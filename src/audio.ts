@@ -49,92 +49,172 @@ export function stopRingtone() {
   ringtone = null
 }
 
-function startLineNoise(c: AudioContext) {
-  stopLineNoise()
+let callSources: AudioScheduledSourceNode[] = []
+let callNodes: AudioNode[] = []
 
-  const buffer = c.createBuffer(1, c.sampleRate * 1.25, c.sampleRate)
+const vowelFormants = [
+  [760, 1180, 2760],
+  [520, 1680, 2480],
+  [360, 2050, 2820],
+  [500, 900, 2440],
+  [350, 720, 2260],
+] as const
+
+const speechPatterns = [
+  [0,1,3,1,4,0,2,1,3,0,4,1,0,3],
+  [3,1,0,4,2,1,3,0,1,4,0,3,2,1,0,4,3],
+  [1,3,0,2,4,1,0,3,1,4,2,0,3,1,0,4,1],
+  [0,3,1,4,0,2,1,3,4,1,0,3,2,1,4,0],
+] as const
+
+function makePhoneNoise(c: AudioContext, seconds: number) {
+  const buffer = c.createBuffer(1, Math.ceil(c.sampleRate * seconds), c.sampleRate)
   const data = buffer.getChannelData(0)
   let last = 0
 
   for (let i = 0; i < data.length; i++) {
     const white = Math.random() * 2 - 1
-    last = last * 0.92 + white * 0.08
-    data[i] = last
+    last = last * 0.88 + white * 0.12
+    data[i] = last * 0.55
   }
 
-  const source = c.createBufferSource()
-  const highpass = c.createBiquadFilter()
-  const lowpass = c.createBiquadFilter()
-  const gain = c.createGain()
-
-  source.buffer = buffer
-  source.loop = true
-  highpass.type = 'highpass'
-  highpass.frequency.value = 420
-  lowpass.type = 'lowpass'
-  lowpass.frequency.value = 3100
-  gain.gain.value = 0.018
-
-  source.connect(highpass)
-  highpass.connect(lowpass)
-  lowpass.connect(gain)
-  gain.connect(c.destination)
-  source.start()
-
-  callNoise = source
-  callNoiseGain = gain
+  return buffer
 }
 
-function stopLineNoise() {
-  if (callNoise) {
-    try { callNoise.stop() } catch {}
-    try { callNoise.disconnect() } catch {}
-  }
-  if (callNoiseGain) {
-    try { callNoiseGain.disconnect() } catch {}
-  }
-  callNoise = null
-  callNoiseGain = null
-}
-
-function chooseBrazilianVoice() {
-  if (!('speechSynthesis' in window)) return null
-  const voices = window.speechSynthesis.getVoices()
-  return (
-    voices.find(v => v.lang.toLowerCase() === 'pt-br' && /female|luciana|eloquence|premium/i.test(v.name)) ||
-    voices.find(v => v.lang.toLowerCase() === 'pt-br') ||
-    voices.find(v => v.lang.toLowerCase().startsWith('pt')) ||
-    null
-  )
-}
-
-export async function playCallVoice(text: string) {
+export async function playCallVoice(lineIndex: number, durationMs: number) {
   stopCallVoice()
+
   const c = await ready()
   if (!c) return
 
-  startLineNoise(c)
+  const duration = Math.max(2.8, durationMs / 1000 - 0.15)
+  const now = c.currentTime + 0.03
 
-  if (!('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') return
+  const voice = c.createOscillator()
+  voice.type = 'sawtooth'
+  voice.frequency.value = 186
 
-  const utterance = new SpeechSynthesisUtterance(text)
-  utterance.lang = 'pt-BR'
-  utterance.rate = 0.88
-  utterance.pitch = 0.82
-  utterance.volume = 0.48
+  const voiceGain = c.createGain()
+  voiceGain.gain.value = 0.0001
 
-  const voice = chooseBrazilianVoice()
-  if (voice) utterance.voice = voice
+  const formant1 = c.createBiquadFilter()
+  const formant2 = c.createBiquadFilter()
+  const formant3 = c.createBiquadFilter()
+  formant1.type = formant2.type = formant3.type = 'bandpass'
+  formant1.Q.value = 5.2
+  formant2.Q.value = 6.0
+  formant3.Q.value = 7.0
 
-  utterance.onend = () => stopLineNoise()
-  utterance.onerror = () => stopLineNoise()
+  const f1Gain = c.createGain()
+  const f2Gain = c.createGain()
+  const f3Gain = c.createGain()
+  f1Gain.gain.value = 0.95
+  f2Gain.gain.value = 0.46
+  f3Gain.gain.value = 0.16
 
-  window.speechSynthesis.speak(utterance)
+  const phoneHighpass = c.createBiquadFilter()
+  const phoneLowpass = c.createBiquadFilter()
+  phoneHighpass.type = 'highpass'
+  phoneHighpass.frequency.value = 330
+  phoneLowpass.type = 'lowpass'
+  phoneLowpass.frequency.value = 3150
+
+  const compressor = c.createDynamicsCompressor()
+  compressor.threshold.value = -28
+  compressor.knee.value = 9
+  compressor.ratio.value = 6
+  compressor.attack.value = 0.004
+  compressor.release.value = 0.12
+
+  const master = c.createGain()
+  master.gain.value = 0.18
+
+  voice.connect(voiceGain)
+  voiceGain.connect(formant1)
+  voiceGain.connect(formant2)
+  voiceGain.connect(formant3)
+  formant1.connect(f1Gain)
+  formant2.connect(f2Gain)
+  formant3.connect(f3Gain)
+  f1Gain.connect(phoneHighpass)
+  f2Gain.connect(phoneHighpass)
+  f3Gain.connect(phoneHighpass)
+  phoneHighpass.connect(phoneLowpass)
+  phoneLowpass.connect(compressor)
+  compressor.connect(master)
+  master.connect(c.destination)
+
+  const noise = c.createBufferSource()
+  const noiseBand = c.createBiquadFilter()
+  const noiseGain = c.createGain()
+  noise.buffer = makePhoneNoise(c, duration + 0.5)
+  noiseBand.type = 'bandpass'
+  noiseBand.frequency.value = 1850
+  noiseBand.Q.value = 0.7
+  noiseGain.gain.value = 0.012
+  noise.connect(noiseBand)
+  noiseBand.connect(noiseGain)
+  noiseGain.connect(master)
+
+  const pattern = speechPatterns[lineIndex % speechPatterns.length]
+  let t = now + 0.08
+  let syllable = 0
+
+  while (t < now + duration - 0.25) {
+    const vowel = vowelFormants[pattern[syllable % pattern.length]]
+    const syllableLength = 0.20 + ((syllable * 37 + lineIndex * 19) % 13) / 100
+    const gap = 0.055 + ((syllable * 17 + lineIndex * 11) % 8) / 100
+    const phraseBreak = syllable > 0 && syllable % (4 + (lineIndex % 2)) === 0
+    const pause = phraseBreak ? 0.24 + (syllable % 3) * 0.07 : gap
+    const end = Math.min(t + syllableLength, now + duration - 0.08)
+
+    const basePitch = 176 + ((syllable * 13 + lineIndex * 23) % 34)
+    voice.frequency.setValueAtTime(basePitch, t)
+    voice.frequency.linearRampToValueAtTime(basePitch + (syllable % 2 ? -9 : 11), end)
+
+    formant1.frequency.setTargetAtTime(vowel[0], t, 0.025)
+    formant2.frequency.setTargetAtTime(vowel[1], t, 0.025)
+    formant3.frequency.setTargetAtTime(vowel[2], t, 0.025)
+
+    const level = 0.11 + ((syllable * 7) % 4) * 0.01
+    voiceGain.gain.setValueAtTime(0.0001, t)
+    voiceGain.gain.linearRampToValueAtTime(level, t + 0.035)
+    voiceGain.gain.setValueAtTime(level * 0.9, Math.max(t + 0.05, end - 0.055))
+    voiceGain.gain.exponentialRampToValueAtTime(0.0001, end)
+
+    if (syllable % 3 === 1) {
+      noiseGain.gain.setValueAtTime(0.010, t)
+      noiseGain.gain.linearRampToValueAtTime(0.026, t + 0.035)
+      noiseGain.gain.exponentialRampToValueAtTime(0.010, Math.min(end, t + 0.12))
+    }
+
+    t = end + pause
+    syllable++
+  }
+
+  voice.start(now)
+  voice.stop(now + duration)
+  noise.start(now)
+  noise.stop(now + duration)
+
+  callSources = [voice, noise]
+  callNodes = [
+    voiceGain, formant1, formant2, formant3,
+    f1Gain, f2Gain, f3Gain, phoneHighpass, phoneLowpass,
+    noiseBand, noiseGain, compressor, master
+  ]
 }
 
 export function stopCallVoice() {
-  if ('speechSynthesis' in window) window.speechSynthesis.cancel()
-  stopLineNoise()
+  callSources.forEach(source => {
+    try { source.stop() } catch {}
+    try { source.disconnect() } catch {}
+  })
+  callNodes.forEach(node => {
+    try { node.disconnect() } catch {}
+  })
+  callSources = []
+  callNodes = []
 }
 
 function shortTone(c: AudioContext, from: number, to: number, duration: number, volume: number) {
