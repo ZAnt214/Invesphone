@@ -36,6 +36,10 @@ type Loaded = {
   visemes?:Partial<Record<Viseme,HTMLCanvasElement>>
 }
 
+/** Resolução máxima do canvas em relação ao recorte da imagem: acima disso só há ampliação, sem detalhe novo. */
+const RES_CAP = 1.25
+/** Quadros por segundo quando nada além da respiração se move. */
+const IDLE_FRAME_MS = 1000/30
 /** Duração da transição de expressão, em segundos. */
 const MORPH_SECONDS = .34
 /**
@@ -77,11 +81,22 @@ export class PortraitRenderer {
   private faceBox = { x:0, y:0, w:0, h:0 }
   private patch:HTMLCanvasElement|null = null
   private masks:HTMLCanvasElement[] = []
-  private processor:((k:Expression)=>void)|null = null
   private grp:HTMLCanvasElement|null = null
   /** opacidade da boca falando: 1 enquanto fala, some logo depois */
   private mouthOn = 0
   private mouthHold = 0
+  /** imagem neutra pronta para a GPU (desenhada a cada quadro) */
+  private baseImg:CanvasImageSource|null = null
+  private cssWidth = 0
+  /** fator de qualidade adaptativo (0,5 a 1) */
+  private quality = 1
+  private slow = 0
+  private fast = 0
+  private lastDraw = 0
+  private raw:Partial<Record<Expression,HTMLCanvasElement>> = {}
+  private skinRef:Rgb = [0,0,0]
+  private plate:ImageData|null = null
+  private loading = new Set<Expression>()
   private expression:Expression = 'neutral'
 
   constructor(private canvas:HTMLCanvasElement, private def:CharacterDef){
@@ -89,44 +104,59 @@ export class PortraitRenderer {
     this.calm = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
   }
 
+  /** Baixa a imagem de uma expressão para um canvas (sem processar). */
+  private async loadRaw(k:Expression){
+    const asset = this.def.assets[k]
+    if(!asset || this.raw[k] || this.loading.has(k)) return
+    this.loading.add(k)
+    try{
+      const img = await loadImage(asset.src)
+      const c = document.createElement('canvas')
+      c.width = img.naturalWidth; c.height = img.naturalHeight
+      c.getContext('2d')!.drawImage(img,0,0)
+      this.raw[k] = c
+    }catch{ /* a expressão sem imagem usa a neutra */ }
+    this.loading.delete(k)
+  }
+
+  /** Processa uma expressão já baixada: tom de pele, recorte do rosto e formas de boca. */
+  private process(k:Expression){
+    const c = this.raw[k], asset = this.def.assets[k]
+    if(!c || !asset || this.loaded[k]) return
+    if(this.plate){
+      const id = c.getContext('2d',{ willReadFrequently:true })!.getImageData(0,0,c.width,c.height)
+      applyPlate(c,this.plate,backgroundMask(id.data,c.width,c.height))
+    }
+    if(k!=='neutral') this.matchSkin(c,asset,this.skinRef)
+    const l = this.prepare(asset,c,k==='neutral')
+    // com base fixa só o recorte do rosto é usado: a imagem inteira sai da memória
+    if(this.stable && k!=='neutral' && l.patch){ l.img = l.patch; delete this.raw[k] }
+    this.loaded[k] = l
+  }
+
   async start(){
-    if(this.def.visemes){
-      try{ this.atlas = await loadImage(this.def.visemes.src) }catch{ /* fala com o lábio de baixo */ }
+    await Promise.all([
+      this.def.visemes ? loadImage(this.def.visemes.src).then(a=>{ this.atlas = a },()=>{}) : null,
+      this.def.faceMask ? loadImage(this.def.faceMask).then(m=>{ this.buildFaceMask(m); this.stable = true },()=>{}) : null,
+      this.loadRaw('neutral'),
+      this.loadRaw(this.expression)
+    ])
+    if(this.destroyed || !this.raw.neutral) return
+    const neutral = this.raw.neutral
+    if(!this.stable){
+      // sem base fixa: o fundo de todas as expressões vira o da neutra
+      const nd = neutral.getContext('2d',{ willReadFrequently:true })!.getImageData(0,0,neutral.width,neutral.height)
+      this.plate = buildPlate(nd.data,backgroundMask(nd.data,nd.width,nd.height),nd.width,nd.height)
     }
-    if(this.def.faceMask){
-      try{ this.buildFaceMask(await loadImage(this.def.faceMask)); this.stable = true }catch{ /* sem máscara: troca por regiões */ }
-    }
-    const entries = Object.entries(this.def.assets) as [Expression,ExpressionAsset][]
-    const raw:Partial<Record<Expression,HTMLCanvasElement>> = {}
-    await Promise.all(entries.map(async([k,asset])=>{
-      try{
-        const img = await loadImage(asset.src)
-        const c = document.createElement('canvas')
-        c.width = img.naturalWidth; c.height = img.naturalHeight
-        c.getContext('2d',{ willReadFrequently:true })!.drawImage(img,0,0)
-        raw[k] = c
-      }catch{ /* a expressão sem imagem usa a neutra */ }
-    }))
-    if(this.destroyed || !raw.neutral) return
-    // fundo único para todas as expressões (o da neutra, liso); a figura não muda
-    const nd = raw.neutral.getContext('2d',{ willReadFrequently:true })!.getImageData(0,0,raw.neutral.width,raw.neutral.height)
-    const plate = this.stable ? null : buildPlate(nd.data,backgroundMask(nd.data,nd.width,nd.height),nd.width,nd.height)
-    const skinRef = this.skinTone(raw.neutral,this.def.assets.neutral)
-    this.processor = (k:Expression)=>{
-      const c = raw[k], asset = this.def.assets[k]
-      if(!c || !asset || this.loaded[k]) return
-      const cx = c.getContext('2d',{ willReadFrequently:true })!
-      const id = cx.getImageData(0,0,c.width,c.height)
-      if(plate) applyPlate(c,plate,backgroundMask(id.data,c.width,c.height))
-      if(k!=='neutral') this.matchSkin(c,asset,skinRef)
-      this.loaded[k] = this.prepare(asset,c,k==='neutral')
-    }
-    this.processor('neutral')
-    this.processor(this.expression)
+    this.skinRef = this.skinTone(neutral,this.def.assets.neutral)
+    this.process('neutral')
+    this.process(this.expression)
     if(this.destroyed || !this.loaded.neutral) return
+    // a neutra é desenhada a cada quadro: vai para a GPU uma vez, em vez de subir do canvas de CPU toda vez
+    try{ this.baseImg = await createImageBitmap(neutral) }catch{ this.baseImg = neutral }
     const c = document.createElement('canvas'); c.width = 6; c.height = 6
     const cx = c.getContext('2d')!
-    cx.drawImage(this.loaded.neutral.img,8,8,6,6,0,0,6,6)
+    cx.drawImage(neutral,8,8,6,6,0,0,6,6)
     const d = cx.getImageData(0,0,6,6).data
     let r=0,g=0,b=0
     for(let i=0;i<d.length;i+=4){ r+=d[i]; g+=d[i+1]; b+=d[i+2] }
@@ -135,11 +165,13 @@ export class PortraitRenderer {
     this.last = performance.now()
     this.blink.next = this.last + 1800
     this.loop(this.last)
-    // as demais expressões são preparadas aos poucos, sem travar a tela
-    for(const [k] of entries){
-      await new Promise(r=>setTimeout(r,30))
+    // as demais expressões chegam aos poucos, sem travar a tela
+    for(const k of Object.keys(this.def.assets) as Expression[]){
+      if(this.loaded[k]) continue
+      await this.loadRaw(k)
+      await new Promise(r=>setTimeout(r,40))
       if(this.destroyed) return
-      this.processor?.(k)
+      this.process(k)
     }
   }
 
@@ -164,16 +196,30 @@ export class PortraitRenderer {
   }
 
   resize(cssWidth:number){
+    this.cssWidth = cssWidth
+    this.applySize()
+  }
+
+  /** Tamanho do canvas: nunca acima da resolução útil da imagem, reduzido se a tela não acompanha. */
+  private applySize(){
     const crop = this.def.portrait.crop
     const dpr = Math.min(3, window.devicePixelRatio || 1)
-    this.canvas.width = Math.round(cssWidth*dpr)
-    this.canvas.height = Math.round(cssWidth*dpr*crop.h/crop.w)
+    const w = Math.max(1,Math.round(Math.min(this.cssWidth*dpr,crop.w*RES_CAP)*this.quality))
+    const h = Math.round(w*crop.h/crop.w)
+    if(this.canvas.width!==w || this.canvas.height!==h){ this.canvas.width = w; this.canvas.height = h }
   }
 
   // ---------- preparação a partir do próprio arquivo ----------
 
   private pick(e:Expression){
-    if(!this.loaded[e]) this.processor?.(e)
+    if(!this.loaded[e]){
+      if(this.raw[e]) this.process(e)
+      else if(this.baseImg){
+        // ainda não chegou: carrega agora e aplica quando estiver pronta
+        this.loadRaw(e).then(()=>{ if(!this.destroyed && this.raw[e]){ this.process(e); if(this.expression===e) this.setExpression(e) } })
+        return null
+      }
+    }
     return this.loaded[e] ?? this.loaded.neutral ?? null
   }
 
@@ -223,15 +269,24 @@ export class PortraitRenderer {
   private matchSkin(c:HTMLCanvasElement, asset:ExpressionAsset, ref:Rgb){
     const mine = this.skinTone(c,asset)
     const gain = [0,1,2].map(i=>ref[i]/mine[i])
+    // com base fixa só o rosto é usado: corrige só o retângulo do rosto
+    let rx = 0, ry = 0, rw = c.width, rh = c.height
+    if(this.stable){
+      const { x, y, w, h } = this.faceBox
+      const [px,py] = this.def.portrait.eyeMid, [ex,ey] = asset.align.eyeMid, sc = asset.align.scale
+      const x0 = Math.max(0,Math.floor(ex+(x-px)/sc)), y0 = Math.max(0,Math.floor(ey+(y-py)/sc))
+      const x1 = Math.min(c.width,Math.ceil(ex+(x+w-px)/sc)), y1 = Math.min(c.height,Math.ceil(ey+(y+h-py)/sc))
+      rx = x0; ry = y0; rw = Math.max(1,x1-x0); rh = Math.max(1,y1-y0)
+    }
     const cx = c.getContext('2d',{ willReadFrequently:true })!
-    const id = cx.getImageData(0,0,c.width,c.height)
+    const id = cx.getImageData(rx,ry,rw,rh)
     const d = id.data
     for(let i=0;i<d.length;i+=4){
       const w = clamp(((d[i]+d[i+1]+d[i+2])/3-90)/60,0,1)
       if(w<=0) continue
       for(let ch=0;ch<3;ch++) d[i+ch] = clamp(d[i+ch]*(1+(gain[ch]-1)*w),0,255)
     }
-    cx.putImageData(id,0,0)
+    cx.putImageData(id,rx,ry)
   }
 
   /** Máscara do interior do rosto, recortada no seu retângulo e com borda suave (reduz e amplia para desfocar). */
@@ -365,6 +420,17 @@ export class PortraitRenderer {
     this.raf = requestAnimationFrame(this.loop)
     if(document.hidden || !this.shown) return
     const dt = Math.min(.05,(now-this.last)/1000)
+    // só respiração e deriva: 30 quadros por segundo bastam e poupam bateria
+    const busy = this.speech || this.trans || this.blink.start>=0 || this.mouthOn>.02
+    if(!busy && now-this.lastDraw<IDLE_FRAME_MS-2) return
+    // qualidade adaptativa: se os quadros demoram, reduz a resolução do canvas; se sobra tempo, sobe de volta
+    const frame = now-this.lastDraw
+    this.lastDraw = now
+    if(frame>0 && frame<250){
+      if(frame>(busy ? 26 : 42)){ this.slow++; this.fast = 0 } else if(frame<(busy ? 19 : 36)){ this.fast++; this.slow = 0 } else { this.slow = 0; this.fast = 0 }
+      if(this.slow>=20 && this.quality>.5){ this.quality = Math.max(.5,this.quality*.8); this.slow = 0; this.applySize() }
+      else if(this.fast>=240 && this.quality<1){ this.quality = Math.min(1,this.quality*1.15); this.fast = 0; this.applySize() }
+    }
     this.last = now
     this.update(now,dt)
     this.draw(now)
@@ -452,7 +518,7 @@ export class PortraitRenderer {
       const e = tr ? tr.t*tr.t*(3-2*tr.t) : 1
       if(this.stable && this.loaded.neutral){
         // cabelo, corpo e fundo vêm sempre da imagem neutra; só o interior do rosto troca de expressão
-        ctx.drawImage(this.loaded.neutral.img,0,0)
+        ctx.drawImage(this.baseImg ?? this.loaded.neutral.img,0,0)
         const { x, y } = this.faceBox
         if(this.shown.patch) ctx.drawImage(this.shown.patch,x,y)
         if(tr?.to.patch){ ctx.globalAlpha = e; ctx.drawImage(tr.to.patch,x,y); ctx.globalAlpha = 1 }
