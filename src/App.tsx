@@ -7,6 +7,7 @@ import {
   RotateCcw, Search, Shield, Smartphone, Users, Volume2
 } from 'lucide-react'
 import { enableAudio, playConnect, playHangup, playTypingTick, startRingtone, stopRingtone } from './audio'
+import HandsetHome from './HandsetHome'
 import { acceptedProofs, chapters, clues, disclaimer, people, teamMessages, victimMessages } from './case01'
 
 const SAVE_VERSION = 2
@@ -331,10 +332,9 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
  if(game.app==='interrogate')return <PhonePage title="Interrogar" back={()=>openApp('home')}><People game={game} setGame={setGame}/></PhonePage>
  if(game.app==='victim')return <PhonePage title="Telefone de Helena" back={()=>openApp('home')}><VictimPhone/></PhonePage>
  if(game.app==='chapters')return <PhonePage title="Arquivo do caso" back={()=>openApp('home')}><ChapterMap game={game}/></PhonePage>
- return <main className="handset"><HandsetStatus/><section className="handset-home"><div className="device-title"><small>DHPP · TERMINAL MÓVEL</small><h1>04:27</h1><span>LE​MOS / UNIDADE 04</span></div><button className="task-card" onClick={()=>setGame(g=>({...g,screen:'task'}))}><small>CASO 001 · CAP. {chapter.number}</small><b>{current.title}</b><span>{chapter.title}</span><em>ABRIR TAREFA</em></button><div className="app-grid"><AppIcon label="Equipe" icon={<MessageCircle/>} badge={game.task<3?1:0} onClick={()=>openApp('team')}/><AppIcon label="Pistas" icon={<FileSearch/>} badge={game.clues.length} onClick={()=>openApp('clues')}/><AppIcon label="Interrogar" icon={<Users/>} onClick={()=>openApp('interrogate')}/><AppIcon label="Tel. Helena" icon={<Smartphone/>} onClick={()=>openApp('victim')}/><AppIcon label="Arquivo" icon={<FolderSearch/>} onClick={()=>openApp('chapters')}/><AppIcon label="Agenda" icon={<CalendarDays/>}/></div><div className="softkeys"><span>Menu</span><i>●</i><span>Opções</span></div></section></main>
+ return <HandsetHome chapterNumber={chapter.number} taskTitle={current.title} chapterTitle={chapter.title} taskNumber={game.task+1} taskCount={tasks.length} teamBadge={game.task<3?1:0} clueBadge={game.clues.length} onOpenApp={openApp} onOpenTask={()=>setGame(g=>({...g,screen:'task'}))}/>
 }
 function HandsetStatus(){return <header className="handset-status"><span>VIVO&nbsp;&nbsp;▮▮▮</span><b>DHPP</b><BatteryMedium/></header>}
-function AppIcon({label,icon,badge=0,onClick}:{label:string;icon:React.ReactNode;badge?:number;onClick?:()=>void}){return <button className="app-icon" onClick={onClick}><i>{icon}{badge>0&&<em>{Math.min(badge,99)}</em>}</i><span>{label}</span></button>}
 function PhonePage({title,back,children}:{title:string;back:()=>void;children:React.ReactNode}){return <main className="handset page"><HandsetStatus/><header className="page-head"><button onClick={back}><ChevronLeft/></button><b>{title}</b><span/></header><section className="page-body">{children}</section></main>}
 
 function Team({game}:{game:GameSave}){
