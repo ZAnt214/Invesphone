@@ -6,7 +6,7 @@ import {
   Home, Image as ImageIcon, Lock, MessageCircle, MicOff, Phone, PhoneOff,
   RotateCcw, Search, Shield, Smartphone, Users, Volume2
 } from 'lucide-react'
-import { enableAudio, playConnect, playHangup, startRingtone, stopRingtone } from './audio'
+import { enableAudio, playCallVoice, playConnect, playHangup, startRingtone, stopCallVoice, stopRingtone } from './audio'
 import { acceptedProofs, chapters, clues, disclaimer, people, teamMessages, victimMessages } from './case01'
 
 const SAVE_VERSION = 2
@@ -36,6 +36,15 @@ const callLines = [
   'Ela está chamando de assalto. A equipe chegou agora e a porta da frente está intacta.',
   'Abre o DHPP. Quero você acompanhando isso desde o primeiro minuto.'
 ]
+
+const callVoiceLines = [
+  callLines[0],
+  callLines[1],
+  callLines[2],
+  'Abre o D H P P. Quero você acompanhando isso desde o primeiro minuto.'
+]
+
+const callLineDurations = [5000, 6900, 6800, 5900]
 
 const tasks = [
   {chapter:0,title:'Chegada à Rua das Acácias',kind:'brief'},
@@ -84,10 +93,12 @@ export default function App(){
   },[game.screen])
 
   useEffect(()=>{
-    if(game.screen!=='active'||line>=callLines.length-1)return
-    const id=window.setTimeout(()=>setLine(v=>v+1),3400)
-    return()=>window.clearTimeout(id)
-  },[game.screen,line])
+    if(game.screen!=='active')return
+    if(audioOn)playCallVoice(callVoiceLines[line])
+    if(line>=callLines.length-1)return()=>stopCallVoice()
+    const id=window.setTimeout(()=>setLine(v=>v+1),callLineDurations[line])
+    return()=>{window.clearTimeout(id);stopCallVoice()}
+  },[game.screen,line,audioOn])
 
   useEffect(()=>{
     if(game.screen!=='launching')return
@@ -98,8 +109,8 @@ export default function App(){
   const setScreen=(screen:Screen)=>setGame(g=>({...g,screen}))
   const activateSound=async()=>{if(await enableAudio()){setAudioOn(true);if(game.screen==='incoming')startRingtone()}}
   const answer=()=>{stopRingtone();if(audioOn)playConnect();setElapsed(0);setLine(0);navigator.vibrate?.(18);setScreen('active')}
-  const decline=()=>{stopRingtone();if(audioOn)playHangup();setScreen('missed')}
-  const finishCall=()=>{if(audioOn)playHangup();setScreen('launching')}
+  const decline=()=>{stopRingtone();stopCallVoice();if(audioOn)playHangup();setScreen('missed')}
+  const finishCall=()=>{stopCallVoice();if(audioOn)playHangup();setScreen('launching')}
   const addClue=(id:string)=>setGame(g=>({...g,clues:g.clues.includes(id)?g.clues:[...g.clues,id]}))
   const finishTask=()=>setGame(g=>({...g,task:Math.min(tasks.length-1,g.task+1),screen:'phone',app:'home'}))
   const time=`${String(Math.floor(elapsed/60)).padStart(2,'0')}:${String(elapsed%60).padStart(2,'0')}`
