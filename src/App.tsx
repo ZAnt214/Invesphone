@@ -37,13 +37,6 @@ const callLines = [
   'Abre o DHPP. Quero você acompanhando isso desde o primeiro minuto.'
 ]
 
-const callVoiceLines = [
-  callLines[0],
-  callLines[1],
-  callLines[2],
-  'Abre o D H P P. Quero você acompanhando isso desde o primeiro minuto.'
-]
-
 const callLineDurations = [5000, 6900, 6800, 5900]
 
 const tasks = [
@@ -94,7 +87,7 @@ export default function App(){
 
   useEffect(()=>{
     if(game.screen!=='active')return
-    if(audioOn)playCallVoice(callVoiceLines[line])
+    if(audioOn)playCallVoice(line,callLineDurations[line])
     if(line>=callLines.length-1)return()=>stopCallVoice()
     const id=window.setTimeout(()=>setLine(v=>v+1),callLineDurations[line])
     return()=>{window.clearTimeout(id);stopCallVoice()}
