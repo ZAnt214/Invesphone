@@ -51,17 +51,6 @@ export type VisemeAtlas = {
   lipWidth:number
 }
 
-/**
- * Camadas fixas do personagem (fundo, corpo e cabeça sem as feições). Quando existem, o retrato nunca troca
- * de imagem inteira: só o interior do rosto (`facePolygon`, em pixels do retrato) muda de expressão.
- */
-export type CharacterRig = {
-  background:string
-  body:string
-  head:string
-  facePolygon:[number, number][]
-}
-
 export type CharacterDef = {
   id:string
   name:string
@@ -79,8 +68,11 @@ export type CharacterDef = {
   assets: { neutral:ExpressionAsset } & Partial<Record<Expression,ExpressionAsset>>
   /** Formas de boca para sincronizar a fala. Sem isso, a boca fala abrindo o lábio de baixo. */
   visemes?: VisemeAtlas
-  /** Camadas fixas: fundo, corpo e cabeça. Só o rosto muda de expressão. */
-  rig?: CharacterRig
+  /**
+   * Contorno do interior do rosto no retrato neutro (pixels). Com ele, a imagem neutra é a base imutável
+   * (cabelo, pescoço, corpo, fundo) e só o interior do rosto vem da imagem de cada expressão.
+   */
+  facePolygon?: [number, number][]
   /** Recorte quadrado do rosto (no retrato neutro) para listas e perfis. */
   face: { cx:number; cy:number; size:number }
 }
