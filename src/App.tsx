@@ -30,19 +30,49 @@ const initialGame:GameSave = {
   version:SAVE_VERSION,screen:'incoming',app:'home',task:0,clues:[],interviewed:[],score:1000
 }
 
-const callLines = [
-  'Lemos? Desculpa a hora. Temos duas vítimas no Campo Belo.',
-  'Ricardo e Helena Valença. A filha voltou pra casa e diz que encontrou tudo revirado.',
-  'Ela está chamando de assalto. A equipe chegou agora e a porta da frente está intacta.',
-  'Abre o DHPP. Quero você acompanhando isso desde o primeiro minuto.'
-]
-
-const callReplies = [
-  ['Estou acordado. O que temos no local?','Certo. Quem encontrou os corpos?'],
-  ['A casa foi realmente roubada?','A filha estava sozinha quando chegou?'],
-  ['Porta intacta não combina com invasão.','Quero o alarme e a entrada preservados.'],
-  ['Entendido. Vou acompanhar desde agora.','Certo. Me mantenha informado.']
-]
+const callTurns = [
+  {
+    sonia:'Lemos? Desculpa a hora. Temos duas vítimas no Campo Belo.',
+    replies:[
+      'Estou acordado. O que temos no local?',
+      'Quem encontrou as vítimas?'
+    ]
+  },
+  {
+    sonia:[
+      'Casal. Ricardo e Helena Valença. A filha, Lívia, chegou de madrugada e encontrou os dois no quarto.',
+      'A filha deles, Lívia. Chegou de madrugada e encontrou Ricardo e Helena no quarto.'
+    ],
+    replies:[
+      'Ela viu alguém saindo da casa?',
+      'A cena indica assalto?'
+    ]
+  },
+  {
+    sonia:[
+      'Não. Ela diz que entrou, viu a casa revirada e foi direto ao quarto. Ninguém foi visto saindo.',
+      'É o que ela está dizendo. A casa está revirada, mas a equipe ainda está fechando a primeira leitura.'
+    ],
+    replies:[
+      'E a porta? Tem sinal de entrada forçada?',
+      'Tem alguma coisa que já não fecha nessa versão?'
+    ]
+  },
+  {
+    sonia:[
+      'A porta da frente está intacta. Sem arrombamento. E o cachorro estava preso no canil.',
+      'Tem. Porta intacta, objetos de valor ainda na casa e o cachorro preso. Não parece um roubo simples.'
+    ],
+    replies:[
+      'Preserva a entrada e puxa o log do alarme.',
+      'Entendido. Abro o DHPP e acompanho daqui.'
+    ],
+    closing:[
+      'Faz isso. Assim que tiver o log, me chama. Estou te colocando no caso desde o primeiro minuto.',
+      'Ótimo. Assume o acompanhamento. Se alguma coisa sair do lugar, me chama na hora.'
+    ]
+  }
+] as const
 
 const tasks = [
   {chapter:0,title:'Chegada à Rua das Acácias',kind:'brief'},
@@ -108,7 +138,7 @@ export default function App(){
   return <AnimatePresence mode="wait">
     {game.screen==='incoming'&&<Incoming audioOn={audioOn} onSound={activateSound} onAnswer={answer} onDecline={decline}/>} 
     {game.screen==='missed'&&<Missed onAnswer={answer}/>}
-    {game.screen==='active'&&<ActiveCall line={line} time={time} muted={muted} speaker={speaker} audioOn={audioOn} setMuted={setMuted} setSpeaker={setSpeaker} onNext={()=>setLine(v=>Math.min(callLines.length-1,v+1))} onFinish={finishCall}/>}
+    {game.screen==='active'&&<ActiveCall line={line} time={time} muted={muted} speaker={speaker} audioOn={audioOn} setMuted={setMuted} setSpeaker={setSpeaker} onNext={()=>setLine(v=>Math.min(callTurns.length-1,v+1))} onFinish={finishCall}/>}
     {game.screen==='launching'&&<Launching/>}
     {game.screen==='phone'&&<PolicePhone game={game} setGame={setGame}/>}
     {game.screen==='task'&&<TaskView game={game} addClue={addClue} setGame={setGame} finishTask={finishTask}/>}
@@ -161,19 +191,34 @@ function TypewriterText({text,audioOn,onDone,quote=true}:{text:string;audioOn:bo
 }
 
 function ActiveCall({line,time,muted,speaker,audioOn,setMuted,setSpeaker,onNext,onFinish}:{line:number;time:string;muted:boolean;speaker:boolean;audioOn:boolean;setMuted:(v:boolean)=>void;setSpeaker:(v:boolean)=>void;onNext:()=>void;onFinish:()=>void}){
- const [phase,setPhase]=useState<'sonia'|'choice'|'player'>('sonia')
+ const [phase,setPhase]=useState<'sonia'|'choice'|'player'|'closing'>('sonia')
  const [reply,setReply]=useState('')
+ const [previousChoice,setPreviousChoice]=useState(0)
+ const [selectedChoice,setSelectedChoice]=useState(0)
 
  useEffect(()=>{setPhase('sonia');setReply('')},[line])
 
+ const turn=callTurns[line]
+ const soniaText=typeof turn.sonia==='string'?turn.sonia:turn.sonia[previousChoice]
+ const closingText='closing' in turn&&turn.closing?turn.closing[selectedChoice]:''
+
  const soniaDone=()=>setPhase('choice')
- const chooseReply=(text:string)=>{setReply(text);setPhase('player')}
+ const chooseReply=(text:string,index:number)=>{
+   setReply(text)
+   setSelectedChoice(index)
+   setPhase('player')
+ }
  const playerDone=()=>{
    window.setTimeout(()=>{
-     if(line===callLines.length-1)onFinish()
-     else onNext()
-   },850)
+     if(line===callTurns.length-1){
+       setPhase('closing')
+     }else{
+       setPreviousChoice(selectedChoice)
+       onNext()
+     }
+   },650)
  }
+ const closingDone=()=>window.setTimeout(onFinish,1050)
 
  return <motion.main className="call-screen active" initial={{opacity:0,scale:1.015}} animate={{opacity:1,scale:1}} exit={{opacity:0,y:-20}}>
   <Ambient/><StatusBar/>
@@ -181,23 +226,27 @@ function ActiveCall({line,time,muted,speaker,audioOn,setMuted,setSpeaker,onNext,
   <motion.section className="transcript call-dialogue" layout>
    <small>CHAMADA · DHPP</small>
    <AnimatePresence mode="wait">
-    {phase!=='player'
-      ?<motion.div className="dialogue-line sonia-line" key={'s'+line} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}}>
-        <b>SÔNIA</b><p><TypewriterText text={callLines[line]} audioOn={audioOn} onDone={soniaDone}/></p>
+    {phase==='sonia'||phase==='choice'
+      ?<motion.div className="dialogue-line sonia-line" key={'s'+line+'-'+previousChoice} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}}>
+        <b>SÔNIA</b><p><TypewriterText text={soniaText} audioOn={audioOn} onDone={soniaDone}/></p>
        </motion.div>
-      :<motion.div className="dialogue-line player-line" key={'p'+line} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}}>
+      :phase==='player'
+      ?<motion.div className="dialogue-line player-line" key={'p'+line+'-'+selectedChoice} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}}>
         <b>LEMOS</b><p><TypewriterText text={reply} audioOn={audioOn} onDone={playerDone}/></p>
+       </motion.div>
+      :<motion.div className="dialogue-line sonia-line" key={'c'+selectedChoice} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}}>
+        <b>SÔNIA</b><p><TypewriterText text={closingText} audioOn={audioOn} onDone={closingDone}/></p>
        </motion.div>
     }
    </AnimatePresence>
 
    {phase==='choice'&&<motion.div className="call-replies" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}}>
     <small>RESPONDER</small>
-    {callReplies[line].map((text,i)=><button key={i} onClick={()=>chooseReply(text)}>{text}</button>)}
+    {turn.replies.map((text,i)=><button key={i} onClick={()=>chooseReply(text,i)}>{text}</button>)}
    </motion.div>}
 
    <div className="wave">{[10,18,27,15,30,20,26,16,11,22,14].map((h,i)=><motion.i key={i} animate={{height:phase==='choice'?[8,9,8]:[8,h,11]}} transition={{duration:.55+(i%3)*.1,repeat:Infinity,repeatType:'mirror',delay:i*.045}}/>)}</div>
-   <div className="speaking"><i/> {phase==='choice'?'aguardando resposta':phase==='player'?'Lemos falando':'transcrição em tempo real'}</div>
+   <div className="speaking"><i/> {phase==='choice'?'aguardando resposta':phase==='player'?'Lemos falando':phase==='closing'?'Sônia encerrando':'transcrição em tempo real'}</div>
   </motion.section>
   <section className="controls"><button className={muted?'on':''} onClick={()=>setMuted(!muted)}><span><MicOff/></span><small>{muted?'mudo ativo':'mudo'}</small></button><button><span><Grid3X3/></span><small>teclado</small></button><button className={speaker?'on':''} onClick={()=>setSpeaker(!speaker)}><span><Volume2/></span><small>{speaker?'alto-falante ativo':'alto-falante'}</small></button></section>
   <div className="homebar"/>
