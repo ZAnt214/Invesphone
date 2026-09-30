@@ -1,0 +1,34 @@
+{
+  "character": "livia",
+  "basePath": "/characters/livia/expressions/",
+  "resolution": {
+    "width": 900,
+    "height": 1200
+  },
+  "expressions": {
+    "neutral": {
+      "file": "neutral.jpg",
+      "meaning": "controlada/estado base"
+    },
+    "tired": {
+      "file": "tired.jpg",
+      "meaning": "cansada/energia baixa"
+    },
+    "uncomfortable": {
+      "file": "uncomfortable.jpg",
+      "meaning": "incômodo e hesitação"
+    },
+    "defensive": {
+      "file": "defensive.jpg",
+      "meaning": "resistente e fechada"
+    },
+    "nervous": {
+      "file": "nervous.jpg",
+      "meaning": "tensão e ansiedade"
+    },
+    "shaken": {
+      "file": "shaken.jpg",
+      "meaning": "abalada/tensão silenciosa"
+    }
+  }
+}
