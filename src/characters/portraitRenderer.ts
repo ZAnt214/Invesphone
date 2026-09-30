@@ -129,7 +129,8 @@ export class PortraitRenderer {
     }
     // pele: bochecha esquerda; interior da boca: junto ao canto; cílios: ponto mais escuro do olho
     const [mx,my] = asset.align.eyeMid
-    const skin = avg(mx-38,my+52,3)
+    const dist = asset.eyes.right.cx-asset.eyes.left.cx
+    const skin = avg(mx-dist*.52,my+dist*.71,3)
     const m = asset.mouth
     const inner = avg(m.cx-m.halfWidth*.6,m.rimY,1)
     const e = asset.eyes.left
@@ -223,6 +224,12 @@ export class PortraitRenderer {
     }
   }
 
+  /** Tamanho do rosto em relação à arte de referência (olhos a 73 px), para escalar movimentos em pixels. */
+  private unit(){
+    const e = this.def.assets.neutral.eyes
+    return (e.right.cx-e.left.cx)/73
+  }
+
   private blinkAmount(now:number){
     if(this.blink.start<0) return 0
     const p = (now-this.blink.start)/170
@@ -244,14 +251,15 @@ export class PortraitRenderer {
     const t = now/1000
     const calm = this.calm
     const breath = calm ? 0 : Math.sin(t*2*Math.PI/4.6)
-    const drift = calm ? 0 : Math.sin(t*.31)*.8
-    const trem = calm ? 0 : this.cur.tremor*(Math.sin(t*37)*.6+Math.sin(t*23.3)*.4)*.7
+    const u = this.unit()
+    const drift = calm ? 0 : Math.sin(t*.31)*.8*u
+    const trem = calm ? 0 : this.cur.tremor*(Math.sin(t*37)*.6+Math.sin(t*23.3)*.4)*.7*u
     const pivotX = crop.x+crop.w/2, pivotY = crop.y+crop.h*.45
     const scale = 1.04 + breath*.002 - Math.min(0,this.cur.slump)*.0016
     ctx.save()
     ctx.translate(pivotX,pivotY)
     ctx.scale(scale,scale)
-    ctx.translate(-pivotX+drift+trem,-pivotY+breath+Math.max(0,this.cur.slump)+this.mouth*.5)
+    ctx.translate(-pivotX+drift+trem,-pivotY+(breath+Math.max(0,this.cur.slump)+this.mouth*.5)*u)
 
     if(this.prev && this.fade<1) this.drawAsset(this.prev,now,1)
     if(this.shown) this.drawAsset(this.shown,now,this.prev ? this.fade : 1)
@@ -282,7 +290,7 @@ export class PortraitRenderer {
     for(const e of eyes){
       const top = e.cy-e.ry-1
       const edge = top + amount*(e.ry*2+2)
-      const bulge = 1.6*amount
+      const bulge = 1.6*amount*this.unit()
       ctx.save()
       ctx.beginPath(); ctx.ellipse(e.cx,e.cy,e.rx+1,e.ry+1,0,0,Math.PI*2); ctx.clip()
       ctx.fillStyle = rgb(l.skin)
@@ -290,7 +298,7 @@ export class PortraitRenderer {
       ctx.moveTo(e.cx-e.rx-2,top-3); ctx.lineTo(e.cx+e.rx+2,top-3); ctx.lineTo(e.cx+e.rx+2,edge)
       ctx.quadraticCurveTo(e.cx,edge+bulge*2,e.cx-e.rx-2,edge)
       ctx.closePath(); ctx.fill()
-      ctx.strokeStyle = rgb(l.lash); ctx.lineWidth = 1.5; ctx.lineCap = 'round'
+      ctx.strokeStyle = rgb(l.lash); ctx.lineWidth = 1.5*this.unit(); ctx.lineCap = 'round'
       ctx.beginPath(); ctx.moveTo(e.cx-e.rx,edge); ctx.quadraticCurveTo(e.cx,edge+bulge*2,e.cx+e.rx,edge); ctx.stroke()
       ctx.restore()
     }
@@ -327,8 +335,10 @@ export class PortraitRenderer {
     const { ctx } = this
     const m = l.asset.mouth
     const d = open*m.maxOpen
+    const w = 1.3*this.unit()
     const x0 = Math.floor(m.cx-m.halfWidth-1), x1 = Math.ceil(m.cx+m.halfWidth+1)
-    for(let x=x0;x<x1;x+=1){
+    const step = w
+    for(let x=x0;x<x1;x+=step){
       const u = clamp((x+.5-m.cx)/m.halfWidth,-1,1)
       const edge = Math.pow(1-u*u,.7)
       const rim = m.rimY-m.arch*(1-u*u)
@@ -336,8 +346,8 @@ export class PortraitRenderer {
       if(s<.2) continue
       const top = Math.round(rim)
       ctx.fillStyle = rgb(l.inner,.7)
-      ctx.fillRect(x,top,1.3,s+.8)
-      ctx.drawImage(l.img,x,top,1.3,m.bottom-top,x,top+s,1.3,m.bottom-top)
+      ctx.fillRect(x,top,w,s+.8)
+      ctx.drawImage(l.img,x,top,w,m.bottom-top,x,top+s,w,m.bottom-top)
     }
   }
 }
