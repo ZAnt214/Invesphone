@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { enableAudio, playConnect, playHangup, playTypingTick, startRingtone, stopRingtone } from './audio'
 import HandsetHome from './HandsetHome'
+import './handset-pages.css'
 import { acceptedProofs, chapters, clues, disclaimer, people, teamMessages, victimMessages } from './case01'
 
 const SAVE_VERSION = 2

@@ -1,0 +1,64 @@
+/* Páginas internas do terminal no mesmo visor preto da tela inicial */
+.handset.page{
+  --hud:#f3f5f6;--ink:#f3f5f6;--mut:#8a9399;--line:rgba(255,255,255,.2);--surf:rgba(255,255,255,.05);
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,"Courier New",monospace;
+  background:#050607;color:var(--ink);font-family:var(--mono);
+}
+.handset.page button{font-family:inherit}
+
+/* status e cabeçalho */
+.handset.page .handset-status{height:calc(40px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 22px 0;background:transparent;border:0;color:#cfd6da;font:600 11px/1 var(--mono)}
+.handset.page .handset-status b{font-size:11px}
+.handset.page .handset-status svg{width:19px}
+.handset.page .page-head{background:#000;border-bottom:1px solid var(--line);color:var(--ink)}
+.handset.page .page-head button{color:var(--ink)}
+.handset.page .page-head b{font:700 13px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.handset.page .page-body{background:transparent}
+
+/* equipe */
+.handset.page .thread-head{background:var(--surf);border:1px solid var(--line);border-radius:2px}
+.handset.page .thread-head span{color:var(--mut)}
+.handset.page .mini-avatar{background:var(--ink);color:#000;border-radius:2px}
+.handset.page .thread article>small{color:var(--mut)}
+.handset.page .thread article p{background:var(--surf);border:1px solid var(--line);border-radius:2px;color:var(--ink)}
+.handset.page .thread article p b{color:var(--mut)}
+.handset.page .typing{color:var(--mut)}
+.handset.page .typing i{background:var(--mut)}
+
+/* pistas */
+.handset.page .clue-list article{background:var(--surf);border:1px solid var(--line);border-radius:2px}
+.handset.page .clue-list article>svg{color:var(--ink)}
+.handset.page .clue-list small{color:var(--mut)}
+.handset.page .clue-list p{color:var(--mut)}
+.handset.page .empty{color:var(--mut)}
+
+/* interrogar */
+.handset.page .people-list button{background:var(--surf);border:1px solid var(--line);border-radius:2px;color:var(--ink)}
+.handset.page .people-list button>i{background:var(--ink);color:#000;border-radius:2px}
+.handset.page .people-list span{color:var(--mut)}
+.handset.page .people-list svg{color:var(--ink)}
+.handset.page .people-list svg.right{color:var(--mut)}
+
+/* telefone da vítima */
+.handset.page .victim-home>small{color:var(--mut)}
+.handset.page .victim-home h2{font-family:var(--mono)}
+.handset.page .victim-grid button{background:var(--surf);border:1px solid var(--line);border-radius:2px;color:var(--ink)}
+.handset.page .victim-grid svg{color:var(--ink)}
+.handset.page .legal-access{color:var(--mut)}
+.handset.page .subback{background:var(--surf);border-bottom:1px solid var(--line);color:var(--ink)}
+.handset.page .victim-messages section{border-bottom:1px solid var(--line)}
+.handset.page .victim-messages header small{color:var(--mut)}
+.handset.page .bubble{border-radius:2px}
+.handset.page .bubble.in{background:var(--surf);border:1px solid var(--line);color:var(--ink)}
+.handset.page .bubble.out{background:var(--ink);color:#000}
+.handset.page .photo-grid figure{background:linear-gradient(145deg,#15191c,#0a0d0f);border:1px solid var(--line);color:var(--ink)}
+.handset.page .photo-grid svg{color:var(--mut)}
+.handset.page .call-log p{border-bottom:1px solid var(--line)}
+.handset.page .call-log span{color:var(--mut)}
+
+/* arquivo do caso */
+.handset.page .chapter-map article{background:transparent;border:1px solid var(--line);border-radius:2px;color:var(--mut)}
+.handset.page .chapter-map article.open{background:var(--surf);color:var(--ink)}
+.handset.page .chapter-map article>i{border-color:var(--line)}
+.handset.page .chapter-map small{color:var(--mut)}
+.handset.page .chapter-map>article>svg{color:var(--ink)}
