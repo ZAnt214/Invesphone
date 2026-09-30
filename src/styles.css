@@ -94,3 +94,13 @@ button:disabled{opacity:.45}
 .call-replies>small{font:700 8px "Courier New",monospace;color:#879198;letter-spacing:.1em}
 .call-replies button{width:100%;min-height:44px;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.055);color:#eef1f2;border-radius:10px;padding:10px 12px;text-align:left;font-size:11px;line-height:1.35}
 .call-replies button:active{transform:scale(.985);background:rgba(255,255,255,.1)}
+
+.order-trigger{display:flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;margin-top:3px!important;border-style:dashed!important;color:#c9d7df!important;background:rgba(87,113,128,.10)!important;font:700 9px "Courier New",monospace!important;letter-spacing:.08em}
+.order-trigger svg{width:15px;height:15px}
+.order-panel{display:grid;gap:6px;padding:9px;margin-top:2px;border:1px solid rgba(151,173,184,.18);background:rgba(8,11,13,.58);border-radius:10px}
+.order-panel>small{font:700 8px "Courier New",monospace;color:#8fa4af;letter-spacing:.1em;margin:1px 2px 3px}
+.order-panel>button{display:grid!important;gap:2px!important;min-height:47px!important;background:rgba(255,255,255,.045)!important}
+.order-panel>button b{font-size:10px;font-weight:600}
+.order-panel>button span{font-size:8px;color:#7f8c93;text-transform:uppercase;letter-spacing:.07em}
+.order-feedback{display:flex;align-items:flex-start;gap:7px;padding:8px 10px;border:1px solid rgba(93,130,106,.45);background:rgba(38,73,49,.22);border-radius:9px;color:#b9d2c1;font-size:9px;line-height:1.35}
+.order-feedback svg{width:14px;height:14px;flex:0 0 14px;margin-top:1px}
