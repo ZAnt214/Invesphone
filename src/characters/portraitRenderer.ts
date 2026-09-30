@@ -349,6 +349,10 @@ export class PortraitRenderer {
       g.addColorStop(0,'rgba(0,0,0,1)'); g.addColorStop(1,'rgba(0,0,0,0)')
       cx.fillStyle = g; cx.fillRect(-mrx,-mrx,mrx*2,mrx*2)
       cx.restore()
+      // nada acima dos lábios: a ponta do nariz fica a ~40 px da boca e não pode ser coberta pela pele da folha
+      const top = cx.createLinearGradient(0,vd.center[1]-vd.lipWidth*.36,0,vd.center[1]-vd.lipWidth*.22)
+      top.addColorStop(0,'rgba(0,0,0,0)'); top.addColorStop(1,'rgba(0,0,0,1)')
+      cx.fillStyle = top; cx.fillRect(0,0,vd.cellW,vd.cellH)
       out[v] = c
     })
     return out
@@ -529,7 +533,7 @@ export class PortraitRenderer {
       ctx.quadraticCurveTo(e.cx,edge+bulge*2,e.cx-e.rx-2,edge)
       ctx.closePath(); ctx.fill()
       ctx.strokeStyle = rgb(l.lash); ctx.lineWidth = 1.5*this.unit(); ctx.lineCap = 'round'
-      ctx.beginPath(); ctx.moveTo(e.cx-e.rx,edge); ctx.quadraticCurveTo(e.cx,edge+bulge*2,e.cx+e.rx,edge); ctx.stroke()
+      if(amount>.2){ ctx.beginPath(); ctx.moveTo(e.cx-e.rx+6,edge); ctx.quadraticCurveTo(e.cx,edge+bulge*2,e.cx+e.rx-6,edge); ctx.stroke() }
       ctx.restore()
     }
   }
