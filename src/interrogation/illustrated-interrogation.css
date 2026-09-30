@@ -31,41 +31,34 @@
   height:100%;
   display:block;
   transform-origin:50% 70%;
-  animation:ii-breathe 5.8s ease-in-out infinite;
 }
-.ii-character .ii-eye{
-  transform-box:fill-box;
-  transform-origin:center;
-  animation:ii-blink 6.7s steps(1) infinite;
+.ii-character-img{
+  object-fit:cover;
+  object-position:center 42%;
+  user-select:none;
+  -webkit-user-drag:none;
+  animation:ii-photo-breathe 6.2s ease-in-out infinite;
+  transition:filter .35s ease,transform .35s ease;
 }
-.ii-character.is-speaking .ii-mouth{
-  animation:ii-talk .34s ease-in-out infinite alternate;
-  transform-box:fill-box;
-  transform-origin:center;
-}
-.ii-character.expression-nervous .ii-hands{animation:ii-hands 1.7s ease-in-out infinite alternate}
-.ii-character.expression-shaken .ii-body{transform:translateY(4px)}
-.ii-character.expression-defensive .ii-body{transform:translateX(2px)}
-.ii-character.expression-uncomfortable .ii-body{transform:translateX(-2px) translateY(1px)}
-.ii-character.expression-tired{filter:saturate(.9) brightness(.96)}
-.ii-character.expression-shaken{filter:saturate(.82) brightness(.9)}
-.ii-character.expression-nervous{filter:saturate(.94) contrast(1.03)}
+.ii-character-img.expression-neutral{filter:saturate(.96) brightness(.98)}
+.ii-character-img.expression-tired{filter:saturate(.82) brightness(.88) contrast(1.02);transform:scale(1.012) translateY(3px)}
+.ii-character-img.expression-uncomfortable{filter:saturate(.9) brightness(.93) contrast(1.04);transform:scale(1.018) translateX(-3px)}
+.ii-character-img.expression-defensive{filter:saturate(.92) brightness(.96) contrast(1.07);transform:scale(1.022) translateX(3px)}
+.ii-character-img.expression-nervous{filter:saturate(.86) brightness(.91) contrast(1.08);animation:ii-photo-breathe 5s ease-in-out infinite,ii-photo-nervous 2.4s ease-in-out infinite}
+.ii-character-img.expression-shaken{filter:saturate(.68) brightness(.8) contrast(1.06);transform:scale(1.025) translateY(5px)}
+.ii-character-img.is-speaking{animation:ii-photo-speaking 1.25s ease-in-out infinite alternate}
 
-@keyframes ii-breathe{
-  0%,100%{transform:translateY(0) scale(1)}
-  50%{transform:translateY(1.5px) scale(1.002)}
+@keyframes ii-photo-breathe{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.006) translateY(1px)}
 }
-@keyframes ii-blink{
-  0%,45%,47%,100%{scale:1 1}
-  46%{scale:1 .08}
+@keyframes ii-photo-nervous{
+  0%,100%{margin-left:0}
+  50%{margin-left:-1.5px}
 }
-@keyframes ii-talk{
-  from{scale:1 1}
-  to{scale:1 1.16}
-}
-@keyframes ii-hands{
-  from{transform:translateX(-1px)}
-  to{transform:translateX(1px)}
+@keyframes ii-photo-speaking{
+  from{transform:scale(1.008) translateY(0)}
+  to{transform:scale(1.014) translateY(1px)}
 }
 
 .ii-camera-fx{
