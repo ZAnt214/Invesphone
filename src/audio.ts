@@ -1,5 +1,7 @@
 let ctx: AudioContext | null = null
+let activeSources: AudioScheduledSourceNode[] = []
 let activeNodes: AudioNode[] = []
+let buzzTimer: number | null = null
 
 function audioContext() {
   const Ctx = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
@@ -15,17 +17,36 @@ async function ready() {
   return c
 }
 
-function stopNode(node: AudioNode) {
-  try {
-    if ('stop' in node && typeof (node as OscillatorNode).stop === 'function') {
-      ;(node as OscillatorNode).stop()
-    }
-    node.disconnect()
-  } catch {}
-}
-
 export async function enableAudio() {
   return Boolean(await ready())
+}
+
+function scheduleBuzzEnvelope(c: AudioContext, gain: GainNode, at: number) {
+  const buzz = (start: number, duration: number, level: number) => {
+    gain.gain.setValueAtTime(0.0001, start)
+    gain.gain.linearRampToValueAtTime(level, start + 0.025)
+    gain.gain.setValueAtTime(level * 0.92, start + duration - 0.05)
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration)
+  }
+
+  // Cadência típica de celular vibrando sobre uma superfície:
+  // brrrrrr — pausa curta — brrrrrr — pausa maior — repete.
+  buzz(at, 0.72, 0.14)
+  buzz(at + 0.94, 0.72, 0.14)
+}
+
+function makeNoiseBuffer(c: AudioContext) {
+  const seconds = 1
+  const buffer = c.createBuffer(1, c.sampleRate * seconds, c.sampleRate)
+  const data = buffer.getChannelData(0)
+
+  for (let i = 0; i < data.length; i++) {
+    // ruído com pequenas irregularidades para lembrar o chacoalhar físico
+    const white = Math.random() * 2 - 1
+    const flutter = Math.sin((i / c.sampleRate) * Math.PI * 2 * 118)
+    data[i] = white * 0.38 + flutter * 0.12
+  }
+  return buffer
 }
 
 export async function startRingtone() {
@@ -34,66 +55,82 @@ export async function startRingtone() {
   if (!c) return false
 
   const compressor = c.createDynamicsCompressor()
-  compressor.threshold.value = -17
-  compressor.knee.value = 10
-  compressor.ratio.value = 4
-  compressor.attack.value = 0.003
-  compressor.release.value = 0.18
+  compressor.threshold.value = -20
+  compressor.knee.value = 12
+  compressor.ratio.value = 5
+  compressor.attack.value = 0.004
+  compressor.release.value = 0.16
 
   const master = c.createGain()
-  master.gain.value = 0.075
+  master.gain.value = 0.0001
 
-  // Tremolo contínuo: mantém o som sempre presente, sem virar sequência de bipes.
-  const lfo = c.createOscillator()
-  const lfoGain = c.createGain()
-  lfo.type = 'sine'
-  lfo.frequency.value = 7.2
-  lfoGain.gain.value = 0.038
-  lfo.connect(lfoGain)
-  lfoGain.connect(master.gain)
+  // Motor principal: grave e contínuo.
+  const motor = c.createOscillator()
+  const motorGain = c.createGain()
+  motor.type = 'sawtooth'
+  motor.frequency.value = 118
+  motorGain.gain.value = 0.42
 
-  // Corpo principal de "ring" telefônico.
-  const low = c.createOscillator()
-  const lowGain = c.createGain()
-  low.type = 'sine'
-  low.frequency.value = 438
-  lowGain.gain.value = 0.72
+  // Segundo harmônico dá a sensação de carcaça/mesa vibrando.
+  const body = c.createOscillator()
+  const bodyGain = c.createGain()
+  body.type = 'triangle'
+  body.frequency.value = 236
+  bodyGain.gain.value = 0.16
 
-  const high = c.createOscillator()
-  const highGain = c.createGain()
-  high.type = 'triangle'
-  high.frequency.value = 512
-  highGain.gain.value = 0.42
+  // Ruído band-pass imita a vibração física e o leve "rattle" na superfície.
+  const noise = c.createBufferSource()
+  const band = c.createBiquadFilter()
+  const noiseGain = c.createGain()
+  noise.buffer = makeNoiseBuffer(c)
+  noise.loop = true
+  band.type = 'bandpass'
+  band.frequency.value = 215
+  band.Q.value = 0.75
+  noiseGain.gain.value = 0.62
 
-  // Harmônico discreto para dar leitura de chamada no alto-falante do celular.
-  const edge = c.createOscillator()
-  const edgeGain = c.createGain()
-  edge.type = 'sine'
-  edge.frequency.value = 876
-  edgeGain.gain.value = 0.13
+  motor.connect(motorGain)
+  body.connect(bodyGain)
+  noise.connect(band)
+  band.connect(noiseGain)
 
-  low.connect(lowGain)
-  high.connect(highGain)
-  edge.connect(edgeGain)
-
-  lowGain.connect(master)
-  highGain.connect(master)
-  edgeGain.connect(master)
+  motorGain.connect(master)
+  bodyGain.connect(master)
+  noiseGain.connect(master)
   master.connect(compressor)
   compressor.connect(c.destination)
 
   const now = c.currentTime
-  low.start(now)
-  high.start(now)
-  edge.start(now)
-  lfo.start(now)
+  motor.start(now)
+  body.start(now)
+  noise.start(now)
 
-  activeNodes = [low, high, edge, lfo, lowGain, highGain, edgeGain, lfoGain, master, compressor]
+  scheduleBuzzEnvelope(c, master, now + 0.02)
+  buzzTimer = window.setInterval(() => {
+    scheduleBuzzEnvelope(c, master, c.currentTime + 0.02)
+  }, 2600)
+
+  activeSources = [motor, body, noise]
+  activeNodes = [motorGain, bodyGain, band, noiseGain, master, compressor]
   return true
 }
 
 export function stopRingtone() {
-  activeNodes.forEach(stopNode)
+  if (buzzTimer !== null) {
+    window.clearInterval(buzzTimer)
+    buzzTimer = null
+  }
+
+  activeSources.forEach(source => {
+    try { source.stop() } catch {}
+    try { source.disconnect() } catch {}
+  })
+
+  activeNodes.forEach(node => {
+    try { node.disconnect() } catch {}
+  })
+
+  activeSources = []
   activeNodes = []
 }
 
