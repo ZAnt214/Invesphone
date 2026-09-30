@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft } from 'lucide-react'
 import InterrogationVideo from './InterrogationVideo'
 import DialogueChoices from './DialogueChoices'
-import { applyAnswer, askedQuestions, between, getQuestion, pendingQuestions, typingDuration } from './logic'
+import { applyAnswer, askedQuestions, between, getQuestion, pendingQuestions, subtitleChunks, subtitleDuration } from './logic'
 import type { VideoDirector } from './videoDirector'
 import type { InterrogationConfig, InterrogationProgress } from './types'
 import './interrogation.css'
@@ -31,8 +31,7 @@ const mmss = (s:number) => `${String(Math.floor(s/60)).padStart(2,'0')}:${String
 export default function VideoInterrogation({config,progress,onProgress,onClue,onComplete,onBack,onReturn}:Props){
   const [phase,setPhase] = useState<Phase>('idle')
   const [activeId,setActiveId] = useState<string|null>(null)
-  const [typed,setTyped] = useState(0)
-  const [last,setLast] = useState<{q:string;a:string}|null>(null)
+  const [subtitle,setSubtitle] = useState<string|null>(null)
   const [closing,setClosing] = useState(false)
   const [clock,setClock] = useState(0)
   const director = useRef<VideoDirector|null>(null)
@@ -61,25 +60,22 @@ export default function VideoInterrogation({config,progress,onProgress,onClue,on
     const q = getQuestion(config,id)
     if(!q || phase!=='idle') return
     director.current?.resume()
+    director.current?.warm(q.videoState)
     setActiveId(id)
-    setTyped(0)
     setPhase('asking')
     onProgress({...progressRef.current,currentQuestion:id})
     // Lívia ouve a pergunta: o vídeo continua parado
     later(()=>{
       setPhase('answering')
       director.current?.play(q.videoState)
-      const total = reduceMotion() ? 0 : typingDuration(q.answer)
-      if(total===0){ setTyped(q.answer.length) }
-      else {
-        const start = performance.now()
-        const step = ()=>{
-          const n = Math.min(q.answer.length, Math.floor((performance.now()-start)/(total/q.answer.length)))
-          setTyped(n)
-          if(n<q.answer.length) later(step,40)
-        }
-        step()
-      }
+      // a resposta aparece como legenda no próprio vídeo, em blocos curtos
+      const chunks = subtitleChunks(q.answer)
+      let at = 250
+      chunks.forEach(c=>{
+        later(()=>setSubtitle(c),at)
+        at += reduceMotion() ? subtitleDuration(c) : subtitleDuration(c)+120
+      })
+      const total = at
       // termina de falar, segura o último quadro e volta a ficar parada
       later(()=>{
         director.current?.freeze()
@@ -87,7 +83,7 @@ export default function VideoInterrogation({config,progress,onProgress,onClue,on
         later(()=>{
           const { progress:next, clues } = applyAnswer(config,progressRef.current,id)
           clues.forEach(onClue)
-          setLast({q:q.question,a:q.answer})
+          setSubtitle(null)
           onProgress(next)
           director.current?.idle()
           setActiveId(null)
@@ -96,7 +92,7 @@ export default function VideoInterrogation({config,progress,onProgress,onClue,on
             later(()=>{ setClosing(false); setPhase('idle'); onComplete() },1500)
           } else setPhase('idle')
         }, between(400,900))
-      }, total+350)
+      }, total+250)
     }, between(700,1200))
   }
 
@@ -113,29 +109,14 @@ export default function VideoInterrogation({config,progress,onProgress,onClue,on
         <div className="iv-rec"><i/>REC <span>{mmss(clock)}</span></div>
         <div className="iv-label">{config.depositionLabel}</div>
         <div className="iv-name">{config.name.toUpperCase()}</div>
+        <div className="iv-sub" aria-live="polite">{subtitle && <span key={subtitle}>{subtitle}</span>}</div>
       </InterrogationVideo>
 
       <section className="iv-panel" aria-live="polite">
         {busy && active && (
           <div className="iv-dialogue">
             <div className="iv-line iv-lemos"><small>LEMOS</small><p>{active.question}</p></div>
-            {(phase==='answering'||phase==='holding') && (
-              <div className="iv-line iv-target"><small>{config.name.split(' ')[0].toUpperCase()}</small>
-                <p>“{active.answer.slice(0,typed)}<span className="iv-caret" hidden={typed>=active.answer.length}/>{typed>=active.answer.length?'”':''}</p>
-              </div>
-            )}
           </div>
-        )}
-
-        {!busy && last && (
-          <div className="iv-last">
-            <small>{config.name.split(' ')[0].toUpperCase()}</small>
-            <p>“{last.a}”</p>
-          </div>
-        )}
-
-        {closing && !active && last && (
-          <div className="iv-last"><small>{config.name.split(' ')[0].toUpperCase()}</small><p>“{last.a}”</p></div>
         )}
 
         {finished && (
