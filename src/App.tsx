@@ -6,7 +6,7 @@ import {
   Home, Image as ImageIcon, Lock, MessageCircle, MicOff, Phone, PhoneOff,
   RotateCcw, Search, Shield, Smartphone, Users, Volume2
 } from 'lucide-react'
-import { enableAudio, playConnect, playHangup, playTick, startRingtone, stopRingtone } from './audio'
+import { enableAudio, playConnect, playHangup, startRingtone, stopRingtone } from './audio'
 import { acceptedProofs, chapters, clues, disclaimer, people, teamMessages, victimMessages } from './case01'
 
 const SAVE_VERSION = 2
@@ -71,10 +71,10 @@ export default function App(){
 
   useEffect(()=>{
     if(game.screen!=='incoming'){stopRingtone();return}
-    const vibrate=()=>navigator.vibrate?.([120,80,120])
-    vibrate();const id=window.setInterval(vibrate,1900)
+    // Sem vibração física repetitiva: o pulso visual já comunica a chamada
+    // e evita uma sensação artificial em navegadores/dispositivos diferentes.
     if(audioOn)startRingtone()
-    return()=>{window.clearInterval(id);stopRingtone()}
+    return()=>stopRingtone()
   },[game.screen,audioOn])
 
   useEffect(()=>{
@@ -89,8 +89,6 @@ export default function App(){
     return()=>window.clearTimeout(id)
   },[game.screen,line])
 
-  useEffect(()=>{if(game.screen==='active'&&audioOn)playTick()},[game.screen,line,audioOn])
-
   useEffect(()=>{
     if(game.screen!=='launching')return
     const id=window.setTimeout(()=>setGame(g=>({...g,screen:'phone',app:'home'})),1100)
@@ -99,7 +97,7 @@ export default function App(){
 
   const setScreen=(screen:Screen)=>setGame(g=>({...g,screen}))
   const activateSound=async()=>{if(await enableAudio()){setAudioOn(true);if(game.screen==='incoming')startRingtone()}}
-  const answer=()=>{stopRingtone();if(audioOn)playConnect();setElapsed(0);setLine(0);navigator.vibrate?.(40);setScreen('active')}
+  const answer=()=>{stopRingtone();if(audioOn)playConnect();setElapsed(0);setLine(0);navigator.vibrate?.(18);setScreen('active')}
   const decline=()=>{stopRingtone();if(audioOn)playHangup();setScreen('missed')}
   const finishCall=()=>{if(audioOn)playHangup();setScreen('launching')}
   const addClue=(id:string)=>setGame(g=>({...g,clues:g.clues.includes(id)?g.clues:[...g.clues,id]}))
@@ -118,13 +116,13 @@ export default function App(){
 }
 
 function Incoming({audioOn,onSound,onAnswer,onDecline}:{audioOn:boolean;onSound:()=>void;onAnswer:()=>void;onDecline:()=>void}){
- return <motion.main key="incoming" className="call-screen" initial={{opacity:0}} animate={{opacity:1,x:[0,-1.5,1.5,0]}} exit={{opacity:0,scale:.985}} transition={{opacity:{duration:.35},x:{duration:.18,repeat:Infinity,repeatDelay:1.55}}}>
+ return <motion.main key="incoming" className="call-screen" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0,scale:.985}} transition={{duration:.35}}>
   <Ambient/><StatusBar/>
   <section className="caller">
    <div className="avatar-pulse"><motion.i animate={{scale:[1,1.48],opacity:[.3,0]}} transition={{duration:1.8,repeat:Infinity}}/><motion.i animate={{scale:[1,1.72],opacity:[.16,0]}} transition={{duration:1.8,repeat:Infinity,delay:.45}}/><motion.div className="avatar" animate={{scale:[1,1.035,1]}} transition={{duration:1.8,repeat:Infinity}}>SP</motion.div></div>
    <small>CHAMADA RECEBIDA</small><h1>Sônia Prado</h1><p>DHPP · Supervisão</p>
    <motion.span className="ringing" animate={{opacity:[.45,1,.45]}} transition={{duration:1.4,repeat:Infinity}}>chamando…</motion.span>
-   {!audioOn?<button className="sound-button" onClick={onSound}><Volume2/> Ativar som da chamada</button>:<span className="sound-on"><Volume2/> Som ativado</span>}
+   {!audioOn?<button className="sound-button" onClick={onSound}><Volume2/> Ativar toque da chamada</button>:<span className="sound-on"><Volume2/> Som ativado</span>}
   </section>
   <motion.div className="call-actions" initial={{opacity:0,y:24}} animate={{opacity:1,y:0}} transition={{delay:.35,type:'spring'}}>
    <button className="decline" onClick={onDecline}><PhoneOff/><span>Recusar</span></button>
