@@ -16,49 +16,61 @@ async function ready() {
   return c
 }
 
-function softTone(
+function phoneTone(
   c: AudioContext,
   frequency: number,
   duration: number,
-  volume = 0.018,
+  volume = 0.05,
   delay = 0,
-  type: OscillatorType = 'sine'
+  type: OscillatorType = 'triangle'
 ) {
   const oscillator = c.createOscillator()
   const gain = c.createGain()
   const filter = c.createBiquadFilter()
+  const compressor = c.createDynamicsCompressor()
 
   oscillator.type = type
   oscillator.frequency.value = frequency
 
   filter.type = 'lowpass'
-  filter.frequency.value = 1800
-  filter.Q.value = 0.4
+  filter.frequency.value = 2600
+  filter.Q.value = 0.25
+
+  compressor.threshold.value = -18
+  compressor.knee.value = 10
+  compressor.ratio.value = 5
+  compressor.attack.value = 0.003
+  compressor.release.value = 0.16
 
   const start = c.currentTime + delay
   gain.gain.setValueAtTime(0.0001, start)
-  gain.gain.linearRampToValueAtTime(volume, start + 0.045)
-  gain.gain.setValueAtTime(volume, start + Math.max(0.05, duration - 0.08))
+  gain.gain.linearRampToValueAtTime(volume, start + 0.018)
+  gain.gain.setValueAtTime(volume, start + Math.max(0.025, duration - 0.04))
   gain.gain.exponentialRampToValueAtTime(0.0001, start + duration)
 
   oscillator.connect(filter)
   filter.connect(gain)
-  gain.connect(c.destination)
+  gain.connect(compressor)
+  compressor.connect(c.destination)
 
   oscillator.start(start)
-  oscillator.stop(start + duration + 0.04)
+  oscillator.stop(start + duration + 0.03)
   scheduled.push(oscillator)
 }
 
 function ringPhrase(c: AudioContext) {
-  // Toque discreto inspirado em telefones móveis do início dos anos 2000:
-  // duas frequências próximas, volume baixo e bastante silêncio entre ciclos.
-  const burst = (delay: number) => {
-    softTone(c, 440, 0.62, 0.014, delay)
-    softTone(c, 480, 0.62, 0.012, delay)
-  }
-  burst(0)
-  burst(0.82)
+  // Toque monofônico original, mais presente e próximo de celulares do início dos anos 2000.
+  const notes = [
+    [784, 0.18, 0.00],
+    [988, 0.18, 0.22],
+    [880, 0.18, 0.44],
+    [659, 0.30, 0.66],
+    [784, 0.18, 1.08],
+    [988, 0.18, 1.30],
+    [880, 0.18, 1.52],
+    [659, 0.30, 1.74],
+  ] as const
+  notes.forEach(([frequency,duration,delay]) => phoneTone(c, frequency, duration, 0.052, delay, 'triangle'))
 }
 
 export async function enableAudio() {
@@ -69,9 +81,8 @@ export async function startRingtone() {
   stopRingtone()
   const c = await ready()
   if (!c) return false
-
   ringPhrase(c)
-  ringTimer = window.setInterval(() => ringPhrase(c), 4200)
+  ringTimer = window.setInterval(() => ringPhrase(c), 3800)
   return true
 }
 
@@ -87,16 +98,12 @@ export function stopRingtone() {
 export async function playConnect() {
   const c = await ready()
   if (!c) return
-  softTone(c, 523.25, 0.08, 0.014)
-}
-
-export async function playTick() {
-  // Mantido por compatibilidade, mas propositalmente silencioso.
+  phoneTone(c, 740, 0.10, 0.035, 0, 'sine')
 }
 
 export async function playHangup() {
   const c = await ready()
   if (!c) return
-  softTone(c, 392, 0.10, 0.012)
-  softTone(c, 330, 0.12, 0.010, 0.11)
+  phoneTone(c, 520, 0.11, 0.030, 0, 'sine')
+  phoneTone(c, 360, 0.15, 0.026, 0.12, 'sine')
 }
