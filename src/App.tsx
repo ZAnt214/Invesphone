@@ -10,7 +10,8 @@ import { enableAudio, playConnect, playHangup, playTypingTick, startRingtone, st
 import HandsetHome from './HandsetHome'
 import IllustratedInterrogation from './interrogation/IllustratedInterrogation'
 import { liviaInterrogation } from './interrogation/livia'
-import { characterAssets } from './interrogation/characterAssets'
+import { characters } from './characters/characters'
+import CharacterFace from './characters/CharacterFace'
 import { newProgress } from './interrogation/logic'
 import type { InterrogationProgress } from './interrogation/types'
 import './handset-pages.css'
@@ -329,7 +330,7 @@ function ActiveCall({line,time,muted,speaker,audioOn,issuedOrders,setMuted,setSp
  </motion.main>
 }
 function Launching(){return <motion.main className="launching" initial={{opacity:0}} animate={{opacity:1}}><motion.div className="launch-icon" initial={{scale:.8,opacity:0}} animate={{scale:1,opacity:1}}><Shield/></motion.div><span>chamada encerrada</span><motion.div className="launch-line" initial={{width:0}} animate={{width:'72%'}} transition={{duration:.9}}/><small>Abrindo DHPP…</small></motion.main>}
-function Face({p}:{p:{id?:string;name:string;initials:string;photo?:string}}){const src=p.id==='livia'?characterAssets.livia.default:(p.photo?`${import.meta.env.BASE_URL}${p.photo}`:null);return src?<img className="face" src={src} alt={p.name}/>:<>{p.initials}</>}
+function Face({p}:{p:{id?:string;name:string;initials:string;photo?:string}}){const ch=p.id?characters[p.id]:undefined;if(ch)return <CharacterFace character={ch}/>;return p.photo?<img className="face" src={`${import.meta.env.BASE_URL}${p.photo}`} alt={p.name}/>:<>{p.initials}</>}
 function StatusBar(){return <header className="status"><b>04:27</b><span>VIVO&nbsp;&nbsp;▮▮▮ <BatteryMedium/></span></header>}
 function Ambient(){return <div className="call-backdrop"/>}
 

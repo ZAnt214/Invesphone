@@ -21,7 +21,7 @@ Fluxo: o ChatGPT cria o asset, o dono do projeto o coloca no repositório (ou o 
 Os retratos têm estados como `neutral`, `tired`, `uncomfortable`, `defensive`, `nervous`, `shaken`, `angry`, `sad`, `confident`, `scared`. A estrutura é dados por personagem:
 
 ```ts
-characterAssets.livia = { neutral: '…', tired: '…', nervous: '…' }
+characters.livia.expressionAssets = { nervous: '…' }   // imagens oficiais por expressão; sem elas, o retrato neutro é animado pelo rig
 ```
 
 e a pergunta escolhe a expressão nos dados (`expression: 'nervous'`). Regra narrativa fica nos dados, nunca espalhada pelo JSX.
@@ -34,7 +34,7 @@ Lívia é só o primeiro personagem. Componentes genéricos (`CharacterPortrait`
 
 Direção aprovada: sem depender de vídeo. Retrato ilustrado com expressões, microanimações discretas (respiração, leve movimento, piscar quando possível, trocas suaves de expressão, pequenos movimentos de câmera), diálogo interativo, perguntas ramificadas, pistas, desbloqueios e save. A ilustração continua sendo o centro.
 
-Estado do código hoje: existe `src/interrogation/` com a mecânica por vídeo da Lívia (dados, lógica de perguntas e componentes já genéricos). A lógica de perguntas, desbloqueios, pistas e save é reaproveitável. A parte de vídeo (`videoDirector.ts`, `videoGraph.ts`, `InterrogationVideo.tsx`) deve ser substituída por retratos ilustrados quando os assets chegarem. Guia da mecânica atual: `docs/VIDEO_INTERROGATION.md`.
+Estado do código hoje: `src/characters/` tem o retrato animado genérico (rig de rosto, expressões, boca sincronizada com a fala, rosto recortado para listas) e `src/interrogation/` tem dados e lógica das perguntas e o componente `IllustratedInterrogation`. A Lívia é o primeiro personagem. Guia: `docs/ILLUSTRATED_INTERROGATION.md`. A mecânica por vídeo foi removida (continua no histórico do git).
 
 ## Personagem novo
 

@@ -17,7 +17,7 @@ export const disclaimer = 'Caso ficcional livremente inspirado em um crime real 
 
 export const people: Person[] = [
   { id:'sonia', name:'Sônia Prado', role:'Delegada · DHPP', initials:'SP', photo:'sonia.jpg' },
-  { id:'livia', name:'Lívia Valença', role:'Filha do casal · 19 anos', initials:'LV', photo:'characters/livia/livia-official.jpg' },
+  { id:'livia', name:'Lívia Valença', role:'Filha do casal · 19 anos', initials:'LV' },
   { id:'caio', name:'Caio Duarte', role:'Namorado de Lívia · 21 anos', initials:'CD' },
   { id:'teo', name:'Téo Duarte', role:'Irmão de Caio', initials:'TD' },
   { id:'rafael', name:'Rafael Valença', role:'Filho do casal', initials:'RV' },
