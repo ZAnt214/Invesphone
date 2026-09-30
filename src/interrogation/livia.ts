@@ -9,7 +9,7 @@ export const liviaInterrogation:InterrogationConfig = {
   personId:'livia',
   name:'Lívia Valença',
   depositionLabel:'DEPOIMENTO 01',
-  idleExpression:'tired',
+  idleExpression:'apprehensive',
   initial:['arrival','entering'],
   requiredForFinal:['where_were','after','breakin','caio_code','fights','mother_last'],
   finalQuestion:'untold',
@@ -19,7 +19,7 @@ export const liviaInterrogation:InterrogationConfig = {
       id:'arrival',
       question:'Que horas você chegou em casa?',
       answer:'Eu não sei exatamente… devia ser uma da manhã, talvez um pouco depois. Eu não fiquei olhando a hora.',
-      expression:'tired',
+      expression:'slightly_tired',
       unlocks:['caio_together']
     },
     {
@@ -76,7 +76,7 @@ export const liviaInterrogation:InterrogationConfig = {
       id:'caio_code',
       question:'E o Caio sabia?',
       answer:'Não. Pelo menos… eu nunca passei o código pra ele.',
-      expression:'nervous',
+      expression:'lying',
       clues:['inconsistencia_caio_codigo']
     },
     {
@@ -90,20 +90,20 @@ export const liviaInterrogation:InterrogationConfig = {
       id:'fights',
       question:'Vocês discutiam por causa disso?',
       answer:'Família discute. Mas não era nada… desse tamanho.',
-      expression:'uncomfortable',
+      expression:'false_relief',
       clues:['brigas_namoro']
     },
     {
       id:'mother_last',
       question:'Quando foi a última vez que você falou com sua mãe?',
       answer:'Antes de sair. A gente ia conversar quando eu voltasse.',
-      expression:'shaken'
+      expression:'teary'
     },
     {
       id:'untold',
       question:'Tem alguma coisa que você ainda não contou pra gente?',
       answer:'Não. Eu contei tudo.',
-      expression:'nervous'
+      expression:'lying'
     }
   ]
 }
