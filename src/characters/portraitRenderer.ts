@@ -163,7 +163,7 @@ export class PortraitRenderer {
 
   resize(cssWidth:number){
     const crop = this.def.portrait.crop
-    const dpr = Math.min(2, window.devicePixelRatio || 1)
+    const dpr = Math.min(3, window.devicePixelRatio || 1)
     this.canvas.width = Math.round(cssWidth*dpr)
     this.canvas.height = Math.round(cssWidth*dpr*crop.h/crop.w)
   }
