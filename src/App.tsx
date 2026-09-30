@@ -22,12 +22,13 @@ type GameSave = {
   task:number
   clues:string[]
   interviewed:string[]
+  orders:string[]
   score:number
   ending?:'A'|'B'|'C'
 }
 
 const initialGame:GameSave = {
-  version:SAVE_VERSION,screen:'incoming',app:'home',task:0,clues:[],interviewed:[],score:1000
+  version:SAVE_VERSION,screen:'incoming',app:'home',task:0,clues:[],interviewed:[],orders:[],score:1000
 }
 
 const callTurns = [
@@ -73,6 +74,36 @@ const callTurns = [
     ]
   }
 ] as const
+
+const operationalOrders = [
+  [
+    {id:'isolar_rua',label:'Enviar viatura para isolar a rua',confirm:'Viatura acionada para reforçar o perímetro.'},
+    {id:'acionar_pericia',label:'Acionar perícia no quarto',confirm:'Perícia avisada. Quarto do casal será prioridade.'}
+  ],
+  [
+    {id:'separar_depoimentos',label:'Separar Lívia e Caio',confirm:'Equipe orientada a manter os dois separados.'},
+    {id:'preservar_casa',label:'Restringir acesso à casa',confirm:'Acesso restrito apenas à equipe autorizada.'}
+  ],
+  [
+    {id:'pedir_alarme',label:'Solicitar log do alarme',confirm:'Central já está buscando o histórico do alarme.'},
+    {id:'checar_cameras',label:'Checar câmeras da rua',confirm:'Equipe externa vai levantar câmeras próximas.'}
+  ],
+  [
+    {id:'preservar_painel',label:'Preservar painel do alarme',confirm:'Painel isolado para perícia e coleta técnica.'},
+    {id:'relatorio_preliminar',label:'Pedir relatório preliminar',confirm:'Sônia vai cobrar um resumo assim que a perícia fechar a primeira leitura.'}
+  ]
+] as const
+
+const orderResultMessages:Record<string,{time:string;from:string;text:string}> = {
+  isolar_rua:{time:'04:34',from:'Em Campo',text:'Viatura 27 no local. Rua isolada e circulação controlada.'},
+  acionar_pericia:{time:'04:36',from:'Perícia',text:'Equipe acionada. Quarto do casal entrou como prioridade de processamento.'},
+  separar_depoimentos:{time:'04:38',from:'Sônia',text:'Lívia e Caio foram mantidos separados para evitar alinhamento de versão.'},
+  preservar_casa:{time:'04:39',from:'Em Campo',text:'Acesso à residência restrito. Só equipe técnica entra a partir de agora.'},
+  pedir_alarme:{time:'04:43',from:'Inteligência',text:'Solicitação do log do alarme enviada à central. Aguardando retorno.'},
+  checar_cameras:{time:'04:45',from:'Equipe Externa',text:'Levantando câmeras de portarias e comércios nas duas quadras próximas.'},
+  preservar_painel:{time:'04:46',from:'Perícia',text:'Painel do alarme preservado e fotografado antes de qualquer manipulação.'},
+  relatorio_preliminar:{time:'04:49',from:'Sônia',text:'Relatório preliminar solicitado. Te envio assim que a primeira leitura for fechada.'}
+}
 
 const tasks = [
   {chapter:0,title:'Chegada à Rua das Acácias',kind:'brief'},
@@ -138,7 +169,7 @@ export default function App(){
   return <AnimatePresence mode="wait">
     {game.screen==='incoming'&&<Incoming audioOn={audioOn} onSound={activateSound} onAnswer={answer} onDecline={decline}/>} 
     {game.screen==='missed'&&<Missed onAnswer={answer}/>}
-    {game.screen==='active'&&<ActiveCall line={line} time={time} muted={muted} speaker={speaker} audioOn={audioOn} setMuted={setMuted} setSpeaker={setSpeaker} onNext={()=>setLine(v=>Math.min(callTurns.length-1,v+1))} onFinish={finishCall}/>}
+    {game.screen==='active'&&<ActiveCall line={line} time={time} muted={muted} speaker={speaker} audioOn={audioOn} issuedOrders={game.orders} setMuted={setMuted} setSpeaker={setSpeaker} onOrder={(id)=>setGame(g=>({...g,orders:g.orders.includes(id)?g.orders:[...g.orders,id]}))} onNext={()=>setLine(v=>Math.min(callTurns.length-1,v+1))} onFinish={finishCall}/>} 
     {game.screen==='launching'&&<Launching/>}
     {game.screen==='phone'&&<PolicePhone game={game} setGame={setGame}/>}
     {game.screen==='task'&&<TaskView game={game} addClue={addClue} setGame={setGame} finishTask={finishTask}/>}
@@ -190,13 +221,16 @@ function TypewriterText({text,audioOn,onDone,quote=true}:{text:string;audioOn:bo
   return <span>{quote?'“':''}{visible}{!done&&<motion.i className="typing-cursor" animate={{opacity:[1,.2,1]}} transition={{duration:.55,repeat:Infinity}}/>}{done&&quote?'”':''}</span>
 }
 
-function ActiveCall({line,time,muted,speaker,audioOn,setMuted,setSpeaker,onNext,onFinish}:{line:number;time:string;muted:boolean;speaker:boolean;audioOn:boolean;setMuted:(v:boolean)=>void;setSpeaker:(v:boolean)=>void;onNext:()=>void;onFinish:()=>void}){
+function ActiveCall({line,time,muted,speaker,audioOn,issuedOrders,setMuted,setSpeaker,onOrder,onNext,onFinish}:{line:number;time:string;muted:boolean;speaker:boolean;audioOn:boolean;issuedOrders:string[];setMuted:(v:boolean)=>void;setSpeaker:(v:boolean)=>void;onOrder:(id:string)=>void;onNext:()=>void;onFinish:()=>void}){
  const [phase,setPhase]=useState<'sonia'|'choice'|'player'|'closing'>('sonia')
  const [reply,setReply]=useState('')
  const [previousChoice,setPreviousChoice]=useState(0)
  const [selectedChoice,setSelectedChoice]=useState(0)
+ const [orderOpen,setOrderOpen]=useState(false)
+ const [orderIssued,setOrderIssued]=useState(false)
+ const [orderFeedback,setOrderFeedback]=useState('')
 
- useEffect(()=>{setPhase('sonia');setReply('')},[line])
+ useEffect(()=>{setPhase('sonia');setReply('');setOrderOpen(false);setOrderIssued(false);setOrderFeedback('')},[line])
 
  const turn=callTurns[line]
  const soniaText=typeof turn.sonia==='string'?turn.sonia:turn.sonia[previousChoice]
@@ -206,7 +240,15 @@ function ActiveCall({line,time,muted,speaker,audioOn,setMuted,setSpeaker,onNext,
  const chooseReply=(text:string,index:number)=>{
    setReply(text)
    setSelectedChoice(index)
+   setOrderOpen(false)
    setPhase('player')
+ }
+ const issueOrder=(order:{id:string;label:string;confirm:string})=>{
+   if(issuedOrders.includes(order.id)||orderIssued)return
+   onOrder(order.id)
+   setOrderIssued(true)
+   setOrderOpen(false)
+   setOrderFeedback(order.confirm)
  }
  const playerDone=()=>{
    window.setTimeout(()=>{
@@ -243,6 +285,12 @@ function ActiveCall({line,time,muted,speaker,audioOn,setMuted,setSpeaker,onNext,
    {phase==='choice'&&<motion.div className="call-replies" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}}>
     <small>RESPONDER</small>
     {turn.replies.map((text,i)=><button key={i} onClick={()=>chooseReply(text,i)}>{text}</button>)}
+    {!orderIssued&&<button className="order-trigger" onClick={()=>setOrderOpen(v=>!v)}><Shield/> DAR ORDEM</button>}
+    {orderOpen&&<motion.div className="order-panel" initial={{opacity:0,y:8}} animate={{opacity:1,y:0}}>
+      <small>AÇÃO OPERACIONAL</small>
+      {operationalOrders[line].map(order=><button key={order.id} onClick={()=>issueOrder(order)}><b>{order.label}</b><span>executar agora</span></button>)}
+    </motion.div>}
+    {orderFeedback&&<motion.div className="order-feedback" initial={{opacity:0}} animate={{opacity:1}}><Check/>{orderFeedback}</motion.div>}
    </motion.div>}
 
    <div className="wave">{[10,18,27,15,30,20,26,16,11,22,14].map((h,i)=><motion.i key={i} animate={{height:phase==='choice'?[8,9,8]:[8,h,11]}} transition={{duration:.55+(i%3)*.1,repeat:Infinity,repeatType:'mirror',delay:i*.045}}/>)}</div>
@@ -260,7 +308,7 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
  const current=tasks[game.task]
  const chapter=chapters[current.chapter]
  const openApp=(app:AppName)=>setGame(g=>({...g,app}))
- if(game.app==='team')return <PhonePage title="Equipe" back={()=>openApp('home')}><Team/></PhonePage>
+ if(game.app==='team')return <PhonePage title="Equipe" back={()=>openApp('home')}><Team game={game}/></PhonePage>
  if(game.app==='clues')return <PhonePage title="Pistas" back={()=>openApp('home')}><ClueList ids={game.clues}/></PhonePage>
  if(game.app==='interrogate')return <PhonePage title="Interrogar" back={()=>openApp('home')}><People game={game} setGame={setGame}/></PhonePage>
  if(game.app==='victim')return <PhonePage title="Telefone de Helena" back={()=>openApp('home')}><VictimPhone/></PhonePage>
@@ -271,7 +319,11 @@ function HandsetStatus(){return <header className="handset-status"><span>VIVO&nb
 function AppIcon({label,icon,badge=0,onClick}:{label:string;icon:React.ReactNode;badge?:number;onClick?:()=>void}){return <button className="app-icon" onClick={onClick}><i>{icon}{badge>0&&<em>{Math.min(badge,99)}</em>}</i><span>{label}</span></button>}
 function PhonePage({title,back,children}:{title:string;back:()=>void;children:React.ReactNode}){return <main className="handset page"><HandsetStatus/><header className="page-head"><button onClick={back}><ChevronLeft/></button><b>{title}</b><span/></header><section className="page-body">{children}</section></main>}
 
-function Team(){return <div className="thread"><div className="thread-head"><div className="mini-avatar">SP</div><div><b>Ocorrência 001</b><span>canal operacional · 4 participantes</span></div></div>{teamMessages.map(m=><article key={m.time+m.from}><small>{m.time}</small><p><b>{m.from}</b>{m.text}</p></article>)}<div className="typing"><i/><i/><i/> equipe em campo</div></div>}
+function Team({game}:{game:GameSave}){
+ const ordered=game.orders.map(id=>orderResultMessages[id]).filter(Boolean)
+ const messages=[...teamMessages,...ordered].sort((a,b)=>a.time.localeCompare(b.time))
+ return <div className="thread"><div className="thread-head"><div className="mini-avatar">SP</div><div><b>Ocorrência 001</b><span>canal operacional · 4 participantes</span></div></div>{messages.map((m,i)=><article key={m.time+m.from+i}><small>{m.time}</small><p><b>{m.from}</b>{m.text}</p></article>)}<div className="typing"><i/><i/><i/> equipe em campo</div></div>
+}
 function ClueList({ids}:{ids:string[]}){if(!ids.length)return <Empty icon={<FileSearch/>} title="Nenhuma pista registrada" text="Abra a tarefa atual e comece pela cena."/>;return <div className="clue-list">{ids.map(id=>{const c=clues.find(x=>x.id===id)!;return <article key={id}><FileText/><div><small>{c.category.toUpperCase()}</small><b>{c.title}</b><p>{c.description}</p></div></article>})}</div>}
 function People({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStateAction<GameSave>>}){return <div className="people-list">{people.filter(p=>p.id!=='sonia').map(p=><button key={p.id} onClick={()=>setGame(g=>({...g,interviewed:g.interviewed.includes(p.id)?g.interviewed:[...g.interviewed,p.id]}))}><i>{p.initials}</i><div><b>{p.name}</b><span>{p.role}</span></div>{game.interviewed.includes(p.id)?<Check/>:<ChevronLeft className="right"/>}</button>)}</div>}
 function VictimPhone(){const [tab,setTab]=useState<'home'|'messages'|'photos'|'calls'>('home');if(tab==='messages')return <div><SubBack onClick={()=>setTab('home')} title="Mensagens"/><div className="victim-messages">{victimMessages.map(m=><section key={m.contact}><header><b>{m.contact}</b><small>{m.time}</small></header><p className="bubble in">{m.incoming}</p><p className="bubble out">{m.outgoing}</p></section>)}</div></div>;if(tab==='photos')return <div><SubBack onClick={()=>setTab('home')} title="Fotos"/><div className="photo-grid"><figure><Camera/><figcaption>Família · 12 OUT</figcaption></figure><figure><ImageIcon/><figcaption>Consultório · 15 OUT</figcaption></figure><figure><ImageIcon/><figcaption>Thor · 16 OUT</figcaption></figure><figure><ImageIcon/><figcaption>Casa · 16 OUT</figcaption></figure></div></div>;if(tab==='calls')return <div><SubBack onClick={()=>setTab('home')} title="Chamadas"/><div className="call-log"><p><b>Lívia</b><span>18:39 · 00:43</span></p><p><b>Ricardo</b><span>17:12 · 01:05</span></p><p><b>Rafael</b><span>14:07 · perdida</span></p></div></div>;return <div className="victim-home"><small>DISPOSITIVO APREENDIDO · HELENA VALENÇA</small><h2>04:27</h2><div className="victim-grid"><button onClick={()=>setTab('messages')}><MessageCircle/><span>Mensagens</span></button><button onClick={()=>setTab('photos')}><ImageIcon/><span>Fotos</span></button><button><Globe2/><span>Internet</span></button><button onClick={()=>setTab('calls')}><Phone/><span>Chamadas</span></button></div><p className="legal-access"><Shield/> acesso remoto autorizado pelo DHPP</p></div>}
