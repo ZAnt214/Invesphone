@@ -4,17 +4,23 @@ Mecânica reutilizável para interrogar qualquer personagem que tenha arte ofici
 
 ## Peças
 
-- `src/characters/types.ts`: formato de um personagem (`CharacterDef`), do rig do rosto (`FaceRig`) e das expressões (`Expression`).
-- `src/characters/characters.ts`: cadastro dos personagens com arte oficial. Hoje: Lívia.
-- `src/characters/expressions.ts`: parâmetros de cada expressão (sobrancelhas, pálpebra, olhar, corpo, boca em repouso, piscadas, tremor). Valem para qualquer personagem.
+- `src/characters/types.ts`: formato de um personagem (`CharacterDef`), das imagens por expressão (`ExpressionAsset`) e das marcas de olhos e boca.
+- `src/characters/characters.ts`: cadastro dos personagens com arte oficial. Hoje: Lívia, com as 6 expressões do ChatGPT (`neutral`, `tired`, `uncomfortable`, `defensive`, `nervous`, `shaken`).
+- `src/characters/expressions.ts`: ajustes de corpo por expressão (afundar, tremor, frequência de piscar).
 - `src/characters/mouth.ts`: transforma o texto falado numa linha do tempo de abertura da boca (vogais abrem, b/m/p fecham, pontuação é pausa).
-- `src/characters/portraitRenderer.ts`: desenha o retrato num canvas e o anima por recortes do próprio arquivo: respiração, deriva de câmera, piscar, olhar, sobrancelhas, boca sincronizada.
-- `src/characters/CharacterPortrait.tsx`: componente do retrato animado. `CharacterFace.tsx`: rosto recortado do retrato para listas e perfis (sem arquivo extra).
+- `src/characters/portraitRenderer.ts`: desenha a imagem da expressão num canvas e anima: respiração, deriva de câmera, troca suave entre expressões, piscar e boca sincronizada.
+- `src/characters/CharacterPortrait.tsx`: componente do retrato animado. `CharacterFace.tsx`: rosto recortado do retrato neutro para listas e perfis (sem arquivo extra).
 - `src/interrogation/`: dados e lógica (`livia.ts`, `logic.ts`), `IllustratedInterrogation.tsx` e `DialogueChoices.tsx`.
 
 ## Como a imagem é usada
 
-O retrato oficial não é redesenhado. O rig só marca onde ficam olhos, sobrancelhas e boca (em pixels do arquivo) e de onde tirar as cores (pele, esclera, cílios, interior da boca). Olhos, sobrancelhas e boca são recortes do próprio arquivo que se movem; a única coisa pintada é a cor da pele sobre a sobrancelha apagada e o interior escuro da boca aberta, ambos amostrados da imagem.
+Cada expressão é uma imagem oficial; nada é redesenhado. Cada imagem tem marcas em pixels do próprio arquivo:
+
+- `align`: ponto médio entre os olhos e escala, para a cabeça não pular quando uma expressão troca por outra (as imagens não vêm perfeitamente alinhadas).
+- `eyes`: onde ficam os olhos, para piscar. A pálpebra usa a cor da pele amostrada da imagem e os cílios a cor mais escura do olho.
+- `mouth`: cantos, largura e limite do queixo, para a boca falar. A parte de baixo da boca desce em tiras e o interior escuro é amostrado da imagem.
+
+A troca de expressão é um fade de 220 ms. Expressão sem imagem (ex.: `angry`) usa a neutra.
 
 ## Fala
 
@@ -24,19 +30,13 @@ A resposta aparece em legendas curtas dentro da imagem. Para cada legenda, a boc
 
 Em `src/interrogation/livia.ts`, cada pergunta tem `expression`. A lógica não sabe nada de personagem específico.
 
-## Imagens de expressão do ChatGPT
+## Nova imagem de expressão
 
-Quando existirem imagens oficiais por expressão, basta cadastrar em `expressionAssets` do personagem:
-
-```ts
-expressionAssets: { nervous: `${base}characters/livia/nervous.png` }
-```
-
-Para as expressões com imagem própria o renderizador usa a imagem e desliga o rig. As demais continuam animadas a partir do retrato neutro.
+Coloque o arquivo em `public/characters/<id>/` e acrescente em `assets` do personagem: `src`, `align` (olhos e escala), `eyes` e `mouth` (medidos na imagem). Imagens de uma mesma expressão devem ter o mesmo enquadramento; o `align` corrige pequenas diferenças.
 
 ## Personagem novo
 
-1. Coloque o retrato em `public/characters/<id>/` e cadastre em `characters.ts` (recorte, `face`, e o `rig` se for animar o rosto).
+1. Coloque as imagens em `public/characters/<id>/` e cadastre em `characters.ts` (recorte, `face` e as marcas de cada imagem).
 2. Crie `src/interrogation/<id>.ts` com `personId`, perguntas, expressões, pistas e desbloqueios.
 3. Renderize `<IllustratedInterrogation config=... />` e guarde o progresso no save.
 
