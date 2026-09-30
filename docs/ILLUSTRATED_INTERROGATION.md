@@ -7,7 +7,7 @@ Mecânica reutilizável para interrogar qualquer personagem que tenha arte ofici
 - `src/characters/types.ts`: formato de um personagem (`CharacterDef`), das imagens por expressão (`ExpressionAsset`) e das marcas de olhos e boca.
 - `src/characters/characters.ts`: cadastro dos personagens com arte oficial. Hoje: Lívia, com as 6 expressões do ChatGPT (`neutral`, `tired`, `uncomfortable`, `defensive`, `nervous`, `shaken`).
 - `src/characters/expressions.ts`: ajustes de corpo por expressão (afundar, tremor, frequência de piscar).
-- `src/characters/mouth.ts`: transforma o texto falado numa linha do tempo de abertura da boca (vogais abrem, b/m/p fecham, pontuação é pausa).
+- `src/characters/mouth.ts`: transforma o texto falado numa linha do tempo de formas de boca (A, E, I, O, U e M/B/P; outras consoantes entreabrem; pontuação é pausa).
 - `src/characters/portraitRenderer.ts`: desenha a imagem da expressão num canvas e anima: respiração, deriva de câmera, troca suave entre expressões, piscar e boca sincronizada.
 - `src/characters/CharacterPortrait.tsx`: componente do retrato animado. `CharacterFace.tsx`: rosto recortado do retrato neutro para listas e perfis (sem arquivo extra).
 - `src/interrogation/`: dados e lógica (`livia.ts`, `logic.ts`), `IllustratedInterrogation.tsx` e `DialogueChoices.tsx`.
@@ -18,7 +18,11 @@ Cada expressão é uma imagem oficial; nada é redesenhado. Cada imagem tem marc
 
 - `align`: ponto médio entre os olhos e escala, para a cabeça não pular quando uma expressão troca por outra (as imagens não vêm perfeitamente alinhadas).
 - `eyes`: onde ficam os olhos, para piscar. A pálpebra usa a cor da pele amostrada da imagem e os cílios a cor mais escura do olho.
-- `mouth`: cantos, largura e limite do queixo, para a boca falar. A parte de baixo da boca desce em tiras e o interior escuro é amostrado da imagem.
+- `mouth`: cantos, largura e limite do queixo. Serve para posicionar e dimensionar as formas de boca e, se o personagem não tiver formas próprias, para abrir o lábio de baixo em tiras.
+
+### Formas de boca (visemas)
+
+`visemes` do personagem aponta para um arquivo com as formas de boca lado a lado (`public/characters/livia/visemes.png`: A, E, I, O, U, M/B/P, recortadas da referência de animação do ChatGPT). Enquanto fala, a forma da letra atual entra sobre a boca da expressão: a cor de pele da forma é ajustada à da imagem, a borda é suave e a escala vem da largura da boca da expressão. Ao terminar a fala a boca original volta.
 
 A troca de expressão é um fade de 220 ms. Expressão sem imagem (ex.: `angry`) usa a neutra.
 

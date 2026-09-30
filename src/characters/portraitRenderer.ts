@@ -1,4 +1,4 @@
-import type { CharacterDef, Expression, ExpressionAsset, EyeRig } from './types'
+import type { CharacterDef, Expression, ExpressionAsset, EyeRig, Viseme } from './types'
 import { EXPRESSIONS } from './expressions'
 import type { ExpressionParams } from './expressions'
 import { sampleMouth } from './mouth'
@@ -26,6 +26,8 @@ type Loaded = {
   skin:Rgb
   lash:Rgb
   inner:Rgb
+  /** formas de boca na cor de pele desta imagem, com borda suave */
+  visemes?:Partial<Record<Viseme,HTMLCanvasElement>>
 }
 
 const FADE_SECONDS = .22
@@ -47,6 +49,9 @@ export class PortraitRenderer {
   private tgt:ExpressionParams = {...EXPRESSIONS.neutral}
   private blink = { next:0, start:-1 }
   private mouth = 0
+  private vis:Record<Viseme,number> = { A:0, E:0, I:0, O:0, U:0, M:0 }
+  private atlas:HTMLImageElement|null = null
+  private shapeAmount = 0
   private speech:{ keys:MouthKey[]; start:number; duration:number }|null = null
   private shown:Loaded|null = null
   private prev:Loaded|null = null
@@ -59,6 +64,9 @@ export class PortraitRenderer {
   }
 
   async start(){
+    if(this.def.visemes){
+      try{ this.atlas = await loadImage(this.def.visemes.src) }catch{ /* fala com o lábio de baixo */ }
+    }
     const entries = Object.entries(this.def.assets) as [Expression,ExpressionAsset][]
     await Promise.all(entries.map(async([k,asset])=>{
       try{
@@ -131,7 +139,41 @@ export class PortraitRenderer {
       const l = d[i]+d[i+1]+d[i+2]
       if(l<best){ best = l; lash = [d[i],d[i+1],d[i+2]] }
     }
-    return { asset, img, skin, lash, inner }
+    return { asset, img, skin, lash, inner, visemes:this.tintVisemes(skin) }
+  }
+
+  /** Recorta cada forma de boca, ajusta a cor da pele à da imagem e suaviza a borda. */
+  private tintVisemes(target:Rgb){
+    const vd = this.def.visemes
+    if(!vd || !this.atlas) return undefined
+    const out:Partial<Record<Viseme,HTMLCanvasElement>> = {}
+    vd.order.forEach((v,i)=>{
+      const c = document.createElement('canvas'); c.width = vd.cellW; c.height = vd.cellH
+      const cx = c.getContext('2d', { willReadFrequently:true })!
+      cx.drawImage(this.atlas!,i*vd.cellW,0,vd.cellW,vd.cellH,0,0,vd.cellW,vd.cellH)
+      // pele da forma de boca: faixa acima da boca
+      const s = cx.getImageData(Math.round(vd.center[0]-20),3,40,4).data
+      let R=0,G=0,B=0,n=0
+      for(let k=0;k<s.length;k+=4){ R+=s[k]; G+=s[k+1]; B+=s[k+2]; n++ }
+      const gain = [target[0]/(R/n),target[1]/(G/n),target[2]/(B/n)]
+      const id = cx.getImageData(0,0,vd.cellW,vd.cellH)
+      for(let k=0;k<id.data.length;k+=4){
+        id.data[k] = Math.min(255,id.data[k]*gain[0])
+        id.data[k+1] = Math.min(255,id.data[k+1]*gain[1])
+        id.data[k+2] = Math.min(255,id.data[k+2]*gain[2])
+      }
+      cx.putImageData(id,0,0)
+      // borda suave em elipse, longe dos cantos escuros do queixo
+      cx.globalCompositeOperation = 'destination-in'
+      cx.save()
+      cx.translate(vd.center[0],vd.center[1]); cx.scale(1,24/64)
+      const g = cx.createRadialGradient(0,0,64*.6,0,0,64)
+      g.addColorStop(0,'rgba(0,0,0,1)'); g.addColorStop(1,'rgba(0,0,0,0)')
+      cx.fillStyle = g; cx.fillRect(-64,-64,128,128)
+      cx.restore()
+      out[v] = c
+    })
+    return out
   }
 
   // ---------- animação ----------
@@ -159,14 +201,26 @@ export class PortraitRenderer {
     }
 
     let target = this.cur.mouthRest
+    let shape:Viseme|null = null
     const sp = this.speech
     if(sp){
       const e = now-sp.start
       if(e>=sp.duration) this.speech = null
-      else target = Math.max(target,sampleMouth(sp.keys,e))
+      else {
+        const s = sampleMouth(sp.keys,e)
+        shape = s.v
+        target = Math.max(target,s.v==='M' ? 0 : s.a*(s.v==='I'||s.v==='U' ? .6 : 1))
+        this.shapeAmount = s.a
+      }
     }
     const km = 1-Math.exp(-dt*(target>this.mouth?30:20))
     this.mouth += (target-this.mouth)*km
+    // peso de cada forma de boca, suavizado
+    const kv = 1-Math.exp(-dt*24)
+    for(const v of Object.keys(this.vis) as Viseme[]){
+      const goal = shape===v ? this.shapeAmount : 0
+      this.vis[v] += (goal-this.vis[v])*kv
+    }
   }
 
   private blinkAmount(now:number){
@@ -242,8 +296,32 @@ export class PortraitRenderer {
     }
   }
 
-  /** A parte de baixo da boca desce em tiras, mais no meio do que nos cantos. */
+  /** Boca falando: formas de boca oficiais sobre a da expressão; sem elas, o lábio de baixo desce em tiras. */
   private drawMouth(l:Loaded){
+    const vd = this.def.visemes
+    if(vd && l.visemes){
+      const m = l.asset.mouth
+      const s = (m.halfWidth*2)/vd.lipWidth
+      const { ctx } = this
+      for(const v of vd.order){
+        const w = this.vis[v]
+        const sprite = l.visemes[v]
+        if(w<.02 || !sprite) continue
+        ctx.save()
+        ctx.globalAlpha *= clamp(w,0,1)
+        ctx.translate(m.cx,m.rimY)
+        ctx.scale(s,s)
+        ctx.translate(-vd.center[0],-vd.center[1])
+        ctx.drawImage(sprite,0,0)
+        ctx.restore()
+      }
+      return
+    }
+    this.drawMouthStrips(l)
+  }
+
+  /** A parte de baixo da boca desce em tiras, mais no meio do que nos cantos. */
+  private drawMouthStrips(l:Loaded){
     const open = this.mouth
     if(open<.02) return
     const { ctx } = this

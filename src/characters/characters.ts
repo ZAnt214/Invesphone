@@ -57,6 +57,13 @@ export const characters:Record<string,CharacterDef> = {
         mouth:mouth(255,277.6,28,290,.5)
       }
     },
+    visemes:{
+      src:`${base}characters/livia/visemes.png`,
+      cellW:216, cellH:56,
+      order:['A','E','I','O','U','M'],
+      center:[108,27],
+      lipWidth:85
+    },
     face:{ cx:243, cy:215, size:240 }
   }
 }
