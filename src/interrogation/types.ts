@@ -19,8 +19,10 @@ export type InterrogationQuestion = {
   id:string
   question:string
   answer:string
-  /** Estado visual que representa a personagem enquanto responde. */
+  /** Estado visual usado pela versão em vídeo, quando existir. */
   videoState:string
+  /** Expressão usada pela versão ilustrada do interrogatório. */
+  expression?:'neutral'|'tired'|'uncomfortable'|'defensive'|'nervous'|'shaken'
   /** Perguntas liberadas depois desta. */
   unlocks?:string[]
   /** Pistas registradas depois desta resposta. */
