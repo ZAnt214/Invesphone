@@ -41,6 +41,8 @@ export const clues: Clue[] = [
   {id:'alibi_cida',title:'Álibi de Cida',description:'Cida estava com familiares e foi confirmada por terceiros.',category:'depoimento'},
   {id:'pergunta_inventario',title:'Pergunta sobre inventário',description:'Lívia havia feito perguntas sobre herança antes das mortes.',category:'depoimento'},
   {id:'vigia_gol',title:'Gol visto na rua',description:'Jorge viu o Gol de Caio próximo à casa antes do horário declarado.',category:'depoimento'},
+  {id:'livia_codigo',title:'Lívia conhece o código',description:'Lívia admite que sabia o código do alarme, além dos pais.',category:'depoimento'},
+  {id:'inconsistencia_caio_codigo',title:'Caio e o código',description:'Lívia nega ter passado o código a Caio, mas diz que ele a viu digitando.',category:'depoimento'},
   {id:'log_alarme',title:'Log do alarme',description:'23:52 — sistema desativado com o código mestre.',category:'digital'},
   {id:'nota_motel',title:'Nota do motel',description:'Entrada registrada às 00:56, incompatível com parte do álibi.',category:'documento'},
   {id:'moto_dolares',title:'Moto e dólares',description:'Investigação conecta dinheiro em espécie a Téo.',category:'financeiro'},
