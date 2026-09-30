@@ -29,6 +29,26 @@
     "shaken": {
       "file": "shaken.jpg",
       "meaning": "abalada/tensão silenciosa"
+    },
+    "apprehensive": {
+      "file": "apprehensive.jpg",
+      "meaning": "apreensiva; tensa enquanto espera a próxima pergunta"
+    },
+    "lying": {
+      "file": "lying.jpg",
+      "meaning": "mentindo/disfarçando; controle excessivo e sorriso mínimo forçado"
+    },
+    "teary": {
+      "file": "teary.jpg",
+      "meaning": "quase chorando; olhos marejados e tensão contida"
+    },
+    "false_relief": {
+      "file": "false_relief.jpg",
+      "meaning": "alívio falso; relaxa um pouco mas continua alerta"
+    },
+    "slightly_tired": {
+      "file": "slightly_tired.jpg",
+      "meaning": "levemente cansada; transição entre neutral e tired"
     }
   }
 }
