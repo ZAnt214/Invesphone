@@ -21,7 +21,7 @@
   position:relative;
   flex:none;
   width:100%;
-  aspect-ratio:390/440;
+  aspect-ratio:540/820;
   overflow:hidden;
   background:#151817;
   border-bottom:1px solid var(--line);
@@ -34,31 +34,31 @@
 }
 .ii-character-img{
   object-fit:cover;
-  object-position:center 42%;
+  object-position:center top;
   user-select:none;
   -webkit-user-drag:none;
   animation:ii-photo-breathe 6.2s ease-in-out infinite;
   transition:filter .35s ease,transform .35s ease;
 }
-.ii-character-img.expression-neutral{filter:saturate(.96) brightness(.98)}
-.ii-character-img.expression-tired{filter:saturate(.82) brightness(.88) contrast(1.02);transform:scale(1.012) translateY(3px)}
-.ii-character-img.expression-uncomfortable{filter:saturate(.9) brightness(.93) contrast(1.04);transform:scale(1.018) translateX(-3px)}
-.ii-character-img.expression-defensive{filter:saturate(.92) brightness(.96) contrast(1.07);transform:scale(1.022) translateX(3px)}
-.ii-character-img.expression-nervous{filter:saturate(.86) brightness(.91) contrast(1.08);animation:ii-photo-breathe 5s ease-in-out infinite,ii-photo-nervous 2.4s ease-in-out infinite}
-.ii-character-img.expression-shaken{filter:saturate(.68) brightness(.8) contrast(1.06);transform:scale(1.025) translateY(5px)}
-.ii-character-img.is-speaking{animation:ii-photo-speaking 1.25s ease-in-out infinite alternate}
+.ii-character-img.expression-neutral{filter:none}
+.ii-character-img.expression-tired{filter:brightness(.98);transform:scale(1.004) translateY(1px)}
+.ii-character-img.expression-uncomfortable{filter:brightness(.99);transform:scale(1.005) translateX(-1px)}
+.ii-character-img.expression-defensive{filter:none;transform:scale(1.005) translateX(1px)}
+.ii-character-img.expression-nervous{filter:brightness(.98);animation:ii-photo-breathe 5.4s ease-in-out infinite,ii-photo-nervous 2.8s ease-in-out infinite}
+.ii-character-img.expression-shaken{filter:brightness(.96);transform:scale(1.006) translateY(2px)}
+.ii-character-img.is-speaking{animation:ii-photo-speaking 1.7s ease-in-out infinite alternate}
 
 @keyframes ii-photo-breathe{
   0%,100%{transform:scale(1)}
-  50%{transform:scale(1.006) translateY(1px)}
+  50%{transform:scale(1.002) translateY(.5px)}
 }
 @keyframes ii-photo-nervous{
   0%,100%{margin-left:0}
-  50%{margin-left:-1.5px}
+  50%{margin-left:-.5px}
 }
 @keyframes ii-photo-speaking{
-  from{transform:scale(1.008) translateY(0)}
-  to{transform:scale(1.014) translateY(1px)}
+  from{transform:scale(1.001) translateY(0)}
+  to{transform:scale(1.004) translateY(.6px)}
 }
 
 .ii-camera-fx{
