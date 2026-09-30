@@ -4,53 +4,49 @@ export type Expression =
 /** Retângulo em pixels do arquivo de retrato. */
 export type Box = { x:number; y:number; w:number; h:number }
 
-export type EyeRig = { cx:number; cy:number; rx:number; ry:number; iris:number }
+export type EyeRig = { cx:number; cy:number; rx:number; ry:number }
+
+export type MouthRig = {
+  cx:number
+  /** y dos cantos da boca. */
+  rimY:number
+  /** quanto o meio da boca é mais alto que os cantos. */
+  arch:number
+  halfWidth:number
+  /** limite inferior do lábio/queixo que desce. */
+  bottom:number
+  /** abertura máxima, em pixels do arquivo. */
+  maxOpen:number
+}
 
 /**
- * Marcações sobre o retrato oficial, em pixels do arquivo.
- * O retrato é recortado e transformado (sobrancelhas, íris, pálpebras, boca); nada é redesenhado.
- * As cores vêm de pontos do próprio arquivo (samples).
+ * Uma imagem oficial de uma expressão, com as marcas necessárias para animá-la.
+ * As coordenadas são em pixels do próprio arquivo. A imagem nunca é redesenhada:
+ * piscar e falar usam recortes dela e cores amostradas dela.
  */
-export type FaceRig = {
-  eyes: { left:EyeRig; right:EyeRig }
-  brows: { left:Box; right:Box }
-  mouth: {
-    cx:number
-    /** y dos cantos da boca. */
-    rimY:number
-    /** quanto o meio do lábio é mais alto que os cantos. */
-    arch:number
-    halfWidth:number
-    /** limite inferior do recorte do lábio/queixo que desce. */
-    bottom:number
-    /** abertura máxima, em pixels do arquivo. */
-    maxOpen:number
-  }
-  samples: {
-    skin:[number, number]
-    sclera:[number, number]
-    lash:[number, number]
-    mouthInner:[number, number]
-  }
+export type ExpressionAsset = {
+  src:string
+  /** Ponto médio entre os olhos neste arquivo e escala para casar com o retrato neutro (troca sem a cabeça pular). */
+  align:{ eyeMid:[number, number]; scale:number }
+  eyes:{ left:EyeRig; right:EyeRig }
+  mouth:MouthRig
 }
 
 export type CharacterDef = {
   id:string
   name:string
   portrait: {
-    /** Retrato neutro oficial. */
-    src:string
     width:number
     height:number
     /** Parte do arquivo que aparece na tela. */
     crop:Box
+    /** Ponto médio entre os olhos no retrato neutro: referência do alinhamento. */
+    eyeMid:[number, number]
     /** O arquivo já traz REC / DEPOIMENTO desenhados, então a interface não repete. */
     hasBakedHud?:boolean
   }
-  /** Imagens oficiais por expressão. Quando existir uma, ela substitui o retrato neutro animado. */
-  expressionAssets?: Partial<Record<Expression,string>>
-  /** Sem rig, o retrato só respira. */
-  rig?: FaceRig
-  /** Recorte quadrado do rosto para listas e perfis. */
+  /** Imagens oficiais por expressão. `neutral` é obrigatória; expressão sem imagem usa a neutra. */
+  assets: { neutral:ExpressionAsset } & Partial<Record<Expression,ExpressionAsset>>
+  /** Recorte quadrado do rosto (no retrato neutro) para listas e perfis. */
   face: { cx:number; cy:number; size:number }
 }
