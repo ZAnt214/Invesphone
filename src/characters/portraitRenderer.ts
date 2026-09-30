@@ -3,6 +3,7 @@ import { EXPRESSIONS } from './expressions'
 import type { ExpressionParams } from './expressions'
 import { sampleMouth } from './mouth'
 import type { MouthKey } from './mouth'
+import { applyPlate, backgroundMask, buildPlate } from './background'
 
 type Rgb = [number, number, number]
 const rgb = (c:Rgb, k=1) => `rgb(${Math.round(c[0]*k)},${Math.round(c[1]*k)},${Math.round(c[2]*k)})`
@@ -59,6 +60,7 @@ export class PortraitRenderer {
   private speech:{ keys:MouthKey[]; start:number; duration:number }|null = null
   private shown:Loaded|null = null
   private pending:{ l:Loaded; at:number }|null = null
+  private processor:((k:Expression)=>void)|null = null
   private grp:HTMLCanvasElement|null = null
   /** opacidade da boca falando: 1 enquanto fala, some logo depois */
   private mouthOn = 0
@@ -86,15 +88,21 @@ export class PortraitRenderer {
       }catch{ /* a expressão sem imagem usa a neutra */ }
     }))
     if(this.destroyed || !raw.neutral) return
-    // o fundo de cada imagem tem um tom um pouco diferente: casa todos com o da neutra
-    const ref = this.bgPlane(raw.neutral)
+    // fundo único para todas as expressões (o da neutra, liso); a figura não muda
+    const nd = raw.neutral.getContext('2d',{ willReadFrequently:true })!.getImageData(0,0,raw.neutral.width,raw.neutral.height)
+    const plate = buildPlate(nd.data,backgroundMask(nd.data,nd.width,nd.height),nd.width,nd.height)
     const skinRef = this.skinTone(raw.neutral,this.def.assets.neutral)
-    for(const [k,asset] of entries){
-      const c = raw[k]
-      if(!c) continue
-      if(k!=='neutral'){ this.matchBackground(c,ref); this.matchSkin(c,asset,skinRef) }
+    this.processor = (k:Expression)=>{
+      const c = raw[k], asset = this.def.assets[k]
+      if(!c || !asset || this.loaded[k]) return
+      const cx = c.getContext('2d',{ willReadFrequently:true })!
+      const id = cx.getImageData(0,0,c.width,c.height)
+      applyPlate(c,plate,backgroundMask(id.data,c.width,c.height))
+      if(k!=='neutral') this.matchSkin(c,asset,skinRef)
       this.loaded[k] = this.prepare(asset,c,k==='neutral')
     }
+    this.processor('neutral')
+    this.processor(this.expression)
     if(this.destroyed || !this.loaded.neutral) return
     const c = document.createElement('canvas'); c.width = 6; c.height = 6
     const cx = c.getContext('2d')!
@@ -107,6 +115,12 @@ export class PortraitRenderer {
     this.last = performance.now()
     this.blink.next = this.last + 1800
     this.loop(this.last)
+    // as demais expressões são preparadas aos poucos, sem travar a tela
+    for(const [k] of entries){
+      await new Promise(r=>setTimeout(r,30))
+      if(this.destroyed) return
+      this.processor?.(k)
+    }
   }
 
   destroy(){ this.destroyed = true; cancelAnimationFrame(this.raf) }
@@ -136,7 +150,10 @@ export class PortraitRenderer {
 
   // ---------- preparação a partir do próprio arquivo ----------
 
-  private pick(e:Expression){ return this.loaded[e] ?? this.loaded.neutral ?? null }
+  private pick(e:Expression){
+    if(!this.loaded[e]) this.processor?.(e)
+    return this.loaded[e] ?? this.loaded.neutral ?? null
+  }
 
   private prepare(asset:ExpressionAsset, c:HTMLCanvasElement, isBase:boolean):Loaded{
     const cx = c.getContext('2d', { willReadFrequently:true })!
@@ -165,44 +182,6 @@ export class PortraitRenderer {
     return { asset, img:c, base:isBase ? c : this.alignImage(asset,c), skin, lash, inner, visemes:this.tintVisemes(mskin) }
   }
 
-  /** Plano (a + b·x + c·y) do fundo, por canal, ajustado em blocos das margens da imagem. */
-  private bgPlane(c:HTMLCanvasElement):number[][]{
-    const cx = c.getContext('2d',{ willReadFrequently:true })!
-    const W = c.width
-    const pts:{x:number;y:number;v:number[]}[] = []
-    for(const x of [12,48,84,W-12,W-48,W-84]) for(const y of [12,150,300,450,600]){
-      const d = cx.getImageData(x-4,y-4,8,8).data
-      const v = [0,0,0]
-      for(let i=0;i<d.length;i+=4){ v[0]+=d[i]; v[1]+=d[i+1]; v[2]+=d[i+2] }
-      pts.push({ x, y, v:v.map(t=>t/(d.length/4)) })
-    }
-    return [0,1,2].map(ch=>{
-      // mínimos quadrados para [1,x,y]
-      const A = [[0,0,0],[0,0,0],[0,0,0]], b = [0,0,0]
-      for(const p of pts){
-        const r = [1,p.x,p.y]
-        for(let i=0;i<3;i++){ b[i]+=r[i]*p.v[ch]; for(let j=0;j<3;j++) A[i][j]+=r[i]*r[j] }
-      }
-      for(let i=0;i<3;i++){
-        let m = i
-        for(let r=i+1;r<3;r++) if(Math.abs(A[r][i])>Math.abs(A[m][i])) m = r
-        ;[A[i],A[m]] = [A[m],A[i]]; [b[i],b[m]] = [b[m],b[i]]
-        for(let r=i+1;r<3;r++){
-          const f = A[r][i]/A[i][i]
-          for(let j=i;j<3;j++) A[r][j]-=f*A[i][j]
-          b[r]-=f*b[i]
-        }
-      }
-      const x = [0,0,0]
-      for(let i=2;i>=0;i--){
-        let t = b[i]
-        for(let j=i+1;j<3;j++) t-=A[i][j]*x[j]
-        x[i] = t/A[i][i]
-      }
-      return x
-    })
-  }
-
   /** Tom médio da pele (bochechas e testa) de uma imagem. */
   private skinTone(c:HTMLCanvasElement, asset:ExpressionAsset):Rgb{
     const cx = c.getContext('2d',{ willReadFrequently:true })!
@@ -229,22 +208,6 @@ export class PortraitRenderer {
       const w = clamp(((d[i]+d[i+1]+d[i+2])/3-90)/60,0,1)
       if(w<=0) continue
       for(let ch=0;ch<3;ch++) d[i+ch] = clamp(d[i+ch]*(1+(gain[ch]-1)*w),0,255)
-    }
-    cx.putImageData(id,0,0)
-  }
-
-  /** Soma à imagem a diferença entre o fundo dela e o da neutra; pele e cores claras quase não mudam. */
-  private matchBackground(c:HTMLCanvasElement, ref:number[][]){
-    const mine = this.bgPlane(c)
-    const cx = c.getContext('2d',{ willReadFrequently:true })!
-    const id = cx.getImageData(0,0,c.width,c.height)
-    const d = id.data, W = c.width
-    const dd = [0,1,2].map(ch=>mine[ch].map((v,i)=>ref[ch][i]-v))
-    for(let i=0,p=0;i<d.length;i+=4,p++){
-      const x = p%W, y = (p/W)|0
-      const w = clamp(1-(d[i]+d[i+1]+d[i+2])/480,0,1)
-      if(w<=0) continue
-      for(let ch=0;ch<3;ch++) d[i+ch] = clamp(d[i+ch]+w*(dd[ch][0]+dd[ch][1]*x+dd[ch][2]*y),0,255)
     }
     cx.putImageData(id,0,0)
   }
