@@ -227,19 +227,28 @@ export class PortraitRenderer {
     const out = document.createElement('canvas'); out.width = W; out.height = H
     const ctx = out.getContext('2d')!
     ctx.imageSmoothingQuality = 'high'
-    const [ex,ey] = asset.align.eyeMid, sc = asset.align.scale, ny = asset.align.neckY
-    const yh = ry+215, yc = this.def.assets.neutral.align.neckY
+    const [ex,ey] = asset.align.eyeMid, sc = asset.align.scale
+    const n = this.def.assets.neutral.align
+    const yh = ry+215
     ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,yh); ctx.clip()
     ctx.translate(rx,ry); ctx.scale(sc,sc); ctx.translate(-ex,-ey)
     ctx.drawImage(c,0,0); ctx.restore()
-    ctx.save(); ctx.beginPath(); ctx.rect(0,yc,W,H-yc); ctx.clip()
-    ctx.translate(rx,yc); ctx.scale(sc,sc); ctx.translate(-ex,-ny)
+    ctx.save(); ctx.beginPath(); ctx.rect(0,n.neckY,W,H-n.neckY); ctx.clip()
+    ctx.translate(rx,n.neckY); ctx.scale(sc,sc); ctx.translate(-ex,-asset.align.neckY)
     ctx.drawImage(c,0,0); ctx.restore()
-    const s0 = ey+(yh-ry)/sc
-    for(let y=yh;y<yc;y+=2){
-      const t1 = (y-yh)/(yc-yh), t2 = (y+2-yh)/(yc-yh)
-      const sy = s0+(ny-s0)*t1, sy2 = s0+(ny-s0)*t2
-      ctx.drawImage(c,ex-rx/sc,sy,W/sc,sy2-sy,0,y,W,2.5)
+    // entre os pontos de ancoragem, cada faixa horizontal é esticada linearmente
+    const anchors = [
+      { d:yh, s:ey+(yh-ry)/sc },
+      { d:n.shoulderY, s:asset.align.shoulderY },
+      { d:n.neckY, s:asset.align.neckY }
+    ]
+    for(let k=0;k<anchors.length-1;k++){
+      const a = anchors[k], b = anchors[k+1]
+      for(let y=a.d;y<b.d;y+=2){
+        const y2 = Math.min(b.d,y+2)
+        const sy = a.s+(b.s-a.s)*(y-a.d)/(b.d-a.d), sy2 = a.s+(b.s-a.s)*(y2-a.d)/(b.d-a.d)
+        ctx.drawImage(c,ex-rx/sc,sy,W/sc,sy2-sy,0,y,W,y2-y+.5)
+      }
     }
     return out
   }
