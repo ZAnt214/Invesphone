@@ -155,7 +155,7 @@ function TypewriterText({text,audioOn,onDone,quote=true}:{text:string;audioOn:bo
     },34)
 
     return()=>window.clearInterval(id)
-  },[text,audioOn,onDone])
+  },[text,audioOn])
 
   return <span>{quote?'“':''}{visible}{!done&&<motion.i className="typing-cursor" animate={{opacity:[1,.2,1]}} transition={{duration:.55,repeat:Infinity}}/>}{done&&quote?'”':''}</span>
 }
