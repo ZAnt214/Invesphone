@@ -21,7 +21,10 @@ function loadImage(src:string){
 
 type Loaded = {
   asset:ExpressionAsset
-  img:HTMLImageElement
+  /** imagem no espaço do próprio arquivo (fundo corrigido para casar com a neutra) */
+  img:HTMLCanvasElement
+  /** imagem já no espaço do retrato neutro: cabeça pelos olhos, corpo pela roupa */
+  base:HTMLCanvasElement
   /** cores amostradas da própria imagem */
   skin:Rgb
   lash:Rgb
@@ -72,12 +75,25 @@ export class PortraitRenderer {
       try{ this.atlas = await loadImage(this.def.visemes.src) }catch{ /* fala com o lábio de baixo */ }
     }
     const entries = Object.entries(this.def.assets) as [Expression,ExpressionAsset][]
+    const raw:Partial<Record<Expression,HTMLCanvasElement>> = {}
     await Promise.all(entries.map(async([k,asset])=>{
       try{
         const img = await loadImage(asset.src)
-        this.loaded[k] = this.prepare(asset,img)
+        const c = document.createElement('canvas')
+        c.width = img.naturalWidth; c.height = img.naturalHeight
+        c.getContext('2d',{ willReadFrequently:true })!.drawImage(img,0,0)
+        raw[k] = c
       }catch{ /* a expressão sem imagem usa a neutra */ }
     }))
+    if(this.destroyed || !raw.neutral) return
+    // o fundo de cada imagem tem um tom um pouco diferente: casa todos com o da neutra
+    const ref = this.bgPlane(raw.neutral)
+    for(const [k,asset] of entries){
+      const c = raw[k]
+      if(!c) continue
+      if(k!=='neutral') this.matchBackground(c,ref)
+      this.loaded[k] = this.prepare(asset,c,k==='neutral')
+    }
     if(this.destroyed || !this.loaded.neutral) return
     const c = document.createElement('canvas'); c.width = 6; c.height = 6
     const cx = c.getContext('2d')!
@@ -121,11 +137,8 @@ export class PortraitRenderer {
 
   private pick(e:Expression){ return this.loaded[e] ?? this.loaded.neutral ?? null }
 
-  private prepare(asset:ExpressionAsset, img:HTMLImageElement):Loaded{
-    const c = document.createElement('canvas')
-    c.width = img.naturalWidth; c.height = img.naturalHeight
+  private prepare(asset:ExpressionAsset, c:HTMLCanvasElement, isBase:boolean):Loaded{
     const cx = c.getContext('2d', { willReadFrequently:true })!
-    cx.drawImage(img,0,0)
     const avg = (x:number,y:number,r=2):Rgb=>{
       const d = cx.getImageData(Math.round(x-r),Math.round(y-r),r*2+1,r*2+1).data
       let R=0,G=0,B=0,n=0
@@ -148,7 +161,87 @@ export class PortraitRenderer {
       const l = d[i]+d[i+1]+d[i+2]
       if(l<best){ best = l; lash = [d[i],d[i+1],d[i+2]] }
     }
-    return { asset, img, skin, lash, inner, visemes:this.tintVisemes(mskin) }
+    return { asset, img:c, base:isBase ? c : this.alignImage(asset,c), skin, lash, inner, visemes:this.tintVisemes(mskin) }
+  }
+
+  /** Plano (a + b·x + c·y) do fundo, por canal, ajustado em blocos das margens da imagem. */
+  private bgPlane(c:HTMLCanvasElement):number[][]{
+    const cx = c.getContext('2d',{ willReadFrequently:true })!
+    const W = c.width
+    const pts:{x:number;y:number;v:number[]}[] = []
+    for(const x of [12,48,84,W-12,W-48,W-84]) for(const y of [12,150,300,450,600]){
+      const d = cx.getImageData(x-4,y-4,8,8).data
+      const v = [0,0,0]
+      for(let i=0;i<d.length;i+=4){ v[0]+=d[i]; v[1]+=d[i+1]; v[2]+=d[i+2] }
+      pts.push({ x, y, v:v.map(t=>t/(d.length/4)) })
+    }
+    return [0,1,2].map(ch=>{
+      // mínimos quadrados para [1,x,y]
+      const A = [[0,0,0],[0,0,0],[0,0,0]], b = [0,0,0]
+      for(const p of pts){
+        const r = [1,p.x,p.y]
+        for(let i=0;i<3;i++){ b[i]+=r[i]*p.v[ch]; for(let j=0;j<3;j++) A[i][j]+=r[i]*r[j] }
+      }
+      for(let i=0;i<3;i++){
+        let m = i
+        for(let r=i+1;r<3;r++) if(Math.abs(A[r][i])>Math.abs(A[m][i])) m = r
+        ;[A[i],A[m]] = [A[m],A[i]]; [b[i],b[m]] = [b[m],b[i]]
+        for(let r=i+1;r<3;r++){
+          const f = A[r][i]/A[i][i]
+          for(let j=i;j<3;j++) A[r][j]-=f*A[i][j]
+          b[r]-=f*b[i]
+        }
+      }
+      const x = [0,0,0]
+      for(let i=2;i>=0;i--){
+        let t = b[i]
+        for(let j=i+1;j<3;j++) t-=A[i][j]*x[j]
+        x[i] = t/A[i][i]
+      }
+      return x
+    })
+  }
+
+  /** Soma à imagem a diferença entre o fundo dela e o da neutra; pele e cores claras quase não mudam. */
+  private matchBackground(c:HTMLCanvasElement, ref:number[][]){
+    const mine = this.bgPlane(c)
+    const cx = c.getContext('2d',{ willReadFrequently:true })!
+    const id = cx.getImageData(0,0,c.width,c.height)
+    const d = id.data, W = c.width
+    const dd = [0,1,2].map(ch=>mine[ch].map((v,i)=>ref[ch][i]-v))
+    for(let i=0,p=0;i<d.length;i+=4,p++){
+      const x = p%W, y = (p/W)|0
+      const w = clamp(1-(d[i]+d[i+1]+d[i+2])/480,0,1)
+      if(w<=0) continue
+      for(let ch=0;ch<3;ch++) d[i+ch] = clamp(d[i+ch]+w*(dd[ch][0]+dd[ch][1]*x+dd[ch][2]*y),0,255)
+    }
+    cx.putImageData(id,0,0)
+  }
+
+  /**
+   * Coloca a imagem no espaço do retrato neutro. A cabeça alinha pelos olhos; o corpo, pela linha do pescoço
+   * com a roupa; o pescoço entre os dois é esticado. Assim, nenhuma das duas partes pula na troca.
+   */
+  private alignImage(asset:ExpressionAsset, c:HTMLCanvasElement){
+    const { width:W, height:H, eyeMid:[rx,ry] } = this.def.portrait
+    const out = document.createElement('canvas'); out.width = W; out.height = H
+    const ctx = out.getContext('2d')!
+    ctx.imageSmoothingQuality = 'high'
+    const [ex,ey] = asset.align.eyeMid, sc = asset.align.scale, ny = asset.align.neckY
+    const yh = ry+215, yc = this.def.assets.neutral.align.neckY
+    ctx.save(); ctx.beginPath(); ctx.rect(0,0,W,yh); ctx.clip()
+    ctx.translate(rx,ry); ctx.scale(sc,sc); ctx.translate(-ex,-ey)
+    ctx.drawImage(c,0,0); ctx.restore()
+    ctx.save(); ctx.beginPath(); ctx.rect(0,yc,W,H-yc); ctx.clip()
+    ctx.translate(rx,yc); ctx.scale(sc,sc); ctx.translate(-ex,-ny)
+    ctx.drawImage(c,0,0); ctx.restore()
+    const s0 = ey+(yh-ry)/sc
+    for(let y=yh;y<yc;y+=2){
+      const t1 = (y-yh)/(yc-yh), t2 = (y+2-yh)/(yc-yh)
+      const sy = s0+(ny-s0)*t1, sy2 = s0+(ny-s0)*t2
+      ctx.drawImage(c,ex-rx/sc,sy,W/sc,sy2-sy,0,y,W,2.5)
+    }
+    return out
   }
 
   /** Recorta cada forma de boca, ajusta a cor da pele à da imagem e suaviza a borda. */
@@ -267,11 +360,11 @@ export class PortraitRenderer {
     const drift = calm ? 0 : Math.sin(t*.31)*.8*u
     const trem = calm ? 0 : this.cur.tremor*(Math.sin(t*37)*.6+Math.sin(t*23.3)*.4)*.7*u
     const pivotX = crop.x+crop.w/2, pivotY = crop.y+crop.h*.45
-    const scale = 1.04 + breath*.002 - Math.min(0,this.cur.slump)*.0016
+    const scale = 1.04 + breath*.002
     ctx.save()
     ctx.translate(pivotX,pivotY)
     ctx.scale(scale,scale)
-    ctx.translate(-pivotX+drift+trem,-pivotY+(breath+Math.max(0,this.cur.slump))*u)
+    ctx.translate(-pivotX+drift+trem,-pivotY+breath*u)
 
     if(this.shown){ this.drawAsset(this.shown,1); this.drawOverlays(this.shown,now) }
     ctx.restore()
@@ -292,7 +385,7 @@ export class PortraitRenderer {
   private drawAsset(l:Loaded, alpha:number){
     const { ctx } = this
     ctx.globalAlpha = alpha
-    this.withAlign(l,()=>ctx.drawImage(l.img,0,0,l.img.naturalWidth,l.img.naturalHeight))
+    ctx.drawImage(l.base,0,0)
     ctx.globalAlpha = 1
   }
 

@@ -27,8 +27,8 @@ export type MouthRig = {
  */
 export type ExpressionAsset = {
   src:string
-  /** Ponto médio entre os olhos neste arquivo e escala para casar com o retrato neutro (troca sem a cabeça pular). */
-  align:{ eyeMid:[number, number]; scale:number }
+  /** Ponto médio entre os olhos neste arquivo e escala para casar com o retrato neutro, e y onde o pescoço encontra a roupa (no centro). Cabeça alinhada pelos olhos e corpo pela roupa, com o pescoço esticado entre os dois: a troca não faz nenhuma das duas partes pular. */
+  align:{ eyeMid:[number, number]; scale:number; neckY:number }
   eyes:{ left:EyeRig; right:EyeRig }
   mouth:MouthRig
 }
