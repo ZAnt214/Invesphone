@@ -34,8 +34,17 @@ type Loaded = {
   visemes?:Partial<Record<Viseme,HTMLCanvasElement>>
 }
 
-/** A troca de expressão é um corte escondido no pico de um piscar (sem fade): o piscar dura 170 ms e fecha em ~68 ms. */
-const SWAP_DELAY_MS = 65
+/** Duração da transição de expressão, em segundos. */
+const MORPH_SECONDS = .34
+/**
+ * Regiões do rosto (espaço do retrato neutro) que mudam de expressão. Cada uma é uma elipse de pele
+ * só com feições (sem contorno de rosto nem cabelo), então a mistura entre expressões não deixa fantasma
+ * de queixo ou cabelo: o que se move são sobrancelhas, olhos e boca.
+ */
+const MORPH_REGIONS = [
+  { cx:432, cy:440, rx:142, ry:108 },
+  { cx:436, cy:590, rx:82, ry:52 }
+]
 
 /**
  * Desenha o retrato oficial num canvas e o anima: respiração, deriva de câmera, troca suave entre as
@@ -59,7 +68,9 @@ export class PortraitRenderer {
   private shapeAmount = 0
   private speech:{ keys:MouthKey[]; start:number; duration:number }|null = null
   private shown:Loaded|null = null
-  private pending:{ l:Loaded; at:number }|null = null
+  private trans:{ from:Loaded; to:Loaded; t:number }|null = null
+  private patch:HTMLCanvasElement|null = null
+  private masks:HTMLCanvasElement[] = []
   private processor:((k:Expression)=>void)|null = null
   private grp:HTMLCanvasElement|null = null
   /** opacidade da boca falando: 1 enquanto fala, some logo depois */
@@ -129,12 +140,14 @@ export class PortraitRenderer {
     this.expression = e
     this.tgt = {...(EXPRESSIONS[e] ?? EXPRESSIONS.neutral)}
     const next = this.pick(e)
-    if(!next || next===(this.pending?.l ?? this.shown)) return
-    if(this.calm || !this.shown){ this.shown = next; this.pending = null; return }
-    // troca no pico do piscar: o corte some atrás da pálpebra
-    const now = performance.now()
-    this.pending = { l:next, at:now+SWAP_DELAY_MS }
-    this.blink.start = now
+    const cur = this.trans?.to ?? this.shown
+    if(!next || next===cur) return
+    if(this.calm || !this.shown){ this.shown = next; this.trans = null; return }
+    // se já havia uma transição em curso, parte do lado mais próximo
+    const from = this.trans ? (this.trans.t<.5 ? this.trans.from : this.trans.to) : this.shown
+    if(from===next){ this.shown = next; this.trans = null; return }
+    this.shown = from
+    this.trans = { from, to:next, t:0 }
   }
 
   setSpeech(keys:MouthKey[]|null, duration=0){
@@ -301,7 +314,10 @@ export class PortraitRenderer {
     const k = 1-Math.exp(-dt*5)
     const keys = Object.keys(this.cur) as (keyof ExpressionParams)[]
     for(const key of keys) this.cur[key] += (this.tgt[key]-this.cur[key])*k
-    if(this.pending && now>=this.pending.at){ this.shown = this.pending.l; this.pending = null }
+    if(this.trans){
+      this.trans.t = Math.min(1,this.trans.t+dt/MORPH_SECONDS)
+      if(this.trans.t>=1){ this.shown = this.trans.to; this.trans = null }
+    }
 
     if(this.blink.start<0 && now>=this.blink.next) this.blink.start = now
     if(this.blink.start>=0 && now-this.blink.start>170){
@@ -372,7 +388,16 @@ export class PortraitRenderer {
     ctx.scale(scale,scale)
     ctx.translate(-pivotX+drift+trem,-pivotY+breath*u)
 
-    if(this.shown){ this.drawAsset(this.shown,1); this.drawOverlays(this.shown,now) }
+    if(this.shown){
+      this.drawAsset(this.shown,1)
+      const tr = this.trans
+      if(tr){
+        const e = tr.t*tr.t*(3-2*tr.t)
+        for(let i=0;i<MORPH_REGIONS.length;i++) this.drawRegion(tr.to,i,e)
+      }
+      const top = tr && tr.t>=.5 ? tr.to : this.shown
+      this.drawOverlays(top,now)
+    }
     ctx.restore()
   }
 
@@ -393,6 +418,32 @@ export class PortraitRenderer {
     ctx.globalAlpha = alpha
     ctx.drawImage(l.base,0,0)
     ctx.globalAlpha = 1
+  }
+
+  /** Recorte elíptico e suave de uma região do rosto da imagem já alinhada, sobre o que está desenhado. */
+  private drawRegion(l:Loaded, i:number, alpha:number){
+    const r = MORPH_REGIONS[i]
+    const w = Math.ceil(r.rx*2), h = Math.ceil(r.ry*2)
+    const pc = this.patch ?? (this.patch = document.createElement('canvas'))
+    if(pc.width!==w || pc.height!==h){ pc.width = w; pc.height = h }
+    if(!this.masks[i]){
+      const m = document.createElement('canvas'); m.width = w; m.height = h
+      const mx = m.getContext('2d')!
+      mx.translate(w/2,h/2); mx.scale(1,r.ry/r.rx)
+      const g = mx.createRadialGradient(0,0,r.rx*.5,0,0,r.rx)
+      g.addColorStop(0,'rgba(0,0,0,1)'); g.addColorStop(1,'rgba(0,0,0,0)')
+      mx.fillStyle = g; mx.fillRect(-r.rx,-r.rx,r.rx*2,r.rx*2)
+      this.masks[i] = m
+    }
+    const px = pc.getContext('2d')!
+    px.globalCompositeOperation = 'source-over'
+    px.clearRect(0,0,w,h)
+    px.drawImage(l.base,-(r.cx-r.rx),-(r.cy-r.ry))
+    px.globalCompositeOperation = 'destination-in'
+    px.drawImage(this.masks[i],0,0)
+    this.ctx.globalAlpha = alpha
+    this.ctx.drawImage(pc,r.cx-r.rx,r.cy-r.ry)
+    this.ctx.globalAlpha = 1
   }
 
   /** Boca e piscar, desenhados uma vez só, sobre a imagem mais recente. */
