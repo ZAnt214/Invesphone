@@ -7,6 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: { globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg}'] },
       manifest: {
         name: 'Arquivo Morto',
         short_name: 'Arquivo Morto',

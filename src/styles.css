@@ -99,3 +99,19 @@ button:disabled{opacity:.45}
 .order-panel>button span{font-size:8px;color:#7f8c93;text-transform:uppercase;letter-spacing:.07em}
 .order-feedback{display:flex;align-items:flex-start;gap:7px;padding:8px 10px;border:1px solid rgba(93,130,106,.45);background:rgba(38,73,49,.22);border-radius:9px;color:#b9d2c1;font-size:9px;line-height:1.35}
 .order-feedback svg{width:14px;height:14px;flex:0 0 14px;margin-top:1px}
+
+/* ligação: visual iOS escuro com a foto da Sônia */
+.call-screen{background:radial-gradient(70% 40% at 50% 0,#3a3a4a,transparent 70%),linear-gradient(#1c1c1f,#000 60%)}
+.call-screen.active{background:radial-gradient(70% 40% at 50% 0,#33333f,transparent 70%),linear-gradient(#19191c,#000 60%)}
+img.avatar{display:block;object-fit:cover;background:#2a2d31;box-shadow:0 14px 30px -10px rgba(0,0,0,.6)}
+img.mini-avatar{display:block;object-fit:cover}
+.caller small{font-size:12px;font-weight:600;letter-spacing:.06em;color:#a3a3a8}
+.caller h1{font-size:36px;font-weight:600;letter-spacing:-.03em}
+.call-actions{gap:40px;padding-inline:18px}
+.call-actions .decline,.call-actions .answer,.single-action .answer{min-height:106px}
+.call-actions .decline svg,.call-actions .answer svg,.single-action .answer svg{width:74px;height:74px;padding:21px}
+.call-actions button span,.single-action button span{font-size:12px}
+.transcript{background:rgba(255,255,255,.1);border-color:transparent;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+.call-replies button{background:rgba(255,255,255,.1);border-color:transparent}
+.controls button span{background:rgba(255,255,255,.14)}
+.controls button.on span{background:#e5e8ea}

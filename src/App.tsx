@@ -11,6 +11,7 @@ import HandsetHome from './HandsetHome'
 import './handset-pages.css'
 import { acceptedProofs, chapters, clues, disclaimer, people, teamMessages, victimMessages } from './case01'
 
+const SONIA_PHOTO = `${import.meta.env.BASE_URL}sonia.jpg`
 const SAVE_VERSION = 2
 const SAVE_KEY = 'invesphone-case01-v2'
 
@@ -183,7 +184,7 @@ function Incoming({audioOn,onSound,onAnswer,onDecline}:{audioOn:boolean;onSound:
  return <motion.main key="incoming" className="call-screen" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0,scale:.985}} transition={{duration:.35}}>
   <Ambient/><StatusBar/>
   <section className="caller">
-   <div className="avatar-pulse"><motion.i animate={{scale:[1,1.48],opacity:[.3,0]}} transition={{duration:1.8,repeat:Infinity}}/><motion.i animate={{scale:[1,1.72],opacity:[.16,0]}} transition={{duration:1.8,repeat:Infinity,delay:.45}}/><motion.div className="avatar" animate={{scale:[1,1.035,1]}} transition={{duration:1.8,repeat:Infinity}}>SP</motion.div></div>
+   <div className="avatar-pulse"><motion.i animate={{scale:[1,1.48],opacity:[.3,0]}} transition={{duration:1.8,repeat:Infinity}}/><motion.i animate={{scale:[1,1.72],opacity:[.16,0]}} transition={{duration:1.8,repeat:Infinity,delay:.45}}/><motion.img className="avatar" src={SONIA_PHOTO} alt="Sônia Prado" animate={{scale:[1,1.035,1]}} transition={{duration:1.8,repeat:Infinity}}/></div>
    <small>CHAMADA RECEBIDA</small><h1>Sônia Prado</h1><p>DHPP · Supervisão</p>
    <motion.span className="ringing" animate={{opacity:[.45,1,.45]}} transition={{duration:1.4,repeat:Infinity}}>chamando…</motion.span>
    {!audioOn?<button className="sound-button" onClick={onSound}><Volume2/> Ativar toque da chamada</button>:<span className="sound-on"><Volume2/> Toque contínuo ativado</span>}
@@ -194,7 +195,7 @@ function Incoming({audioOn,onSound,onAnswer,onDecline}:{audioOn:boolean;onSound:
   </motion.div><div className="homebar"/>
  </motion.main>
 }
-function Missed({onAnswer}:{onAnswer:()=>void}){return <motion.main className="call-screen" initial={{opacity:0,y:18}} animate={{opacity:1,y:0}}><StatusBar/><section className="caller"><div className="avatar">SP</div><small>CHAMADA PERDIDA</small><h1>Sônia Prado</h1><p>DHPP · Supervisão</p><div className="missed-card">1 chamada perdida · agora</div></section><div className="single-action"><button className="answer" onClick={onAnswer}><Phone/><span>Retornar</span></button></div><div className="homebar"/></motion.main>}
+function Missed({onAnswer}:{onAnswer:()=>void}){return <motion.main className="call-screen" initial={{opacity:0,y:18}} animate={{opacity:1,y:0}}><StatusBar/><section className="caller"><img className="avatar" src={SONIA_PHOTO} alt="Sônia Prado"/><small>CHAMADA PERDIDA</small><h1>Sônia Prado</h1><p>DHPP · Supervisão</p><div className="missed-card">1 chamada perdida · agora</div></section><div className="single-action"><button className="answer" onClick={onAnswer}><Phone/><span>Retornar</span></button></div><div className="homebar"/></motion.main>}
 function TypewriterText({text,audioOn,onDone,quote=true}:{text:string;audioOn:boolean;onDone?:()=>void;quote?:boolean}){
   const [visible,setVisible]=useState('')
   const [done,setDone]=useState(false)
@@ -273,7 +274,7 @@ function ActiveCall({line,time,muted,speaker,audioOn,issuedOrders,setMuted,setSp
 
  return <motion.main className="call-screen active" initial={{opacity:0,scale:1.015}} animate={{opacity:1,scale:1}} exit={{opacity:0,y:-20}}>
   <Ambient/><StatusBar/>
-  <section className="active-caller"><motion.div className="avatar small" initial={{scale:.8}} animate={{scale:1}}>SP</motion.div><h1>Sônia Prado</h1><span>{time}</span></section>
+  <section className="active-caller"><motion.img className="avatar small" src={SONIA_PHOTO} alt="Sônia Prado" initial={{scale:.8}} animate={{scale:1}}/><h1>Sônia Prado</h1><span>{time}</span></section>
   <motion.section className="transcript call-dialogue" layout>
    <small>CHAMADA · DHPP</small>
    <AnimatePresence mode="wait">
@@ -341,7 +342,7 @@ function PhonePage({title,back,children}:{title:string;back:()=>void;children:Re
 function Team({game}:{game:GameSave}){
  const ordered=game.orders.map(id=>orderResultMessages[id]).filter(Boolean)
  const messages=[...teamMessages,...ordered].sort((a,b)=>a.time.localeCompare(b.time))
- return <div className="thread"><div className="thread-head"><div className="mini-avatar">SP</div><div><b>Ocorrência 001</b><span>canal operacional · 4 participantes</span></div></div>{messages.map((m,i)=><article key={m.time+m.from+i}><small>{m.time}</small><p><b>{m.from}</b>{m.text}</p></article>)}<div className="typing"><i/><i/><i/> equipe em campo</div></div>
+ return <div className="thread"><div className="thread-head"><img className="mini-avatar" src={SONIA_PHOTO} alt="Sônia Prado"/><div><b>Ocorrência 001</b><span>canal operacional · 4 participantes</span></div></div>{messages.map((m,i)=><article key={m.time+m.from+i}><small>{m.time}</small><p><b>{m.from}</b>{m.text}</p></article>)}<div className="typing"><i/><i/><i/> equipe em campo</div></div>
 }
 function ClueList({ids}:{ids:string[]}){if(!ids.length)return <Empty icon={<FileSearch/>} title="Nenhuma pista registrada" text="Abra a tarefa atual e comece pela cena."/>;return <div className="clue-list">{ids.map(id=>{const c=clues.find(x=>x.id===id)!;return <article key={id}><FileText/><div><small>{c.category.toUpperCase()}</small><b>{c.title}</b><p>{c.description}</p></div></article>})}</div>}
 function People({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStateAction<GameSave>>}){return <div className="people-list">{people.filter(p=>p.id!=='sonia').map(p=><button key={p.id} onClick={()=>setGame(g=>({...g,interviewed:g.interviewed.includes(p.id)?g.interviewed:[...g.interviewed,p.id]}))}><i>{p.initials}</i><div><b>{p.name}</b><span>{p.role}</span></div>{game.interviewed.includes(p.id)?<Check/>:<ChevronLeft className="right"/>}</button>)}</div>}
