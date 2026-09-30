@@ -30,7 +30,8 @@ type Loaded = {
   visemes?:Partial<Record<Viseme,HTMLCanvasElement>>
 }
 
-const FADE_SECONDS = .75
+/** A troca de expressão é um corte escondido no pico de um piscar (sem fade): o piscar dura 170 ms e fecha em ~68 ms. */
+const SWAP_DELAY_MS = 65
 
 /**
  * Desenha o retrato oficial num canvas e o anima: respiração, deriva de câmera, troca suave entre as
@@ -53,9 +54,12 @@ export class PortraitRenderer {
   private atlas:HTMLImageElement|null = null
   private shapeAmount = 0
   private speech:{ keys:MouthKey[]; start:number; duration:number }|null = null
-  /** Camadas de expressão, da mais antiga à mais nova; só a última está em transição. */
-  private layers:{ l:Loaded; a:number }[] = []
+  private shown:Loaded|null = null
+  private pending:{ l:Loaded; at:number }|null = null
   private grp:HTMLCanvasElement|null = null
+  /** opacidade da boca falando: 1 enquanto fala, some logo depois */
+  private mouthOn = 0
+  private mouthHold = 0
   private expression:Expression = 'neutral'
 
   constructor(private canvas:HTMLCanvasElement, private def:CharacterDef){
@@ -82,8 +86,7 @@ export class PortraitRenderer {
     let r=0,g=0,b=0
     for(let i=0;i<d.length;i+=4){ r+=d[i]; g+=d[i+1]; b+=d[i+2] }
     this.bg = [r/36,g/36,b/36]
-    const first = this.pick(this.expression)
-    if(first) this.layers = [{ l:first, a:1 }]
+    this.shown = this.pick(this.expression)
     this.last = performance.now()
     this.blink.next = this.last + 1800
     this.loop(this.last)
@@ -95,13 +98,12 @@ export class PortraitRenderer {
     this.expression = e
     this.tgt = {...(EXPRESSIONS[e] ?? EXPRESSIONS.neutral)}
     const next = this.pick(e)
-    const top = this.layers[this.layers.length-1]
-    if(!next || next===top?.l) return
-    // a imagem que volta a ser pedida sobe para o topo mantendo a opacidade que já tinha
-    const i = this.layers.findIndex(x=>x.l===next)
-    const entry = i>=0 ? this.layers.splice(i,1)[0] : { l:next, a:0 }
-    if(this.calm || !this.layers.length) entry.a = 1
-    this.layers.push(entry)
+    if(!next || next===(this.pending?.l ?? this.shown)) return
+    if(this.calm || !this.shown){ this.shown = next; this.pending = null; return }
+    // troca no pico do piscar: o corte some atrás da pálpebra
+    const now = performance.now()
+    this.pending = { l:next, at:now+SWAP_DELAY_MS }
+    this.blink.start = now
   }
 
   setSpeech(keys:MouthKey[]|null, duration=0){
@@ -135,6 +137,9 @@ export class PortraitRenderer {
     const dist = asset.eyes.right.cx-asset.eyes.left.cx
     const skin = avg(mx-dist*.52,my+dist*.71,3)
     const m = asset.mouth
+    // pele ao lado da boca, para a folha de visemas ter o mesmo tom local
+    const sl = avg(m.cx-m.halfWidth-16,m.rimY+4,2), sr = avg(m.cx+m.halfWidth+16,m.rimY+4,2)
+    const mskin:Rgb = [(sl[0]+sr[0])/2,(sl[1]+sr[1])/2,(sl[2]+sr[2])/2]
     const inner = avg(m.cx-m.halfWidth*.6,m.rimY,1)
     const e = asset.eyes.left
     const d = cx.getImageData(Math.round(e.cx-e.rx),Math.round(e.cy-e.ry),e.rx*2,e.ry*2).data
@@ -143,7 +148,7 @@ export class PortraitRenderer {
       const l = d[i]+d[i+1]+d[i+2]
       if(l<best){ best = l; lash = [d[i],d[i+1],d[i+2]] }
     }
-    return { asset, img, skin, lash, inner, visemes:this.tintVisemes(skin) }
+    return { asset, img, skin, lash, inner, visemes:this.tintVisemes(mskin) }
   }
 
   /** Recorta cada forma de boca, ajusta a cor da pele à da imagem e suaviza a borda. */
@@ -186,7 +191,7 @@ export class PortraitRenderer {
   private loop = (now:number)=>{
     if(this.destroyed) return
     this.raf = requestAnimationFrame(this.loop)
-    if(document.hidden || !this.layers.length) return
+    if(document.hidden || !this.shown) return
     const dt = Math.min(.05,(now-this.last)/1000)
     this.last = now
     this.update(now,dt)
@@ -197,11 +202,7 @@ export class PortraitRenderer {
     const k = 1-Math.exp(-dt*5)
     const keys = Object.keys(this.cur) as (keyof ExpressionParams)[]
     for(const key of keys) this.cur[key] += (this.tgt[key]-this.cur[key])*k
-    const top = this.layers[this.layers.length-1]
-    if(top && top.a<1){
-      top.a = Math.min(1,top.a+dt/FADE_SECONDS)
-      if(top.a>=1) this.layers = [top]
-    }
+    if(this.pending && now>=this.pending.at){ this.shown = this.pending.l; this.pending = null }
 
     if(this.blink.start<0 && now>=this.blink.next) this.blink.start = now
     if(this.blink.start>=0 && now-this.blink.start>170){
@@ -217,19 +218,22 @@ export class PortraitRenderer {
       if(e>=sp.duration) this.speech = null
       else {
         const s = sampleMouth(sp.keys,e)
-        shape = s.v
+        shape = s.a<.12 ? 'M' : s.v
         target = Math.max(target,s.v==='M' ? 0 : s.a*(s.v==='I'||s.v==='U' ? .6 : 1))
         this.shapeAmount = s.a
       }
     }
     const km = 1-Math.exp(-dt*(target>this.mouth?30:20))
     this.mouth += (target-this.mouth)*km
-    // peso de cada forma de boca, suavizado
-    const kv = 1-Math.exp(-dt*16)
+    // forma de boca: pesos só trocam a forma (soma 1); a boca liga de uma vez e desliga logo após a fala
+    const kv = 1-Math.exp(-dt*28)
     for(const v of Object.keys(this.vis) as Viseme[]){
-      const goal = shape===v ? this.shapeAmount : 0
+      const goal = shape===v ? 1 : 0
       this.vis[v] += (goal-this.vis[v])*kv
     }
+    if(shape){ this.mouthOn = 1; this.mouthHold = .14 }
+    else if(this.mouthHold>0) this.mouthHold -= dt
+    else this.mouthOn = Math.max(0,this.mouthOn-dt/.12)
   }
 
   /** Tamanho do rosto em relação à arte de referência (olhos a 73 px), para escalar movimentos em pixels. */
@@ -267,12 +271,9 @@ export class PortraitRenderer {
     ctx.save()
     ctx.translate(pivotX,pivotY)
     ctx.scale(scale,scale)
-    ctx.translate(-pivotX+drift+trem,-pivotY+(breath+Math.max(0,this.cur.slump)+this.mouth*.5)*u)
+    ctx.translate(-pivotX+drift+trem,-pivotY+(breath+Math.max(0,this.cur.slump))*u)
 
-    // a mais antiga fica opaca por baixo; as novas entram com ease suave
-    this.layers.forEach((x,i)=>this.drawAsset(x.l,i===0 ? 1 : x.a*x.a*(3-2*x.a)))
-    const top = this.layers[this.layers.length-1]
-    if(top) this.drawOverlays(top.l,now)
+    if(this.shown){ this.drawAsset(this.shown,1); this.drawOverlays(this.shown,now) }
     ctx.restore()
   }
 
@@ -306,11 +307,11 @@ export class PortraitRenderer {
     const { ctx } = this
     const eyes:EyeRig[] = [l.asset.eyes.left,l.asset.eyes.right]
     for(const e of eyes){
-      const top = e.cy-e.ry-1
-      const edge = top + amount*(e.ry*2+2)
+      const top = e.cy-e.ry+3
+      const edge = top + amount*(e.ry*2-4)
       const bulge = 1.6*amount*this.unit()
       ctx.save()
-      ctx.beginPath(); ctx.ellipse(e.cx,e.cy,e.rx+1,e.ry+1,0,0,Math.PI*2); ctx.clip()
+      ctx.beginPath(); ctx.ellipse(e.cx,e.cy,e.rx-1,e.ry-1,0,0,Math.PI*2); ctx.clip()
       ctx.fillStyle = rgb(l.skin)
       ctx.beginPath()
       ctx.moveTo(e.cx-e.rx-2,top-3); ctx.lineTo(e.cx+e.rx+2,top-3); ctx.lineTo(e.cx+e.rx+2,edge)
@@ -327,8 +328,7 @@ export class PortraitRenderer {
     const vd = this.def.visemes
     if(vd && l.visemes){
       const ws = vd.order.map(v=>({ v, w:this.vis[v] })).filter(x=>x.w>.01 && l.visemes![x.v]).sort((a,b)=>a.w-b.w)
-      const total = ws.reduce((t,x)=>t+x.w,0)
-      if(!ws.length) return
+            if(!ws.length || this.mouthOn<.02) return
       const { ctx } = this
       const g = this.grp ?? (this.grp = document.createElement('canvas'))
       if(g.width!==vd.cellW || g.height!==vd.cellH){ g.width = vd.cellW; g.height = vd.cellH }
@@ -345,7 +345,7 @@ export class PortraitRenderer {
       const m = l.asset.mouth
       const s = (m.halfWidth*2)/vd.lipWidth
       ctx.save()
-      ctx.globalAlpha = clamp(total,0,1)
+      ctx.globalAlpha = clamp(this.mouthOn,0,1)
       ctx.translate(m.cx,m.rimY)
       ctx.scale(s,s)
       ctx.translate(-vd.center[0],-vd.center[1])
