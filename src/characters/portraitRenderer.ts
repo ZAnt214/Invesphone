@@ -26,6 +26,8 @@ type Loaded = {
   img:HTMLCanvasElement
   /** imagem já no espaço do retrato neutro: cabeça pelos olhos, corpo pela roupa */
   base:HTMLCanvasElement
+  /** interior do rosto desta expressão, já no espaço do retrato, com borda suave (modo com camadas fixas) */
+  patch?:HTMLCanvasElement
   /** cores amostradas da própria imagem */
   skin:Rgb
   lash:Rgb
@@ -69,6 +71,9 @@ export class PortraitRenderer {
   private speech:{ keys:MouthKey[]; start:number; duration:number }|null = null
   private shown:Loaded|null = null
   private trans:{ from:Loaded; to:Loaded; t:number }|null = null
+  private rigImgs:{ background:HTMLImageElement; body:HTMLImageElement; head:HTMLImageElement }|null = null
+  private faceMask:HTMLCanvasElement|null = null
+  private faceBox = { x:0, y:0, w:0, h:0 }
   private patch:HTMLCanvasElement|null = null
   private masks:HTMLCanvasElement[] = []
   private processor:((k:Expression)=>void)|null = null
@@ -87,6 +92,14 @@ export class PortraitRenderer {
     if(this.def.visemes){
       try{ this.atlas = await loadImage(this.def.visemes.src) }catch{ /* fala com o lábio de baixo */ }
     }
+    if(this.def.rig){
+      try{
+        const r = this.def.rig
+        const [background,body,head] = await Promise.all([loadImage(r.background),loadImage(r.body),loadImage(r.head)])
+        this.rigImgs = { background, body, head }
+        this.buildFaceMask(r.facePolygon)
+      }catch{ this.rigImgs = null /* sem camadas: troca a imagem inteira */ }
+    }
     const entries = Object.entries(this.def.assets) as [Expression,ExpressionAsset][]
     const raw:Partial<Record<Expression,HTMLCanvasElement>> = {}
     await Promise.all(entries.map(async([k,asset])=>{
@@ -101,14 +114,14 @@ export class PortraitRenderer {
     if(this.destroyed || !raw.neutral) return
     // fundo único para todas as expressões (o da neutra, liso); a figura não muda
     const nd = raw.neutral.getContext('2d',{ willReadFrequently:true })!.getImageData(0,0,raw.neutral.width,raw.neutral.height)
-    const plate = buildPlate(nd.data,backgroundMask(nd.data,nd.width,nd.height),nd.width,nd.height)
+    const plate = this.rigImgs ? null : buildPlate(nd.data,backgroundMask(nd.data,nd.width,nd.height),nd.width,nd.height)
     const skinRef = this.skinTone(raw.neutral,this.def.assets.neutral)
     this.processor = (k:Expression)=>{
       const c = raw[k], asset = this.def.assets[k]
       if(!c || !asset || this.loaded[k]) return
       const cx = c.getContext('2d',{ willReadFrequently:true })!
       const id = cx.getImageData(0,0,c.width,c.height)
-      applyPlate(c,plate,backgroundMask(id.data,c.width,c.height))
+      if(plate) applyPlate(c,plate,backgroundMask(id.data,c.width,c.height))
       if(k!=='neutral') this.matchSkin(c,asset,skinRef)
       this.loaded[k] = this.prepare(asset,c,k==='neutral')
     }
@@ -117,7 +130,7 @@ export class PortraitRenderer {
     if(this.destroyed || !this.loaded.neutral) return
     const c = document.createElement('canvas'); c.width = 6; c.height = 6
     const cx = c.getContext('2d')!
-    cx.drawImage(this.loaded.neutral.img,8,8,6,6,0,0,6,6)
+    cx.drawImage(this.rigImgs?.background ?? this.loaded.neutral.img,8,8,6,6,0,0,6,6)
     const d = cx.getImageData(0,0,6,6).data
     let r=0,g=0,b=0
     for(let i=0;i<d.length;i+=4){ r+=d[i]; g+=d[i+1]; b+=d[i+2] }
@@ -192,7 +205,7 @@ export class PortraitRenderer {
       const l = d[i]+d[i+1]+d[i+2]
       if(l<best){ best = l; lash = [d[i],d[i+1],d[i+2]] }
     }
-    return { asset, img:c, base:isBase ? c : this.alignImage(asset,c), skin, lash, inner, visemes:this.tintVisemes(mskin) }
+    return { asset, img:c, base:isBase || this.rigImgs ? c : this.alignImage(asset,c), patch:this.rigImgs ? this.buildPatch(asset,c) : undefined, skin, lash, inner, visemes:this.tintVisemes(mskin) }
   }
 
   /** Tom médio da pele (bochechas e testa) de uma imagem. */
@@ -223,6 +236,46 @@ export class PortraitRenderer {
       for(let ch=0;ch<3;ch++) d[i+ch] = clamp(d[i+ch]*(1+(gain[ch]-1)*w),0,255)
     }
     cx.putImageData(id,0,0)
+  }
+
+  /** Máscara do interior do rosto: polígono preenchido com borda suave (reduz e amplia para desfocar). */
+  private buildFaceMask(poly:[number,number][]){
+    const xs = poly.map(p=>p[0]), ys = poly.map(p=>p[1])
+    const m = 14
+    const x = Math.floor(Math.min(...xs))-m, y = Math.floor(Math.min(...ys))-m
+    const w = Math.ceil(Math.max(...xs))+m-x, h = Math.ceil(Math.max(...ys))+m-y
+    this.faceBox = { x, y, w, h }
+    const hard = document.createElement('canvas'); hard.width = w; hard.height = h
+    const hx = hard.getContext('2d')!
+    hx.fillStyle = '#000'
+    hx.beginPath()
+    poly.forEach(([px,py],i)=>{ i ? hx.lineTo(px-x,py-y) : hx.moveTo(px-x,py-y) })
+    hx.closePath(); hx.fill()
+    const k = 5
+    const small = document.createElement('canvas'); small.width = Math.ceil(w/k); small.height = Math.ceil(h/k)
+    const sx = small.getContext('2d')!
+    sx.imageSmoothingEnabled = true
+    sx.drawImage(hard,0,0,small.width,small.height)
+    const soft = document.createElement('canvas'); soft.width = w; soft.height = h
+    const ox = soft.getContext('2d')!
+    ox.imageSmoothingEnabled = true; ox.imageSmoothingQuality = 'high'
+    ox.drawImage(small,0,0,w,h)
+    this.faceMask = soft
+  }
+
+  /** Interior do rosto de uma expressão, alinhado ao retrato neutro e recortado pela máscara. */
+  private buildPatch(asset:ExpressionAsset, c:HTMLCanvasElement){
+    const { x, y, w, h } = this.faceBox
+    const out = document.createElement('canvas'); out.width = w; out.height = h
+    const ox = out.getContext('2d')!
+    ox.imageSmoothingQuality = 'high'
+    const [rx,ry] = this.def.portrait.eyeMid
+    ox.translate(rx-x,ry-y); ox.scale(asset.align.scale,asset.align.scale); ox.translate(-asset.align.eyeMid[0],-asset.align.eyeMid[1])
+    ox.drawImage(c,0,0)
+    ox.setTransform(1,0,0,1,0,0)
+    ox.globalCompositeOperation = 'destination-in'
+    ox.drawImage(this.faceMask!,0,0)
+    return out
   }
 
   /**
@@ -389,11 +442,19 @@ export class PortraitRenderer {
     ctx.translate(-pivotX+drift+trem,-pivotY+breath*u)
 
     if(this.shown){
-      this.drawAsset(this.shown,1)
       const tr = this.trans
-      if(tr){
-        const e = tr.t*tr.t*(3-2*tr.t)
-        for(let i=0;i<MORPH_REGIONS.length;i++) this.drawRegion(tr.to,i,e)
+      const e = tr ? tr.t*tr.t*(3-2*tr.t) : 1
+      if(this.rigImgs){
+        // fundo, corpo e cabeça nunca mudam; só o interior do rosto troca de expressão
+        ctx.drawImage(this.rigImgs.background,0,0)
+        ctx.drawImage(this.rigImgs.body,0,0)
+        ctx.drawImage(this.rigImgs.head,0,0)
+        const { x, y } = this.faceBox
+        if(this.shown.patch) ctx.drawImage(this.shown.patch,x,y)
+        if(tr?.to.patch){ ctx.globalAlpha = e; ctx.drawImage(tr.to.patch,x,y); ctx.globalAlpha = 1 }
+      } else {
+        this.drawAsset(this.shown,1)
+        if(tr) for(let i=0;i<MORPH_REGIONS.length;i++) this.drawRegion(tr.to,i,e)
       }
       const top = tr && tr.t>=.5 ? tr.to : this.shown
       this.drawOverlays(top,now)
