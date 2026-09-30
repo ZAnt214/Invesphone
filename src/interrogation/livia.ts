@@ -8,8 +8,8 @@ const base = import.meta.env.BASE_URL
  * Só existem dois arquivos de vídeo, e eles não são "uma pergunta cada":
  *  - livia-01: ela parada, calada, olhando para baixo (áudio é só ambiente).
  *  - livia-02: ela reagindo e falando (o áudio é fala que não corresponde ao texto do jogo, então nunca toca).
- * Os trechos abaixo são só marcações de tempo nesses dois arquivos.
- * Os pares de tempo foram escolhidos por comparação de quadros: nos pontos de emenda a pose é quase a mesma.
+ * Os estados abaixo são só faixas de tempo nesses dois arquivos.
+ * Os saltos entre momentos do vídeo vêm de uma comparação de quadros (videoGraph.ts): só emenda onde a pose é quase igual.
  */
 export const liviaInterrogation:InterrogationConfig = {
   id:'livia',
@@ -21,20 +21,12 @@ export const liviaInterrogation:InterrogationConfig = {
     reaction:`${base}videos/livia/livia-02.mp4`
   },
   states:{
-    // parada: três recortes que começam e terminam em poses quase idênticas, sorteados a cada ciclo
-    idle:{ file:'neutral', kind:'random', segments:[
-      {start:0.08,end:2.0},{start:0.17,end:2.25},{start:0.25,end:2.5}
-    ]},
-    // falando: entra em pontos onde a pose combina com a de "parada" e fica na região de fala (5,17 a 6,6 s)
-    response:{ file:'reaction', kind:'sequence', repeatLast:true, sequence:[
-      {start:0.5,end:6.6},{start:5.17,end:6.6}
-    ]},
-    reactionA:{ file:'reaction', kind:'sequence', repeatLast:true, sequence:[
-      {start:2.0,end:6.6},{start:5.17,end:6.6}
-    ]},
-    reactionB:{ file:'reaction', kind:'sequence', repeatLast:true, sequence:[
-      {start:0.75,end:6.6},{start:5.17,end:6.6}
-    ]}
+    // parada: passeia por quase todo o arquivo, inclusive os trechos em que ela mexe as mãos
+    idle:{ file:'neutral', range:[0.1,9.8], run:[5.5,9.0], startRange:[0.1,3.0] },
+    // falando: usa o meio do arquivo, onde ela gesticula mais; cada estado começa numa região diferente
+    response:{ file:'reaction', range:[0.3,9.7], run:[3.0,5.0], startRange:[1.6,4.4] },
+    reactionA:{ file:'reaction', range:[0.3,9.7], run:[3.0,5.0], startRange:[3.6,6.4] },
+    reactionB:{ file:'reaction', range:[0.3,9.7], run:[3.0,5.0], startRange:[5.2,8.2] }
   },
   idleState:'idle',
   initial:['arrival','entering'],

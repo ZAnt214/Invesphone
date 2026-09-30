@@ -1,13 +1,19 @@
 export type VideoFileId = 'neutral' | 'reaction'
 
-/** Trecho de um dos arquivos, em segundos. Nada é cortado fisicamente. */
-export type VideoSegment = { start:number; end:number }
-
-export type VideoState =
-  /** Sorteia um trecho a cada ciclo e emenda com crossfade curto. Usado para ficar parado. */
-  | { file:VideoFileId; kind:'random'; segments:VideoSegment[] }
-  /** Toca os trechos em ordem. Com repeatLast, o último trecho se repete até mandarem parar. */
-  | { file:VideoFileId; kind:'sequence'; sequence:VideoSegment[]; repeatLast:boolean }
+/**
+ * Estado visual = um "passeio" pelo tempo de um dos arquivos.
+ * O vídeo toca de forma contínua e, de tempos em tempos, salta para outro momento com pose quase igual.
+ * Como o salto vai para lugares diferentes a cada vez, o jogador não vê um loop.
+ */
+export type VideoState = {
+  file:VideoFileId
+  /** Intervalo do arquivo (s) que este estado pode usar. */
+  range:[number, number]
+  /** Duração de cada trecho contínuo antes de saltar (s). */
+  run:[number, number]
+  /** Onde pode começar ao entrar no estado (s). Padrão: o intervalo todo. */
+  startRange?:[number, number]
+}
 
 export type InterrogationQuestion = {
   id:string
