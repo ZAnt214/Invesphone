@@ -47,3 +47,36 @@ Quando o ChatGPT criar as imagens de alguém: localizar os assets, entender os e
 - Só está pronto quando funciona, não quando o código foi escrito.
 - Trabalhar em branch, abrir PR e mergear na `main` (squash). Não commitar `package-lock.json` nem `tsconfig.tsbuildinfo`.
 - O Chromium dos testes automáticos não toca H.264; vídeos precisam de conversão temporária no teste. Safari real só no aparelho.
+
+
+## Pedidos visuais ao ChatGPT
+
+Quando você precisar de um asset visual novo, uma variação de personagem, expressão, pose, enquadramento ou outro material criativo que pertença à responsabilidade do ChatGPT, **não peça ao usuário para copiar uma solicitação manualmente**.
+
+Crie um arquivo de pedido em:
+
+`creative-requests/inbox/`
+
+Use o modelo:
+
+`creative-requests/TEMPLATE.md`
+
+Cada pedido deve ser específico e conter:
+- objetivo no jogo;
+- personagem;
+- asset necessário;
+- expressão/pose;
+- enquadramento;
+- resolução/formato;
+- referência oficial que deve ser preservada;
+- quantidade;
+- caminho de destino esperado;
+- detalhes técnicos úteis para integração.
+
+Exemplo de nome:
+
+`creative-requests/inbox/2026-09-30-livia-extra-expressions.md`
+
+Depois que o ChatGPT criar os assets, consuma diretamente os arquivos gerados no caminho registrado pelo pedido concluído.
+
+O canal `creative-requests/` é a forma oficial de comunicação Claude → ChatGPT para demandas visuais do projeto.
