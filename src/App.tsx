@@ -108,7 +108,7 @@ export default function App(){
   return <AnimatePresence mode="wait">
     {game.screen==='incoming'&&<Incoming audioOn={audioOn} onSound={activateSound} onAnswer={answer} onDecline={decline}/>} 
     {game.screen==='missed'&&<Missed onAnswer={answer}/>}
-    {game.screen==='active'&&<ActiveCall line={line} time={time} muted={muted} speaker={speaker} audioOn={audioOn} setMuted={setMuted} setSpeaker={setSpeaker} onFinish={finishCall}/>}
+    {game.screen==='active'&&<ActiveCall line={line} time={time} muted={muted} speaker={speaker} audioOn={audioOn} setMuted={setMuted} setSpeaker={setSpeaker} onNext={()=>setLine(v=>Math.min(callLines.length-1,v+1))} onFinish={finishCall}/>}
     {game.screen==='launching'&&<Launching/>}
     {game.screen==='phone'&&<PolicePhone game={game} setGame={setGame}/>}
     {game.screen==='task'&&<TaskView game={game} addClue={addClue} setGame={setGame} finishTask={finishTask}/>}
