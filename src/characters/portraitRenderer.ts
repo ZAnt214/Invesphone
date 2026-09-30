@@ -71,7 +71,8 @@ export class PortraitRenderer {
   private speech:{ keys:MouthKey[]; start:number; duration:number }|null = null
   private shown:Loaded|null = null
   private trans:{ from:Loaded; to:Loaded; t:number }|null = null
-  private rigImgs:{ background:HTMLImageElement; body:HTMLImageElement; head:HTMLImageElement }|null = null
+  /** a imagem neutra é a base imutável; só o interior do rosto muda (personagem com `facePolygon`) */
+  private stable = false
   private faceMask:HTMLCanvasElement|null = null
   private faceBox = { x:0, y:0, w:0, h:0 }
   private patch:HTMLCanvasElement|null = null
@@ -92,14 +93,7 @@ export class PortraitRenderer {
     if(this.def.visemes){
       try{ this.atlas = await loadImage(this.def.visemes.src) }catch{ /* fala com o lábio de baixo */ }
     }
-    if(this.def.rig){
-      try{
-        const r = this.def.rig
-        const [background,body,head] = await Promise.all([loadImage(r.background),loadImage(r.body),loadImage(r.head)])
-        this.rigImgs = { background, body, head }
-        this.buildFaceMask(r.facePolygon)
-      }catch{ this.rigImgs = null /* sem camadas: troca a imagem inteira */ }
-    }
+    if(this.def.facePolygon){ this.stable = true; this.buildFaceMask(this.def.facePolygon) }
     const entries = Object.entries(this.def.assets) as [Expression,ExpressionAsset][]
     const raw:Partial<Record<Expression,HTMLCanvasElement>> = {}
     await Promise.all(entries.map(async([k,asset])=>{
@@ -114,7 +108,7 @@ export class PortraitRenderer {
     if(this.destroyed || !raw.neutral) return
     // fundo único para todas as expressões (o da neutra, liso); a figura não muda
     const nd = raw.neutral.getContext('2d',{ willReadFrequently:true })!.getImageData(0,0,raw.neutral.width,raw.neutral.height)
-    const plate = this.rigImgs ? null : buildPlate(nd.data,backgroundMask(nd.data,nd.width,nd.height),nd.width,nd.height)
+    const plate = this.stable ? null : buildPlate(nd.data,backgroundMask(nd.data,nd.width,nd.height),nd.width,nd.height)
     const skinRef = this.skinTone(raw.neutral,this.def.assets.neutral)
     this.processor = (k:Expression)=>{
       const c = raw[k], asset = this.def.assets[k]
@@ -130,7 +124,7 @@ export class PortraitRenderer {
     if(this.destroyed || !this.loaded.neutral) return
     const c = document.createElement('canvas'); c.width = 6; c.height = 6
     const cx = c.getContext('2d')!
-    cx.drawImage(this.rigImgs?.background ?? this.loaded.neutral.img,8,8,6,6,0,0,6,6)
+    cx.drawImage(this.loaded.neutral.img,8,8,6,6,0,0,6,6)
     const d = cx.getImageData(0,0,6,6).data
     let r=0,g=0,b=0
     for(let i=0;i<d.length;i+=4){ r+=d[i]; g+=d[i+1]; b+=d[i+2] }
@@ -205,7 +199,7 @@ export class PortraitRenderer {
       const l = d[i]+d[i+1]+d[i+2]
       if(l<best){ best = l; lash = [d[i],d[i+1],d[i+2]] }
     }
-    return { asset, img:c, base:isBase || this.rigImgs ? c : this.alignImage(asset,c), patch:this.rigImgs ? this.buildPatch(asset,c) : undefined, skin, lash, inner, visemes:this.tintVisemes(mskin) }
+    return { asset, img:c, base:isBase || this.stable ? c : this.alignImage(asset,c), patch:this.stable ? this.buildPatch(asset,c) : undefined, skin, lash, inner, visemes:this.tintVisemes(mskin) }
   }
 
   /** Tom médio da pele (bochechas e testa) de uma imagem. */
@@ -444,11 +438,9 @@ export class PortraitRenderer {
     if(this.shown){
       const tr = this.trans
       const e = tr ? tr.t*tr.t*(3-2*tr.t) : 1
-      if(this.rigImgs){
-        // fundo, corpo e cabeça nunca mudam; só o interior do rosto troca de expressão
-        ctx.drawImage(this.rigImgs.background,0,0)
-        ctx.drawImage(this.rigImgs.body,0,0)
-        ctx.drawImage(this.rigImgs.head,0,0)
+      if(this.stable && this.loaded.neutral){
+        // cabelo, corpo e fundo vêm sempre da imagem neutra; só o interior do rosto troca de expressão
+        ctx.drawImage(this.loaded.neutral.img,0,0)
         const { x, y } = this.faceBox
         if(this.shown.patch) ctx.drawImage(this.shown.patch,x,y)
         if(tr?.to.patch){ ctx.globalAlpha = e; ctx.drawImage(tr.to.patch,x,y); ctx.globalAlpha = 1 }
