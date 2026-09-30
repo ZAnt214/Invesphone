@@ -30,16 +30,16 @@ export const liviaInterrogation:InterrogationConfig = {
   },
   idleState:'idle',
   initial:['arrival','entering'],
-  requiredForFinal:['where_were','door_open','breakin','caio_code','fights'],
+  requiredForFinal:['where_were','after','breakin','caio_code','fights','mother_last'],
   finalQuestion:'untold',
   closingLabel:'DEPOIMENTO ENCERRADO',
   questions:[
-    // linha 1: horário e o Caio
     {
       id:'arrival',
       question:'Que horas você chegou em casa?',
       answer:'Eu não sei exatamente… devia ser uma da manhã, talvez um pouco depois. Eu não fiquei olhando a hora.',
       videoState:'response',
+      expression:'tired',
       unlocks:['caio_together']
     },
     {
@@ -47,74 +47,95 @@ export const liviaInterrogation:InterrogationConfig = {
       question:'Você estava com o Caio?',
       answer:'Estava. A gente ficou junto a noite toda.',
       videoState:'reactionA',
+      expression:'defensive',
       unlocks:['where_were','parents_relationship']
     },
     {
       id:'where_were',
       question:'Onde vocês estavam?',
-      answer:'A gente rodou de carro, depois ficou num lugar… eu não lembro o nome. A gente só queria ficar sozinho.',
-      videoState:'reactionB'
+      answer:'Num motel. A gente foi pra lá depois que saiu.',
+      videoState:'reactionB',
+      expression:'uncomfortable'
     },
-    // linha 2: entrada na casa
     {
       id:'entering',
       question:'O que você viu quando entrou?',
-      answer:'A casa estava toda apagada. Achei estranho o silêncio. Fui até o quarto deles, abri a porta e… eu não consegui nem gritar.',
+      answer:'A sala tava toda bagunçada. Tinha coisa fora do lugar… eu achei que tinham entrado lá. Eu chamei pela minha mãe… ninguém respondeu.',
       videoState:'response',
-      unlocks:['door_open','breakin']
+      expression:'shaken',
+      unlocks:['after','door_open']
+    },
+    {
+      id:'after',
+      question:'E depois?',
+      answer:'Eu subi. Fui no quarto deles. Eu… eu vi os dois lá.',
+      videoState:'reactionB',
+      expression:'shaken'
     },
     {
       id:'door_open',
-      question:'A porta estava aberta?',
-      answer:'Estava trancada. Eu usei minha chave, como sempre faço.',
+      question:'A porta estava aberta quando você chegou?',
+      answer:'Não… quer dizer… eu abri normalmente. Eu tenho chave.',
       videoState:'reactionA',
+      expression:'nervous',
+      unlocks:['breakin'],
       clues:['porta_intacta']
     },
     {
       id:'breakin',
-      question:'Tinha sinal de arrombamento?',
-      answer:'Não vi nada quebrado. Nem porta, nem janela. É isso que eu não entendo.',
+      question:'Tinha algum sinal de arrombamento?',
+      answer:'Eu não reparei nisso. Eu só vi a casa daquele jeito e achei que alguém tinha entrado.',
       videoState:'reactionB',
+      expression:'defensive',
       unlocks:['alarm_code'],
       clues:['porta_intacta']
     },
-    // linha 3: alarme
     {
       id:'alarm_code',
       question:'Quem sabia o código do alarme?',
-      answer:'Meus pais, eu… o Rafael também, acho. A Cida sabia o antigo.',
+      answer:'Eu… meu pai, minha mãe… eu também sabia. Meu irmão provavelmente sabia.',
       videoState:'response',
+      expression:'nervous',
       unlocks:['caio_code'],
       clues:['livia_codigo']
     },
     {
       id:'caio_code',
-      question:'E o Caio?',
-      answer:'O Caio? Não. Eu nunca passei o código pra ele. Ele só me viu digitando uma vez, mas nunca precisou saber.',
+      question:'E o Caio sabia?',
+      answer:'Não. Pelo menos… eu nunca passei o código pra ele.',
       videoState:'reactionB',
+      expression:'nervous',
       clues:['inconsistencia_caio_codigo']
     },
-    // linha 4: os pais e o namoro
     {
       id:'parents_relationship',
-      question:'Seus pais gostavam do relacionamento?',
-      answer:'Meu pai não engolia o Caio. Minha mãe fingia que aceitava, mas vivia me cobrando.',
+      question:'Seus pais gostavam do seu relacionamento com ele?',
+      answer:'Não muito. Meu pai principalmente. Ele achava que o Caio não era bom pra mim.',
       videoState:'reactionA',
-      unlocks:['fights']
+      expression:'defensive',
+      unlocks:['fights','mother_last']
     },
     {
       id:'fights',
       question:'Vocês discutiam por causa disso?',
-      answer:'Discutíamos, sim. Toda família discute… mas nunca a ponto de eu querer que acontecesse uma coisa dessas.',
+      answer:'Família discute. Mas não era nada… desse tamanho.',
       videoState:'response',
+      expression:'uncomfortable',
       clues:['brigas_namoro']
     },
-    // final
+    {
+      id:'mother_last',
+      question:'Quando foi a última vez que você falou com sua mãe?',
+      answer:'Antes de sair. A gente ia conversar quando eu voltasse.',
+      videoState:'reactionA',
+      expression:'shaken'
+    },
     {
       id:'untold',
       question:'Tem alguma coisa que você ainda não contou pra gente?',
-      answer:'…Eu devia ter ligado pra alguém antes de entrar no quarto. Mas eu fiquei parada na porta, olhando. Eu só… não consegui.',
-      videoState:'reactionB'
+      answer:'Não. Eu contei tudo.',
+      videoState:'reactionB',
+      expression:'nervous'
     }
   ]
 }
