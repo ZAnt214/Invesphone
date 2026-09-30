@@ -77,20 +77,20 @@ const callTurns = [
 
 const operationalOrders = [
   [
-    {id:'isolar_rua',label:'Enviar viatura para isolar a rua',confirm:'Viatura acionada para reforçar o perímetro.'},
-    {id:'acionar_pericia',label:'Acionar perícia no quarto',confirm:'Perícia avisada. Quarto do casal será prioridade.'}
+    {id:'isolar_rua',label:'Enviar viatura para isolar a rua',spoken:'Sônia, manda uma viatura isolar a rua e segura qualquer movimentação em frente à casa.',confirm:'Pode deixar. Vou reforçar o perímetro agora.'},
+    {id:'acionar_pericia',label:'Acionar perícia no quarto',spoken:'Aciona a perícia e coloca o quarto do casal como prioridade.',confirm:'Certo. Vou colocar o quarto como prioridade para a equipe técnica.'}
   ],
   [
-    {id:'separar_depoimentos',label:'Separar Lívia e Caio',confirm:'Equipe orientada a manter os dois separados.'},
-    {id:'preservar_casa',label:'Restringir acesso à casa',confirm:'Acesso restrito apenas à equipe autorizada.'}
+    {id:'separar_depoimentos',label:'Separar Lívia e Caio',spoken:'Mantém a Lívia e o Caio separados. Não quero os dois alinhando versão.',confirm:'Entendido. Vou manter os dois separados até você falar com eles.'},
+    {id:'preservar_casa',label:'Restringir acesso à casa',spoken:'Restringe o acesso à casa. Só entra quem estiver autorizado na ocorrência.',confirm:'Fechado. Vou limitar o acesso à equipe da ocorrência.'}
   ],
   [
-    {id:'pedir_alarme',label:'Solicitar log do alarme',confirm:'Central já está buscando o histórico do alarme.'},
-    {id:'checar_cameras',label:'Checar câmeras da rua',confirm:'Equipe externa vai levantar câmeras próximas.'}
+    {id:'pedir_alarme',label:'Solicitar log do alarme',spoken:'Pede pra central puxar o log completo do alarme, principalmente as últimas ativações e desativações.',confirm:'Vou pedir agora. Assim que a central devolver o histórico, te encaminho.'},
+    {id:'checar_cameras',label:'Checar câmeras da rua',spoken:'Manda alguém levantar câmeras da rua e das duas quadras próximas.',confirm:'Certo. Vou acionar a equipe externa para levantar as imagens.'}
   ],
   [
-    {id:'preservar_painel',label:'Preservar painel do alarme',confirm:'Painel isolado para perícia e coleta técnica.'},
-    {id:'relatorio_preliminar',label:'Pedir relatório preliminar',confirm:'Sônia vai cobrar um resumo assim que a perícia fechar a primeira leitura.'}
+    {id:'preservar_painel',label:'Preservar painel do alarme',spoken:'Preserva o painel do alarme. Ninguém mexe nele antes da perícia.',confirm:'Entendido. Vou mandar isolar o painel agora.'},
+    {id:'relatorio_preliminar',label:'Pedir relatório preliminar',spoken:'Me manda um relatório preliminar assim que a perícia fechar essa primeira leitura.',confirm:'Combinado. Assim que eles fecharem a primeira leitura, eu te envio.'}
   ]
 ] as const
 
@@ -222,15 +222,15 @@ function TypewriterText({text,audioOn,onDone,quote=true}:{text:string;audioOn:bo
 }
 
 function ActiveCall({line,time,muted,speaker,audioOn,issuedOrders,setMuted,setSpeaker,onOrder,onNext,onFinish}:{line:number;time:string;muted:boolean;speaker:boolean;audioOn:boolean;issuedOrders:string[];setMuted:(v:boolean)=>void;setSpeaker:(v:boolean)=>void;onOrder:(id:string)=>void;onNext:()=>void;onFinish:()=>void}){
- const [phase,setPhase]=useState<'sonia'|'choice'|'player'|'closing'>('sonia')
+ const [phase,setPhase]=useState<'sonia'|'choice'|'player'|'orderPlayer'|'orderAck'|'orderChoice'|'closing'>('sonia')
  const [reply,setReply]=useState('')
  const [previousChoice,setPreviousChoice]=useState(0)
  const [selectedChoice,setSelectedChoice]=useState(0)
  const [orderOpen,setOrderOpen]=useState(false)
  const [orderIssued,setOrderIssued]=useState(false)
- const [orderFeedback,setOrderFeedback]=useState('')
+ const [currentOrder,setCurrentOrder]=useState<(typeof operationalOrders)[number][number]|null>(null)
 
- useEffect(()=>{setPhase('sonia');setReply('');setOrderOpen(false);setOrderIssued(false);setOrderFeedback('')},[line])
+ useEffect(()=>{setPhase('sonia');setReply('');setOrderOpen(false);setOrderIssued(false);setCurrentOrder(null)},[line])
 
  const turn=callTurns[line]
  const soniaText=typeof turn.sonia==='string'?turn.sonia:turn.sonia[previousChoice]
@@ -243,13 +243,20 @@ function ActiveCall({line,time,muted,speaker,audioOn,issuedOrders,setMuted,setSp
    setOrderOpen(false)
    setPhase('player')
  }
- const issueOrder=(order:{id:string;label:string;confirm:string})=>{
+ const issueOrder=(order:(typeof operationalOrders)[number][number])=>{
    if(issuedOrders.includes(order.id)||orderIssued)return
-   onOrder(order.id)
-   setOrderIssued(true)
+   setCurrentOrder(order)
    setOrderOpen(false)
-   setOrderFeedback(order.confirm)
+   setPhase('orderPlayer')
  }
+ const orderPlayerDone=()=>window.setTimeout(()=>setPhase('orderAck'),500)
+ const orderAckDone=()=>window.setTimeout(()=>{
+   if(currentOrder){
+     onOrder(currentOrder.id)
+     setOrderIssued(true)
+   }
+   setPhase('orderChoice')
+ },650)
  const playerDone=()=>{
    window.setTimeout(()=>{
      if(line===callTurns.length-1){
@@ -276,25 +283,36 @@ function ActiveCall({line,time,muted,speaker,audioOn,issuedOrders,setMuted,setSp
       ?<motion.div className="dialogue-line player-line" key={'p'+line+'-'+selectedChoice} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}}>
         <b>LEMOS</b><p><TypewriterText text={reply} audioOn={audioOn} onDone={playerDone}/></p>
        </motion.div>
+      :phase==='orderPlayer'&&currentOrder
+      ?<motion.div className="dialogue-line player-line" key={'op'+currentOrder.id} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}}>
+        <b>LEMOS</b><p><TypewriterText text={currentOrder.spoken} audioOn={audioOn} onDone={orderPlayerDone}/></p>
+       </motion.div>
+      :phase==='orderAck'&&currentOrder
+      ?<motion.div className="dialogue-line sonia-line" key={'oa'+currentOrder.id} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}}>
+        <b>SÔNIA</b><p><TypewriterText text={currentOrder.confirm} audioOn={audioOn} onDone={orderAckDone}/></p>
+       </motion.div>
+      :phase==='orderChoice'&&currentOrder
+      ?<motion.div className="dialogue-line sonia-line" key={'oc'+currentOrder.id} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}}>
+        <b>SÔNIA</b><p>“{currentOrder.confirm}”</p>
+       </motion.div>
       :<motion.div className="dialogue-line sonia-line" key={'c'+selectedChoice} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}}>
         <b>SÔNIA</b><p><TypewriterText text={closingText} audioOn={audioOn} onDone={closingDone}/></p>
        </motion.div>
     }
    </AnimatePresence>
 
-   {phase==='choice'&&<motion.div className="call-replies" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}}>
+   {(phase==='choice'||phase==='orderChoice')&&<motion.div className="call-replies" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}}>
     <small>RESPONDER</small>
     {turn.replies.map((text,i)=><button key={i} onClick={()=>chooseReply(text,i)}>{text}</button>)}
     {!orderIssued&&<button className="order-trigger" onClick={()=>setOrderOpen(v=>!v)}><Shield/> DAR ORDEM</button>}
     {orderOpen&&<motion.div className="order-panel" initial={{opacity:0,y:8}} animate={{opacity:1,y:0}}>
-      <small>AÇÃO OPERACIONAL</small>
-      {operationalOrders[line].map(order=><button key={order.id} onClick={()=>issueOrder(order)}><b>{order.label}</b><span>executar agora</span></button>)}
+      <small>O QUE LEMOS VAI DIZER</small>
+      {operationalOrders[line].map(order=><button key={order.id} onClick={()=>issueOrder(order)}><b>{order.label}</b><span>falar na ligação</span></button>)}
     </motion.div>}
-    {orderFeedback&&<motion.div className="order-feedback" initial={{opacity:0}} animate={{opacity:1}}><Check/>{orderFeedback}</motion.div>}
    </motion.div>}
 
-   <div className="wave">{[10,18,27,15,30,20,26,16,11,22,14].map((h,i)=><motion.i key={i} animate={{height:phase==='choice'?[8,9,8]:[8,h,11]}} transition={{duration:.55+(i%3)*.1,repeat:Infinity,repeatType:'mirror',delay:i*.045}}/>)}</div>
-   <div className="speaking"><i/> {phase==='choice'?'aguardando resposta':phase==='player'?'Lemos falando':phase==='closing'?'Sônia encerrando':'transcrição em tempo real'}</div>
+   <div className="wave">{[10,18,27,15,30,20,26,16,11,22,14].map((h,i)=><motion.i key={i} animate={{height:(phase==='choice'||phase==='orderChoice')?[8,9,8]:[8,h,11]}} transition={{duration:.55+(i%3)*.1,repeat:Infinity,repeatType:'mirror',delay:i*.045}}/>)}</div>
+   <div className="speaking"><i/> {phase==='choice'||phase==='orderChoice'?'aguardando resposta':phase==='player'||phase==='orderPlayer'?'Lemos falando':phase==='closing'?'Sônia encerrando':'transcrição em tempo real'}</div>
   </motion.section>
   <section className="controls"><button className={muted?'on':''} onClick={()=>setMuted(!muted)}><span><MicOff/></span><small>{muted?'mudo ativo':'mudo'}</small></button><button><span><Grid3X3/></span><small>teclado</small></button><button className={speaker?'on':''} onClick={()=>setSpeaker(!speaker)}><span><Volume2/></span><small>{speaker?'alto-falante ativo':'alto-falante'}</small></button></section>
   <div className="homebar"/>
