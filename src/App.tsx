@@ -6,7 +6,7 @@ import {
   Home, Image as ImageIcon, Lock, MessageCircle, MicOff, Phone, PhoneOff,
   RotateCcw, Search, Shield, Smartphone, Users, Volume2
 } from 'lucide-react'
-import { enableAudio, playConnect, playHangup, startRingtone, stopRingtone } from './audio'
+import { enableAudio, playConnect, playHangup, previewRingtone, startRingtone, stopRingtone, type RingtoneStyle } from './audio'
 import { acceptedProofs, chapters, clues, disclaimer, people, teamMessages, victimMessages } from './case01'
 
 const SAVE_VERSION = 2
@@ -66,6 +66,11 @@ export default function App(){
   const [audioOn,setAudioOn]=useState(false)
   const [muted,setMuted]=useState(false)
   const [speaker,setSpeaker]=useState(false)
+  const [ringtone,setRingtone]=useState<RingtoneStyle>(()=>{
+    const saved=Number(localStorage.getItem('invesphone-ringtone'))
+    return saved>=1&&saved<=10?saved as RingtoneStyle:1
+  })
+  const [showRingtones,setShowRingtones]=useState(false)
 
   useEffect(()=>localStorage.setItem(SAVE_KEY,JSON.stringify(game)),[game])
 
@@ -73,9 +78,9 @@ export default function App(){
     if(game.screen!=='incoming'){stopRingtone();return}
     // Sem vibração física repetitiva: o pulso visual já comunica a chamada
     // e evita uma sensação artificial em navegadores/dispositivos diferentes.
-    if(audioOn)startRingtone()
+    if(audioOn)startRingtone(ringtone)
     return()=>stopRingtone()
-  },[game.screen,audioOn])
+  },[game.screen,audioOn,ringtone])
 
   useEffect(()=>{
     if(game.screen!=='active')return
@@ -96,7 +101,16 @@ export default function App(){
   },[game.screen])
 
   const setScreen=(screen:Screen)=>setGame(g=>({...g,screen}))
-  const activateSound=async()=>{if(await enableAudio()){setAudioOn(true);if(game.screen==='incoming')startRingtone()}}
+  const activateSound=async()=>{if(await enableAudio()){setAudioOn(true);if(game.screen==='incoming')startRingtone(ringtone)}}
+  const chooseRingtone=async(style:RingtoneStyle)=>{
+    const ok=await enableAudio()
+    if(!ok)return
+    stopRingtone()
+    setAudioOn(true)
+    setRingtone(style)
+    localStorage.setItem('invesphone-ringtone',String(style))
+    await previewRingtone(style)
+  }
   const answer=()=>{stopRingtone();if(audioOn)playConnect();setElapsed(0);setLine(0);navigator.vibrate?.(18);setScreen('active')}
   const decline=()=>{stopRingtone();if(audioOn)playHangup();setScreen('missed')}
   const finishCall=()=>{if(audioOn)playHangup();setScreen('launching')}
@@ -105,7 +119,7 @@ export default function App(){
   const time=`${String(Math.floor(elapsed/60)).padStart(2,'0')}:${String(elapsed%60).padStart(2,'0')}`
 
   return <AnimatePresence mode="wait">
-    {game.screen==='incoming'&&<Incoming audioOn={audioOn} onSound={activateSound} onAnswer={answer} onDecline={decline}/>}
+    {game.screen==='incoming'&&<Incoming audioOn={audioOn} ringtone={ringtone} showRingtones={showRingtones} onToggleRingtones={()=>setShowRingtones(v=>!v)} onSelectRingtone={chooseRingtone} onSound={activateSound} onAnswer={answer} onDecline={decline}/>} 
     {game.screen==='missed'&&<Missed onAnswer={answer}/>}
     {game.screen==='active'&&<ActiveCall line={line} time={time} muted={muted} speaker={speaker} setMuted={setMuted} setSpeaker={setSpeaker} onFinish={finishCall}/>}
     {game.screen==='launching'&&<Launching/>}
@@ -115,15 +129,28 @@ export default function App(){
   </AnimatePresence>
 }
 
-function Incoming({audioOn,onSound,onAnswer,onDecline}:{audioOn:boolean;onSound:()=>void;onAnswer:()=>void;onDecline:()=>void}){
+function Incoming({audioOn,ringtone,showRingtones,onToggleRingtones,onSelectRingtone,onSound,onAnswer,onDecline}:{audioOn:boolean;ringtone:RingtoneStyle;showRingtones:boolean;onToggleRingtones:()=>void;onSelectRingtone:(style:RingtoneStyle)=>void;onSound:()=>void;onAnswer:()=>void;onDecline:()=>void}){
  return <motion.main key="incoming" className="call-screen" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0,scale:.985}} transition={{duration:.35}}>
   <Ambient/><StatusBar/>
   <section className="caller">
    <div className="avatar-pulse"><motion.i animate={{scale:[1,1.48],opacity:[.3,0]}} transition={{duration:1.8,repeat:Infinity}}/><motion.i animate={{scale:[1,1.72],opacity:[.16,0]}} transition={{duration:1.8,repeat:Infinity,delay:.45}}/><motion.div className="avatar" animate={{scale:[1,1.035,1]}} transition={{duration:1.8,repeat:Infinity}}>SP</motion.div></div>
    <small>CHAMADA RECEBIDA</small><h1>Sônia Prado</h1><p>DHPP · Supervisão</p>
    <motion.span className="ringing" animate={{opacity:[.45,1,.45]}} transition={{duration:1.4,repeat:Infinity}}>chamando…</motion.span>
-   {!audioOn?<button className="sound-button" onClick={onSound}><Volume2/> Ativar toque da chamada</button>:<span className="sound-on"><Volume2/> Som ativado</span>}
+   {!audioOn?<button className="sound-button" onClick={onSound}><Volume2/> Ativar toque da chamada</button>:<span className="sound-on"><Volume2/> Som ativado · toque {ringtone}</span>}
+   <button className="ringtone-open" onClick={onToggleRingtones}>{showRingtones?'Fechar testes':'Testar 10 toques'}</button>
   </section>
+  <AnimatePresence>
+   {showRingtones&&<motion.section className="ringtone-picker" initial={{opacity:0,y:28}} animate={{opacity:1,y:0}} exit={{opacity:0,y:20}}>
+    <header><div><small>ESCOLHER TOQUE</small><b>Toque em uma opção para ouvir</b></div><button onClick={onToggleRingtones}>×</button></header>
+    <div className="ringtone-grid">
+     {[
+      [1,'Clássico'],[2,'Smartphone'],[3,'Corporativo'],[4,'Campainha'],[5,'Crescente'],
+      [6,'Eco'],[7,'Minimal'],[8,'Grave'],[9,'Duplo ring'],[10,'Moderno']
+     ].map(([id,label])=><button key={id} className={ringtone===id?'selected':''} onClick={()=>onSelectRingtone(id as RingtoneStyle)}><Volume2/><span>{id}. {label}</span>{ringtone===id&&<Check/>}</button>)}
+    </div>
+    <p>O toque selecionado fica salvo neste aparelho.</p>
+   </motion.section>}
+  </AnimatePresence>
   <motion.div className="call-actions" initial={{opacity:0,y:24}} animate={{opacity:1,y:0}} transition={{delay:.35,type:'spring'}}>
    <button className="decline" onClick={onDecline}><PhoneOff/><span>Recusar</span></button>
    <motion.button className="answer" onClick={onAnswer} animate={{scale:[1,1.05,1]}} transition={{duration:1.35,repeat:Infinity}}><Phone/><span>Atender</span></motion.button>
