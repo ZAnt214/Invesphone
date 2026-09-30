@@ -16,55 +16,67 @@ async function ready() {
   return c
 }
 
-function bellTone(c: AudioContext, frequency: number, delay = 0, volume = 0.075) {
-  const master = c.createGain()
+function connectOutput(c: AudioContext) {
   const compressor = c.createDynamicsCompressor()
-  const start = c.currentTime + delay
-  const duration = 0.62
-
-  compressor.threshold.value = -20
-  compressor.knee.value = 12
-  compressor.ratio.value = 4
-  compressor.attack.value = 0.002
-  compressor.release.value = 0.22
-
-  master.gain.setValueAtTime(0.0001, start)
-  master.gain.linearRampToValueAtTime(volume, start + 0.018)
-  master.gain.exponentialRampToValueAtTime(0.0001, start + duration)
-
-  const partials = [
-    { ratio: 1, gain: 1 },
-    { ratio: 2.01, gain: 0.32 },
-    { ratio: 3.98, gain: 0.10 },
-  ]
-
-  partials.forEach((partial, index) => {
-    const osc = c.createOscillator()
-    const gain = c.createGain()
-    osc.type = 'sine'
-    osc.frequency.setValueAtTime(frequency * partial.ratio, start)
-    gain.gain.value = partial.gain
-    osc.connect(gain)
-    gain.connect(master)
-    osc.start(start)
-    osc.stop(start + duration + index * 0.025)
-    scheduled.push(osc)
-  })
-
-  master.connect(compressor)
+  compressor.threshold.value = -16
+  compressor.knee.value = 8
+  compressor.ratio.value = 5
+  compressor.attack.value = 0.003
+  compressor.release.value = 0.16
   compressor.connect(c.destination)
+  return compressor
+}
+
+function pulseLayer(
+  c: AudioContext,
+  out: AudioNode,
+  from: number,
+  to: number,
+  duration: number,
+  volume: number,
+  delay: number,
+  type: OscillatorType
+) {
+  const osc = c.createOscillator()
+  const gain = c.createGain()
+  const start = c.currentTime + delay
+
+  osc.type = type
+  osc.frequency.setValueAtTime(from, start)
+  osc.frequency.exponentialRampToValueAtTime(to, start + duration)
+
+  gain.gain.setValueAtTime(0.0001, start)
+  gain.gain.linearRampToValueAtTime(volume, start + 0.012)
+  gain.gain.setValueAtTime(volume * 0.72, start + duration * 0.48)
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration)
+
+  osc.connect(gain)
+  gain.connect(out)
+  osc.start(start)
+  osc.stop(start + duration + 0.025)
+  scheduled.push(osc)
+}
+
+function callPulse(c: AudioContext, delay: number, accent = false) {
+  const out = connectOutput(c)
+
+  // Corpo grave para dar presença mesmo em alto-falante pequeno.
+  pulseLayer(c, out, accent ? 246 : 220, accent ? 272 : 246, 0.23, accent ? 0.095 : 0.088, delay, 'sine')
+
+  // Ataque médio curto: deixa o toque definido sem parecer uma melodia.
+  pulseLayer(c, out, accent ? 740 : 660, accent ? 830 : 740, 0.17, 0.052, delay + 0.012, 'triangle')
+
+  // Brilho discreto de chamada moderna.
+  pulseLayer(c, out, accent ? 1480 : 1320, accent ? 1660 : 1480, 0.09, 0.018, delay + 0.025, 'sine')
 }
 
 function ringPhrase(c: AudioContext) {
-  // Toque limpo e atual: notas de sino digital com bastante presença,
-  // sem tentar imitar um aparelho antigo ou um toque conhecido.
-  bellTone(c, 880, 0.00, 0.082)
-  bellTone(c, 1174.66, 0.34, 0.076)
-  bellTone(c, 987.77, 0.76, 0.080)
-  bellTone(c, 1318.51, 1.10, 0.074)
+  // Padrão curto de chamada corporativa: pulsos, não melodia.
+  callPulse(c, 0.00, false)
+  callPulse(c, 0.36, true)
 
-  bellTone(c, 880, 1.78, 0.078)
-  bellTone(c, 1174.66, 2.12, 0.072)
+  callPulse(c, 1.26, false)
+  callPulse(c, 1.62, true)
 }
 
 export async function enableAudio() {
@@ -77,7 +89,7 @@ export async function startRingtone() {
   if (!c) return false
 
   ringPhrase(c)
-  ringTimer = window.setInterval(() => ringPhrase(c), 4_700)
+  ringTimer = window.setInterval(() => ringPhrase(c), 3_900)
   return true
 }
 
@@ -92,6 +104,7 @@ export function stopRingtone() {
 }
 
 function shortTone(c: AudioContext, from: number, to: number, duration: number, volume: number) {
+  const out = connectOutput(c)
   const osc = c.createOscillator()
   const gain = c.createGain()
   const start = c.currentTime
@@ -101,11 +114,11 @@ function shortTone(c: AudioContext, from: number, to: number, duration: number, 
   osc.frequency.linearRampToValueAtTime(to, start + duration)
 
   gain.gain.setValueAtTime(0.0001, start)
-  gain.gain.linearRampToValueAtTime(volume, start + 0.012)
+  gain.gain.linearRampToValueAtTime(volume, start + 0.01)
   gain.gain.exponentialRampToValueAtTime(0.0001, start + duration)
 
   osc.connect(gain)
-  gain.connect(c.destination)
+  gain.connect(out)
   osc.start(start)
   osc.stop(start + duration + 0.02)
   scheduled.push(osc)
@@ -114,11 +127,11 @@ function shortTone(c: AudioContext, from: number, to: number, duration: number, 
 export async function playConnect() {
   const c = await ready()
   if (!c) return
-  shortTone(c, 620, 760, 0.11, 0.030)
+  shortTone(c, 560, 760, 0.10, 0.038)
 }
 
 export async function playHangup() {
   const c = await ready()
   if (!c) return
-  shortTone(c, 520, 390, 0.18, 0.028)
+  shortTone(c, 520, 360, 0.16, 0.034)
 }
