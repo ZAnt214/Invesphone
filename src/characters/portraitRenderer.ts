@@ -430,19 +430,18 @@ export class PortraitRenderer {
     ctx.fillStyle = rgb(this.bg)
     ctx.fillRect(crop.x-40,crop.y-40,crop.w+80,crop.h+80)
 
-    // câmera: respiração e deriva lenta; o corpo afunda quando cansada e treme quando nervosa
+    // câmera: só respiração e uma deriva lenta (sem tremor)
     const t = now/1000
     const calm = this.calm
     const breath = calm ? 0 : Math.sin(t*2*Math.PI/4.6)
     const u = this.unit()
     const drift = calm ? 0 : Math.sin(t*.31)*.8*u
-    const trem = calm ? 0 : this.cur.tremor*(Math.sin(t*37)*.6+Math.sin(t*23.3)*.4)*.7*u
     const pivotX = crop.x+crop.w/2, pivotY = crop.y+crop.h*.45
     const scale = 1.04 + breath*.002
     ctx.save()
     ctx.translate(pivotX,pivotY)
     ctx.scale(scale,scale)
-    ctx.translate(-pivotX+drift+trem,-pivotY+breath*u)
+    ctx.translate(-pivotX+drift,-pivotY+breath*u)
 
     if(this.shown){
       const tr = this.trans
