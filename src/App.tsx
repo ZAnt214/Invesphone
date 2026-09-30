@@ -173,14 +173,15 @@ export default function App(){
   const answer=()=>{stopRingtone();if(audioOn)playConnect();setElapsed(0);setLine(0);navigator.vibrate?.(18);setScreen('active')}
   const decline=()=>{stopRingtone();if(audioOn)playHangup();setScreen('missed')}
   const finishCall=()=>{if(audioOn)playHangup();setScreen('launching')}
+  const skipCall=()=>{stopRingtone();setScreen('launching')}
   const addClue=(id:string)=>setGame(g=>({...g,clues:g.clues.includes(id)?g.clues:[...g.clues,id]}))
   const finishTask=()=>setGame(g=>({...g,task:Math.min(tasks.length-1,g.task+1),screen:'phone',app:'home'}))
   const time=`${String(Math.floor(elapsed/60)).padStart(2,'0')}:${String(elapsed%60).padStart(2,'0')}`
 
   return <AnimatePresence mode="wait">
-    {game.screen==='incoming'&&<Incoming audioOn={audioOn} onSound={activateSound} onAnswer={answer} onDecline={decline}/>} 
-    {game.screen==='missed'&&<Missed onAnswer={answer}/>}
-    {game.screen==='active'&&<ActiveCall line={line} time={time} muted={muted} speaker={speaker} audioOn={audioOn} issuedOrders={game.orders} setMuted={setMuted} setSpeaker={setSpeaker} onOrder={(id)=>setGame(g=>({...g,orders:g.orders.includes(id)?g.orders:[...g.orders,id]}))} onNext={()=>setLine(v=>Math.min(callTurns.length-1,v+1))} onFinish={finishCall}/>} 
+    {game.screen==='incoming'&&<Incoming audioOn={audioOn} onSound={activateSound} onAnswer={answer} onDecline={decline} onSkip={skipCall}/>} 
+    {game.screen==='missed'&&<Missed onAnswer={answer} onSkip={skipCall}/>}
+    {game.screen==='active'&&<ActiveCall line={line} time={time} muted={muted} speaker={speaker} audioOn={audioOn} issuedOrders={game.orders} setMuted={setMuted} setSpeaker={setSpeaker} onOrder={(id)=>setGame(g=>({...g,orders:g.orders.includes(id)?g.orders:[...g.orders,id]}))} onNext={()=>setLine(v=>Math.min(callTurns.length-1,v+1))} onFinish={finishCall} onSkip={skipCall}/>} 
     {game.screen==='launching'&&<Launching/>}
     {game.screen==='phone'&&<PolicePhone game={game} setGame={setGame}/>}
     {game.screen==='task'&&<TaskView game={game} addClue={addClue} setGame={setGame} finishTask={finishTask}/>}
@@ -188,7 +189,8 @@ export default function App(){
   </AnimatePresence>
 }
 
-function Incoming({audioOn,onSound,onAnswer,onDecline}:{audioOn:boolean;onSound:()=>void;onAnswer:()=>void;onDecline:()=>void}){
+function SkipCall({onSkip}:{onSkip:()=>void}){return <button className="skip-call" onClick={onSkip}>Pular ligação</button>}
+function Incoming({audioOn,onSound,onAnswer,onDecline,onSkip}:{audioOn:boolean;onSound:()=>void;onAnswer:()=>void;onDecline:()=>void;onSkip:()=>void}){
  return <motion.main key="incoming" className="call-screen" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0,scale:.985}} transition={{duration:.35}}>
   <Ambient/><StatusBar/>
   <section className="caller">
@@ -200,10 +202,10 @@ function Incoming({audioOn,onSound,onAnswer,onDecline}:{audioOn:boolean;onSound:
   <motion.div className="call-actions" initial={{opacity:0,y:24}} animate={{opacity:1,y:0}} transition={{delay:.35,type:'spring'}}>
    <button className="decline" onClick={onDecline}><PhoneOff/><span>Recusar</span></button>
    <motion.button className="answer" onClick={onAnswer} animate={{scale:[1,1.05,1]}} transition={{duration:1.35,repeat:Infinity}}><Phone/><span>Atender</span></motion.button>
-  </motion.div><div className="homebar"/>
+  </motion.div><SkipCall onSkip={onSkip}/><div className="homebar"/>
  </motion.main>
 }
-function Missed({onAnswer}:{onAnswer:()=>void}){return <motion.main className="call-screen" initial={{opacity:0,y:18}} animate={{opacity:1,y:0}}><StatusBar/><section className="caller"><img className="avatar" src={SONIA_PHOTO} alt="Sônia Prado"/><small>CHAMADA PERDIDA</small><h1>Sônia Prado</h1><p>DHPP · Supervisão</p><div className="missed-card">1 chamada perdida · agora</div></section><div className="single-action"><button className="answer" onClick={onAnswer}><Phone/><span>Retornar</span></button></div><div className="homebar"/></motion.main>}
+function Missed({onAnswer,onSkip}:{onAnswer:()=>void;onSkip:()=>void}){return <motion.main className="call-screen" initial={{opacity:0,y:18}} animate={{opacity:1,y:0}}><StatusBar/><section className="caller"><img className="avatar" src={SONIA_PHOTO} alt="Sônia Prado"/><small>CHAMADA PERDIDA</small><h1>Sônia Prado</h1><p>DHPP · Supervisão</p><div className="missed-card">1 chamada perdida · agora</div></section><div className="single-action"><button className="answer" onClick={onAnswer}><Phone/><span>Retornar</span></button></div><SkipCall onSkip={onSkip}/><div className="homebar"/></motion.main>}
 function TypewriterText({text,audioOn,onDone,quote=true}:{text:string;audioOn:boolean;onDone?:()=>void;quote?:boolean}){
   const [visible,setVisible]=useState('')
   const [done,setDone]=useState(false)
@@ -232,7 +234,7 @@ function TypewriterText({text,audioOn,onDone,quote=true}:{text:string;audioOn:bo
   return <span>{quote?'“':''}{visible}{!done&&<motion.i className="typing-cursor" animate={{opacity:[1,.2,1]}} transition={{duration:.55,repeat:Infinity}}/>}{done&&quote?'”':''}</span>
 }
 
-function ActiveCall({line,time,muted,speaker,audioOn,issuedOrders,setMuted,setSpeaker,onOrder,onNext,onFinish}:{line:number;time:string;muted:boolean;speaker:boolean;audioOn:boolean;issuedOrders:string[];setMuted:(v:boolean)=>void;setSpeaker:(v:boolean)=>void;onOrder:(id:string)=>void;onNext:()=>void;onFinish:()=>void}){
+function ActiveCall({line,time,muted,speaker,audioOn,issuedOrders,setMuted,setSpeaker,onOrder,onNext,onFinish,onSkip}:{line:number;time:string;muted:boolean;speaker:boolean;audioOn:boolean;issuedOrders:string[];setMuted:(v:boolean)=>void;setSpeaker:(v:boolean)=>void;onOrder:(id:string)=>void;onNext:()=>void;onFinish:()=>void;onSkip:()=>void}){
  const [phase,setPhase]=useState<'sonia'|'choice'|'player'|'orderPlayer'|'orderAck'|'orderChoice'|'closing'>('sonia')
  const [reply,setReply]=useState('')
  const [previousChoice,setPreviousChoice]=useState(0)
@@ -282,6 +284,7 @@ function ActiveCall({line,time,muted,speaker,audioOn,issuedOrders,setMuted,setSp
 
  return <motion.main className="call-screen active" initial={{opacity:0,scale:1.015}} animate={{opacity:1,scale:1}} exit={{opacity:0,y:-20}}>
   <Ambient/><StatusBar/>
+  <SkipCall onSkip={onSkip}/>
   <section className="active-caller"><motion.img className="avatar small" src={SONIA_PHOTO} alt="Sônia Prado" initial={{scale:.8}} animate={{scale:1}}/><h1>Sônia Prado</h1><span>{time}</span></section>
   <motion.section className="transcript call-dialogue" layout>
    <small>CHAMADA · DHPP</small>
