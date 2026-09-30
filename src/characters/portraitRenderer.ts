@@ -93,7 +93,9 @@ export class PortraitRenderer {
     if(this.def.visemes){
       try{ this.atlas = await loadImage(this.def.visemes.src) }catch{ /* fala com o lábio de baixo */ }
     }
-    if(this.def.facePolygon){ this.stable = true; this.buildFaceMask(this.def.facePolygon) }
+    if(this.def.faceMask){
+      try{ this.buildFaceMask(await loadImage(this.def.faceMask)); this.stable = true }catch{ /* sem máscara: troca por regiões */ }
+    }
     const entries = Object.entries(this.def.assets) as [Expression,ExpressionAsset][]
     const raw:Partial<Record<Expression,HTMLCanvasElement>> = {}
     await Promise.all(entries.map(async([k,asset])=>{
@@ -232,20 +234,27 @@ export class PortraitRenderer {
     cx.putImageData(id,0,0)
   }
 
-  /** Máscara do interior do rosto: polígono preenchido com borda suave (reduz e amplia para desfocar). */
-  private buildFaceMask(poly:[number,number][]){
-    const xs = poly.map(p=>p[0]), ys = poly.map(p=>p[1])
-    const m = 14
-    const x = Math.floor(Math.min(...xs))-m, y = Math.floor(Math.min(...ys))-m
-    const w = Math.ceil(Math.max(...xs))+m-x, h = Math.ceil(Math.max(...ys))+m-y
+  /** Máscara do interior do rosto, recortada no seu retângulo e com borda suave (reduz e amplia para desfocar). */
+  private buildFaceMask(img:HTMLImageElement){
+    const W = img.naturalWidth, H = img.naturalHeight
+    const full = document.createElement('canvas'); full.width = W; full.height = H
+    const fx = full.getContext('2d',{ willReadFrequently:true })!
+    fx.drawImage(img,0,0)
+    const d = fx.getImageData(0,0,W,H).data
+    let x0 = W, y0 = H, x1 = 0, y1 = 0
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(d[(y*W+x)*4]>127){
+      if(x<x0) x0 = x; if(x>x1) x1 = x; if(y<y0) y0 = y; if(y>y1) y1 = y
+    }
+    const m = 12
+    const x = Math.max(0,x0-m), y = Math.max(0,y0-m)
+    const w = Math.min(W,x1+m)-x, h = Math.min(H,y1+m)-y
     this.faceBox = { x, y, w, h }
     const hard = document.createElement('canvas'); hard.width = w; hard.height = h
     const hx = hard.getContext('2d')!
-    hx.fillStyle = '#000'
-    hx.beginPath()
-    poly.forEach(([px,py],i)=>{ i ? hx.lineTo(px-x,py-y) : hx.moveTo(px-x,py-y) })
-    hx.closePath(); hx.fill()
-    const k = 5
+    const id = hx.createImageData(w,h)
+    for(let j=0;j<h;j++) for(let i=0;i<w;i++) id.data[(j*w+i)*4+3] = d[((y+j)*W+x+i)*4]
+    hx.putImageData(id,0,0)
+    const k = 4
     const small = document.createElement('canvas'); small.width = Math.ceil(w/k); small.height = Math.ceil(h/k)
     const sx = small.getContext('2d')!
     sx.imageSmoothingEnabled = true
