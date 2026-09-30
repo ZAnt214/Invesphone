@@ -88,6 +88,34 @@ function shortTone(c: AudioContext, from: number, to: number, duration: number, 
   osc.stop(start + duration + 0.02)
 }
 
+export async function playTypingTick() {
+  const c = await ready()
+  if (!c) return
+
+  const osc = c.createOscillator()
+  const gain = c.createGain()
+  const filter = c.createBiquadFilter()
+  const now = c.currentTime
+
+  osc.type = 'square'
+  osc.frequency.setValueAtTime(1280, now)
+  osc.frequency.exponentialRampToValueAtTime(860, now + 0.022)
+
+  filter.type = 'lowpass'
+  filter.frequency.value = 2400
+  filter.Q.value = 0.6
+
+  gain.gain.setValueAtTime(0.0001, now)
+  gain.gain.linearRampToValueAtTime(0.018, now + 0.002)
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.028)
+
+  osc.connect(filter)
+  filter.connect(gain)
+  gain.connect(c.destination)
+  osc.start(now)
+  osc.stop(now + 0.032)
+}
+
 export async function playConnect() {
   const c = await ready()
   if (!c) return
