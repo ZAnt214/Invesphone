@@ -236,6 +236,8 @@ export class PortraitRenderer {
     ctx.save(); ctx.beginPath(); ctx.rect(0,n.neckY,W,H-n.neckY); ctx.clip()
     ctx.translate(rx,n.neckY); ctx.scale(sc,sc); ctx.translate(-ex,-asset.align.neckY)
     ctx.drawImage(c,0,0); ctx.restore()
+    const sx0 = Math.max(0,ex-rx/sc), sx1 = Math.min(c.width,ex+(W-rx)/sc)
+    const dx = rx+(sx0-ex)*sc
     // entre os pontos de ancoragem, cada faixa horizontal é esticada linearmente
     const anchors = [
       { d:yh, s:ey+(yh-ry)/sc },
@@ -247,7 +249,8 @@ export class PortraitRenderer {
       for(let y=a.d;y<b.d;y+=2){
         const y2 = Math.min(b.d,y+2)
         const sy = a.s+(b.s-a.s)*(y-a.d)/(b.d-a.d), sy2 = a.s+(b.s-a.s)*(y2-a.d)/(b.d-a.d)
-        ctx.drawImage(c,ex-rx/sc,sy,W/sc,sy2-sy,0,y,W,y2-y+.5)
+        // Safari não recorta bem origem fora da imagem: usa só a parte que existe e posiciona no destino
+        ctx.drawImage(c,sx0,sy,sx1-sx0,sy2-sy,dx,y,(sx1-sx0)*sc,y2-y+.5)
       }
     }
     return out
