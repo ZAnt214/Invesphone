@@ -89,10 +89,10 @@ export const characters:Record<string,CharacterDef> = {
     },
     visemes:{
       src:`${base}characters/livia/visemes.png`,
-      cellW:216, cellH:56,
+      cellW:400, cellH:120,
       order:['A','E','I','O','U','M'],
-      center:[108,27],
-      lipWidth:85
+      center:[200,60],
+      lipWidth:108
     },
     face:{ cx:432, cy:450, size:420 }
   }
