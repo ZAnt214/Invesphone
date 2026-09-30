@@ -36,11 +36,11 @@ Em `src/interrogation/livia.ts`, cada pergunta tem `expression`. A lógica não 
 
 ## Nova imagem de expressão
 
-Coloque o arquivo em `public/characters/<id>/` e acrescente em `assets` do personagem: `src`, `align` (olhos e escala), `eyes` e `mouth` (medidos na imagem). Imagens de uma mesma expressão devem ter o mesmo enquadramento; o `align` corrige pequenas diferenças.
+Coloque o arquivo em `public/characters/<id>/expressions/<expressao>.jpg` (o ChatGPT entrega ali, com `README.md` e `manifest.json`; a Lívia está em 900x1200) e acrescente em `assets` do personagem: `src`, `align` (olhos e escala), `eyes` e `mouth` (medidos na imagem). Imagens de uma mesma expressão devem ter o mesmo enquadramento; o `align` corrige pequenas diferenças.
 
 ## Personagem novo
 
-1. Coloque as imagens em `public/characters/<id>/` e cadastre em `characters.ts` (recorte, `face` e as marcas de cada imagem).
+1. Confira `public/characters/<id>/expressions/` (assets do ChatGPT) e cadastre em `characters.ts` (recorte, `face` e as marcas de cada imagem).
 2. Crie `src/interrogation/<id>.ts` com `personId`, perguntas, expressões, pistas e desbloqueios.
 3. Renderize `<IllustratedInterrogation config=... />` e guarde o progresso no save.
 
