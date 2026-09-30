@@ -115,3 +115,7 @@ img.mini-avatar{display:block;object-fit:cover}
 .call-replies button{background:rgba(255,255,255,.1);border-color:transparent}
 .controls button span{background:rgba(255,255,255,.14)}
 .controls button.on span{background:#e5e8ea}
+
+/* fotos dos personagens nas listas */
+.people-list button>i,.interview-cards button>i{overflow:hidden}
+img.face{display:block;width:100%;height:100%;object-fit:cover}
