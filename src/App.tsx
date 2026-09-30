@@ -6,7 +6,7 @@ import {
   Home, Image as ImageIcon, Lock, MessageCircle, MicOff, Phone, PhoneOff,
   RotateCcw, Search, Shield, Smartphone, Users, Volume2
 } from 'lucide-react'
-import { enableAudio, playCallVoice, playConnect, playHangup, startRingtone, stopCallVoice, stopRingtone } from './audio'
+import { enableAudio, playConnect, playHangup, startRingtone, stopRingtone } from './audio'
 import { acceptedProofs, chapters, clues, disclaimer, people, teamMessages, victimMessages } from './case01'
 
 const SAVE_VERSION = 2
@@ -86,12 +86,10 @@ export default function App(){
   },[game.screen])
 
   useEffect(()=>{
-    if(game.screen!=='active')return
-    if(audioOn)playCallVoice(line,callLineDurations[line])
-    if(line>=callLines.length-1)return()=>stopCallVoice()
+    if(game.screen!=='active'||line>=callLines.length-1)return
     const id=window.setTimeout(()=>setLine(v=>v+1),callLineDurations[line])
-    return()=>{window.clearTimeout(id);stopCallVoice()}
-  },[game.screen,line,audioOn])
+    return()=>window.clearTimeout(id)
+  },[game.screen,line])
 
   useEffect(()=>{
     if(game.screen!=='launching')return
@@ -102,8 +100,8 @@ export default function App(){
   const setScreen=(screen:Screen)=>setGame(g=>({...g,screen}))
   const activateSound=async()=>{if(await enableAudio()){setAudioOn(true);if(game.screen==='incoming')startRingtone()}}
   const answer=()=>{stopRingtone();if(audioOn)playConnect();setElapsed(0);setLine(0);navigator.vibrate?.(18);setScreen('active')}
-  const decline=()=>{stopRingtone();stopCallVoice();if(audioOn)playHangup();setScreen('missed')}
-  const finishCall=()=>{stopCallVoice();if(audioOn)playHangup();setScreen('launching')}
+  const decline=()=>{stopRingtone();if(audioOn)playHangup();setScreen('missed')}
+  const finishCall=()=>{if(audioOn)playHangup();setScreen('launching')}
   const addClue=(id:string)=>setGame(g=>({...g,clues:g.clues.includes(id)?g.clues:[...g.clues,id]}))
   const finishTask=()=>setGame(g=>({...g,task:Math.min(tasks.length-1,g.task+1),screen:'phone',app:'home'}))
   const time=`${String(Math.floor(elapsed/60)).padStart(2,'0')}:${String(elapsed%60).padStart(2,'0')}`
@@ -135,7 +133,7 @@ function Incoming({audioOn,onSound,onAnswer,onDecline}:{audioOn:boolean;onSound:
  </motion.main>
 }
 function Missed({onAnswer}:{onAnswer:()=>void}){return <motion.main className="call-screen" initial={{opacity:0,y:18}} animate={{opacity:1,y:0}}><StatusBar/><section className="caller"><div className="avatar">SP</div><small>CHAMADA PERDIDA</small><h1>Sônia Prado</h1><p>DHPP · Supervisão</p><div className="missed-card">1 chamada perdida · agora</div></section><div className="single-action"><button className="answer" onClick={onAnswer}><Phone/><span>Retornar</span></button></div><div className="homebar"/></motion.main>}
-function ActiveCall({line,time,muted,speaker,setMuted,setSpeaker,onFinish}:{line:number;time:string;muted:boolean;speaker:boolean;setMuted:(v:boolean)=>void;setSpeaker:(v:boolean)=>void;onFinish:()=>void}){return <motion.main className="call-screen active" initial={{opacity:0,scale:1.015}} animate={{opacity:1,scale:1}} exit={{opacity:0,y:-20}}><Ambient/><StatusBar/><section className="active-caller"><motion.div className="avatar small" initial={{scale:.8}} animate={{scale:1}}>SP</motion.div><h1>Sônia Prado</h1><span>{time}</span></section><motion.section className="transcript" layout><small>CHAMADA · DHPP</small><AnimatePresence mode="wait"><motion.p key={line} initial={{opacity:0,y:13,filter:'blur(3px)'}} animate={{opacity:1,y:0,filter:'blur(0px)'}} exit={{opacity:0,y:-8}}>“{callLines[line]}”</motion.p></AnimatePresence><div className="wave">{[10,18,27,15,30,20,26,16,11,22,14].map((h,i)=><motion.i key={i} animate={{height:[8,h,11]}} transition={{duration:.55+(i%3)*.1,repeat:Infinity,repeatType:'mirror',delay:i*.045}}/>)}</div><div className="speaking"><i/> Sônia falando</div></motion.section><section className="controls"><button className={muted?'on':''} onClick={()=>setMuted(!muted)}><span><MicOff/></span><small>{muted?'mudo ativo':'mudo'}</small></button><button><span><Grid3X3/></span><small>teclado</small></button><button className={speaker?'on':''} onClick={()=>setSpeaker(!speaker)}><span><Volume2/></span><small>{speaker?'alto-falante ativo':'alto-falante'}</small></button></section>{line===callLines.length-1&&<motion.button className="hangup" initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} onClick={onFinish}><PhoneOff/> Encerrar chamada</motion.button>}<div className="homebar"/></motion.main>}
+function ActiveCall({line,time,muted,speaker,setMuted,setSpeaker,onFinish}:{line:number;time:string;muted:boolean;speaker:boolean;setMuted:(v:boolean)=>void;setSpeaker:(v:boolean)=>void;onFinish:()=>void}){return <motion.main className="call-screen active" initial={{opacity:0,scale:1.015}} animate={{opacity:1,scale:1}} exit={{opacity:0,y:-20}}><Ambient/><StatusBar/><section className="active-caller"><motion.div className="avatar small" initial={{scale:.8}} animate={{scale:1}}>SP</motion.div><h1>Sônia Prado</h1><span>{time}</span></section><motion.section className="transcript" layout><small>CHAMADA · DHPP</small><AnimatePresence mode="wait"><motion.p key={line} initial={{opacity:0,y:13,filter:'blur(3px)'}} animate={{opacity:1,y:0,filter:'blur(0px)'}} exit={{opacity:0,y:-8}}>“{callLines[line]}”</motion.p></AnimatePresence><div className="wave">{[10,18,27,15,30,20,26,16,11,22,14].map((h,i)=><motion.i key={i} animate={{height:[8,h,11]}} transition={{duration:.55+(i%3)*.1,repeat:Infinity,repeatType:'mirror',delay:i*.045}}/>)}</div><div className="speaking"><i/> ligação ativa</div></motion.section><section className="controls"><button className={muted?'on':''} onClick={()=>setMuted(!muted)}><span><MicOff/></span><small>{muted?'mudo ativo':'mudo'}</small></button><button><span><Grid3X3/></span><small>teclado</small></button><button className={speaker?'on':''} onClick={()=>setSpeaker(!speaker)}><span><Volume2/></span><small>{speaker?'alto-falante ativo':'alto-falante'}</small></button></section>{line===callLines.length-1&&<motion.button className="hangup" initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} onClick={onFinish}><PhoneOff/> Encerrar chamada</motion.button>}<div className="homebar"/></motion.main>}
 function Launching(){return <motion.main className="launching" initial={{opacity:0}} animate={{opacity:1}}><motion.div className="launch-icon" initial={{scale:.8,opacity:0}} animate={{scale:1,opacity:1}}><Shield/></motion.div><span>chamada encerrada</span><motion.div className="launch-line" initial={{width:0}} animate={{width:'72%'}} transition={{duration:.9}}/><small>Abrindo DHPP…</small></motion.main>}
 function StatusBar(){return <header className="status"><b>04:27</b><span>VIVO&nbsp;&nbsp;▮▮▮ <BatteryMedium/></span></header>}
 function Ambient(){return <div className="call-backdrop"/>}
