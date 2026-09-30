@@ -113,3 +113,9 @@
 @keyframes ii-sub{from{opacity:0;transform:translateY(4px)}}
 .ii-status,.ii-back,.ii-rec,.ii-deposition{z-index:5}
 /* rosto para listas e perfis */
+
+/* marca d'água do DHPP */
+.ii-mark{position:absolute;right:14px;top:calc(46px + env(safe-area-inset-top));z-index:5;display:flex;flex-direction:column;align-items:flex-end;gap:3px;opacity:.6;pointer-events:none;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.ii-mark b{font:800 26px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;letter-spacing:.02em}
+.ii-mark i{display:block;width:100%;height:2px;background:currentColor;opacity:.8}
+.ii-mark span{font:600 8.5px var(--mono);letter-spacing:.32em;margin-right:-.32em}

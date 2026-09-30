@@ -115,6 +115,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
           <div className="ii-rec"><i/>REC</div>
           <div className="ii-deposition">{config.depositionLabel}</div>
         </>}
+        <div className="ii-mark" aria-hidden="true"><b>DHPP</b><i/><span>HOMICÍDIOS</span></div>
         <div className="ii-sub" aria-live="polite">{subtitle && <span key={subtitle}>{subtitle}</span>}</div>
         <div className="ii-status">
           <span>{phase==='answering'?'RESPONDENDO':phase==='asking'?'ESCUTANDO':'AGUARDANDO'}</span>
