@@ -16,61 +16,55 @@ async function ready() {
   return c
 }
 
-function phoneTone(
-  c: AudioContext,
-  frequency: number,
-  duration: number,
-  volume = 0.05,
-  delay = 0,
-  type: OscillatorType = 'triangle'
-) {
-  const oscillator = c.createOscillator()
-  const gain = c.createGain()
-  const filter = c.createBiquadFilter()
+function bellTone(c: AudioContext, frequency: number, delay = 0, volume = 0.075) {
+  const master = c.createGain()
   const compressor = c.createDynamicsCompressor()
-
-  oscillator.type = type
-  oscillator.frequency.value = frequency
-
-  filter.type = 'lowpass'
-  filter.frequency.value = 2600
-  filter.Q.value = 0.25
-
-  compressor.threshold.value = -18
-  compressor.knee.value = 10
-  compressor.ratio.value = 5
-  compressor.attack.value = 0.003
-  compressor.release.value = 0.16
-
   const start = c.currentTime + delay
-  gain.gain.setValueAtTime(0.0001, start)
-  gain.gain.linearRampToValueAtTime(volume, start + 0.018)
-  gain.gain.setValueAtTime(volume, start + Math.max(0.025, duration - 0.04))
-  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration)
+  const duration = 0.62
 
-  oscillator.connect(filter)
-  filter.connect(gain)
-  gain.connect(compressor)
+  compressor.threshold.value = -20
+  compressor.knee.value = 12
+  compressor.ratio.value = 4
+  compressor.attack.value = 0.002
+  compressor.release.value = 0.22
+
+  master.gain.setValueAtTime(0.0001, start)
+  master.gain.linearRampToValueAtTime(volume, start + 0.018)
+  master.gain.exponentialRampToValueAtTime(0.0001, start + duration)
+
+  const partials = [
+    { ratio: 1, gain: 1 },
+    { ratio: 2.01, gain: 0.32 },
+    { ratio: 3.98, gain: 0.10 },
+  ]
+
+  partials.forEach((partial, index) => {
+    const osc = c.createOscillator()
+    const gain = c.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(frequency * partial.ratio, start)
+    gain.gain.value = partial.gain
+    osc.connect(gain)
+    gain.connect(master)
+    osc.start(start)
+    osc.stop(start + duration + index * 0.025)
+    scheduled.push(osc)
+  })
+
+  master.connect(compressor)
   compressor.connect(c.destination)
-
-  oscillator.start(start)
-  oscillator.stop(start + duration + 0.03)
-  scheduled.push(oscillator)
 }
 
 function ringPhrase(c: AudioContext) {
-  // Toque monofônico original, mais presente e próximo de celulares do início dos anos 2000.
-  const notes = [
-    [784, 0.18, 0.00],
-    [988, 0.18, 0.22],
-    [880, 0.18, 0.44],
-    [659, 0.30, 0.66],
-    [784, 0.18, 1.08],
-    [988, 0.18, 1.30],
-    [880, 0.18, 1.52],
-    [659, 0.30, 1.74],
-  ] as const
-  notes.forEach(([frequency,duration,delay]) => phoneTone(c, frequency, duration, 0.052, delay, 'triangle'))
+  // Toque limpo e atual: notas de sino digital com bastante presença,
+  // sem tentar imitar um aparelho antigo ou um toque conhecido.
+  bellTone(c, 880, 0.00, 0.082)
+  bellTone(c, 1174.66, 0.34, 0.076)
+  bellTone(c, 987.77, 0.76, 0.080)
+  bellTone(c, 1318.51, 1.10, 0.074)
+
+  bellTone(c, 880, 1.78, 0.078)
+  bellTone(c, 1174.66, 2.12, 0.072)
 }
 
 export async function enableAudio() {
@@ -81,29 +75,50 @@ export async function startRingtone() {
   stopRingtone()
   const c = await ready()
   if (!c) return false
+
   ringPhrase(c)
-  ringTimer = window.setInterval(() => ringPhrase(c), 3800)
+  ringTimer = window.setInterval(() => ringPhrase(c), 4_700)
   return true
 }
 
 export function stopRingtone() {
   if (ringTimer !== null) window.clearInterval(ringTimer)
   ringTimer = null
+
   scheduled.forEach(node => {
     try { node.stop() } catch {}
   })
   scheduled = []
 }
 
+function shortTone(c: AudioContext, from: number, to: number, duration: number, volume: number) {
+  const osc = c.createOscillator()
+  const gain = c.createGain()
+  const start = c.currentTime
+
+  osc.type = 'sine'
+  osc.frequency.setValueAtTime(from, start)
+  osc.frequency.linearRampToValueAtTime(to, start + duration)
+
+  gain.gain.setValueAtTime(0.0001, start)
+  gain.gain.linearRampToValueAtTime(volume, start + 0.012)
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + duration)
+
+  osc.connect(gain)
+  gain.connect(c.destination)
+  osc.start(start)
+  osc.stop(start + duration + 0.02)
+  scheduled.push(osc)
+}
+
 export async function playConnect() {
   const c = await ready()
   if (!c) return
-  phoneTone(c, 740, 0.10, 0.035, 0, 'sine')
+  shortTone(c, 620, 760, 0.11, 0.030)
 }
 
 export async function playHangup() {
   const c = await ready()
   if (!c) return
-  phoneTone(c, 520, 0.11, 0.030, 0, 'sine')
-  phoneTone(c, 360, 0.15, 0.026, 0.12, 'sine')
+  shortTone(c, 520, 390, 0.18, 0.028)
 }
