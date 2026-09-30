@@ -69,10 +69,11 @@ export type CharacterDef = {
   /** Formas de boca para sincronizar a fala. Sem isso, a boca fala abrindo o lábio de baixo. */
   visemes?: VisemeAtlas
   /**
-   * Contorno do interior do rosto no retrato neutro (pixels). Com ele, a imagem neutra é a base imutável
-   * (cabelo, pescoço, corpo, fundo) e só o interior do rosto vem da imagem de cada expressão.
+   * Máscara (PNG em tons de cinza, branco = interior do rosto, mesmo tamanho do retrato) gerada por
+   * `scripts/make-face-mask.py`. Com ela, a imagem neutra é a base imutável (cabelo, pescoço, corpo, fundo)
+   * e só o interior do rosto vem da imagem de cada expressão. Mechas de cabelo ficam fora da máscara.
    */
-  facePolygon?: [number, number][]
+  faceMask?: string
   /** Recorte quadrado do rosto (no retrato neutro) para listas e perfis. */
   face: { cx:number; cy:number; size:number }
 }
