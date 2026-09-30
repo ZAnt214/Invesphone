@@ -82,3 +82,15 @@ button:disabled{opacity:.45}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 
 .typing-cursor{display:inline-block;width:2px;height:1em;margin-left:2px;vertical-align:-.12em;background:currentColor;border-radius:1px}
+
+.call-dialogue{display:flex;flex-direction:column;gap:12px}
+.dialogue-line{width:100%;display:grid;gap:5px}
+.dialogue-line>b{font:700 8px "Courier New",monospace;letter-spacing:.1em;color:#8f999e}
+.dialogue-line p{margin:0;min-height:84px}
+.player-line{align-self:flex-end;text-align:right}
+.player-line>b{color:#a8b9c4}
+.player-line p{color:#d7e1e7}
+.call-replies{display:grid;gap:7px;width:100%}
+.call-replies>small{font:700 8px "Courier New",monospace;color:#879198;letter-spacing:.1em}
+.call-replies button{width:100%;min-height:44px;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.055);color:#eef1f2;border-radius:10px;padding:10px 12px;text-align:left;font-size:11px;line-height:1.35}
+.call-replies button:active{transform:scale(.985);background:rgba(255,255,255,.1)}
