@@ -26,39 +26,107 @@
   background:#151817;
   border-bottom:1px solid var(--line);
 }
+.ii-live{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+  transform-origin:50% 67%;
+  animation:ii-live-breathe 5.8s ease-in-out infinite;
+}
 .ii-character{
   width:100%;
   height:100%;
   display:block;
-  transform-origin:50% 70%;
 }
-.ii-character-img{
+.ii-live .ii-character-img{
   object-fit:cover;
   object-position:center top;
   user-select:none;
   -webkit-user-drag:none;
-  animation:ii-photo-breathe 6.2s ease-in-out infinite;
-  transition:filter .35s ease,transform .35s ease;
+  transform-origin:50% 65%;
+  transition:transform .45s ease,filter .45s ease;
 }
-.ii-character-img.expression-neutral{filter:none}
-.ii-character-img.expression-tired{filter:brightness(.98);transform:scale(1.004) translateY(1px)}
-.ii-character-img.expression-uncomfortable{filter:brightness(.99);transform:scale(1.005) translateX(-1px)}
-.ii-character-img.expression-defensive{filter:none;transform:scale(1.005) translateX(1px)}
-.ii-character-img.expression-nervous{filter:brightness(.98);animation:ii-photo-breathe 5.4s ease-in-out infinite,ii-photo-nervous 2.8s ease-in-out infinite}
-.ii-character-img.expression-shaken{filter:brightness(.96);transform:scale(1.006) translateY(2px)}
-.ii-character-img.is-speaking{animation:ii-photo-speaking 1.7s ease-in-out infinite alternate}
+.ii-live.expression-neutral .ii-character-img{transform:scale(1)}
+.ii-live.expression-tired .ii-character-img{transform:scale(1.006) translateY(1px);filter:brightness(.98)}
+.ii-live.expression-uncomfortable .ii-character-img{transform:scale(1.008) translateX(-1.5px)}
+.ii-live.expression-defensive .ii-character-img{transform:scale(1.008) translateX(1.5px)}
+.ii-live.expression-nervous .ii-character-img{transform:scale(1.01);filter:contrast(1.015)}
+.ii-live.expression-shaken .ii-character-img{transform:scale(1.012) translateY(2px);filter:brightness(.96) saturate(.95)}
+.ii-live.is-speaking .ii-character-img{animation:ii-talk-body 1.4s ease-in-out infinite alternate}
 
-@keyframes ii-photo-breathe{
-  0%,100%{transform:scale(1)}
-  50%{transform:scale(1.002) translateY(.5px)}
+.ii-face-overlay{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  overflow:visible;
 }
-@keyframes ii-photo-nervous{
+.ii-brows path{
+  fill:none;
+  stroke:#5a4035;
+  stroke-width:5;
+  stroke-linecap:round;
+  opacity:.62;
+  transition:d .3s ease,opacity .3s ease;
+}
+.ii-lid{
+  fill:#bc9374;
+  opacity:0;
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:ii-blink 6.2s steps(1) infinite;
+}
+.ii-lids.is-heavy .ii-lid{
+  opacity:.18;
+  animation:ii-heavy-blink 5.1s steps(1) infinite;
+}
+.ii-mouth-mask{
+  fill:#bc9374;
+  opacity:.94;
+}
+.ii-mouth-expression path{
+  fill:none;
+  stroke:#79534b;
+  stroke-width:4;
+  stroke-linecap:round;
+  opacity:.9;
+}
+.ii-speaking-mouth{animation:ii-mouth-bob .38s ease-in-out infinite alternate}
+.ii-mouth-open{fill:#6f403d}
+.ii-mouth-lip{
+  fill:none;
+  stroke:#8a5b55;
+  stroke-width:3.5;
+  stroke-linecap:round;
+}
+.ii-nervous-detail circle{fill:#9c6d5d;opacity:.45}
+.ii-live.expression-nervous{animation:ii-live-breathe 4.9s ease-in-out infinite,ii-nervous-shift 2.8s ease-in-out infinite}
+.ii-live.expression-shaken{animation:ii-live-breathe 6.4s ease-in-out infinite}
+
+@keyframes ii-live-breathe{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(1.4px) scale(1.002)}
+}
+@keyframes ii-talk-body{
+  from{transform:scale(1.003) translateY(0)}
+  to{transform:scale(1.007) translateY(1px)}
+}
+@keyframes ii-mouth-bob{
+  from{transform:scaleY(.82)}
+  to{transform:scaleY(1.08)}
+}
+@keyframes ii-blink{
+  0%,43%,46%,100%{opacity:0}
+  44%,45%{opacity:.96}
+}
+@keyframes ii-heavy-blink{
+  0%,38%,44%,100%{opacity:.14}
+  40%,42%{opacity:.96}
+}
+@keyframes ii-nervous-shift{
   0%,100%{margin-left:0}
-  50%{margin-left:-.5px}
-}
-@keyframes ii-photo-speaking{
-  from{transform:scale(1.001) translateY(0)}
-  to{transform:scale(1.004) translateY(.6px)}
+  50%{margin-left:-.7px}
 }
 
 .ii-camera-fx{
