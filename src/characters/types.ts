@@ -32,6 +32,24 @@ export type ExpressionAsset = {
   mouth:MouthRig
 }
 
+export type Viseme = 'A'|'E'|'I'|'O'|'U'|'M'
+
+/**
+ * Formas de boca para a fala, lado a lado num arquivo. Cada uma é um recorte do queixo
+ * com a boca no centro; o renderizador troca a boca da expressão por elas enquanto a personagem fala.
+ */
+export type VisemeAtlas = {
+  src:string
+  cellW:number
+  cellH:number
+  /** ordem das formas no arquivo */
+  order:Viseme[]
+  /** centro da boca dentro de uma célula */
+  center:[number, number]
+  /** largura da boca fechada (M) dentro de uma célula, para calcular a escala */
+  lipWidth:number
+}
+
 export type CharacterDef = {
   id:string
   name:string
@@ -47,6 +65,8 @@ export type CharacterDef = {
   }
   /** Imagens oficiais por expressão. `neutral` é obrigatória; expressão sem imagem usa a neutra. */
   assets: { neutral:ExpressionAsset } & Partial<Record<Expression,ExpressionAsset>>
+  /** Formas de boca para sincronizar a fala. Sem isso, a boca fala abrindo o lábio de baixo. */
+  visemes?: VisemeAtlas
   /** Recorte quadrado do rosto (no retrato neutro) para listas e perfis. */
   face: { cx:number; cy:number; size:number }
 }
