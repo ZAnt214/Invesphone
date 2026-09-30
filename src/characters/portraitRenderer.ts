@@ -1,5 +1,6 @@
 import type { CharacterDef, Expression, ExpressionAsset, EyeRig, Viseme } from './types'
 import { EXPRESSIONS } from './expressions'
+import { PRESETS, getQuality, onQualityChange } from './quality'
 import type { ExpressionParams } from './expressions'
 import { sampleMouth } from './mouth'
 import type { MouthKey } from './mouth'
@@ -36,10 +37,6 @@ type Loaded = {
   visemes?:Partial<Record<Viseme,HTMLCanvasElement>>
 }
 
-/** Resolução máxima do canvas em relação ao recorte da imagem: acima disso só há ampliação, sem detalhe novo. */
-const RES_CAP = 1.25
-/** Quadros por segundo quando nada além da respiração se move. */
-const IDLE_FRAME_MS = 1000/30
 /** Duração da transição de expressão, em segundos. */
 const MORPH_SECONDS = .34
 /**
@@ -88,10 +85,8 @@ export class PortraitRenderer {
   /** imagem neutra pronta para a GPU (desenhada a cada quadro) */
   private baseImg:CanvasImageSource|null = null
   private cssWidth = 0
-  /** fator de qualidade adaptativo (0,5 a 1) */
-  private quality = 1
-  private slow = 0
-  private fast = 0
+  private preset = PRESETS[getQuality()]
+  private offQuality:(()=>void)|null = null
   private lastDraw = 0
   private raw:Partial<Record<Expression,HTMLCanvasElement>> = {}
   private skinRef:Rgb = [0,0,0]
@@ -102,6 +97,7 @@ export class PortraitRenderer {
   constructor(private canvas:HTMLCanvasElement, private def:CharacterDef){
     this.ctx = canvas.getContext('2d')!
     this.calm = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    this.offQuality = onQualityChange(q=>{ this.preset = PRESETS[q]; this.applySize() })
   }
 
   /** Baixa a imagem de uma expressão para um canvas (sem processar). */
@@ -175,7 +171,7 @@ export class PortraitRenderer {
     }
   }
 
-  destroy(){ this.destroyed = true; cancelAnimationFrame(this.raf) }
+  destroy(){ this.destroyed = true; cancelAnimationFrame(this.raf); this.offQuality?.() }
 
   setExpression(e:Expression){
     this.expression = e
@@ -200,11 +196,12 @@ export class PortraitRenderer {
     this.applySize()
   }
 
-  /** Tamanho do canvas: nunca acima da resolução útil da imagem, reduzido se a tela não acompanha. */
+  /** Tamanho do canvas conforme a qualidade escolhida. */
   private applySize(){
     const crop = this.def.portrait.crop
     const dpr = Math.min(3, window.devicePixelRatio || 1)
-    const w = Math.max(1,Math.round(Math.min(this.cssWidth*dpr,crop.w*RES_CAP)*this.quality))
+    const device = this.cssWidth*dpr
+    const w = Math.max(1,Math.round(this.preset.resCap==null ? device : Math.min(device,crop.w*this.preset.resCap)))
     const h = Math.round(w*crop.h/crop.w)
     if(this.canvas.width!==w || this.canvas.height!==h){ this.canvas.width = w; this.canvas.height = h }
   }
@@ -419,18 +416,12 @@ export class PortraitRenderer {
     if(this.destroyed) return
     this.raf = requestAnimationFrame(this.loop)
     if(document.hidden || !this.shown) return
-    const dt = Math.min(.05,(now-this.last)/1000)
-    // só respiração e deriva: 30 quadros por segundo bastam e poupam bateria
     const busy = this.speech || this.trans || this.blink.start>=0 || this.mouthOn>.02
-    if(!busy && now-this.lastDraw<IDLE_FRAME_MS-2) return
-    // qualidade adaptativa: se os quadros demoram, reduz a resolução do canvas; se sobra tempo, sobe de volta
-    const frame = now-this.lastDraw
+    const gap = busy ? this.preset.busyMs : this.preset.idleMs
+    // a qualidade é escolha do jogador: nada aqui muda sozinho, só limita os quadros quando ele pede
+    if(gap>0 && now-this.lastDraw<gap-2) return
     this.lastDraw = now
-    if(frame>0 && frame<250){
-      if(frame>(busy ? 26 : 42)){ this.slow++; this.fast = 0 } else if(frame<(busy ? 19 : 36)){ this.fast++; this.slow = 0 } else { this.slow = 0; this.fast = 0 }
-      if(this.slow>=20 && this.quality>.5){ this.quality = Math.max(.5,this.quality*.8); this.slow = 0; this.applySize() }
-      else if(this.fast>=240 && this.quality<1){ this.quality = Math.min(1,this.quality*1.15); this.fast = 0; this.applySize() }
-    }
+    const dt = Math.min(.05,(now-this.last)/1000)
     this.last = now
     this.update(now,dt)
     this.draw(now)

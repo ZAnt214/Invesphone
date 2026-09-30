@@ -4,6 +4,8 @@ import CharacterPortrait from '../characters/CharacterPortrait'
 import type { Speech } from '../characters/CharacterPortrait'
 import { getCharacter } from '../characters/characters'
 import type { Expression } from '../characters/types'
+import { QUALITIES, QUALITY_LABEL, getQuality, setQuality } from '../characters/quality'
+import type { Quality } from '../characters/quality'
 import DialogueChoices from './DialogueChoices'
 import { applyAnswer, askedQuestions, between, getQuestion, pendingQuestions, subtitleChunks, subtitleDuration } from './logic'
 import type { InterrogationConfig, InterrogationProgress } from './types'
@@ -30,6 +32,20 @@ const speakingTime = (text:string) => Math.min(subtitleDuration(text)-150, Math.
  * Interrogatório com retrato ilustrado. Serve para qualquer personagem em src/characters:
  * as perguntas, as expressões, as pistas e os desbloqueios vêm do `config`.
  */
+function QualityPicker(){
+  const [q,setQ] = useState<Quality>(getQuality)
+  return (
+    <div className="ii-quality" role="radiogroup" aria-label="Qualidade gráfica">
+      <small>QUALIDADE GRÁFICA</small>
+      <div>
+        {QUALITIES.map(x=>(
+          <button key={x} role="radio" aria-checked={q===x} className={q===x?'on':''} onClick={()=>{ setQ(x); setQuality(x) }}>{QUALITY_LABEL[x]}</button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function IllustratedInterrogation({config,progress,onProgress,onClue,onComplete,onBack,onReturn}:Props){
   const character = getCharacter(config.personId)
   const idleExpression:Expression = config.idleExpression ?? 'neutral'
@@ -144,6 +160,8 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
         {!busy && (
           <DialogueChoices pending={finished?[]:pending} asked={asked} onPick={ask}/>
         )}
+
+        <QualityPicker/>
       </section>
     </main>
   )
