@@ -37,7 +37,12 @@ const callLines = [
   'Abre o DHPP. Quero você acompanhando isso desde o primeiro minuto.'
 ]
 
-const callLineDurations = [5000, 6900, 6800, 5900]
+const callReplies = [
+  ['Estou acordado. O que temos no local?','Certo. Quem encontrou os corpos?'],
+  ['A casa foi realmente roubada?','A filha estava sozinha quando chegou?'],
+  ['Porta intacta não combina com invasão.','Quero o alarme e a entrada preservados.'],
+  ['Entendido. Vou acompanhar desde agora.','Certo. Me mantenha informado.']
+]
 
 const tasks = [
   {chapter:0,title:'Chegada à Rua das Acácias',kind:'brief'},
@@ -86,12 +91,6 @@ export default function App(){
   },[game.screen])
 
   useEffect(()=>{
-    if(game.screen!=='active'||line>=callLines.length-1)return
-    const id=window.setTimeout(()=>setLine(v=>v+1),callLineDurations[line])
-    return()=>window.clearTimeout(id)
-  },[game.screen,line])
-
-  useEffect(()=>{
     if(game.screen!=='launching')return
     const id=window.setTimeout(()=>setGame(g=>({...g,screen:'phone',app:'home'})),1100)
     return()=>window.clearTimeout(id)
@@ -133,7 +132,7 @@ function Incoming({audioOn,onSound,onAnswer,onDecline}:{audioOn:boolean;onSound:
  </motion.main>
 }
 function Missed({onAnswer}:{onAnswer:()=>void}){return <motion.main className="call-screen" initial={{opacity:0,y:18}} animate={{opacity:1,y:0}}><StatusBar/><section className="caller"><div className="avatar">SP</div><small>CHAMADA PERDIDA</small><h1>Sônia Prado</h1><p>DHPP · Supervisão</p><div className="missed-card">1 chamada perdida · agora</div></section><div className="single-action"><button className="answer" onClick={onAnswer}><Phone/><span>Retornar</span></button></div><div className="homebar"/></motion.main>}
-function TypewriterText({text,audioOn}:{text:string;audioOn:boolean}){
+function TypewriterText({text,audioOn,onDone,quote=true}:{text:string;audioOn:boolean;onDone?:()=>void;quote?:boolean}){
   const [visible,setVisible]=useState('')
   const [done,setDone]=useState(false)
 
@@ -143,8 +142,7 @@ function TypewriterText({text,audioOn}:{text:string;audioOn:boolean}){
     let index=0
     const id=window.setInterval(()=>{
       index++
-      const next=text.slice(0,index)
-      setVisible(next)
+      setVisible(text.slice(0,index))
 
       const char=text[index-1]
       if(audioOn&&char&&char!==' '&&index%2===0)playTypingTick()
@@ -152,16 +150,59 @@ function TypewriterText({text,audioOn}:{text:string;audioOn:boolean}){
       if(index>=text.length){
         window.clearInterval(id)
         setDone(true)
+        onDone?.()
       }
     },34)
 
     return()=>window.clearInterval(id)
-  },[text,audioOn])
+  },[text,audioOn,onDone])
 
-  return <span>“{visible}{!done&&<motion.i className="typing-cursor" animate={{opacity:[1,.2,1]}} transition={{duration:.55,repeat:Infinity}}/>}{done?'”':''}</span>
+  return <span>{quote?'“':''}{visible}{!done&&<motion.i className="typing-cursor" animate={{opacity:[1,.2,1]}} transition={{duration:.55,repeat:Infinity}}/>}{done&&quote?'”':''}</span>
 }
 
-function ActiveCall({line,time,muted,speaker,audioOn,setMuted,setSpeaker,onFinish}:{line:number;time:string;muted:boolean;speaker:boolean;audioOn:boolean;setMuted:(v:boolean)=>void;setSpeaker:(v:boolean)=>void;onFinish:()=>void}){return <motion.main className="call-screen active" initial={{opacity:0,scale:1.015}} animate={{opacity:1,scale:1}} exit={{opacity:0,y:-20}}><Ambient/><StatusBar/><section className="active-caller"><motion.div className="avatar small" initial={{scale:.8}} animate={{scale:1}}>SP</motion.div><h1>Sônia Prado</h1><span>{time}</span></section><motion.section className="transcript" layout><small>CHAMADA · DHPP</small><AnimatePresence mode="wait"><motion.p key={line} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}}><TypewriterText text={callLines[line]} audioOn={audioOn}/></motion.p></AnimatePresence><div className="wave">{[10,18,27,15,30,20,26,16,11,22,14].map((h,i)=><motion.i key={i} animate={{height:[8,h,11]}} transition={{duration:.55+(i%3)*.1,repeat:Infinity,repeatType:'mirror',delay:i*.045}}/>)}</div><div className="speaking"><i/> transcrição em tempo real</div></motion.section><section className="controls"><button className={muted?'on':''} onClick={()=>setMuted(!muted)}><span><MicOff/></span><small>{muted?'mudo ativo':'mudo'}</small></button><button><span><Grid3X3/></span><small>teclado</small></button><button className={speaker?'on':''} onClick={()=>setSpeaker(!speaker)}><span><Volume2/></span><small>{speaker?'alto-falante ativo':'alto-falante'}</small></button></section>{line===callLines.length-1&&<motion.button className="hangup" initial={{opacity:0,y:16}} animate={{opacity:1,y:0}} onClick={onFinish}><PhoneOff/> Encerrar chamada</motion.button>}<div className="homebar"/></motion.main>}
+function ActiveCall({line,time,muted,speaker,audioOn,setMuted,setSpeaker,onNext,onFinish}:{line:number;time:string;muted:boolean;speaker:boolean;audioOn:boolean;setMuted:(v:boolean)=>void;setSpeaker:(v:boolean)=>void;onNext:()=>void;onFinish:()=>void}){
+ const [phase,setPhase]=useState<'sonia'|'choice'|'player'>('sonia')
+ const [reply,setReply]=useState('')
+
+ useEffect(()=>{setPhase('sonia');setReply('')},[line])
+
+ const soniaDone=()=>setPhase('choice')
+ const chooseReply=(text:string)=>{setReply(text);setPhase('player')}
+ const playerDone=()=>{
+   window.setTimeout(()=>{
+     if(line===callLines.length-1)onFinish()
+     else onNext()
+   },850)
+ }
+
+ return <motion.main className="call-screen active" initial={{opacity:0,scale:1.015}} animate={{opacity:1,scale:1}} exit={{opacity:0,y:-20}}>
+  <Ambient/><StatusBar/>
+  <section className="active-caller"><motion.div className="avatar small" initial={{scale:.8}} animate={{scale:1}}>SP</motion.div><h1>Sônia Prado</h1><span>{time}</span></section>
+  <motion.section className="transcript call-dialogue" layout>
+   <small>CHAMADA · DHPP</small>
+   <AnimatePresence mode="wait">
+    {phase!=='player'
+      ?<motion.div className="dialogue-line sonia-line" key={'s'+line} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}}>
+        <b>SÔNIA</b><p><TypewriterText text={callLines[line]} audioOn={audioOn} onDone={soniaDone}/></p>
+       </motion.div>
+      :<motion.div className="dialogue-line player-line" key={'p'+line} initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}}>
+        <b>LEMOS</b><p><TypewriterText text={reply} audioOn={audioOn} onDone={playerDone}/></p>
+       </motion.div>
+    }
+   </AnimatePresence>
+
+   {phase==='choice'&&<motion.div className="call-replies" initial={{opacity:0,y:12}} animate={{opacity:1,y:0}}>
+    <small>RESPONDER</small>
+    {callReplies[line].map((text,i)=><button key={i} onClick={()=>chooseReply(text)}>{text}</button>)}
+   </motion.div>}
+
+   <div className="wave">{[10,18,27,15,30,20,26,16,11,22,14].map((h,i)=><motion.i key={i} animate={{height:phase==='choice'?[8,9,8]:[8,h,11]}} transition={{duration:.55+(i%3)*.1,repeat:Infinity,repeatType:'mirror',delay:i*.045}}/>)}</div>
+   <div className="speaking"><i/> {phase==='choice'?'aguardando resposta':phase==='player'?'Lemos falando':'transcrição em tempo real'}</div>
+  </motion.section>
+  <section className="controls"><button className={muted?'on':''} onClick={()=>setMuted(!muted)}><span><MicOff/></span><small>{muted?'mudo ativo':'mudo'}</small></button><button><span><Grid3X3/></span><small>teclado</small></button><button className={speaker?'on':''} onClick={()=>setSpeaker(!speaker)}><span><Volume2/></span><small>{speaker?'alto-falante ativo':'alto-falante'}</small></button></section>
+  <div className="homebar"/>
+ </motion.main>
+}
 function Launching(){return <motion.main className="launching" initial={{opacity:0}} animate={{opacity:1}}><motion.div className="launch-icon" initial={{scale:.8,opacity:0}} animate={{scale:1,opacity:1}}><Shield/></motion.div><span>chamada encerrada</span><motion.div className="launch-line" initial={{width:0}} animate={{width:'72%'}} transition={{duration:.9}}/><small>Abrindo DHPP…</small></motion.main>}
 function StatusBar(){return <header className="status"><b>04:27</b><span>VIVO&nbsp;&nbsp;▮▮▮ <BatteryMedium/></span></header>}
 function Ambient(){return <div className="call-backdrop"/>}
