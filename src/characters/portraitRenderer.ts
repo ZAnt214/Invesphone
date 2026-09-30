@@ -30,7 +30,7 @@ type Loaded = {
   visemes?:Partial<Record<Viseme,HTMLCanvasElement>>
 }
 
-const FADE_SECONDS = .22
+const FADE_SECONDS = .75
 
 /**
  * Desenha o retrato oficial num canvas e o anima: respiração, deriva de câmera, troca suave entre as
@@ -53,9 +53,9 @@ export class PortraitRenderer {
   private atlas:HTMLImageElement|null = null
   private shapeAmount = 0
   private speech:{ keys:MouthKey[]; start:number; duration:number }|null = null
-  private shown:Loaded|null = null
-  private prev:Loaded|null = null
-  private fade = 1
+  /** Camadas de expressão, da mais antiga à mais nova; só a última está em transição. */
+  private layers:{ l:Loaded; a:number }[] = []
+  private grp:HTMLCanvasElement|null = null
   private expression:Expression = 'neutral'
 
   constructor(private canvas:HTMLCanvasElement, private def:CharacterDef){
@@ -82,7 +82,8 @@ export class PortraitRenderer {
     let r=0,g=0,b=0
     for(let i=0;i<d.length;i+=4){ r+=d[i]; g+=d[i+1]; b+=d[i+2] }
     this.bg = [r/36,g/36,b/36]
-    this.shown = this.pick(this.expression)
+    const first = this.pick(this.expression)
+    if(first) this.layers = [{ l:first, a:1 }]
     this.last = performance.now()
     this.blink.next = this.last + 1800
     this.loop(this.last)
@@ -94,11 +95,13 @@ export class PortraitRenderer {
     this.expression = e
     this.tgt = {...(EXPRESSIONS[e] ?? EXPRESSIONS.neutral)}
     const next = this.pick(e)
-    if(next && next!==this.shown){
-      this.prev = this.shown
-      this.shown = next
-      this.fade = this.calm || !this.prev ? 1 : 0
-    }
+    const top = this.layers[this.layers.length-1]
+    if(!next || next===top?.l) return
+    // a imagem que volta a ser pedida sobe para o topo mantendo a opacidade que já tinha
+    const i = this.layers.findIndex(x=>x.l===next)
+    const entry = i>=0 ? this.layers.splice(i,1)[0] : { l:next, a:0 }
+    if(this.calm || !this.layers.length) entry.a = 1
+    this.layers.push(entry)
   }
 
   setSpeech(keys:MouthKey[]|null, duration=0){
@@ -183,7 +186,7 @@ export class PortraitRenderer {
   private loop = (now:number)=>{
     if(this.destroyed) return
     this.raf = requestAnimationFrame(this.loop)
-    if(document.hidden || !this.shown) return
+    if(document.hidden || !this.layers.length) return
     const dt = Math.min(.05,(now-this.last)/1000)
     this.last = now
     this.update(now,dt)
@@ -194,7 +197,11 @@ export class PortraitRenderer {
     const k = 1-Math.exp(-dt*5)
     const keys = Object.keys(this.cur) as (keyof ExpressionParams)[]
     for(const key of keys) this.cur[key] += (this.tgt[key]-this.cur[key])*k
-    if(this.fade<1) this.fade = Math.min(1,this.fade+dt/FADE_SECONDS)
+    const top = this.layers[this.layers.length-1]
+    if(top && top.a<1){
+      top.a = Math.min(1,top.a+dt/FADE_SECONDS)
+      if(top.a>=1) this.layers = [top]
+    }
 
     if(this.blink.start<0 && now>=this.blink.next) this.blink.start = now
     if(this.blink.start>=0 && now-this.blink.start>170){
@@ -218,7 +225,7 @@ export class PortraitRenderer {
     const km = 1-Math.exp(-dt*(target>this.mouth?30:20))
     this.mouth += (target-this.mouth)*km
     // peso de cada forma de boca, suavizado
-    const kv = 1-Math.exp(-dt*24)
+    const kv = 1-Math.exp(-dt*16)
     for(const v of Object.keys(this.vis) as Viseme[]){
       const goal = shape===v ? this.shapeAmount : 0
       this.vis[v] += (goal-this.vis[v])*kv
@@ -262,25 +269,35 @@ export class PortraitRenderer {
     ctx.scale(scale,scale)
     ctx.translate(-pivotX+drift+trem,-pivotY+(breath+Math.max(0,this.cur.slump)+this.mouth*.5)*u)
 
-    if(this.prev && this.fade<1) this.drawAsset(this.prev,now,1)
-    if(this.shown) this.drawAsset(this.shown,now,this.prev ? this.fade : 1)
+    // a mais antiga fica opaca por baixo; as novas entram com ease suave
+    this.layers.forEach((x,i)=>this.drawAsset(x.l,i===0 ? 1 : x.a*x.a*(3-2*x.a)))
+    const top = this.layers[this.layers.length-1]
+    if(top) this.drawOverlays(top.l,now)
     ctx.restore()
   }
 
-  /** Imagem de uma expressão alinhada ao retrato neutro, com boca e piscar por cima. */
-  private drawAsset(l:Loaded, now:number, alpha:number){
+  /** Posiciona o desenho no espaço da imagem da expressão (alinhada ao retrato neutro). */
+  private withAlign(l:Loaded, fn:()=>void){
     const { ctx, def } = this
-    const { asset, img } = l
     const [rx,ry] = def.portrait.eyeMid
     ctx.save()
-    ctx.globalAlpha = alpha
     ctx.translate(rx,ry)
-    ctx.scale(asset.align.scale,asset.align.scale)
-    ctx.translate(-asset.align.eyeMid[0],-asset.align.eyeMid[1])
-    ctx.drawImage(img,0,0,img.naturalWidth,img.naturalHeight)
-    this.drawMouth(l)
-    this.drawLids(l,now)
+    ctx.scale(l.asset.align.scale,l.asset.align.scale)
+    ctx.translate(-l.asset.align.eyeMid[0],-l.asset.align.eyeMid[1])
+    fn()
     ctx.restore()
+  }
+
+  private drawAsset(l:Loaded, alpha:number){
+    const { ctx } = this
+    ctx.globalAlpha = alpha
+    this.withAlign(l,()=>ctx.drawImage(l.img,0,0,l.img.naturalWidth,l.img.naturalHeight))
+    ctx.globalAlpha = 1
+  }
+
+  /** Boca e piscar, desenhados uma vez só, sobre a imagem mais recente. */
+  private drawOverlays(l:Loaded, now:number){
+    this.withAlign(l,()=>{ this.drawMouth(l); this.drawLids(l,now) })
   }
 
   private drawLids(l:Loaded, now:number){
@@ -309,21 +326,31 @@ export class PortraitRenderer {
   private drawMouth(l:Loaded){
     const vd = this.def.visemes
     if(vd && l.visemes){
+      const ws = vd.order.map(v=>({ v, w:this.vis[v] })).filter(x=>x.w>.01 && l.visemes![x.v]).sort((a,b)=>a.w-b.w)
+      const total = ws.reduce((t,x)=>t+x.w,0)
+      if(!ws.length) return
+      const { ctx } = this
+      const g = this.grp ?? (this.grp = document.createElement('canvas'))
+      if(g.width!==vd.cellW || g.height!==vd.cellH){ g.width = vd.cellW; g.height = vd.cellH }
+      const gx = g.getContext('2d')!
+      gx.clearRect(0,0,g.width,g.height)
+      // mistura as formas como média ponderada: cada uma entra com w/(soma até ela), sem empilhar
+      let acc = 0
+      for(const x of ws){
+        acc += x.w
+        gx.globalAlpha = x.w/acc
+        gx.drawImage(l.visemes[x.v]!,0,0)
+      }
+      gx.globalAlpha = 1
       const m = l.asset.mouth
       const s = (m.halfWidth*2)/vd.lipWidth
-      const { ctx } = this
-      for(const v of vd.order){
-        const w = this.vis[v]
-        const sprite = l.visemes[v]
-        if(w<.02 || !sprite) continue
-        ctx.save()
-        ctx.globalAlpha *= clamp(w,0,1)
-        ctx.translate(m.cx,m.rimY)
-        ctx.scale(s,s)
-        ctx.translate(-vd.center[0],-vd.center[1])
-        ctx.drawImage(sprite,0,0)
-        ctx.restore()
-      }
+      ctx.save()
+      ctx.globalAlpha = clamp(total,0,1)
+      ctx.translate(m.cx,m.rimY)
+      ctx.scale(s,s)
+      ctx.translate(-vd.center[0],-vd.center[1])
+      ctx.drawImage(g,0,0)
+      ctx.restore()
       return
     }
     this.drawMouthStrips(l)
