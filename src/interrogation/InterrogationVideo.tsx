@@ -54,6 +54,12 @@ export default function InterrogationVideo({config,onDirector,children}:Props){
         />
       ))}
       {failed && <div className="iv-fallback">Gravação indisponível</div>}
+      {/* ruído de gravação: grão, linhas, faixa de rastreio e um brilho que oscila */}
+      <div className="iv-fx iv-grain" aria-hidden="true"/>
+      <div className="iv-fx iv-scan" aria-hidden="true"/>
+      <div className="iv-fx iv-roll" aria-hidden="true"/>
+      <div className="iv-fx iv-flicker" aria-hidden="true"/>
+      <div className="iv-mark" aria-hidden="true"><b>DHPP</b><i/><span>HOMICÍDIOS</span></div>
       {children}
     </div>
   )
