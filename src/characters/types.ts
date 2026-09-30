@@ -1,5 +1,6 @@
 export type Expression =
-  'neutral'|'tired'|'uncomfortable'|'defensive'|'nervous'|'shaken'|'angry'|'sad'|'confident'|'scared'
+  'neutral'|'tired'|'uncomfortable'|'defensive'|'nervous'|'shaken'|'angry'|'sad'|'confident'|'scared'|
+  'apprehensive'|'lying'|'teary'|'false_relief'|'slightly_tired'
 
 /** Retângulo em pixels do arquivo de retrato. */
 export type Box = { x:number; y:number; w:number; h:number }

@@ -29,4 +29,9 @@ export const EXPRESSIONS:Record<Expression,ExpressionParams> = {
   sad:           mk({ slump:2.5, blinkRate:1.1 }),
   confident:     mk({ slump:-1.5, blinkRate:.7 }),
   scared:        mk({ blinkRate:1.8, tremor:.7 }),
+  apprehensive:  mk({ blinkRate:1.4, tremor:.2 }),
+  lying:         mk({ slump:-1, blinkRate:.5 }),
+  teary:         mk({ slump:1.5, blinkRate:1.7, tremor:.4 }),
+  false_relief:  mk({ slump:1, blinkRate:1.2 }),
+  slightly_tired: mk({ slump:1, blinkRate:.8 }),
 }
