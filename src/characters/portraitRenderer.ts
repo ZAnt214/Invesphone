@@ -88,10 +88,11 @@ export class PortraitRenderer {
     if(this.destroyed || !raw.neutral) return
     // o fundo de cada imagem tem um tom um pouco diferente: casa todos com o da neutra
     const ref = this.bgPlane(raw.neutral)
+    const skinRef = this.skinTone(raw.neutral,this.def.assets.neutral)
     for(const [k,asset] of entries){
       const c = raw[k]
       if(!c) continue
-      if(k!=='neutral') this.matchBackground(c,ref)
+      if(k!=='neutral'){ this.matchBackground(c,ref); this.matchSkin(c,asset,skinRef) }
       this.loaded[k] = this.prepare(asset,c,k==='neutral')
     }
     if(this.destroyed || !this.loaded.neutral) return
@@ -200,6 +201,36 @@ export class PortraitRenderer {
       }
       return x
     })
+  }
+
+  /** Tom médio da pele (bochechas e testa) de uma imagem. */
+  private skinTone(c:HTMLCanvasElement, asset:ExpressionAsset):Rgb{
+    const cx = c.getContext('2d',{ willReadFrequently:true })!
+    const [ex,ey] = asset.align.eyeMid, sc = asset.align.scale
+    const v:Rgb = [0,0,0]
+    for(const [dx,dy] of [[-75,80],[75,80],[0,-140]]){
+      const d = cx.getImageData(Math.round(ex+dx*sc)-6,Math.round(ey+dy*sc)-6,12,12).data
+      let r=0,g=0,b=0
+      for(let i=0;i<d.length;i+=4){ r+=d[i]; g+=d[i+1]; b+=d[i+2] }
+      const n = d.length/4
+      v[0]+=r/n/3; v[1]+=g/n/3; v[2]+=b/n/3
+    }
+    return v
+  }
+
+  /** Ajusta o tom da pele ao da neutra, para a troca de expressão não mudar a cor do rosto. */
+  private matchSkin(c:HTMLCanvasElement, asset:ExpressionAsset, ref:Rgb){
+    const mine = this.skinTone(c,asset)
+    const gain = [0,1,2].map(i=>ref[i]/mine[i])
+    const cx = c.getContext('2d',{ willReadFrequently:true })!
+    const id = cx.getImageData(0,0,c.width,c.height)
+    const d = id.data
+    for(let i=0;i<d.length;i+=4){
+      const w = clamp(((d[i]+d[i+1]+d[i+2])/3-90)/60,0,1)
+      if(w<=0) continue
+      for(let ch=0;ch<3;ch++) d[i+ch] = clamp(d[i+ch]*(1+(gain[ch]-1)*w),0,255)
+    }
+    cx.putImageData(id,0,0)
   }
 
   /** Soma à imagem a diferença entre o fundo dela e o da neutra; pele e cores claras quase não mudam. */
