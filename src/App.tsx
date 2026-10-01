@@ -11,6 +11,7 @@ import HandsetHome from './HandsetHome'
 import QualityPicker from './QualityPicker'
 import FullscreenSetting from './FullscreenSetting'
 import SoundSetting from './SoundSetting'
+import ResetSetting from './ResetSetting'
 import Diagnostics from './Diagnostics'
 import IllustratedInterrogation from './interrogation/IllustratedInterrogation'
 import { liviaInterrogation } from './interrogation/livia'
@@ -23,7 +24,7 @@ import './handset-pages.css'
 import { acceptedProofs, chapters, clues, disclaimer, people, teamMessages, victimMessages } from './case01'
 
 const SONIA_PHOTO = `${import.meta.env.BASE_URL}sonia.jpg`
-const SAVE_VERSION = 2
+const SAVE_VERSION = 3
 const SAVE_KEY = 'invesphone-case01-v2'
 
 type Screen = 'incoming'|'missed'|'active'|'launching'|'phone'|'task'|'ending'
@@ -365,7 +366,7 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
  if(game.app==='clues')return <PhonePage title="Pistas" back={()=>openApp('home')}><ClueList ids={game.clues}/></PhonePage>
  if(game.app==='interrogate')return <PhonePage title="Interrogar" back={()=>openApp('home')}><People game={game} setGame={setGame}/></PhonePage>
  if(game.app==='victim')return <PhonePage title="Telefone de Helena" back={()=>openApp('home')}><VictimPhone/></PhonePage>
- if(game.app==='settings')return <PhonePage title="Ajustes" back={()=>openApp('home')}><QualityPicker/><p className="settings-note">A qualidade vale para o jogo inteiro: telas, animações e retratos.</p><FullscreenSetting/><SoundSetting/><Diagnostics/></PhonePage>
+ if(game.app==='settings')return <PhonePage title="Ajustes" back={()=>openApp('home')}><QualityPicker/><p className="settings-note">A qualidade vale para o jogo inteiro: telas, animações e retratos.</p><FullscreenSetting/><SoundSetting/><ResetSetting onReset={()=>{localStorage.removeItem(SAVE_KEY);setGame(initialGame)}}/><Diagnostics/></PhonePage>
  if(game.app==='chapters')return <PhonePage title="Arquivo do caso" back={()=>openApp('home')}><ChapterMap game={game}/></PhonePage>
  return <HandsetHome chapterNumber={chapter.number} taskTitle={current.title} chapterTitle={chapter.title} taskNumber={game.task+1} taskCount={tasks.length} teamBadge={game.task<3?1:0} clueBadge={game.clues.length} onOpenApp={openApp} onOpenTask={()=>setGame(g=>({...g,screen:'task'}))}/>
 }
