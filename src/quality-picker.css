@@ -12,3 +12,8 @@
 [data-quality="low"] .hx *,[data-quality="low"] .hx-hd,[data-quality="low"] .hx-fp,[data-quality="low"] .call-backdrop,[data-quality="low"] .avatar-pulse i{animation:none!important}
 [data-quality="low"] .hx::after,[data-quality="low"] .ii-camera-fx{box-shadow:none!important}
 [data-quality="low"] .transcript{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+
+.qp.fs{margin-top:12px}
+.fs-btn{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:8px 14px;font:700 11px var(--mono,monospace);letter-spacing:.06em}
+.fs-btn svg{width:15px;height:15px}
+.qp b{color:#fff}

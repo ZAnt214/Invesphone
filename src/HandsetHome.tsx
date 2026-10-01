@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BatteryMedium, FileSearch, FolderSearch, Home as HomeIcon, MessageCircle, Smartphone, Users, Gauge } from 'lucide-react'
+import { BatteryMedium, FileSearch, FolderSearch, Home as HomeIcon, MessageCircle, Smartphone, Users, Settings } from 'lucide-react'
 import './handset-home.css'
 
 type HomeTarget = 'team'|'clues'|'interrogate'|'victim'|'chapters'|'settings'
@@ -92,7 +92,7 @@ export default function HandsetHome(p:Props){
         <AppTile label="Interrogar" icon={<Users/>} onClick={()=>p.onOpenApp('interrogate')}/>
         <AppTile label="Tel. Helena" icon={<Smartphone/>} onClick={()=>p.onOpenApp('victim')}/>
         <AppTile label="Arquivo" icon={<FolderSearch/>} onClick={()=>p.onOpenApp('chapters')}/>
-        <AppTile label="Gráficos" icon={<Gauge/>} onClick={()=>p.onOpenApp('settings')}/>
+        <AppTile label="Ajustes" icon={<Settings/>} onClick={()=>p.onOpenApp('settings')}/>
       </div>
       <nav className="hx-tabs" aria-label="Navegação">
         <button className="on" aria-current="page"><i><HomeIcon/></i>Início</button>
