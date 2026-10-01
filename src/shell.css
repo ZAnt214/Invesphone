@@ -40,3 +40,19 @@ button{touch-action:manipulation}
  */
 html.standalone{overscroll-behavior:none}
 html.standalone::after{content:"";position:absolute;left:0;top:0;width:1px;height:100lvh;pointer-events:none}
+
+/* ---------- ajuste geral para tela cheia no iPhone ---------- */
+/* tela inicial: o espaço que sobra entre os ícones e as abas vira respiro igual em cima e embaixo */
+.hx-apps{flex:1 1 auto!important;align-content:center;grid-auto-rows:minmax(92px,128px)}
+.hx-app{justify-content:center}
+/* a digital fica atrás sem competir com o texto do cartão */
+.hx-fp-t{display:none}
+.hx-fp-d{opacity:.14}
+
+/* app instalado: o iOS já mostra a barra de status, então a do jogo vira só um espaçador do tamanho do recuo */
+html.standalone .hx-status,
+html.standalone .handset.page .handset-status{height:env(safe-area-inset-top,0px);padding:0;visibility:hidden}
+html.standalone .call-screen .status,
+html.standalone .launching .status{display:none}
+/* o retrato usa a altura de tela inteira (dvh ainda conta os 47 px que o iOS tira da janela) */
+html.standalone .ii-stage{height:clamp(220px,40lvh,440px)}
