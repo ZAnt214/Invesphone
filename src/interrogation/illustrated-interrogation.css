@@ -250,21 +250,42 @@
 .ii-press-alert small{font:700 8px var(--mono);letter-spacing:.14em;color:#e8a58a}
 .ii-press-alert b{font:800 12px var(--mono);letter-spacing:.16em;color:#fff}
 
-/* resumo final */
-.ii-summary-card{text-align:left;max-height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.ii-summary-card>b,.ii-summary-card>p{text-align:center}
-.ii-summary-card section{display:grid;gap:5px;padding-top:8px;border-top:1px solid var(--line)}
-.ii-summary-card ul{margin:0;padding:0;list-style:none;display:grid;gap:3px}
-.ii-summary-card li{font-size:11px;color:#e7ebec;padding-left:12px;position:relative}
-.ii-summary-card li::before{content:"✓";position:absolute;left:0;color:#f0c446}
-.ii-summary-card ul.miss li{color:var(--mut)}
-.ii-summary-card ul.miss li::before{content:"?";color:#e8683a}
-.ii-summary-card p b{display:inline;font-size:10px;letter-spacing:.06em}
-.ii-trail{display:flex;align-items:flex-end;gap:3px;height:34px}
-.ii-trail i{flex:1;max-width:18px;border-radius:2px 2px 0 0}
 
 /* mensagem de encerramento: o detetive agradece e libera o depoente */
 .ii-farewell{display:grid;gap:6px;text-align:left;width:100%;padding:12px 14px;border:1px solid rgba(255,255,255,.22);border-left:3px solid #eef1f2;border-radius:4px;background:rgba(255,255,255,.05);color:var(--ink);font-family:var(--mono);animation:ii-sub .5s ease-out both}
 .ii-farewell small{font:700 8px var(--mono);letter-spacing:.14em;color:var(--mut)}
 .ii-farewell p{margin:0;font-size:14px;line-height:1.5}
 .ii-farewell em{font-style:normal;font:600 10px var(--mono);color:var(--mut);letter-spacing:.06em}
+
+/* resumo do depoimento: ficha do caso */
+.ds{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:grid;align-content:start;gap:12px;padding:14px;border:1px solid rgba(255,255,255,.2);border-radius:6px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02))}
+.ds-head{display:flex;align-items:center;gap:10px}
+.ds-head>svg{width:26px;height:26px;flex:none;color:#9aa4a8}
+.ds-head div{flex:1;min-width:0}
+.ds-head small{font:700 8px var(--mono);letter-spacing:.13em;color:var(--mut)}
+.ds-head h3{margin:2px 0 0;font:800 15px var(--mono);letter-spacing:.04em}
+.ds-stamp{flex:none;transform:rotate(-6deg);padding:4px 8px;border:2px solid currentColor;border-radius:4px;font:800 10px var(--mono);letter-spacing:.14em;opacity:.92}
+.ds-stamp.completo{color:#5fd08f}.ds-stamp.parcial{color:#f0c446}.ds-stamp.incompleto{color:#e8683a}
+.ds-lead{margin:0;font-size:12px;line-height:1.45;color:#c5cdd0}
+.ds-stats{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:8px}
+.ds-stats div{display:grid;gap:3px;padding:9px 6px;border:1px solid var(--line);border-radius:6px;background:rgba(0,0,0,.28);text-align:center}
+.ds-stats b{font:800 22px/1 var(--mono);color:#fff}
+.ds-stats b em{font-style:normal;font-size:11px;color:var(--mut);margin-left:1px}
+.ds-stats b.txt{font-size:13px;letter-spacing:.08em;align-self:center;padding:5px 0}
+.ds-stats small{font:700 8px var(--mono);letter-spacing:.12em;color:var(--mut)}
+.ds-block{display:grid;gap:7px}
+.ds-block h4{margin:0;font:800 9px var(--mono);letter-spacing:.14em;color:#9aa4a8;display:flex;align-items:center;gap:8px}
+.ds-block h4::after{content:"";flex:1;height:1px;background:var(--line)}
+.ds-curve{width:100%;height:auto;display:block;border-radius:6px;background:rgba(0,0,0,.28)}
+.ds-curve .ds-line{fill:none;stroke:#e8683a;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.ds-curve .ds-stage{stroke:rgba(255,255,255,.16);stroke-dasharray:3 4}
+.ds-curve text{font:700 7px var(--mono);letter-spacing:.1em;fill:#7f8a8f}
+.ds-legend{margin:0;display:flex;align-items:center;gap:5px;flex-wrap:wrap;font:600 9px var(--mono);color:var(--mut)}
+.ds-legend i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.ds-legend i+i{margin-left:6px}
+.ds-tags{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.ds-tags li{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid rgba(240,196,70,.5);border-left:3px solid #f0c446;border-radius:4px;background:rgba(240,196,70,.07);font-size:12px;color:#fff}
+.ds-tags li b{flex:none;font:800 8px var(--mono);letter-spacing:.1em;background:#f0c446;color:#14110a;border-radius:3px;padding:2px 5px}
+.ds-tags.missed li{border:1px dashed rgba(255,255,255,.25);background:rgba(255,255,255,.03);color:var(--mut);font-size:11px}
+.ds-tags.missed svg{width:13px;height:13px;flex:none;color:#e8683a}
+.ds-empty{margin:0;font-size:11px;color:var(--mut);line-height:1.4}
