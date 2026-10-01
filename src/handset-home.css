@@ -66,7 +66,7 @@
 .hx-app em{position:absolute;top:-6px;right:-7px;min-width:19px;height:19px;padding:0 5px;background:var(--hud);color:#000;border:2px solid #050607;border-radius:2px;font:700 10px/15px var(--mono);font-style:normal;text-align:center}
 
 /* abas */
-.hx-tabs{margin-top:auto;display:grid;grid-template-columns:repeat(4,1fr);padding:8px 10px calc(20px + env(safe-area-inset-bottom));background:#000;border-top:1px solid var(--line)}
+.hx-tabs{margin-top:auto;display:grid;grid-template-columns:repeat(4,1fr);padding:8px 10px calc(20px + var(--safe-b));background:#000;border-top:1px solid var(--line)}
 .hx-tabs button{display:flex;flex-direction:column;align-items:center;gap:3px;border:0;background:none;color:var(--mut);font:700 10px var(--mono);cursor:pointer;-webkit-tap-highlight-color:transparent}
 .hx-tabs button.on{color:var(--hud)}
 .hx-tabs i{display:grid;place-items:center;width:46px;height:28px}
