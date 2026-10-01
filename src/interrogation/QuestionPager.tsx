@@ -2,9 +2,10 @@ import { ChevronLeft, ChevronRight, FileSearch } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { InterrogationQuestion } from './types'
 
-/** Altura mínima de uma pergunta e espaço entre elas, em px. */
-const ITEM = 56
-const GAP = 8
+/** Altura estimada de uma pergunta (normal e confrontação, com a etiqueta da pista) e espaço entre elas, em px. */
+const ITEM = 48
+const ITEM_CONFRONT = 70
+const GAP = 6
 const PAGER = 36
 
 type Props = {
@@ -33,16 +34,28 @@ export default function QuestionPager({questions,onPick,clueTitle}:Props){
   },[])
 
   const ordered = [...questions.filter(q=>!q.requiresClue),...questions.filter(q=>q.requiresClue)]
-  const fit = (h:number)=>Math.max(1,Math.floor((h+GAP)/(ITEM+GAP)))
-  let size = fit(height)
-  const pages = Math.max(1,Math.ceil(ordered.length/size))
-  if(pages>1) size = fit(height-PAGER)
-  const total = Math.max(1,Math.ceil(ordered.length/size))
+  const hOf = (q:InterrogationQuestion)=>q.requiresClue ? ITEM_CONFRONT : ITEM
+  // páginas montadas por altura: quantas perguntas couberem (e o seletor de página se houver mais de uma)
+  const paginate = (avail:number)=>{
+    const out:InterrogationQuestion[][] = []
+    let cur:InterrogationQuestion[] = [], used = 0
+    for(const q of ordered){
+      const h = hOf(q)+(cur.length ? GAP : 0)
+      if(cur.length && used+h>avail){ out.push(cur); cur = []; used = 0 }
+      used += hOf(q)+(cur.length ? GAP : 0)
+      cur.push(q)
+    }
+    if(cur.length) out.push(cur)
+    return out.length ? out : [[]]
+  }
+  let pagesList = paginate(height)
+  if(pagesList.length>1) pagesList = paginate(height-PAGER)
+  const total = pagesList.length
   const cur = Math.min(page,total-1)
 
   useEffect(()=>{ if(page>total-1) setPage(Math.max(0,total-1)) },[page,total])
 
-  const slice = ordered.slice(cur*size,cur*size+size)
+  const slice = pagesList[cur]
   return (
     <div className="iq" ref={box}>
       <div className="iq-list">

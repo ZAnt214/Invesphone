@@ -55,4 +55,4 @@ html.standalone .handset.page .handset-status{height:env(safe-area-inset-top,0px
 html.standalone .call-screen .status,
 html.standalone .launching .status{display:none}
 /* o retrato usa a altura de tela inteira (dvh ainda conta os 47 px que o iOS tira da janela) */
-html.standalone .ii-stage{height:clamp(220px,40lvh,440px)}
+html.standalone .ii-stage{height:clamp(250px,46lvh,421px)}
