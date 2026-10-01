@@ -398,7 +398,7 @@ export class PortraitRenderer {
       // borda suave em elipse, longe dos cantos escuros do queixo
       cx.globalCompositeOperation = 'destination-in'
       cx.save()
-      const mrx = vd.lipWidth*1.15, mry = vd.cellH*.45
+      const mrx = vd.lipWidth*(vd.reach ?? 1.15), mry = vd.cellH*.45
       cx.translate(vd.center[0],vd.center[1]); cx.scale(1,mry/mrx)
       const g = cx.createRadialGradient(0,0,mrx*.6,0,0,mrx)
       g.addColorStop(0,'rgba(0,0,0,1)'); g.addColorStop(1,'rgba(0,0,0,0)')
