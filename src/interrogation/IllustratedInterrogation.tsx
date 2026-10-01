@@ -189,6 +189,42 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
   if(!character) return <main className="ii"><div className="ii-portrait-fallback">Retrato indisponível</div></main>
 
   const hud = !character.portrait.hasBakedHud
+  // depoimento já encerrado: o resumo vira um arquivo em papel, sem o retrato
+  const fileMode = finished && !farewell
+  if(fileMode) return (
+    <main className="ii ii-file">
+      <header className="ii-filebar">
+        <button onClick={onBack} aria-label="Sair do arquivo"><ChevronLeft/></button>
+        <span>ARQUIVO DO CASO · {config.name.toUpperCase()}</span>
+      </header>
+      <section className="ii-panel">
+        <div className="ii-main">
+          {tab==='ask' && <DepositionSummary config={config} progress={progress} clueTitle={clueTitle}/>}
+          {tab==='notes' && (
+            <ul className="ii-notes">
+              {asked.map(q=>(
+                <li key={q.id} className={openId===q.id ? 'open' : ''}>
+                  <button type="button" className="iv-asked-row" onClick={()=>setOpenId(o=>o===q.id?null:q.id)} aria-expanded={openId===q.id}>
+                    <span>{q.question}</span><ChevronDown className="chev"/>
+                  </button>
+                  {openId===q.id && (q.highlights
+                    ? <AnswerNotes question={q} compact noted={noted} clueTitle={clueTitle} onNote={note}/>
+                    : <article className="ii-line ii-answer compact"><p>{q.answer}</p></article>)}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <nav className="ii-tabs ii-tabs-file" aria-label="Arquivo do depoimento">
+          <button className={tab==='ask'?'on':''} onClick={()=>setTab('ask')}>RESUMO</button>
+          <button className={tab==='notes'?'on':''} onClick={()=>setTab('notes')}>
+            ANOTAÇÕES{summary.total>0 && <em>{summary.found}/{summary.total}</em>}
+          </button>
+        </nav>
+        {toast && <div className="ii-file-toast" key={toast} role="status"><small>NOVA PISTA REGISTRADA</small><b>{toast}</b></div>}
+      </section>
+    </main>
+  )
   return (
     <main className="ii">
       <section className="ii-stage">
@@ -270,7 +306,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
           <button className="help" aria-label="Como funciona" disabled={busy} onClick={()=>setTutorial(true)}>?</button>
         </nav>
       </section>
-      {tutorial && <Tutorial steps={tutorialSteps(config.name)} onClose={closeTutorial}/>}
+      {tutorial && !fileMode && <Tutorial steps={tutorialSteps(config.name)} onClose={closeTutorial}/>}
     </main>
   )
 }
