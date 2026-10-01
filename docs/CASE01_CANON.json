@@ -1,0 +1,66 @@
+{
+  "caseId": "case01",
+  "title": "A Casa da Rua das Acácias",
+  "setting": {
+    "city": "São Paulo",
+    "period": "outubro de 2002"
+  },
+  "solution": {
+    "mastermind": "livia",
+    "executors": [
+      "caio",
+      "teo"
+    ],
+    "innocents": [
+      "rafael",
+      "cida",
+      "jorge"
+    ],
+    "motive": [
+      "herança",
+      "conflito dos pais com o relacionamento de Lívia e Caio"
+    ]
+  },
+  "fixedTimes": {
+    "alarmDisarmed": "23:52",
+    "motelEntry": "00:56"
+  },
+  "fixedMoney": {
+    "amount": "US$ 5.000",
+    "bank": "Banco Meridional",
+    "agency": "0431",
+    "date": "15/10/2002"
+  },
+  "acceptedProofs": [
+    "log_alarme",
+    "nota_motel",
+    "cinta_bancaria",
+    "confissao_teo",
+    "agenda_helena",
+    "valores_intactos"
+  ],
+  "chapters": [
+    "O Silêncio da Casa",
+    "Versões",
+    "A Janela",
+    "Siga o Dinheiro",
+    "A Última Versão"
+  ],
+  "endings": {
+    "A": "Caso Encerrado",
+    "B": "Meia Justiça",
+    "C": "Arquivado"
+  },
+  "continuityRules": [
+    "Lívia permanece a mentora/facilitadora.",
+    "Caio e Téo permanecem os executores.",
+    "Rafael, Cida e Jorge permanecem inocentes.",
+    "Não há arrombamento na entrada principal.",
+    "Thor estava preso no canil.",
+    "O suposto roubo é uma encenação.",
+    "A nota do motel é posterior ao período crítico.",
+    "Violência não deve ser mostrada graficamente.",
+    "Fatos do mundo devem respeitar 2002."
+  ],
+  "sourceOfTruth": "docs/CASE01_STORY_BIBLE.md"
+}
