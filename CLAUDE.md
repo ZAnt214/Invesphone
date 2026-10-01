@@ -105,3 +105,15 @@ Antes de alterar progressão, desbloqueios, ordem de tarefas, chamadas, interrog
 O princípio de implementação é: **informação gera ação**. Não libere telas ou apps sem motivo narrativo. Cada descoberta relevante deve abrir um confronto, documento, retorno de equipe, nova tela ou mudança de estado coerente.
 
 Se o fluxo atual em `src/App.tsx` for mais simples que o GAME FLOW, faça a migração gradualmente, preservando mecânicas boas e save. Não invente uma ordem nova em paralelo.
+
+
+## Solicitações de material à equipe
+
+A mecânica oficial está em `docs/TEAM_MATERIAL_REQUESTS.md`.
+
+Ao alterar o app Equipe ou progressão do Caso 01:
+- preserve as abas Canal / Solicitar material;
+- pedidos só ficam disponíveis quando há base investigativa;
+- materiais podem registrar pistas no save;
+- nenhum pedido deve revelar uma prova futura antes do gatilho narrativo;
+- novos materiais devem seguir o padrão documentado.

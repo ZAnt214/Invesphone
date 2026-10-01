@@ -38,6 +38,8 @@ type GameSave = {
   clues:string[]
   interviewed:string[]
   orders:string[]
+  /** Materiais solicitados à equipe (fotos, gravações, documentos e períícia). */
+  requestedMaterials?:string[]
   score:number
   liviaInterrogation:InterrogationProgress
   /** Progresso dos depoimentos dos demais personagens, por id (Lívia tem campo próprio, de saves antigos). */
@@ -130,6 +132,72 @@ const orderResultMessages:Record<string,{time:string;from:string;text:string}> =
   preservar_painel:{time:'04:46',from:'Perícia',text:'Painel do alarme preservado e fotografado antes de qualquer manipulação.'},
   relatorio_preliminar:{time:'04:49',from:'Sônia',text:'Relatório preliminar solicitado. Te envio assim que a primeira leitura for fechada.'}
 }
+
+
+type TeamMaterialRequest = {
+  id:string
+  label:string
+  kind:'FOTO'|'GRAVAÇÃO'|'DOCUMENTO'|'PERÍCIA'
+  description:string
+  minTask?:number
+  minInterviews?:number
+  requiresClues?:string[]
+  requiresInterviewed?:string[]
+  clueIds?:string[]
+  requestTime:string
+  response:{time:string;from:string;text:string}
+}
+
+const teamMaterialRequests:TeamMaterialRequest[] = [
+  {
+    id:'fotos_cena',label:'Fotos completas da cena',kind:'FOTO',
+    description:'Entrada, sala, escritório, corredor e quarto do casal em alta resolução.',
+    minTask:1,requestTime:'04:35',
+    response:{time:'04:41',from:'Perícia',text:'Pacote fotográfico da cena anexado. Entrada, sala, escritório e quarto do casal documentados antes da coleta.'}
+  },
+  {
+    id:'fotos_painel',label:'Close do painel do alarme',kind:'FOTO',
+    description:'Fotografias do teclado, visor e estado do painel antes da manipulação.',
+    requiresClues:['painel_alarme'],requestTime:'04:47',
+    response:{time:'04:50',from:'Perícia',text:'Close do painel do alarme enviado. O equipamento foi fotografado e preservado antes da análise.'}
+  },
+  {
+    id:'gravacoes_depoimentos',label:'Gravações dos depoimentos',kind:'GRAVAÇÃO',
+    description:'Cópias de áudio dos depoimentos já colhidos para comparação de versões.',
+    minInterviews:1,requestTime:'05:06',
+    response:{time:'05:09',from:'Cartório',text:'Áudios dos depoimentos já realizados anexados ao arquivo da ocorrência.'}
+  },
+  {
+    id:'comprovante_lan',label:'Comprovante da LAN house',kind:'DOCUMENTO',
+    description:'Registro de pagamento e horário vinculado a Rafael.',
+    requiresInterviewed:['rafael'],clueIds:['lan_paga'],requestTime:'05:11',
+    response:{time:'05:14',from:'Equipe Externa',text:'LAN house confirmou o registro de Rafael. Comprovante e horário foram anexados ao caso.'}
+  },
+  {
+    id:'log_alarme',label:'Log completo do alarme',kind:'PERÍCIA',
+    description:'Histórico de ativações e desativações do sistema da residência.',
+    minInterviews:4,clueIds:['log_alarme'],requestTime:'05:15',
+    response:{time:'05:18',from:'Inteligência',text:'Log completo recebido. Há uma desativação por código mestre às 23:52.'}
+  },
+  {
+    id:'registro_motel',label:'Registro de entrada do motel',kind:'DOCUMENTO',
+    description:'Comprovante com horário de entrada atribuído a Lívia e Caio.',
+    requiresClues:['log_alarme'],clueIds:['nota_motel'],requestTime:'05:26',
+    response:{time:'05:31',from:'Equipe Externa',text:'Motel localizou o registro. Entrada de Lívia e Caio consta às 00:56.'}
+  },
+  {
+    id:'docs_financeiros',label:'Documentos financeiros de Ricardo',kind:'DOCUMENTO',
+    description:'Extratos e cobranças recolhidos no escritório para cruzamento financeiro.',
+    minTask:5,clueIds:['extrato_ricardo','carta_cobranca'],requestTime:'06:03',
+    response:{time:'06:10',from:'Financeiro',text:'Extrato e carta de cobrança de Ricardo digitalizados e anexados para análise.'}
+  },
+  {
+    id:'analise_cinta',label:'Análise da cinta bancária',kind:'PERÍCIA',
+    description:'Conferência de origem, agência, data e valor da cinta encontrada com o dinheiro.',
+    minTask:6,requiresClues:['extrato_ricardo'],clueIds:['cinta_bancaria'],requestTime:'06:20',
+    response:{time:'06:26',from:'Financeiro',text:'Cinta identificada: Banco Meridional, ag. 0431, 15/10/2002, US$ 5.000.'}
+  }
+]
 
 const tasks = [
   {chapter:0,title:'Chegada à Rua das Acácias',kind:'brief'},
@@ -362,7 +430,7 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
   const cfg=interrogations[id]??liviaInterrogation
   return <IllustratedInterrogation key={id} config={cfg} progress={progressOf(game,cfg.id)} onProgress={p=>setGame(g=>withProgress(g,cfg.id,p))} onClue={cid=>setGame(g=>({...g,clues:g.clues.includes(cid)?g.clues:[...g.clues,cid]}))} clueTitle={cid=>clues.find(c=>c.id===cid)?.title} registeredClues={game.clues} onComplete={()=>setGame(g=>({...g,interviewed:g.interviewed.includes(cfg.id)?g.interviewed:[...g.interviewed,cfg.id]}))} onBack={leaveLivia} onReturn={leaveLivia}/>
  }
- if(game.app==='team')return <PhonePage title="Equipe" back={()=>openApp('home')}><Team game={game}/></PhonePage>
+ if(game.app==='team')return <PhonePage title="Equipe" back={()=>openApp('home')}><Team game={game} setGame={setGame}/></PhonePage>
  if(game.app==='clues')return <PhonePage title="Pistas" back={()=>openApp('home')}><ClueList ids={game.clues}/></PhonePage>
  if(game.app==='interrogate')return <PhonePage title="Interrogar" back={()=>openApp('home')}><People game={game} setGame={setGame}/></PhonePage>
  if(game.app==='victim')return <PhonePage title="Telefone de Helena" back={()=>openApp('home')}><VictimPhone/></PhonePage>
@@ -373,10 +441,59 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
 function HandsetStatus(){return <header className="handset-status"><span>VIVO&nbsp;&nbsp;▮▮▮</span><b>DHPP</b><BatteryMedium/></header>}
 function PhonePage({title,back,children}:{title:string;back:()=>void;children:React.ReactNode}){return <main className="handset page"><HandsetStatus/><header className="page-head"><button onClick={back}><ChevronLeft/></button><b>{title}</b><span/></header><section className="page-body">{children}</section></main>}
 
-function Team({game}:{game:GameSave}){
+function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStateAction<GameSave>>}){
+ const [mode,setMode]=useState<'thread'|'requests'>('thread')
  const ordered=game.orders.map(id=>orderResultMessages[id]).filter(Boolean)
- const messages=[...teamMessages,...ordered].sort((a,b)=>a.time.localeCompare(b.time))
- return <div className="thread"><div className="thread-head"><img className="mini-avatar" src={SONIA_PHOTO} alt="Sônia Prado"/><div><b>Ocorrência 001</b><span>canal operacional · 4 participantes</span></div></div>{messages.map((m,i)=><article key={m.time+m.from+i}><small>{m.time}</small><p><b>{m.from}</b>{m.text}</p></article>)}<div className="typing"><i/><i/><i/> equipe em campo</div></div>
+ const requested=game.requestedMaterials??[]
+ const materialMessages=requested.flatMap(id=>{
+  const item=teamMaterialRequests.find(r=>r.id===id)
+  if(!item)return []
+  return [
+   {time:item.requestTime,from:'Lemos',text:`Solicitação de material: ${item.label}.`},
+   item.response
+  ]
+ })
+ const messages=[...teamMessages,...ordered,...materialMessages].sort((a,b)=>a.time.localeCompare(b.time))
+ const available=(item:TeamMaterialRequest)=>{
+  if((item.minTask??0)>game.task)return false
+  if((item.minInterviews??0)>game.interviewed.length)return false
+  if(item.requiresClues?.some(id=>!game.clues.includes(id)))return false
+  if(item.requiresInterviewed?.some(id=>!game.interviewed.includes(id)))return false
+  return true
+ }
+ const request=(item:TeamMaterialRequest)=>{
+  if(requested.includes(item.id)||!available(item))return
+  setGame(g=>{
+   const material=[...(g.requestedMaterials??[]),item.id]
+   const gained=item.clueIds??[]
+   const nextClues=[...g.clues]
+   gained.forEach(id=>{if(!nextClues.includes(id))nextClues.push(id)})
+   return {...g,requestedMaterials:material,clues:nextClues}
+  })
+  setMode('thread')
+ }
+ return <div className="team-hub">
+  <div className="team-tabs">
+   <button className={mode==='thread'?'active':''} onClick={()=>setMode('thread')}>Canal</button>
+   <button className={mode==='requests'?'active':''} onClick={()=>setMode('requests')}>Solicitar material</button>
+  </div>
+  {mode==='thread'?<div className="thread">
+   <div className="thread-head"><img className="mini-avatar" src={SONIA_PHOTO} alt="Sônia Prado"/><div><b>Ocorrência 001</b><span>canal operacional · 4 participantes</span></div></div>
+   {messages.map((m,i)=><article key={m.time+m.from+i}><small>{m.time}</small><p><b>{m.from}</b>{m.text}</p></article>)}
+   <div className="typing"><i/><i/><i/> equipe em campo</div>
+  </div>:<div className="material-requests">
+   <header><small>CENTRAL DE SOLICITAÇÕES</small><b>O que você precisa da equipe?</b><p>Peça materiais conforme novas linhas de investigação forem abertas.</p></header>
+   {teamMaterialRequests.map(item=>{
+    const done=requested.includes(item.id)
+    const can=available(item)
+    return <button key={item.id} className={done?'received':''} disabled={!can||done} onClick={()=>request(item)}>
+     <i>{item.kind==='FOTO'?<Camera/>:item.kind==='GRAVAÇÃO'?<Volume2/>:item.kind==='PERÍCIA'?<Search/>:<FileText/>}</i>
+     <div><small>{item.kind}</small><b>{item.label}</b><p>{item.description}</p><span>{done?'RECEBIDO':can?'SOLICITAR':'AGUARDANDO BASE INVESTIGATIVA'}</span></div>
+     {done&&<Check/>}
+    </button>
+   })}
+  </div>}
+ </div>
 }
 function ClueList({ids}:{ids:string[]}){if(!ids.length)return <Empty icon={<FileSearch/>} title="Nenhuma pista registrada" text="Abra a tarefa atual e comece pela cena."/>;return <div className="clue-list">{ids.map(id=>{const c=clues.find(x=>x.id===id)!;return <article key={id}><FileText/><div><small>{c.category.toUpperCase()}</small><b>{c.title}</b><p>{c.description}</p></div></article>})}</div>}
 function People({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStateAction<GameSave>>}){return <div className="people-list">{people.filter(p=>p.id!=='sonia').map(p=>{const has=!!interrogations[p.id];return <button key={p.id} onClick={()=>has?setGame(openDeposition(p.id,'app')):undefined} disabled={!has}><i><Face p={p}/></i><div><b>{p.name}</b><span>{has?p.role:`${p.role} · sem depoimento`}</span></div>{game.interviewed.includes(p.id)?<Check/>:<ChevronLeft className="right"/>}</button>})}</div>}

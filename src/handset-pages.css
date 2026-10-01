@@ -64,3 +64,28 @@
 .handset.page .chapter-map>article>svg{color:var(--ink)}
 
 .settings-note{margin:14px 2px 0;font-size:11px;line-height:1.5;color:#8d979b}
+
+
+/* equipe: canal + solicitações */
+.team-hub{display:flex;flex-direction:column;gap:10px}
+.team-tabs{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);background:var(--surf)}
+.team-tabs button{min-height:38px;border:0;border-right:1px solid var(--line);background:transparent;color:var(--mut);font:700 10px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase}
+.team-tabs button:last-child{border-right:0}
+.team-tabs button.active{background:var(--ink);color:#000}
+.material-requests{display:flex;flex-direction:column;gap:8px}
+.material-requests>header{padding:10px 2px 6px}
+.material-requests>header small{display:block;color:var(--mut);font:700 9px/1.2 var(--mono);letter-spacing:.08em}
+.material-requests>header b{display:block;margin-top:5px;font-size:15px;color:var(--ink)}
+.material-requests>header p{margin:5px 0 0;color:var(--mut);font-size:11px;line-height:1.45}
+.material-requests>button{width:100%;display:grid;grid-template-columns:38px minmax(0,1fr) 20px;gap:9px;align-items:center;text-align:left;padding:10px;border:1px solid var(--line);border-radius:2px;background:var(--surf);color:var(--ink)}
+.material-requests>button>i{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line);background:#080b0d}
+.material-requests>button>i svg{width:17px;height:17px}
+.material-requests>button>div{min-width:0}
+.material-requests>button small{display:block;color:var(--mut);font:700 8px/1.1 var(--mono);letter-spacing:.08em}
+.material-requests>button b{display:block;margin-top:3px;font-size:12px}
+.material-requests>button p{margin:4px 0 6px;color:var(--mut);font-size:10px;line-height:1.35}
+.material-requests>button span{font:700 8px/1 var(--mono);letter-spacing:.06em;color:var(--ink)}
+.material-requests>button:disabled{opacity:.45}
+.material-requests>button.received{opacity:.75}
+.material-requests>button.received>div>span{color:var(--ink)}
+.material-requests>button>svg{width:16px;height:16px}
