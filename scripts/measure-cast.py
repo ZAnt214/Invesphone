@@ -41,6 +41,13 @@ def eyes_of(path, near):
         out.append(best[1:] if best else None)
     return out
 
+def mouth_line(path, cx, rim):
+    """y da linha entre os lábios: a linha mais escura da coluna central da boca."""
+    a = np.asarray(Image.open(path).convert('L')).astype(float)
+    col = a[rim - 40:rim + 45, cx - 30:cx + 30].mean(1)
+    col = np.convolve(col, np.ones(3) / 3, mode='same')
+    return int(np.argmin(col[3:-3]) + 3 + rim - 40)
+
 def poly_for(info):
     """Contorno do interior do rosto: perfil do rosto da Lívia (máscara aprovada) escalado para o personagem."""
     (lx, ly), (rx, ry) = info['eyes']
@@ -73,6 +80,7 @@ for cid, info in NEUTRAL.items():
     (nl, nr) = info['eyes']
     ndist = nr[0] - nl[0]
     marks[cid] = {}
+    nline = mouth_line(f'{base}/neutral.jpg', info['mouth'][0], info['mouth'][1])
     for e in EXPR:
         found = eyes_of(f'{base}/{e}.jpg', info['eyes'])
         ok = all(found)
@@ -86,6 +94,6 @@ for cid, info in NEUTRAL.items():
         else:
             eye_mid = [(nl[0] + nr[0]) / 2, (nl[1] + nr[1]) / 2]; scale = 1.0
             eyes = [[nl[0], nl[1], 38, 17], [nr[0], nr[1], 38, 17]]
-        marks[cid][e] = {'eyeMid': eye_mid, 'scale': scale, 'eyes': eyes, 'measured': ok}
+        marks[cid][e] = {'eyeMid': eye_mid, 'scale': scale, 'eyes': eyes, 'measured': ok, 'mouthDy': mouth_line(f'{base}/{e}.jpg', info['mouth'][0], info['mouth'][1]) - nline}
         print(cid, e, 'ok' if ok else 'FALLBACK', eye_mid, scale)
 open(f'{ROOT}/src/characters/castMarks.json', 'w').write(json.dumps(marks, indent=1))

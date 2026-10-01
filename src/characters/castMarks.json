@@ -20,7 +20,8 @@
      21
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 0
   },
   "tired": {
    "eyeMid": [
@@ -42,7 +43,8 @@
      17
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 0
   },
   "uncomfortable": {
    "eyeMid": [
@@ -64,7 +66,8 @@
      20
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 29
   },
   "defensive": {
    "eyeMid": [
@@ -86,7 +89,8 @@
      17
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": -5
   },
   "nervous": {
    "eyeMid": [
@@ -108,7 +112,8 @@
      24
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 4
   },
   "shaken": {
    "eyeMid": [
@@ -130,7 +135,8 @@
      23
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 0
   },
   "lying": {
    "eyeMid": [
@@ -152,7 +158,8 @@
      12
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": -3
   },
   "teary": {
    "eyeMid": [
@@ -174,7 +181,8 @@
      29
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": -1
   }
  },
  "teo": {
@@ -198,7 +206,8 @@
      16
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 0
   },
   "tired": {
    "eyeMid": [
@@ -220,7 +229,8 @@
      14
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 0
   },
   "uncomfortable": {
    "eyeMid": [
@@ -242,7 +252,8 @@
      15
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": -2
   },
   "defensive": {
    "eyeMid": [
@@ -264,7 +275,8 @@
      14
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": -6
   },
   "nervous": {
    "eyeMid": [
@@ -286,7 +298,8 @@
      18
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 5
   },
   "shaken": {
    "eyeMid": [
@@ -308,7 +321,8 @@
      18
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 0
   },
   "lying": {
    "eyeMid": [
@@ -330,7 +344,8 @@
      13
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": -4
   },
   "teary": {
    "eyeMid": [
@@ -352,7 +367,8 @@
      19
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": -2
   }
  },
  "rafael": {
@@ -376,7 +392,8 @@
      20
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 0
   },
   "tired": {
    "eyeMid": [
@@ -398,7 +415,8 @@
      17
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 0
   },
   "uncomfortable": {
    "eyeMid": [
@@ -420,7 +438,8 @@
      19
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": -2
   },
   "defensive": {
    "eyeMid": [
@@ -442,7 +461,8 @@
      16
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": -6
   },
   "nervous": {
    "eyeMid": [
@@ -464,7 +484,8 @@
      22
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 5
   },
   "shaken": {
    "eyeMid": [
@@ -486,7 +507,8 @@
      22
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 0
   },
   "lying": {
    "eyeMid": [
@@ -508,7 +530,8 @@
      19
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": -4
   },
   "teary": {
    "eyeMid": [
@@ -530,7 +553,8 @@
      21
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": -2
   }
  },
  "cida": {
@@ -554,7 +578,8 @@
      18
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 0
   },
   "tired": {
    "eyeMid": [
@@ -576,7 +601,8 @@
      15
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 1
   },
   "uncomfortable": {
    "eyeMid": [
@@ -598,7 +624,8 @@
      17
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 0
   },
   "defensive": {
    "eyeMid": [
@@ -620,7 +647,8 @@
      15
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": -3
   },
   "nervous": {
    "eyeMid": [
@@ -642,7 +670,8 @@
      19
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 2
   },
   "shaken": {
    "eyeMid": [
@@ -664,7 +693,8 @@
      19
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 1
   },
   "lying": {
    "eyeMid": [
@@ -686,7 +716,8 @@
      16
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": -1
   },
   "teary": {
    "eyeMid": [
@@ -708,7 +739,8 @@
      19
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 1
   }
  },
  "jorge": {
@@ -732,7 +764,8 @@
      17
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 0
   },
   "tired": {
    "eyeMid": [
@@ -754,7 +787,8 @@
      15
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 1
   },
   "uncomfortable": {
    "eyeMid": [
@@ -776,7 +810,8 @@
      17
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 31
   },
   "defensive": {
    "eyeMid": [
@@ -798,7 +833,8 @@
      14
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": -6
   },
   "nervous": {
    "eyeMid": [
@@ -820,7 +856,8 @@
      19
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 6
   },
   "shaken": {
    "eyeMid": [
@@ -842,7 +879,8 @@
      17
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 1
   },
   "lying": {
    "eyeMid": [
@@ -864,7 +902,8 @@
      16
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": 29
   },
   "teary": {
    "eyeMid": [
@@ -886,7 +925,8 @@
      18
     ]
    ],
-   "measured": true
+   "measured": true,
+   "mouthDy": -1
   }
  }
 }

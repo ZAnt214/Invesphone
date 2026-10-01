@@ -209,14 +209,15 @@ export class PortraitRenderer {
 
   // ---------- preparação a partir do próprio arquivo ----------
 
-  private pick(e:Expression){
-    // expressão sem imagem oficial (personagem só com o retrato neutro): usa a neutra
+  private pick(want:Expression){
+    const e = this.def.alias?.[want] ?? want
+    // expressão sem imagem oficial (personagem só com algumas): usa a neutra
     if(!this.def.assets[e]) return this.loaded.neutral ?? null
     if(!this.loaded[e]){
       if(this.raw[e]) this.process(e)
       else if(this.baseImg){
         // ainda não chegou: carrega agora e aplica quando estiver pronta
-        this.loadRaw(e).then(()=>{ if(!this.destroyed && this.raw[e]){ this.process(e); if(this.expression===e) this.setExpression(e) } })
+        this.loadRaw(e).then(()=>{ if(!this.destroyed && this.raw[e]){ this.process(e); if((this.def.alias?.[this.expression] ?? this.expression)===e) this.setExpression(this.expression) } })
         return null
       }
     }
@@ -266,9 +267,37 @@ export class PortraitRenderer {
   }
 
   /** Ajusta o tom da pele ao da neutra, para a troca de expressão não mudar a cor do rosto. */
+  /**
+   * Ganho de cor que leva o rosto de uma expressão ao tom do rosto neutro: mediana da razão entre os dois, por canal,
+   * em pontos da pele dentro da máscara. A mediana ignora as feições que mudam (olhos, sobrancelhas, boca),
+   * então vale para qualquer rosto, com barba, bigode ou rugas, sem depender de pontos fixos.
+   */
+  private medianGain(c:HTMLCanvasElement, asset:ExpressionAsset):number[]|null {
+    const neutral = this.raw.neutral
+    if(!this.stable || !this.faceMask || !neutral) return null
+    const { x, y, w, h } = this.faceBox
+    const ma = this.faceMask.getContext('2d',{ willReadFrequently:true })!.getImageData(0,0,w,h).data
+    const nd = neutral.getContext('2d',{ willReadFrequently:true })!.getImageData(0,0,neutral.width,neutral.height).data
+    const ed = c.getContext('2d',{ willReadFrequently:true })!.getImageData(0,0,c.width,c.height).data
+    const [px,py] = this.def.portrait.eyeMid, [ex,ey] = asset.align.eyeMid, sc = asset.align.scale
+    const ratios:number[][] = [[],[],[]]
+    for(let j=0;j<h;j+=5) for(let i=0;i<w;i+=5){
+      if(ma[(j*w+i)*4+3]<200) continue
+      const nx = x+i, ny = y+j
+      const qx = Math.round(ex+(nx-px)/sc), qy = Math.round(ey+(ny-py)/sc)
+      if(qx<0||qy<0||qx>=c.width||qy>=c.height) continue
+      const a = (ny*neutral.width+nx)*4, b = (qy*c.width+qx)*4
+      const ln = (nd[a]+nd[a+1]+nd[a+2])/3, le = (ed[b]+ed[b+1]+ed[b+2])/3
+      if(ln<90||le<90) continue
+      for(let ch=0;ch<3;ch++) ratios[ch].push(nd[a+ch]/Math.max(1,ed[b+ch]))
+    }
+    if(ratios[0].length<200) return null
+    return ratios.map(r=>{ r.sort((p,q)=>p-q); return clamp(r[r.length>>1],.7,1.4) })
+  }
+
   private matchSkin(c:HTMLCanvasElement, asset:ExpressionAsset, ref:Rgb){
     const mine = this.skinTone(c,asset)
-    const gain = [0,1,2].map(i=>ref[i]/mine[i])
+    const gain = this.medianGain(c,asset) ?? [0,1,2].map(i=>ref[i]/mine[i])
     // com base fixa só o rosto é usado: corrige só o retângulo do rosto
     let rx = 0, ry = 0, rw = c.width, rh = c.height
     if(this.stable){
