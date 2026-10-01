@@ -3,6 +3,8 @@
  * - alta: resolução nativa da tela, a cada quadro que o aparelho entregar (60/120 fps);
  * - média: resolução útil da arte, 60 fps na fala e 30 quando só há respiração;
  * - baixa: resolução menor e 30 fps, para aparelhos mais fracos ou bateria baixa.
+ * É uma opção do jogo inteiro (Ajustes na tela inicial): além do retrato, a baixa desliga animações
+ * e efeitos pesados das telas (veja `[data-quality="low"]` nos estilos).
  */
 export type Quality = 'low'|'medium'|'high'
 
@@ -35,14 +37,20 @@ export function getQuality():Quality{
   return 'high'
 }
 
+/** Marca a qualidade no documento: os estilos de todo o jogo reagem a `[data-quality]`. */
+export function applyQuality(q:Quality = getQuality()){
+  document.documentElement.dataset.quality = q
+}
+
 export function setQuality(q:Quality){
   try{ localStorage.setItem(KEY,q) }catch{ /* ignora */ }
+  applyQuality(q)
   window.dispatchEvent(new CustomEvent(EVENT,{ detail:q }))
 }
 
 /** Avisa quando a qualidade muda (nesta ou em outra aba). Devolve a função que cancela. */
 export function onQualityChange(fn:(q:Quality)=>void){
-  const local = ()=>fn(getQuality())
+  const local = ()=>{ applyQuality(); fn(getQuality()) }
   window.addEventListener(EVENT,local)
   window.addEventListener('storage',local)
   return ()=>{ window.removeEventListener(EVENT,local); window.removeEventListener('storage',local) }

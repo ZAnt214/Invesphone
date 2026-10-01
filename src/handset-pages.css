@@ -62,3 +62,5 @@
 .handset.page .chapter-map article>i{border-color:var(--line)}
 .handset.page .chapter-map small{color:var(--mut)}
 .handset.page .chapter-map>article>svg{color:var(--ink)}
+
+.settings-note{margin:14px 2px 0;font-size:11px;line-height:1.5;color:#8d979b}

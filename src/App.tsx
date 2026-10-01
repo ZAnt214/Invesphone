@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { enableAudio, playConnect, playHangup, playTypingTick, startRingtone, stopRingtone } from './audio'
 import HandsetHome from './HandsetHome'
+import QualityPicker from './QualityPicker'
 import IllustratedInterrogation from './interrogation/IllustratedInterrogation'
 import { liviaInterrogation } from './interrogation/livia'
 import { characters } from './characters/characters'
@@ -22,7 +23,7 @@ const SAVE_VERSION = 2
 const SAVE_KEY = 'invesphone-case01-v2'
 
 type Screen = 'incoming'|'missed'|'active'|'launching'|'phone'|'task'|'ending'
-type AppName = 'home'|'team'|'clues'|'interrogate'|'victim'|'chapters'|'livia'
+type AppName = 'home'|'team'|'clues'|'interrogate'|'victim'|'chapters'|'livia'|'settings'
 
 type GameSave = {
   version:number
@@ -347,6 +348,7 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
  if(game.app==='clues')return <PhonePage title="Pistas" back={()=>openApp('home')}><ClueList ids={game.clues}/></PhonePage>
  if(game.app==='interrogate')return <PhonePage title="Interrogar" back={()=>openApp('home')}><People game={game} setGame={setGame}/></PhonePage>
  if(game.app==='victim')return <PhonePage title="Telefone de Helena" back={()=>openApp('home')}><VictimPhone/></PhonePage>
+ if(game.app==='settings')return <PhonePage title="Gráficos" back={()=>openApp('home')}><QualityPicker/><p className="settings-note">Vale para o jogo inteiro: telas, animações e retratos. Dá para trocar a qualquer momento, também dentro do depoimento.</p></PhonePage>
  if(game.app==='chapters')return <PhonePage title="Arquivo do caso" back={()=>openApp('home')}><ChapterMap game={game}/></PhonePage>
  return <HandsetHome chapterNumber={chapter.number} taskTitle={current.title} chapterTitle={chapter.title} taskNumber={game.task+1} taskCount={tasks.length} teamBadge={game.task<3?1:0} clueBadge={game.clues.length} onOpenApp={openApp} onOpenTask={()=>setGame(g=>({...g,screen:'task'}))}/>
 }
