@@ -51,3 +51,9 @@ Com "reduzir movimento" ligado, não há respiração, deriva nem tremor. Piscar
 ## Anotar pistas na resposta
 
 Depois de cada resposta, a resposta aparece em frases no painel e o jogador toca nas frases importantes para anotar. Nos dados, a pergunta declara `highlights: [{ phrase, clue }]`: a frase que contém `phrase` registra a pista `clue` (via `onClue`); qualquer outra frase fica anotada como sem valor. As frases anotadas são salvas em `progress.noted` (`<pergunta>:<índice>`). Perguntas só com `clues` (sem `highlights`) continuam registrando a pista sozinhas. As respostas já feitas podem ser reabertas na lista "Já perguntado" (inclusive depois de encerrar o depoimento) para anotar o que ficou para trás, e ao encerrar o painel mostra quantas pistas foram anotadas.
+
+## Elenco com depoimento
+
+`src/interrogation/registry.ts` reúne os depoimentos por personagem: Lívia, Caio, Rafael, Cida, Jorge e Téo (o interrogatório do capítulo 4, com confrontações que exigem moto, cinta bancária e log do alarme). O progresso de cada um fica em `GameSave.depositions[id]` (Lívia segue em `liviaInterrogation`, de saves antigos). Um depoimento concluído marca a pessoa em `interviewed`. Pistas vêm das frases anotadas (`highlights`); só a "Registrar confissão" do Téo garante `confissao_teo` para não travar a história.
+
+Personagens com só o retrato neutro (`single(...)` em `characters.ts`) respiram, piscam e falam (boca provisória). Expressão sem imagem usa a neutra. Para dar expressões e visemas a eles, veja o pedido em `creative-requests/inbox/`.

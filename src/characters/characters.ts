@@ -10,7 +10,30 @@ const src = (id:string,name:string) => `${base}characters/${id}/expressions/${na
 const eye = (cx:number,cy:number,rx=38,ry=17):EyeRig => ({cx,cy,rx,ry})
 const mouth = (cx:number,rimY:number,halfWidth:number,bottom:number,arch=2,maxOpen=17):MouthRig => ({cx,rimY,arch,halfWidth,bottom,maxOpen})
 
+/**
+ * Personagem com uma única imagem oficial (retrato neutro, 900x1200): respira, pisca e fala.
+ * Quando o ChatGPT entregar expressões e formas de boca, entram em `assets`/`visemes` como na Lívia.
+ */
+const single = (id:string, name:string, eyes:{l:[number,number,number,number], r:[number,number,number,number]}, eyeMid:[number,number], m:{cx:number,rim:number,half:number,bottom:number}):CharacterDef => ({
+  id, name,
+  portrait:{ width:900, height:1200, crop:{ x:80, y:10, w:740, h:800 }, eyeMid },
+  assets:{
+    neutral:{
+      src:`${base}characters/${id}/portrait.jpg`,
+      align:{ eyeMid, scale:1, neckY:760, shoulderY:673 },
+      eyes:{ left:eye(...eyes.l), right:eye(...eyes.r) },
+      mouth:mouth(m.cx,m.rim,m.half,m.bottom)
+    }
+  },
+  face:{ cx:eyeMid[0], cy:eyeMid[1]+18, size:420 }
+})
+
 export const characters:Record<string,CharacterDef> = {
+  caio:single('caio','Caio Duarte',{ l:[372,415,40,20], r:[521,410,39,19] },[446.5,412.5],{ cx:454, rim:559, half:54, bottom:577 }),
+  teo:single('teo','Téo Duarte',{ l:[372,430,34,15], r:[523,427,34,15] },[447.5,428.5],{ cx:452, rim:570, half:47, bottom:586 }),
+  rafael:single('rafael','Rafael Valença',{ l:[373,451,38,19], r:[527,451,37,18] },[450,451],{ cx:450, rim:576, half:45, bottom:594 }),
+  cida:single('cida','Cida',{ l:[368,462,36,16], r:[517,466,36,16] },[442.5,464],{ cx:442, rim:599, half:57, bottom:616 }),
+  jorge:single('jorge','Jorge',{ l:[385,385,35,15], r:[532,388,34,15] },[458.5,386.5],{ cx:458, rim:551, half:50, bottom:568 }),
   livia:{
     id:'livia',
     name:'Lívia Valença',
