@@ -1,4 +1,3 @@
-import { FileText, Lock } from 'lucide-react'
 import type { InterrogationConfig, InterrogationProgress } from './types'
 import { clueReport, clueSummary, getQuestion, questionPressure, stagesOf } from './logic'
 import { emotionLevel, emotionOf } from './emotions'
@@ -32,7 +31,7 @@ function PressureCurve({config,progress}:{config:InterrogationConfig;progress:In
     <svg className="ds-curve" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Pressão acumulada a cada resposta">
       <defs>
         <linearGradient id="ds-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#e8683a" stopOpacity=".45"/><stop offset="1" stopColor="#e8683a" stopOpacity="0"/>
+          <stop offset="0" stopColor="#b5301f" stopOpacity=".32"/><stop offset="1" stopColor="#b5301f" stopOpacity="0"/>
         </linearGradient>
       </defs>
       {stagesOf(config).map(s=>(
@@ -43,7 +42,7 @@ function PressureCurve({config,progress}:{config:InterrogationConfig;progress:In
       ))}
       <path d={area} fill="url(#ds-fill)"/>
       <path d={line} className="ds-line"/>
-      {pts.map((p,i)=><circle key={p.q.id+i} cx={p.x} cy={p.y} r="3.6" fill={dot(p.level)} stroke="#0b0d0e" strokeWidth="1.5"><title>{p.q.question}</title></circle>)}
+      {pts.map((p,i)=><circle key={p.q.id+i} cx={p.x} cy={p.y} r="3.6" fill={dot(p.level)} stroke="#efe6cf" strokeWidth="1.5"><title>{p.q.question}</title></circle>)}
     </svg>
   )
 }
@@ -60,45 +59,48 @@ export default function DepositionSummary({config,progress,clueTitle}:Props){
   const first = config.name.split(' ')[0]
 
   return (
-    <article className="ds">
-      <header className="ds-head">
-        <FileText aria-hidden="true"/>
-        <div>
-          <small>FICHA · {config.depositionLabel}</small>
-          <h3>{config.name}</h3>
-        </div>
-        <span className={`ds-stamp ${verdict.toLowerCase()}`}>{verdict}</span>
-      </header>
-      <p className="ds-lead">{first} colaborou e foi liberada. Tudo foi registrado no arquivo do caso.</p>
+    <div className="ds-desk">
+      <article className="ds">
+        <i className="ds-clip" aria-hidden="true"/>
+        <header className="ds-head">
+          <small>DHPP · DIVISÃO DE HOMICÍDIOS</small>
+          <h3>FICHA DE DEPOIMENTO</h3>
+          <span>{config.depositionLabel.replace('DEPOIMENTO','Nº')}</span>
+          <span className={`ds-stamp ${verdict.toLowerCase()}`}>{verdict}</span>
+        </header>
 
-      <div className="ds-stats">
-        <div><b>{found.length}<em>/{total}</em></b><small>PISTAS</small></div>
-        <div><b>{pressure}<em>%</em></b><small>PRESSÃO</small></div>
-        <div><b className="txt">{peak}</b><small>ESTADO FINAL</small></div>
-      </div>
+        <dl className="ds-fields">
+          <div><dt>Depoente</dt><dd>{config.name}</dd></div>
+          <div><dt>Situação</dt><dd>Liberada após colaborar</dd></div>
+          <div><dt>Estado ao final</dt><dd>{peak.toLowerCase()} · pressão {pressure}%</dd></div>
+          <div><dt>Pistas obtidas</dt><dd>{found.length} de {total}</dd></div>
+        </dl>
 
-      <section className="ds-block">
-        <h4>PRESSÃO AO LONGO DO DEPOIMENTO</h4>
-        <PressureCurve config={config} progress={progress}/>
-        <p className="ds-legend"><i style={{background:dot(10)}}/>calma <i style={{background:dot(50)}}/>tensa <i style={{background:dot(90)}}/>abalada · cada ponto é uma resposta</p>
-      </section>
-
-      <section className="ds-block">
-        <h4>PISTAS OBTIDAS</h4>
-        {found.length===0
-          ? <p className="ds-empty">Nenhuma pista anotada.</p>
-          : <ul className="ds-tags">{found.map(c=><li key={c}><b>PISTA</b>{clueTitle(c) ?? c}</li>)}</ul>}
-      </section>
-
-      {missed.length>0 && (
         <section className="ds-block">
-          <h4>O QUE ESCAPOU</h4>
-          <ul className="ds-tags missed">
-            {missed.map(m=><li key={m.clue}><Lock aria-hidden="true"/><span>Pista em: “{m.question}”</span></li>)}
-          </ul>
-          <p className="ds-empty">Reveja em Anotações e toque nas frases que faltaram.</p>
+          <h4>I. Curva de pressão</h4>
+          <PressureCurve config={config} progress={progress}/>
+          <p className="ds-legend"><i style={{background:dot(10)}}/>calma <i style={{background:dot(50)}}/>tensa <i style={{background:dot(90)}}/>abalada · um ponto por resposta</p>
         </section>
-      )}
-    </article>
+
+        <section className="ds-block">
+          <h4>II. Pistas obtidas</h4>
+          {found.length===0
+            ? <p className="ds-empty">Nada foi anotado.</p>
+            : <ul className="ds-tags">{found.map(c=><li key={c}><mark>{clueTitle(c) ?? c}</mark></li>)}</ul>}
+        </section>
+
+        {missed.length>0 && (
+          <section className="ds-block">
+            <h4>III. Não anotado</h4>
+            <ul className="ds-tags missed">
+              {missed.map(m=><li key={m.clue}><span className="redact" aria-hidden="true"/><em>em: “{m.question}”</em></li>)}
+            </ul>
+            <p className="ds-empty">Reveja em Anotações e marque as frases que faltaram.</p>
+          </section>
+        )}
+
+        <footer className="ds-foot">Registrado no arquivo do caso. {first}, liberada.</footer>
+      </article>
+    </div>
   )
 }
