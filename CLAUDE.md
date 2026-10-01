@@ -91,3 +91,17 @@ Antes de criar ou alterar qualquer conteúdo narrativo do Caso 01, leia:
 - docs/CASE01_CANON.json — resumo estruturado das regras imutáveis, horários, solução, provas aceitas e finais.
 
 Se uma fala antiga, placeholder, comentário de código ou tela entrar em conflito com esses arquivos, corrija o conteúdo para ficar de acordo com a bíblia. Não altere culpados, papéis, horários-chave, motivo central ou lógica das pistas sem uma mudança explicitamente aprovada pelo usuário.
+
+
+## Fluxo oficial do Caso 01
+
+Antes de alterar progressão, desbloqueios, ordem de tarefas, chamadas, interrogatórios, linha do tempo, finanças ou finais do Caso 01, consulte:
+
+- `docs/CASE01_GAME_FLOW.md` — fluxo detalhado cena por cena, do primeiro toque ao epílogo.
+- `docs/CASE01_GAME_FLOW.json` — estrutura resumida e legível por código com atos, cenas, viradas, desbloqueios e relatório final.
+- `docs/CASE01_STORY_BIBLE.md` — verdade narrativa completa.
+- `docs/CASE01_CANON.json` — fatos imutáveis.
+
+O princípio de implementação é: **informação gera ação**. Não libere telas ou apps sem motivo narrativo. Cada descoberta relevante deve abrir um confronto, documento, retorno de equipe, nova tela ou mudança de estado coerente.
+
+Se o fluxo atual em `src/App.tsx` for mais simples que o GAME FLOW, faça a migração gradualmente, preservando mecânicas boas e save. Não invente uma ordem nova em paralelo.
