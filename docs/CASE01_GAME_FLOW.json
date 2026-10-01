@@ -140,5 +140,21 @@
     "confrontar",
     "desbloquear nova informação",
     "atualizar o caso"
+  ],
+  "presentationModel": "event-driven-investigation",
+  "visibleTaskSystem": false,
+  "progressionTriggers": [
+    "evidence_received",
+    "deposition_completed",
+    "contradiction_registered",
+    "material_returned",
+    "character_unlocked",
+    "confession_obtained"
+  ],
+  "uiRules": [
+    "Do not show task counters or completion percentages.",
+    "Do not expose internal task state to the player.",
+    "Home shows live case status and latest operational update.",
+    "Contextual actions route to the natural source: team, people, evidence, scene or report."
   ]
 }
