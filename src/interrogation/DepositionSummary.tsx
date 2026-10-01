@@ -6,6 +6,8 @@ type Props = {
   config:InterrogationConfig
   progress:InterrogationProgress
   clueTitle:(id:string)=>string|undefined
+  /** Abre o quadro de assinatura. */
+  onSign:()=>void
 }
 
 /** Cor de cada ponto: da calma (verde) à intensidade máxima (rosa), como no medidor de emoção. */
@@ -48,7 +50,7 @@ function PressureCurve({config,progress}:{config:InterrogationConfig;progress:In
 }
 
 /** Resumo do depoimento: ficha do caso com o veredito, números, a curva da pressão e as pistas. */
-export default function DepositionSummary({config,progress,clueTitle}:Props){
+export default function DepositionSummary({config,progress,clueTitle,onSign}:Props){
   const { found, missed } = clueReport(config,progress)
   const total = clueSummary(config,progress).total
   const pressure = progress.pressure ?? 0
@@ -98,6 +100,17 @@ export default function DepositionSummary({config,progress,clueTitle}:Props){
             <p className="ds-empty">Reveja em Anotações e marque as frases que faltaram.</p>
           </section>
         )}
+
+        <section className="ds-sign">
+          <h4>Assinatura do responsável</h4>
+          <button type="button" className={`ds-sign-box${progress.signature ? ' signed' : ''}`} onClick={onSign}
+            aria-label={progress.signature ? 'Assinar de novo' : 'Assinar o depoimento'}>
+            {progress.signature
+              ? <img src={progress.signature} alt="Assinatura"/>
+              : <span>✎ Toque aqui para assinar</span>}
+          </button>
+          {progress.signedAt && <small>Assinado em {new Date(progress.signedAt).toLocaleDateString('pt-BR')}{' · '}toque para refazer</small>}
+        </section>
 
         <footer className="ds-foot">Registrado no arquivo do caso. {first}, liberada.</footer>
       </article>
