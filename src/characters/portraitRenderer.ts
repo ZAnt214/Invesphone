@@ -66,6 +66,8 @@ export class PortraitRenderer {
   private tgt:ExpressionParams = {...EXPRESSIONS.neutral}
   private blink = { next:0, start:-1 }
   private mouth = 0
+  /** velocidade da abertura (mola criticamente amortecida: abre e fecha sem tremer nem atrasar) */
+  private mouthVel = 0
   private vis:Record<Viseme,number> = { A:0, E:0, I:0, O:0, U:0, M:0 }
   private atlas:HTMLImageElement|null = null
   private shapeAmount = 0
@@ -562,22 +564,25 @@ export class PortraitRenderer {
       if(e>=sp.duration) this.speech = null
       else {
         const s = sampleMouth(sp.keys,e)
-        shape = s.a<.12 ? 'M' : s.v
-        target = Math.max(target,s.v==='M' ? 0 : s.a*(s.v==='I'||s.v==='U' ? .6 : 1))
+        // quase fechada vira lábios fechados; a forma da vogal só aparece com a boca aberta
+        shape = s.a<.14 ? 'M' : s.v
+        target = Math.max(target,s.a)
         this.shapeAmount = s.a
       }
     }
-    const km = 1-Math.exp(-dt*(target>this.mouth?30:20))
-    this.mouth += (target-this.mouth)*km
-    // forma de boca: pesos só trocam a forma (soma 1); a boca liga de uma vez e desliga logo após a fala
-    const kv = 1-Math.exp(-dt*28)
+    // abertura: mola criticamente amortecida (sem degraus entre sílabas, sem tremer)
+    const w0 = 26, h = Math.min(dt,.05)
+    this.mouthVel += (w0*w0*(target-this.mouth) - 2*w0*this.mouthVel)*h
+    this.mouth = clamp(this.mouth + this.mouthVel*h,0,1.1)
+    // forma: troca rápida (~70 ms) para não aparecer duas bocas ao mesmo tempo
+    const kv = 1-Math.exp(-dt*42)
     for(const v of Object.keys(this.vis) as Viseme[]){
       const goal = shape===v ? 1 : 0
       this.vis[v] += (goal-this.vis[v])*kv
     }
-    if(shape){ this.mouthOn = 1; this.mouthHold = .14 }
+    if(shape){ this.mouthOn = 1; this.mouthHold = .16 }
     else if(this.mouthHold>0) this.mouthHold -= dt
-    else this.mouthOn = Math.max(0,this.mouthOn-dt/.12)
+    else this.mouthOn = Math.max(0,this.mouthOn-dt/.14)
   }
 
   /** Tamanho do rosto em relação à arte de referência (olhos a 73 px), para escalar movimentos em pixels. */
@@ -728,10 +733,13 @@ export class PortraitRenderer {
       gx.globalAlpha = 1
       const m = l.asset.mouth
       const s = (m.halfWidth*2)/vd.lipWidth
+      // a forma abre e fecha com a mandíbula: escala vertical acompanha a abertura (lábios fechados ficam inteiros)
+      const closed = this.vis.M
+      const sy = s*(closed + (1-closed)*(.62 + .38*clamp(this.mouth,0,1)))
       ctx.save()
       ctx.globalAlpha = clamp(this.mouthOn,0,1)
       ctx.translate(m.cx,m.rimY)
-      ctx.scale(s,s)
+      ctx.scale(s,sy)
       ctx.translate(-vd.center[0],-vd.center[1])
       ctx.drawImage(g,0,0)
       ctx.restore()
