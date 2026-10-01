@@ -48,6 +48,8 @@ def mouth_line(path, cx, rim):
     col = np.convolve(col, np.ones(3) / 3, mode='same')
     return int(np.argmin(col[3:-3]) + 3 + rim - 40)
 
+TOP = 100   # px (na escala da Lívia) acima da linha dos olhos onde o recorte do rosto começa
+
 def poly_for(info):
     """Contorno do interior do rosto: perfil do rosto da Lívia (máscara aprovada) escalado para o personagem."""
     (lx, ly), (rx, ry) = info['eyes']
@@ -65,6 +67,8 @@ def poly_for(info):
         r = np.where(m[y] > 0)[0]
         if len(r) == 0: continue
         dy = y - 437
+        # o recorte começa logo acima das sobrancelhas: testa e cabelo (mechas sobre a testa) vêm sempre do retrato neutro
+        if dy < -TOP: continue
         left.append((mx + (r.min() - 431.9) * s, my + ymap(dy)))
         right.append((mx + (r.max() - 431.9) * s, my + ymap(dy)))
     return [[int(x), int(y)] for x, y in left + right[::-1]]
