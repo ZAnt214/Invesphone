@@ -79,7 +79,7 @@ for cid, info in NEUTRAL.items():
     poly = poly_for(info)
     json.dump(poly, open(f'/tmp/{cid}-poly.json', 'w'))
     json.dump([list(e) for e in info['eyes']], open(f'/tmp/{cid}-eyes.json', 'w'))
-    r = subprocess.run([sys.executable, f'{ROOT}/scripts/make-face-mask.py', f'{base}/neutral.jpg', f'/tmp/{cid}-poly.json', f'{ROOT}/public/characters/{cid}/face-mask.png', 'dark', f'/tmp/{cid}-eyes.json'], capture_output=True, text=True)
+    r = subprocess.run([sys.executable, f'{ROOT}/scripts/make-face-mask.py', f'{base}/neutral.jpg', f'/tmp/{cid}-poly.json', f'{ROOT}/public/characters/{cid}/face-mask.png', 'nohair'], capture_output=True, text=True)
     print(cid, r.stdout.strip(), r.stderr.strip()[-200:])
     Image.open('/tmp/mask-debug.png').save(f'/tmp/{cid}-mask-debug.png')
     (nl, nr) = info['eyes']
