@@ -1,0 +1,144 @@
+{
+  "caseId": "case01",
+  "title": "A Casa da Rua das Acácias",
+  "sourceOfTruth": "docs/CASE01_GAME_FLOW.md",
+  "acts": [
+    {
+      "id": "act1",
+      "title": "O que aconteceu nesta casa?",
+      "chapters": [
+        "O Silêncio da Casa",
+        "Versões"
+      ],
+      "targetState": "roubo_questionado",
+      "scenes": [
+        "call_intro",
+        "brief_case",
+        "scene_sweep",
+        "team_scene_return",
+        "first_versions",
+        "livia_first",
+        "rafael_first",
+        "cida_first",
+        "jorge_first",
+        "caio_first"
+      ]
+    },
+    {
+      "id": "act2",
+      "title": "Quem está mentindo e por quê?",
+      "chapters": [
+        "Versões",
+        "A Janela",
+        "Siga o Dinheiro"
+      ],
+      "targetState": "teo_comprometido",
+      "scenes": [
+        "alarm_log",
+        "livia_confront_access",
+        "motel_receipt",
+        "timeline_rebuild",
+        "caio_timeline_confront",
+        "helena_phone",
+        "livia_family_confront",
+        "financial_docs",
+        "debt_false_lead",
+        "teo_entry",
+        "teo_first",
+        "bank_band"
+      ]
+    },
+    {
+      "id": "act3",
+      "title": "Quem fez o quê?",
+      "chapters": [
+        "A Última Versão"
+      ],
+      "targetState": "case_resolved",
+      "scenes": [
+        "teo_pressure_setup",
+        "teo_break",
+        "post_confession",
+        "final_board",
+        "accusation_report",
+        "result",
+        "epilogue"
+      ]
+    }
+  ],
+  "turns": [
+    {
+      "id": "turn1",
+      "label": "Isso não foi um roubo normal",
+      "after": "first_versions"
+    },
+    {
+      "id": "turn2",
+      "label": "O álibi de Lívia e Caio não cobre o crime",
+      "after": "timeline_rebuild"
+    },
+    {
+      "id": "turn3",
+      "label": "Lívia preparou e facilitou o plano",
+      "after": "teo_break"
+    }
+  ],
+  "keyUnlocks": {
+    "scene_sweep": [
+      "clues",
+      "people"
+    ],
+    "alarm_log": [
+      "timeline",
+      "evidence_confrontation"
+    ],
+    "motel_receipt": [
+      "timeline_rebuild",
+      "caio_timeline_confront"
+    ],
+    "livia_family_confront": [
+      "motive_notebook"
+    ],
+    "financial_docs": [
+      "financial",
+      "teo_entry"
+    ],
+    "teo_break": [
+      "final_board",
+      "accusation_report"
+    ]
+  },
+  "finalReport": {
+    "executors": [
+      "caio",
+      "teo"
+    ],
+    "mastermind": "livia",
+    "motive": [
+      "herança",
+      "conflito familiar/relacionamento"
+    ],
+    "minAcceptedProofs": 3,
+    "acceptedProofs": [
+      "log_alarme",
+      "nota_motel",
+      "cinta_bancaria",
+      "confissao_teo",
+      "agenda_helena",
+      "valores_intactos"
+    ]
+  },
+  "pacing": {
+    "act1": 0.3,
+    "act2": 0.45,
+    "act3": 0.25
+  },
+  "coreLoop": [
+    "receber informação",
+    "investigar",
+    "formar hipótese",
+    "confrontar",
+    "desbloquear nova informação",
+    "atualizar o caso"
+  ]
+}
