@@ -5,7 +5,7 @@
 /* margem inferior segura: o navegador informa o recuo do indicador de início; a variável só o zera quando a área visível já termina acima dele */
 :root{--safe-b:env(safe-area-inset-bottom,0px)}
 html{height:100%;-webkit-text-size-adjust:100%}
-body{position:fixed;inset:0;width:100%;height:100%;margin:0;overflow:hidden;overscroll-behavior:none;
+body{position:fixed;top:0;left:0;right:0;width:100%;height:var(--app-h,100%);margin:0;overflow:hidden;overscroll-behavior:none;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 #root{height:100%;min-height:0}
 button{touch-action:manipulation}
