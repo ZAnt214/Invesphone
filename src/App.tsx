@@ -51,7 +51,7 @@ type GameSave = {
 }
 
 const initialGame:GameSave = {
-  version:SAVE_VERSION,screen:'incoming',app:'home',task:0,clues:[],interviewed:[],orders:[],score:1000,liviaInterrogation:newProgress(liviaInterrogation)
+  version:SAVE_VERSION,screen:'incoming',app:'home',task:1,clues:[],interviewed:[],orders:[],score:1000,liviaInterrogation:newProgress(liviaInterrogation)
 }
 
 const progressOf = (g:GameSave, id:string):InterrogationProgress => id==='livia' ? g.liviaInterrogation : (g.depositions?.[id] ?? newProgress(interrogations[id]))
@@ -247,9 +247,24 @@ export default function App(){
 
   useEffect(()=>{
     if(game.screen!=='launching')return
-    const id=window.setTimeout(()=>setGame(g=>({...g,screen:'phone',app:'home'})),1100)
+    const id=window.setTimeout(()=>setGame(g=>({...g,screen:'phone',app:'home',task:g.task===0?1:g.task})),1100)
     return()=>window.clearTimeout(id)
   },[game.screen])
+
+  // A investigação avança quando os fatos chegam, não porque o jogador "concluiu uma tarefa".
+  useEffect(()=>{
+    setGame(g=>{
+      let next=g.task
+      const heardInitial=g.interviewed.filter(id=>['livia','rafael','cida','jorge','caio'].includes(id)).length
+      if(next===2&&heardInitial>=4)next=3
+      if(next===3&&g.clues.includes('log_alarme'))next=4
+      if(next===4&&g.clues.includes('nota_motel'))next=5
+      if(next===5&&g.clues.includes('extrato_ricardo')&&g.clues.includes('carta_cobranca'))next=6
+      if(next===6&&g.clues.includes('cinta_bancaria'))next=7
+      if(next===7&&g.clues.includes('confissao_teo'))next=8
+      return next===g.task?g:{...g,task:next}
+    })
+  },[game.clues,game.interviewed])
 
   const setScreen=(screen:Screen)=>setGame(g=>({...g,screen}))
   const activateSound=async()=>{if(await enableAudio()){setAudioOn(true);if(game.screen==='incoming')startRingtone()}}
@@ -436,7 +451,26 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
  if(game.app==='victim')return <PhonePage title="Telefone de Helena" back={()=>openApp('home')}><VictimPhone/></PhonePage>
  if(game.app==='settings')return <PhonePage title="Ajustes" back={()=>openApp('home')}><QualityPicker/><p className="settings-note">A qualidade vale para o jogo inteiro: telas, animações e retratos.</p><FullscreenSetting/><SoundSetting/><ResetSetting onReset={()=>{localStorage.removeItem(SAVE_KEY);setGame(initialGame)}}/><Diagnostics/></PhonePage>
  if(game.app==='chapters')return <PhonePage title="Arquivo do caso" back={()=>openApp('home')}><ChapterMap game={game}/></PhonePage>
- return <HandsetHome chapterNumber={chapter.number} taskTitle={current.title} chapterTitle={chapter.title} taskNumber={game.task+1} taskCount={tasks.length} taskKind={current.kind} peopleOpen={game.task>=2} helenaOpen={game.task>=3} archiveOpen={game.task>=3} teamBadge={game.task<3?1:0} clueBadge={game.clues.length} onOpenApp={openApp} onOpenTask={()=>setGame(g=>({...g,screen:'task'}))}/>
+ const homeState = ({
+  0:{status:'Ocorrência recebida',source:'Sônia',text:'A equipe já está na Rua das Acácias. A primeira leitura é de possível roubo.',label:'Abrir canal'},
+  1:{status:'Cena em processamento',source:'Perícia',text:'A residência está preservada. A equipe aguarda sua leitura dos pontos que não combinam com um roubo comum.',label:'Acompanhar cena'},
+  2:{status:'Versões sendo colhidas',source:'Sônia',text:'Lívia, Caio e as testemunhas estão separados. Ouça as versões e deixe as contradições aparecerem.',label:'Ver pessoas'},
+  3:{status:'Aguardando retorno técnico',source:'Inteligência',text:'Já há base para pedir o histórico do alarme e outros materiais à equipe.',label:'Ir para Equipe'},
+  4:{status:'Janela de horário em aberto',source:'Sônia',text:'O alarme foi desligado às 23:52. Agora precisamos verificar quando Lívia e Caio realmente chegaram ao motel.',label:'Solicitar registro'},
+  5:{status:'Linha financeira aberta',source:'Financeiro',text:'Há indícios de que uma quantia específica saiu da casa. Peça os documentos de Ricardo para cruzamento.',label:'Solicitar documentos'},
+  6:{status:'Dinheiro sob análise',source:'Financeiro',text:'A origem do dinheiro ligado a Téo precisa ser confrontada com os registros bancários de Ricardo.',label:'Solicitar análise'},
+  7:{status:'Téo precisa explicar o dinheiro',source:'Sônia',text:'A trilha financeira chegou a Téo. Traga o depoimento dele de volta e pressione com o que já temos.',label:'Ouvir Téo'},
+  8:{status:'Investigação pronta para relatório',source:'Sônia',text:'Separe o que você suspeita do que consegue provar. O relatório final está pronto para ser protocolado.',label:'Abrir relatório'}
+ } as Record<number,{status:string;source:string;text:string;label:string}>)[game.task] ?? {status:current.title,source:'Equipe',text:'Há novas informações no caso.',label:'Abrir canal'}
+ const openUpdate=()=>{
+  if(game.task===1){setGame(g=>({...g,screen:'task'}));return}
+  if(game.task===2){openApp('interrogate');return}
+  if(game.task>=3&&game.task<=6){openApp('team');return}
+  if(game.task===7){setGame(openDeposition('teo','app'));return}
+  if(game.task===8){setGame(g=>({...g,screen:'task'}));return}
+  openApp('team')
+ }
+ return <HandsetHome chapterNumber={chapter.number} chapterTitle={chapter.title} caseStatus={homeState.status} updateSource={homeState.source} updateText={homeState.text} updateActionLabel={homeState.label} peopleOpen={game.task>=2} helenaOpen={game.task>=3} archiveOpen={game.task>=3} teamBadge={game.task<3?1:0} clueBadge={game.clues.length} onOpenApp={openApp} onOpenUpdate={openUpdate}/>
 }
 function HandsetStatus(){return <header className="handset-status"><span>VIVO&nbsp;&nbsp;▮▮▮</span><b>DHPP</b><BatteryMedium/></header>}
 function PhonePage({title,back,children}:{title:string;back:()=>void;children:React.ReactNode}){return <main className="handset page"><HandsetStatus/><header className="page-head"><button onClick={back}><ChevronLeft/></button><b>{title}</b><span/></header><section className="page-body">{children}</section></main>}
@@ -518,7 +552,15 @@ function TaskByKind({kind,game,addClue,setGame,finishTask}:{kind:typeof tasks[nu
  return <Accusation game={game} setGame={setGame}/>
 }
 function Brief({finish}:{finish:()=>void}){return <div className="story-card"><small>RUA DAS ACÁCIAS · 04:29</small><h2>A casa está silenciosa.</h2><p>Duas vítimas no quarto. Lívia e Caio aguardam do lado de fora. A primeira versão é assalto, mas a porta principal não mostra sinais de entrada forçada.</p><blockquote>“Não procure só o que aconteceu. Procure o que alguém quis que parecesse ter acontecido.” <b>— Sônia</b></blockquote><button className="primary" onClick={finish}>Orientar equipe</button></div>}
-function Scene({game,addClue,finish}:{game:GameSave;addClue:(id:string)=>void;finish:()=>void}){const spots=[['porta_intacta','Porta principal'],['painel_alarme','Painel'],['cao_canil','Canil'],['escritorio_revirado','Escritório'],['valores_intactos','Objetos de valor'],['quarto_livia','Quarto de Lívia'],['vitimas_dormindo','Quarto do casal']] as const;const done=spots.every(([id])=>game.clues.includes(id));return <div><TaskTitle tag="INVESTIGAÇÃO" title="Varredura da residência" text="Toque nos pontos para orientar a equipe e registrar o que importa."/><div className="scene-map">{spots.map(([id,label],i)=><button key={id} className={game.clues.includes(id)?'found':''} onClick={()=>addClue(id)} style={{left:`${[10,65,75,15,48,68,26][i]}%`,top:`${[18,24,70,56,48,43,74][i]}%`}}><Search/><span>{label}</span></button>)}</div><div className="task-progress">{spots.filter(([id])=>game.clues.includes(id)).length}/{spots.length} pontos registrados</div>{done&&<button className="primary" onClick={finish}>Fechar varredura</button>}</div>}
+function Scene({game,addClue,finish}:{game:GameSave;addClue:(id:string)=>void;finish:()=>void}){
+ const spots=[['porta_intacta','Porta principal'],['painel_alarme','Painel'],['cao_canil','Canil'],['escritorio_revirado','Escritório'],['valores_intactos','Objetos de valor'],['quarto_livia','Quarto de Lívia'],['vitimas_dormindo','Quarto do casal']] as const
+ const enough=['porta_intacta','painel_alarme','cao_canil','valores_intactos'].every(id=>game.clues.includes(id))
+ return <div>
+  <TaskTitle tag="PERÍCIA EM CAMPO" title="Leitura da residência" text="A equipe está documentando a casa. Abra os pontos que chamarem sua atenção e registre o que muda a leitura da ocorrência."/>
+  <div className="scene-map">{spots.map(([id,label],i)=><button key={id} className={game.clues.includes(id)?'found':''} onClick={()=>addClue(id)} style={{left:`${[10,65,75,15,48,68,26][i]}%`,top:`${[18,24,70,56,48,43,74][i]}%`}}><Search/><span>{label}</span></button>)}</div>
+  {enough&&<div className="scene-conclusion"><b>Leitura preliminar</b><p>Entrada intacta, alarme, cachorro preso e valores deixados para trás justificam ouvir as pessoas antes de tratar isso como um roubo comum.</p><button className="primary" onClick={finish}>Voltar ao aparelho</button></div>}
+ </div>
+}
 function Interviews({game,setGame,finish}:{game:GameSave;addClue?:(id:string)=>void;setGame:React.Dispatch<React.SetStateAction<GameSave>>;finish:()=>void}){const items=[['livia','Lívia admite discussões constantes por causa do namoro.'],['cida','Cida tem seu álibi confirmado por familiares.'],['rafael','O pagamento da LAN house confirma Rafael fora de casa.'],['jorge','Jorge viu o Gol de Caio na rua antes do horário declarado.'],['caio','Caio sustenta que passou a noite com Lívia no motel.']] as const;const done=items.filter(([p])=>game.interviewed.includes(p)).length>=4;return <div><TaskTitle tag="DEPOIMENTOS" title="Versões" text="Ouça as pessoas separadamente e anote as pistas de cada resposta. Quatro depoimentos bastam para avançar, mas todos ficam registrados."/><div className="interview-cards">{items.map(([pid,text])=>{const p=people.find(x=>x.id===pid)!;const asked=game.interviewed.includes(pid);return <button key={pid} className={asked?'done':''} onClick={()=>setGame(openDeposition(pid,'task'))}><i><Face p={p}/></i><div><b>{p.name}</b><span>{asked?text:p.role}</span></div>{asked?<Check/>:<MessageCircle/>}</button>})}</div>{done&&<button className="primary" onClick={finish}>Cruzar versões</button>}</div>}
 function Alarm({addClue,finish}:{addClue:(id:string)=>void;finish:()=>void}){const [choice,setChoice]=useState('');const ok=choice==='23:52';return <div><TaskTitle tag="PERÍCIA DIGITAL" title="Log do alarme" text="Qual ocorrência foge do padrão da família?"/><div className="terminal"><p>22:11 · ARMADO · CONTROLE 02</p><p>23:04 · SENSOR FUNDOS · NORMAL</p><p>23:52 · DESATIVADO · CÓDIGO MESTRE</p><p>03:41 · ARMADO · CONTROLE 01</p></div><div className="choices">{['22:11','23:04','23:52','03:41'].map(x=><button className={choice===x?'selected':''} onClick={()=>setChoice(x)} key={x}>{x}</button>)}</div>{choice&&<div className={ok?'result ok':'result bad'}>{ok?'O código mestre foi usado às 23:52.':'Esse evento não explica o acesso sem arrombamento.'}</div>}{ok&&<button className="primary" onClick={()=>{addClue('log_alarme');finish()}}>Registrar quebra do álibi</button>}</div>}
 function Timeline({addClue,finish}:{addClue:(id:string)=>void;finish:()=>void}){const [choice,setChoice]=useState('');const ok=choice==='00:56';return <div><TaskTitle tag="LINHA DO TEMPO" title="A janela" text="Caio diz que chegou ao motel às 23h. A nota fiscal mostra outra coisa."/><div className="document"><FileText/><small>MOTEL IMPERIAL · CUPOM 00871</small><b>ENTRADA: 00:56</b><span>SAÍDA: 02:50</span></div><div className="choices">{['23:00','23:30','23:52','00:56'].map(x=><button className={choice===x?'selected':''} onClick={()=>setChoice(x)} key={x}>{x}</button>)}</div>{ok&&<button className="primary" onClick={()=>{addClue('nota_motel');finish()}}>Marcar contradição</button>}</div>}
