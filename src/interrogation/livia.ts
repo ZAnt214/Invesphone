@@ -61,7 +61,7 @@ export const liviaInterrogation:InterrogationConfig = {
       question:'Tinha algum sinal de arrombamento?',
       answer:'Eu não reparei nisso. Eu só vi a casa daquele jeito e achei que alguém tinha entrado.',
       expression:'defensive',
-      unlocks:['alarm_code'],
+      unlocks:['alarm_code','confront_door'],
       highlights:[{ phrase:'Eu não reparei nisso', clue:'porta_intacta' }]
     },
     {
@@ -77,6 +77,7 @@ export const liviaInterrogation:InterrogationConfig = {
       question:'E o Caio sabia?',
       answer:'Não. Pelo menos… eu nunca passei o código pra ele.',
       expression:'lying',
+      unlocks:['confront_code'],
       highlights:[{ phrase:'nunca passei o código', clue:'inconsistencia_caio_codigo' }]
     },
     {
@@ -91,6 +92,7 @@ export const liviaInterrogation:InterrogationConfig = {
       question:'Vocês discutiam por causa disso?',
       answer:'Família discute. Mas não era nada… desse tamanho.',
       expression:'false_relief',
+      unlocks:['confront_family','confront_estate'],
       highlights:[{ phrase:'Família discute', clue:'brigas_namoro' }]
     },
     {
@@ -98,6 +100,37 @@ export const liviaInterrogation:InterrogationConfig = {
       question:'Quando foi a última vez que você falou com sua mãe?',
       answer:'Antes de sair. A gente ia conversar quando eu voltasse.',
       expression:'teary'
+    },
+    {
+      id:'confront_door',
+      requiresClue:'porta_intacta',
+      question:'A porta estava intacta e você tem chave. Quem abriu pra eles?',
+      answer:'Ninguém! Eu não sei como entraram. Eu tenho chave, mas eu não estava lá.',
+      expression:'nervous',
+      highlights:[{ phrase:'Eu tenho chave', clue:'livia_chave' }]
+    },
+    {
+      id:'confront_code',
+      requiresClue:'inconsistencia_caio_codigo',
+      question:'Você disse que nunca passou o código. Como o Caio saberia?',
+      answer:'Ele… ele me viu digitando uma vez, no portão. Eu nunca falei o número pra ele.',
+      expression:'lying',
+      highlights:[{ phrase:'me viu digitando', clue:'caio_viu_digitando' }]
+    },
+    {
+      id:'confront_family',
+      requiresClue:'brigas_namoro',
+      question:'Seu pai chegou a ameaçar você por causa do namoro?',
+      answer:'Ele disse que ia cortar minha parte da herança se eu continuasse com o Caio.',
+      expression:'shaken',
+      highlights:[{ phrase:'cortar minha parte da herança', clue:'ameaca_heranca' }]
+    },
+    {
+      id:'confront_estate',
+      requiresClue:'pergunta_inventario',
+      question:'Você andou perguntando sobre inventário antes das mortes.',
+      answer:'Eu só queria entender o que ia acontecer com a gente. Qualquer filha perguntaria.',
+      expression:'defensive'
     },
     {
       id:'untold',
