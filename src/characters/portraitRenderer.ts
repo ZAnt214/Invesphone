@@ -139,7 +139,8 @@ export class PortraitRenderer {
     ])
     if(this.destroyed || !this.raw.neutral) return
     const neutral = this.raw.neutral
-    if(!this.stable){
+    // personagem só com a imagem neutra não troca de fundo: nada a casar (e o fundo escuro com roupa escura enganaria a máscara)
+    if(!this.stable && Object.keys(this.def.assets).length>1){
       // sem base fixa: o fundo de todas as expressões vira o da neutra
       const nd = neutral.getContext('2d',{ willReadFrequently:true })!.getImageData(0,0,neutral.width,neutral.height)
       this.plate = buildPlate(nd.data,backgroundMask(nd.data,nd.width,nd.height),nd.width,nd.height)
@@ -209,6 +210,8 @@ export class PortraitRenderer {
   // ---------- preparação a partir do próprio arquivo ----------
 
   private pick(e:Expression){
+    // expressão sem imagem oficial (personagem só com o retrato neutro): usa a neutra
+    if(!this.def.assets[e]) return this.loaded.neutral ?? null
     if(!this.loaded[e]){
       if(this.raw[e]) this.process(e)
       else if(this.baseImg){
