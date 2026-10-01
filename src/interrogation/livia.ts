@@ -54,7 +54,7 @@ export const liviaInterrogation:InterrogationConfig = {
       answer:'Não… quer dizer… eu abri normalmente. Eu tenho chave.',
       expression:'nervous',
       unlocks:['breakin'],
-      clues:['porta_intacta']
+      highlights:[{ phrase:'eu abri normalmente', clue:'porta_intacta' }]
     },
     {
       id:'breakin',
@@ -62,7 +62,7 @@ export const liviaInterrogation:InterrogationConfig = {
       answer:'Eu não reparei nisso. Eu só vi a casa daquele jeito e achei que alguém tinha entrado.',
       expression:'defensive',
       unlocks:['alarm_code'],
-      clues:['porta_intacta']
+      highlights:[{ phrase:'Eu não reparei nisso', clue:'porta_intacta' }]
     },
     {
       id:'alarm_code',
@@ -70,14 +70,14 @@ export const liviaInterrogation:InterrogationConfig = {
       answer:'Eu… meu pai, minha mãe… eu também sabia. Meu irmão provavelmente sabia.',
       expression:'nervous',
       unlocks:['caio_code'],
-      clues:['livia_codigo']
+      highlights:[{ phrase:'eu também sabia', clue:'livia_codigo' }]
     },
     {
       id:'caio_code',
       question:'E o Caio sabia?',
       answer:'Não. Pelo menos… eu nunca passei o código pra ele.',
       expression:'lying',
-      clues:['inconsistencia_caio_codigo']
+      highlights:[{ phrase:'nunca passei o código', clue:'inconsistencia_caio_codigo' }]
     },
     {
       id:'parents_relationship',
@@ -91,7 +91,7 @@ export const liviaInterrogation:InterrogationConfig = {
       question:'Vocês discutiam por causa disso?',
       answer:'Família discute. Mas não era nada… desse tamanho.',
       expression:'false_relief',
-      clues:['brigas_namoro']
+      highlights:[{ phrase:'Família discute', clue:'brigas_namoro' }]
     },
     {
       id:'mother_last',

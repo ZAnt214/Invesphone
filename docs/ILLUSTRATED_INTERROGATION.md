@@ -47,3 +47,7 @@ Coloque o arquivo em `public/characters/<id>/expressions/<expressao>.jpg` (o Cha
 ## Acessibilidade
 
 Com "reduzir movimento" ligado, não há respiração, deriva nem tremor. Piscar, olhar e a boca sincronizada continuam, porque fazem parte da fala.
+
+## Anotar pistas na resposta
+
+Depois de cada resposta, a resposta aparece em frases no painel e o jogador toca nas frases importantes para anotar. Nos dados, a pergunta declara `highlights: [{ phrase, clue }]`: a frase que contém `phrase` registra a pista `clue` (via `onClue`); qualquer outra frase fica anotada como sem valor. As frases anotadas são salvas em `progress.noted` (`<pergunta>:<índice>`). Perguntas só com `clues` (sem `highlights`) continuam registrando a pista sozinhas. As respostas já feitas podem ser reabertas na lista "Já perguntado" (inclusive depois de encerrar o depoimento) para anotar o que ficou para trás, e ao encerrar o painel mostra quantas pistas foram anotadas.
