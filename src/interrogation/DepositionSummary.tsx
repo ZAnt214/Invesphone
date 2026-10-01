@@ -1,5 +1,6 @@
+import { FileText, Lock } from 'lucide-react'
 import type { InterrogationConfig, InterrogationProgress } from './types'
-import { clueReport, getQuestion, stagesOf } from './logic'
+import { clueReport, clueSummary, getQuestion, questionPressure, stagesOf } from './logic'
 import { emotionLevel, emotionOf } from './emotions'
 
 type Props = {
@@ -8,47 +9,96 @@ type Props = {
   clueTitle:(id:string)=>string|undefined
 }
 
-/** Cor do ponto da linha do tempo: da calma (verde) à intensidade máxima (rosa), como no medidor. */
+/** Cor de cada ponto: da calma (verde) à intensidade máxima (rosa), como no medidor de emoção. */
 const dot = (level:number) => `hsl(${Math.round(150-level*1.5)} 62% 52%)`
 
-/** Fecho do depoimento: o que ela entregou, o que escapou e como ela reagiu ao longo das perguntas. */
+const W = 320, H = 96, PX = 10, PY = 10
+
+/** Curva da pressão acumulada a cada resposta, com os estágios e a emoção de cada resposta em pontos. */
+function PressureCurve({config,progress}:{config:InterrogationConfig;progress:InterrogationProgress}){
+  const qs = progress.asked.map(id=>getQuestion(config,id)).filter(q=>!!q)
+  if(qs.length===0) return null
+  let acc = 0
+  const pts = qs.map((q,i)=>{
+    acc = Math.min(100,acc+questionPressure(q!))
+    const x = qs.length===1 ? W/2 : PX + (W-2*PX)*i/(qs.length-1)
+    const y = H-PY - (H-2*PY)*acc/100
+    return { x, y, q:q!, level:emotionLevel(emotionOf(q!.expression ?? 'neutral')) }
+  })
+  const line = pts.map((p,i)=>`${i?'L':'M'}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ')
+  const area = `${line} L${pts[pts.length-1].x.toFixed(1)} ${H-PY} L${pts[0].x.toFixed(1)} ${H-PY} Z`
+  const yOf = (v:number) => H-PY-(H-2*PY)*v/100
+  return (
+    <svg className="ds-curve" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Pressão acumulada a cada resposta">
+      <defs>
+        <linearGradient id="ds-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#e8683a" stopOpacity=".45"/><stop offset="1" stopColor="#e8683a" stopOpacity="0"/>
+        </linearGradient>
+      </defs>
+      {stagesOf(config).map(s=>(
+        <g key={s.at}>
+          <line x1={PX} x2={W-PX} y1={yOf(s.at)} y2={yOf(s.at)} className="ds-stage"/>
+          <text x={PX+2} y={yOf(s.at)-3}>{s.label}</text>
+        </g>
+      ))}
+      <path d={area} fill="url(#ds-fill)"/>
+      <path d={line} className="ds-line"/>
+      {pts.map((p,i)=><circle key={p.q.id+i} cx={p.x} cy={p.y} r="3.6" fill={dot(p.level)} stroke="#0b0d0e" strokeWidth="1.5"><title>{p.q.question}</title></circle>)}
+    </svg>
+  )
+}
+
+/** Resumo do depoimento: ficha do caso com o veredito, números, a curva da pressão e as pistas. */
 export default function DepositionSummary({config,progress,clueTitle}:Props){
   const { found, missed } = clueReport(config,progress)
+  const total = clueSummary(config,progress).total
   const pressure = progress.pressure ?? 0
   const reached = stagesOf(config).filter(s=>pressure>=s.at)
   const peak = reached.length ? reached[reached.length-1].label : 'CONTROLADA'
-  const trail = progress.asked.map(id=>getQuestion(config,id)).filter(q=>!!q)
-  return (
-    <div className="ii-complete ii-summary-card">
-      <b>RESUMO DO DEPOIMENTO</b>
-      <p>{config.name} colaborou e foi liberada. O depoimento está salvo no arquivo do caso.</p>
+  const ratio = total ? found.length/total : 1
+  const verdict = ratio>=1 ? 'COMPLETO' : ratio>=.5 ? 'PARCIAL' : 'INCOMPLETO'
+  const first = config.name.split(' ')[0]
 
-      <section>
-        <span>REAÇÃO AO LONGO DO DEPOIMENTO</span>
-        <div className="ii-trail" aria-label="Intensidade emocional a cada resposta">
-          {trail.map((q,i)=>{
-            const level = emotionLevel(emotionOf(q!.expression ?? 'neutral'))
-            return <i key={q!.id+i} title={q!.question} style={{height:`${14+level*.3}px`,background:dot(level)}}/>
-          })}
+  return (
+    <article className="ds">
+      <header className="ds-head">
+        <FileText aria-hidden="true"/>
+        <div>
+          <small>FICHA · {config.depositionLabel}</small>
+          <h3>{config.name}</h3>
         </div>
-        <p>Pressão final: <b>{pressure}%</b> · Estado: <b>{peak}</b></p>
+        <span className={`ds-stamp ${verdict.toLowerCase()}`}>{verdict}</span>
+      </header>
+      <p className="ds-lead">{first} colaborou e foi liberada. Tudo foi registrado no arquivo do caso.</p>
+
+      <div className="ds-stats">
+        <div><b>{found.length}<em>/{total}</em></b><small>PISTAS</small></div>
+        <div><b>{pressure}<em>%</em></b><small>PRESSÃO</small></div>
+        <div><b className="txt">{peak}</b><small>ESTADO FINAL</small></div>
+      </div>
+
+      <section className="ds-block">
+        <h4>PRESSÃO AO LONGO DO DEPOIMENTO</h4>
+        <PressureCurve config={config} progress={progress}/>
+        <p className="ds-legend"><i style={{background:dot(10)}}/>calma <i style={{background:dot(50)}}/>tensa <i style={{background:dot(90)}}/>abalada · cada ponto é uma resposta</p>
       </section>
 
-      <section>
-        <span>PISTAS ANOTADAS ({found.length}{found.length+missed.length>0 ? ` DE ${found.length+missed.length}` : ''})</span>
-        {found.length===0 && <p>Nenhuma pista anotada.</p>}
-        <ul>{found.map(c=><li key={c}>{clueTitle(c) ?? c}</li>)}</ul>
+      <section className="ds-block">
+        <h4>PISTAS OBTIDAS</h4>
+        {found.length===0
+          ? <p className="ds-empty">Nenhuma pista anotada.</p>
+          : <ul className="ds-tags">{found.map(c=><li key={c}><b>PISTA</b>{clueTitle(c) ?? c}</li>)}</ul>}
       </section>
 
       {missed.length>0 && (
-        <section>
-          <span>ESCAPARAM ({missed.length})</span>
-          <p>Havia pistas em respostas que você não marcou:</p>
-          <ul className="miss">{missed.map(m=><li key={m.clue}>“{m.question}”</li>)}</ul>
-          <p>Reveja em Anotações e toque nas frases que faltaram.</p>
+        <section className="ds-block">
+          <h4>O QUE ESCAPOU</h4>
+          <ul className="ds-tags missed">
+            {missed.map(m=><li key={m.clue}><Lock aria-hidden="true"/><span>Pista em: “{m.question}”</span></li>)}
+          </ul>
+          <p className="ds-empty">Reveja em Anotações e toque nas frases que faltaram.</p>
         </section>
       )}
-
-    </div>
+    </article>
   )
 }
