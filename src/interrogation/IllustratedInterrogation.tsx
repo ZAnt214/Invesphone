@@ -41,8 +41,8 @@ const tutorialSteps = (name:string):TutorialStep[] => [
     text:'Mostra como a pessoa está se sentindo. Quando ela se abala, vale insistir naquele assunto.' },
   { target:'.ii-main', place:'stage', title:'Perguntas',
     text:'Toque numa pergunta para fazê-la. Cada resposta pode liberar novas perguntas. As de confronto só abrem com a pista certa.' },
-  { target:'.ii-main', place:'stage', title:'Anote as pistas',
-    text:'Depois da resposta, toque nas frases que parecem importantes. As relevantes viram pistas do caso.' },
+  { target:'.ii-main', place:'stage', demo:true, title:'Anote as pistas',
+    text:'Depois que ela responde, a resposta aparece dividida em frases. Toque nas que parecem importantes: se forem relevantes, viram pista; se não, ficam marcadas sem valor.' },
   { target:'.ii-tabs', place:'tabs', title:'Anotações',
     text:'Releia tudo o que já foi dito e veja quantas pistas você anotou. O ? reabre estas dicas.' }
 ]
