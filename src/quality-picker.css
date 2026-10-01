@@ -1,0 +1,14 @@
+.qp{display:grid;gap:10px}
+.qp-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.qp small{font:700 8px var(--mono,monospace);letter-spacing:.13em;color:#7d878c}
+.qp-buttons{display:flex;border:1px solid rgba(255,255,255,.16);border-radius:8px;overflow:hidden}
+.qp-buttons button{background:none;border:0;color:#9aa4a8;font:600 11px var(--mono,monospace);letter-spacing:.06em;padding:8px 14px;cursor:pointer}
+.qp-buttons button+button{border-left:1px solid rgba(255,255,255,.16)}
+.qp-buttons button.on{background:rgba(255,255,255,.14);color:#fff}
+.qp p{margin:0;font-size:12px;line-height:1.5;color:#b0b9bc}
+.qp:not(.compact){padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:6px;background:rgba(255,255,255,.03)}
+
+/* qualidade baixa: sem animações nem efeitos pesados em todo o jogo */
+[data-quality="low"] .hx *,[data-quality="low"] .hx-hd,[data-quality="low"] .hx-fp,[data-quality="low"] .call-backdrop,[data-quality="low"] .avatar-pulse i{animation:none!important}
+[data-quality="low"] .hx::after,[data-quality="low"] .ii-camera-fx{box-shadow:none!important}
+[data-quality="low"] .transcript{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}

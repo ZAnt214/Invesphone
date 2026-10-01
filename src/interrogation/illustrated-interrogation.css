@@ -120,14 +120,6 @@
 .ii-mark i{display:block;width:100%;height:2px;background:currentColor;opacity:.8}
 .ii-mark span{font:600 8.5px var(--mono);letter-spacing:.32em;margin-right:-.32em}
 
-/* qualidade gráfica */
-.ii-quality{margin:0;display:flex;align-items:center;justify-content:space-between;gap:10px}
-.ii-quality small{font:700 8px var(--mono);letter-spacing:.13em;color:#7d878c}
-.ii-quality div{display:flex;border:1px solid rgba(255,255,255,.16);border-radius:8px;overflow:hidden}
-.ii-quality button{background:none;border:0;color:#9aa4a8;font:600 11px var(--mono);letter-spacing:.06em;padding:7px 13px}
-.ii-quality button+button{border-left:1px solid rgba(255,255,255,.16)}
-.ii-quality button.on{background:rgba(255,255,255,.14);color:#fff}
-
 /* anotar pistas na resposta */
 .ii .iv-asked li{display:block}
 .ii .iv-asked-row{width:100%;display:flex;gap:7px;align-items:flex-start;background:none;border:0;padding:5px 0;color:var(--mut);font:inherit;text-align:left}
