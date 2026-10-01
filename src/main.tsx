@@ -4,10 +4,10 @@ import App from './App'
 import './styles.css'
 import './shell.css'
 import { applyQuality } from './characters/quality'
-import { fitAppHeight } from './appHeight'
+import { fitSafeArea } from './safeArea'
 
 applyQuality()
-fitAppHeight()
+fitSafeArea()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

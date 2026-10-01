@@ -12,8 +12,8 @@ export default defineConfig({
         name: 'Arquivo Morto',
         short_name: 'Arquivo Morto',
         description: 'Investigação criminal narrativa em formato found-phone.',
-        theme_color: '#111315',
-        background_color: '#111315',
+        theme_color: '#050607',
+        background_color: '#050607',
         display: 'standalone',
         display_override: ['fullscreen','standalone'],
         orientation: 'portrait'

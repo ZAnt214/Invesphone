@@ -63,7 +63,7 @@
 
 .ii-panel{
   flex:1;min-height:0;overflow:hidden;
-  padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+  padding:10px 14px calc(10px + var(--safe-b));
   display:flex;flex-direction:column;gap:8px;
 }
 .ii-conversation{display:grid;gap:10px}
