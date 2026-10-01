@@ -1,10 +1,10 @@
 :root{
   font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
-  color:#fff;background:#0b0d10;font-synthesis:none;text-rendering:optimizeLegibility;
+  color:#fff;background:#050607;font-synthesis:none;text-rendering:optimizeLegibility;
   --paper:#d7d1c5;--ink:#16202a;--blue:#244d71;--blue2:#183750;--line:#9aa7b2;--lcd:#d8dfcf;--lcd2:#b9c2ad;
 }
 *{box-sizing:border-box}
-html,body,#root{margin:0;min-height:100%;background:#0b0d10}
+html,body,#root{margin:0;min-height:100%;background:#050607}
 button{font:inherit;-webkit-tap-highlight-color:transparent}
 button:disabled{opacity:.45}
 .call-screen,.launching,.handset,.task-screen,.ending{min-height:100dvh;position:relative;overflow:hidden}
