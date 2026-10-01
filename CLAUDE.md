@@ -117,3 +117,17 @@ Ao alterar o app Equipe ou progressão do Caso 01:
 - materiais podem registrar pistas no save;
 - nenhum pedido deve revelar uma prova futura antes do gatilho narrativo;
 - novos materiais devem seguir o padrão documentado.
+
+
+## Investigação orientada por eventos — sem tarefas visíveis
+
+O Caso 01 **não usa tarefas/missões como linguagem para o jogador**.
+
+Mesmo que `game.task` permaneça temporariamente no código como marcador interno:
+- não mostrar "Abrir tarefa", "Tarefa atual", contagem de tarefas ou percentual;
+- não criar puzzles artificiais só para avançar;
+- avançar o caso por fatos: evidência recebida, depoimento encerrado, material retornado, contradição, novo suspeito ou confissão;
+- a home deve mostrar situação do caso + última atualização operacional;
+- ações contextuais devem levar ao app natural (Equipe, Pessoas, Pistas, Arquivo, cena ou relatório).
+
+Referência: seção 52 de `docs/CASE01_GAME_FLOW.md`.
