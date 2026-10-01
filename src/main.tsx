@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import './styles.css'
 import './shell.css'
+import './desk-theme.css'
 import { applyQuality } from './characters/quality'
 import { fitSafeArea } from './safeArea'
 
