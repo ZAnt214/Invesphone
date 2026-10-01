@@ -1,0 +1,58 @@
+{
+  "case": "case01",
+  "title": "A Casa da Rua das Acácias",
+  "basePath": "/characters/",
+  "resolution": {
+    "width": 900,
+    "height": 1200
+  },
+  "characters": {
+    "livia": {
+      "displayName": "Lívia Valença",
+      "role": "Filha do casal / personagem investigada",
+      "portrait": "/characters/livia/expressions/neutral.jpg",
+      "hasExpressionPack": true,
+      "hasRig": true
+    },
+    "sonia": {
+      "displayName": "Sônia Prado",
+      "role": "Delegada / mentora",
+      "portrait": "/characters/sonia/portrait.jpg"
+    },
+    "caio": {
+      "displayName": "Caio Duarte",
+      "role": "Namorado de Lívia",
+      "portrait": "/characters/caio/portrait.jpg"
+    },
+    "teo": {
+      "displayName": "Téo Duarte",
+      "role": "Irmão de Caio",
+      "portrait": "/characters/teo/portrait.jpg"
+    },
+    "rafael": {
+      "displayName": "Rafael Valença",
+      "role": "Filho do casal",
+      "portrait": "/characters/rafael/portrait.jpg"
+    },
+    "cida": {
+      "displayName": "Cida",
+      "role": "Funcionária da família",
+      "portrait": "/characters/cida/portrait.jpg"
+    },
+    "jorge": {
+      "displayName": "Jorge",
+      "role": "Vigia da rua",
+      "portrait": "/characters/jorge/portrait.jpg"
+    },
+    "ricardo": {
+      "displayName": "Ricardo Valença",
+      "role": "Pai de Lívia / vítima",
+      "portrait": "/characters/ricardo/portrait.jpg"
+    },
+    "helena": {
+      "displayName": "Helena Valença",
+      "role": "Mãe de Lívia / vítima",
+      "portrait": "/characters/helena/portrait.jpg"
+    }
+  }
+}
