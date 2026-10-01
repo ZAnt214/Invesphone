@@ -127,7 +127,87 @@ export class PortraitRenderer {
     const l = this.prepare(asset,c,k==='neutral')
     // com base fixa só o recorte do rosto é usado: a imagem inteira sai da memória
     if(this.stable && k!=='neutral' && l.patch){ l.img = l.patch; delete this.raw[k] }
+    if(this.stable && k!=='neutral' && l.patch) this.fixPatchTone(l.patch)
     this.loaded[k] = l
+  }
+
+  /**
+   * Iluminação do rosto: depois do ganho de cor geral, o rosto de uma expressão ainda pode ficar mais claro ou mais escuro
+   * em algumas áreas (testa, têmporas) que o do retrato neutro, e a borda do recorte aparece contra o cabelo e as orelhas.
+   * Aqui se mede, em células de 16 px e só nos pontos em que as duas imagens quase coincidem (pele sem mudança de feição),
+   * a razão neutro/expressão; o campo suavizado multiplica o recorte. Olhos, sobrancelhas e boca não entram na medida.
+   */
+  private fixPatchTone(patch:HTMLCanvasElement){
+    const neutral = this.raw.neutral
+    if(!neutral) return
+    const { x, y, w, h } = this.faceBox
+    const nd = neutral.getContext('2d',{ willReadFrequently:true })!.getImageData(x,y,w,h).data
+    const px = patch.getContext('2d',{ willReadFrequently:true })!
+    const pimg = px.getImageData(0,0,w,h)
+    const pd = pimg.data
+    const G = 16, gw = Math.ceil(w/G), gh = Math.ceil(h/G)
+    const field:number[][] = [0,1,2].map(()=>new Array<number>(gw*gh).fill(NaN))
+    for(let cy=0;cy<gh;cy++) for(let cx=0;cx<gw;cx++){
+      const r:number[][] = [[],[],[]]
+      for(let j=cy*G;j<Math.min(h,(cy+1)*G);j+=2) for(let i=cx*G;i<Math.min(w,(cx+1)*G);i+=2){
+        const k = (j*w+i)*4
+        if(pd[k+3]<200) continue
+        const ln = nd[k]+nd[k+1]+nd[k+2], lp = pd[k]+pd[k+1]+pd[k+2]
+        if(ln<210||lp<210) continue
+        if(Math.abs(ln-lp)>120||Math.abs(nd[k]-pd[k])+Math.abs(nd[k+1]-pd[k+1])+Math.abs(nd[k+2]-pd[k+2])>120) continue
+        for(let c=0;c<3;c++) r[c].push(nd[k+c]/Math.max(1,pd[k+c]))
+      }
+      if(r[0].length<12) continue
+      for(let c=0;c<3;c++){ r[c].sort((a,b)=>a-b); field[c][cy*gw+cx] = clamp(r[c][r[c].length>>1],.8,1.25) }
+    }
+    // células sem medida recebem a média das vizinhas; o que sobrar fica neutro
+    for(let c=0;c<3;c++){
+      const f = field[c]
+      for(let pass=0;pass<14;pass++){
+        const next = f.slice()
+        for(let cy=0;cy<gh;cy++) for(let cx=0;cx<gw;cx++){
+          if(!Number.isNaN(f[cy*gw+cx])) continue
+          let sum = 0, n = 0
+          for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){
+            const ax = cx+dx, ay = cy+dy
+            if(ax<0||ay<0||ax>=gw||ay>=gh) continue
+            const v = f[ay*gw+ax]
+            if(!Number.isNaN(v)){ sum += v; n++ }
+          }
+          if(n) next[cy*gw+cx] = sum/n
+        }
+        for(let i=0;i<f.length;i++) f[i] = next[i]
+      }
+      for(let i=0;i<f.length;i++) if(Number.isNaN(f[i])) f[i] = 1
+      // suaviza duas vezes
+      for(let rep=0;rep<2;rep++){
+        const sm = f.slice()
+        for(let cy=0;cy<gh;cy++) for(let cx=0;cx<gw;cx++){
+          let sum = 0, n = 0
+          for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){
+            const ax = cx+dx, ay = cy+dy
+            if(ax<0||ay<0||ax>=gw||ay>=gh) continue
+            sum += f[ay*gw+ax]; n++
+          }
+          sm[cy*gw+cx] = sum/n
+        }
+        for(let i=0;i<f.length;i++) f[i] = sm[i]
+      }
+    }
+    // aplica com interpolação bilinear entre os centros das células
+    for(let j=0;j<h;j++){
+      const fy = clamp(j/G-.5,0,gh-1), y0 = Math.floor(fy), y1 = Math.min(gh-1,y0+1), ty = fy-y0
+      for(let i=0;i<w;i++){
+        const fx = clamp(i/G-.5,0,gw-1), x0 = Math.floor(fx), x1 = Math.min(gw-1,x0+1), tx = fx-x0
+        const k = (j*w+i)*4
+        for(let c=0;c<3;c++){
+          const f = field[c]
+          const v = (f[y0*gw+x0]*(1-tx)+f[y0*gw+x1]*tx)*(1-ty)+(f[y1*gw+x0]*(1-tx)+f[y1*gw+x1]*tx)*ty
+          pd[k+c] = clamp(pd[k+c]*v,0,255)
+        }
+      }
+    }
+    px.putImageData(pimg,0,0)
   }
 
   async start(){
