@@ -23,7 +23,8 @@ export function fitSafeArea(){
     const full = portrait ? Math.max(screen.width,screen.height) : Math.min(screen.width,screen.height)
     const l = decideLayout({ inner:window.innerHeight, full, top:topInset(), standalone })
     if(l.height) root.style.setProperty('--app-h',`${l.height}px`); else root.style.removeProperty('--app-h')
-    root.style.setProperty('--safe-b',l.bottomInset ? 'env(safe-area-inset-bottom,0px)' : '0px')
+    // o indicador de início ocupa só os ~14 px de baixo: o recuo útil é o restante, e os controles descem até ele
+    root.style.setProperty('--safe-b',l.bottomInset ? 'max(0px, calc(env(safe-area-inset-bottom,0px) - 14px))' : '0px')
   }
   apply()
   window.addEventListener('resize',apply)
