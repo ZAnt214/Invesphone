@@ -16,11 +16,8 @@ const mouth = (cx:number,rimY:number,halfWidth:number,bottom:number,arch=2,maxOp
  * public/characters/<id>/ (expressions/*.jpg, visemes.png). As marcas de olhos e o alinhamento de cada expressão
  * vêm de castMarks.json (scripts/measure-cast.py); a boca usa a do retrato neutro acompanhando o deslocamento dos olhos.
  */
-/**
- * As folhas de visemas do pacote (boca preta oval com dentes) não combinam com o estilo dos retratos e deixam halo sobre barba
- * e bigode. O elenco usa a boca do próprio retrato: o lábio de baixo e o queixo descem em tiras. Ligue quando houver visemas melhores.
- */
-const USE_VISEMES = false
+/** Folhas de visemas do elenco: geradas de cada retrato oficial por scripts/make-cast-visemes.py, no mesmo formato da Lívia. */
+const USE_VISEMES = true
 const cast = (id:string, name:string, m:{cx:number,rim:number,half:number,bottom:number,open:number}):CharacterDef => {
   const marks = castMarks[id as keyof typeof castMarks] as unknown as Record<string,{eyeMid:[number,number],scale:number,eyes:[number,number,number,number][],mouthDy:number}>
   const n = marks.neutral
@@ -39,7 +36,7 @@ const cast = (id:string, name:string, m:{cx:number,rim:number,half:number,bottom
     portrait:{ width:900, height:1200, crop:{ x:80, y:10, w:740, h:800 }, eyeMid:n.eyeMid },
     assets,
     faceMask:`${base}characters/${id}/face-mask.png`,
-    visemes:USE_VISEMES ? { src:`${base}characters/${id}/visemes.png`, cellW:400, cellH:120, order:['A','E','I','O','U','M'], center:[200,60], lipWidth:108, reach:.5 } : undefined,
+    visemes:USE_VISEMES ? { src:`${base}characters/${id}/visemes.png`, cellW:400, cellH:120, order:['A','E','I','O','U','M'], center:[200,60], lipWidth:108, reach:1 } : undefined,
     face:{ cx:n.eyeMid[0], cy:n.eyeMid[1]+18, size:420 }
   }
 }
