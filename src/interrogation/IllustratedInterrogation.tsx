@@ -176,6 +176,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
   const noted = progress.noted ?? []
   const pending = pendingQuestions(config,progress,registeredClues)
   const asked = askedQuestions(config,progress)
+  const blocked = config.questions.filter(q=>progress.unlocked.includes(q.id) && !progress.asked.includes(q.id) && q.requiresClue && !registeredClues.includes(q.requiresClue)).length
   const finished = progress.completed
   const busy = phase!=='idle'
 
@@ -276,7 +277,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
             )}
 
             {!busy && !review && !finished && (
-              <QuestionPager questions={pending} onPick={ask} clueTitle={clueTitle}/>
+              <QuestionPager questions={pending} onPick={ask} clueTitle={clueTitle} blocked={blocked}/>
             )}
           </>}
 

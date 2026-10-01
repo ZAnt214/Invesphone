@@ -12,13 +12,15 @@ type Props = {
   questions:InterrogationQuestion[]
   onPick:(id:string)=>void
   clueTitle?:(id:string)=>string|undefined
+  /** Perguntas já liberadas que ainda esperam uma pista que o jogador não tem. */
+  blocked?:number
 }
 
 /**
  * Perguntas disponíveis, ajustadas à altura que sobra na tela: quantas couberem aparecem de uma vez e,
  * se houver mais, o jogador troca de página (nada de rolar a tela). As confrontações vêm depois das normais.
  */
-export default function QuestionPager({questions,onPick,clueTitle}:Props){
+export default function QuestionPager({questions,onPick,clueTitle,blocked=0}:Props){
   const box = useRef<HTMLDivElement>(null)
   const [height,setHeight] = useState(0)
   const [page,setPage] = useState(0)
@@ -65,7 +67,7 @@ export default function QuestionPager({questions,onPick,clueTitle}:Props){
             <span>{q.question}</span>
           </button>
         ))}
-        {ordered.length===0 && <div className="ii-empty">Sem novas perguntas por enquanto. Veja as Anotações.</div>}
+        {ordered.length===0 && <div className="ii-empty">{blocked>0 ? `Há ${blocked} ${blocked>1?'perguntas que dependem':'pergunta que depende'} de provas que você ainda não tem. Reúna mais pistas pelo caso e volte.` : 'Sem novas perguntas por enquanto. Veja as Anotações.'}</div>}
       </div>
       {total>1 && (
         <div className="iq-pager">
