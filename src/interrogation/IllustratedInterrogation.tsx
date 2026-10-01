@@ -7,6 +7,8 @@ import type { Expression } from '../characters/types'
 import AnswerNotes from './AnswerNotes'
 import QuestionPager from './QuestionPager'
 import EmotionMeter from './EmotionMeter'
+import Tutorial from './Tutorial'
+import type { TutorialStep } from './Tutorial'
 import { applyAnswer, askedQuestions, between, clueSummary, getQuestion, pendingQuestions, subtitleChunks, subtitleDuration } from './logic'
 import type { InterrogationConfig, InterrogationProgress } from './types'
 import './illustrated-interrogation.css'
@@ -28,6 +30,22 @@ type Props = {
   /** Botão "VOLTAR AO CASO", disponível depois de encerrar. */
   onReturn:()=>void
 }
+
+const TUTORIAL_KEY = 'invesphone.depoimento-tutorial.v1'
+const tutorialSeen = () => { try { return localStorage.getItem(TUTORIAL_KEY)==='1' } catch { return true } }
+
+const tutorialSteps = (name:string):TutorialStep[] => [
+  { target:'.ii-stage', place:'panel', title:'Observe '+name.split(' ')[0],
+    text:'Ela responde em legendas. A expressão e o jeito de falar mostram quando algo a incomoda.' },
+  { target:'.ii-emo', place:'panel', title:'Medidor de emoção',
+    text:'Mostra como a pessoa está se sentindo. Quando ela se abala, vale insistir naquele assunto.' },
+  { target:'.ii-main', place:'stage', title:'Perguntas',
+    text:'Toque numa pergunta para fazê-la. Cada resposta pode liberar novas perguntas. As de confronto só abrem com a pista certa.' },
+  { target:'.ii-main', place:'stage', title:'Anote as pistas',
+    text:'Depois da resposta, toque nas frases que parecem importantes. As relevantes viram pistas do caso.' },
+  { target:'.ii-tabs', place:'tabs', title:'Anotações',
+    text:'Releia tudo o que já foi dito e veja quantas pistas você anotou. O ? reabre estas dicas.' }
+]
 
 /** Tempo em que a boca se mexe numa legenda: um pouco menos que o tempo de leitura. */
 const speakingTime = (text:string) => Math.min(subtitleDuration(text)-150, Math.max(700,text.length*68+300))
@@ -52,6 +70,11 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
   /** Mostra a resposta recém-dada para anotar pistas, até o jogador seguir em frente. */
   const [review,setReview] = useState(false)
   const [toast,setToast] = useState<string|null>(null)
+  const [tutorial,setTutorial] = useState(()=>!tutorialSeen())
+  const closeTutorial = useCallback(()=>{
+    setTutorial(false)
+    try { localStorage.setItem(TUTORIAL_KEY,'1') } catch { /* sem armazenamento: só não lembra */ }
+  },[])
   const timers = useRef<number[]>([])
   const progressRef = useRef(progress)
   progressRef.current = progress
@@ -210,8 +233,10 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
           <button className={tab==='notes'?'on':''} disabled={busy} onClick={()=>setTab('notes')}>
             ANOTAÇÕES{summary.total>0 && <em>{summary.found}/{summary.total}</em>}
           </button>
+          <button className="help" aria-label="Como funciona" disabled={busy} onClick={()=>setTutorial(true)}>?</button>
         </nav>
       </section>
+      {tutorial && <Tutorial steps={tutorialSteps(config.name)} onClose={closeTutorial}/>}
     </main>
   )
 }
