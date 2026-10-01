@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { isStandalone } from './fullscreen'
+import EdgeProbe from './EdgeProbe'
 import './quality-picker.css'
 
 type Info = Record<string,string>
@@ -37,6 +38,7 @@ export default function Diagnostics(){
       <dl>
         {Object.entries(info).map(([k,v])=><div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}
       </dl>
+      <EdgeProbe/>
       <div ref={probe} aria-hidden="true" style={{position:'fixed',left:0,top:0,width:0,height:0,visibility:'hidden',paddingTop:'env(safe-area-inset-top,0px)',paddingBottom:'env(safe-area-inset-bottom,0px)'}}/>
     </div>
   )
