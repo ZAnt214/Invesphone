@@ -16,7 +16,12 @@ const mouth = (cx:number,rimY:number,halfWidth:number,bottom:number,arch=2,maxOp
  * public/characters/<id>/ (expressions/*.jpg, visemes.png). As marcas de olhos e o alinhamento de cada expressão
  * vêm de castMarks.json (scripts/measure-cast.py); a boca usa a do retrato neutro acompanhando o deslocamento dos olhos.
  */
-const cast = (id:string, name:string, m:{cx:number,rim:number,half:number,bottom:number}):CharacterDef => {
+/**
+ * As folhas de visemas do pacote (boca preta oval com dentes) não combinam com o estilo dos retratos e deixam halo sobre barba
+ * e bigode. O elenco usa a boca do próprio retrato: o lábio de baixo e o queixo descem em tiras. Ligue quando houver visemas melhores.
+ */
+const USE_VISEMES = false
+const cast = (id:string, name:string, m:{cx:number,rim:number,half:number,bottom:number,open:number}):CharacterDef => {
   const marks = castMarks[id as keyof typeof castMarks] as unknown as Record<string,{eyeMid:[number,number],scale:number,eyes:[number,number,number,number][],mouthDy:number}>
   const n = marks.neutral
   const assets = Object.fromEntries(Object.entries(marks).map(([k,v])=>{
@@ -25,7 +30,7 @@ const cast = (id:string, name:string, m:{cx:number,rim:number,half:number,bottom
       src:`${base}characters/${id}/expressions/${k}.jpg`,
       align:{ eyeMid:v.eyeMid, scale:v.scale, neckY:760, shoulderY:673 },
       eyes:{ left:eye(...v.eyes[0]), right:eye(...v.eyes[1]) },
-      mouth:mouth(m.cx+dx,m.rim+dy,m.half,m.bottom+dy)
+      mouth:mouth(m.cx+dx,m.rim+dy,m.half,m.bottom+dy,2,m.open)
     }
     return [k,asset]
   })) as CharacterDef['assets']
@@ -34,17 +39,17 @@ const cast = (id:string, name:string, m:{cx:number,rim:number,half:number,bottom
     portrait:{ width:900, height:1200, crop:{ x:80, y:10, w:740, h:800 }, eyeMid:n.eyeMid },
     assets,
     faceMask:`${base}characters/${id}/face-mask.png`,
-    visemes:{ src:`${base}characters/${id}/visemes.png`, cellW:400, cellH:120, order:['A','E','I','O','U','M'], center:[200,60], lipWidth:108, reach:.5 },
+    visemes:USE_VISEMES ? { src:`${base}characters/${id}/visemes.png`, cellW:400, cellH:120, order:['A','E','I','O','U','M'], center:[200,60], lipWidth:108, reach:.5 } : undefined,
     face:{ cx:n.eyeMid[0], cy:n.eyeMid[1]+18, size:420 }
   }
 }
 
 export const characters:Record<string,CharacterDef> = {
-  caio:cast('caio','Caio Duarte',{ cx:454, rim:559, half:54, bottom:577 }),
-  teo:cast('teo','Téo Duarte',{ cx:452, rim:570, half:47, bottom:586 }),
-  rafael:cast('rafael','Rafael Valença',{ cx:450, rim:576, half:45, bottom:594 }),
-  cida:cast('cida','Cida',{ cx:442, rim:599, half:57, bottom:616 }),
-  jorge:cast('jorge','Jorge',{ cx:458, rim:551, half:50, bottom:568 }),
+  caio:cast('caio','Caio Duarte',{ cx:454, rim:559, half:54, bottom:577, open:24 }),
+  teo:cast('teo','Téo Duarte',{ cx:452, rim:570, half:47, bottom:586, open:26 }),
+  rafael:cast('rafael','Rafael Valença',{ cx:450, rim:576, half:45, bottom:594, open:24 }),
+  cida:cast('cida','Cida',{ cx:442, rim:599, half:57, bottom:616, open:24 }),
+  jorge:cast('jorge','Jorge',{ cx:458, rim:551, half:50, bottom:568, open:32 }),
   livia:{
     id:'livia',
     name:'Lívia Valença',

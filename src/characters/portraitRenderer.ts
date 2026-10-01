@@ -677,7 +677,8 @@ export class PortraitRenderer {
       const s = d*edge
       if(s<.2) continue
       const top = Math.round(rim)
-      ctx.fillStyle = rgb(l.inner,.7)
+      // interior da boca: escurece a cor amostrada do canto, para a abertura parecer boca e não lábio esticado
+      ctx.fillStyle = rgb([l.inner[0]*.55,l.inner[1]*.5,l.inner[2]*.5] as Rgb,.85)
       ctx.fillRect(x,top,w,s+.8)
       ctx.drawImage(l.img,x,top,w,m.bottom-top,x,top+s,w,m.bottom-top)
     }
