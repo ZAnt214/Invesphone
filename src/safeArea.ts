@@ -1,15 +1,29 @@
+import { decideLayout } from './layoutMetrics'
+
+/** Mede o recuo superior real (env) com um elemento de prova. */
+function topInset():number{
+  const el = document.createElement('div')
+  el.style.cssText = 'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding-top:env(safe-area-inset-top,0px)'
+  document.body.appendChild(el)
+  const v = parseFloat(getComputedStyle(el).paddingTop) || 0
+  el.remove()
+  return v
+}
+
 /**
- * Alguns navegadores do iPhone (Chrome, por exemplo) informam um recuo inferior de ~34 px mas a área da página
- * já termina acima do indicador de início: aplicar o recuo ali duplica o espaço vazio. Só se mantém o recuo quando a
- * página realmente ocupa a tela inteira; senão ele vira 0.
+ * Ajusta a altura do jogo e o recuo inferior ao que o navegador realmente entrega (veja `decideLayout`).
+ * Resultado em `--app-h` e `--safe-b`, usados em shell.css.
  */
 export function fitSafeArea(){
   const root = document.documentElement
+  const standalone = !!(navigator as Navigator & { standalone?:boolean }).standalone
+    || !!window.matchMedia?.('(display-mode: standalone), (display-mode: fullscreen)').matches
   const apply = ()=>{
     const portrait = window.innerHeight >= window.innerWidth
     const full = portrait ? Math.max(screen.width,screen.height) : Math.min(screen.width,screen.height)
-    const covers = window.innerHeight >= full - 2
-    root.style.setProperty('--safe-b',covers ? 'env(safe-area-inset-bottom,0px)' : '0px')
+    const l = decideLayout({ inner:window.innerHeight, full, top:topInset(), standalone })
+    if(l.height) root.style.setProperty('--app-h',`${l.height}px`); else root.style.removeProperty('--app-h')
+    root.style.setProperty('--safe-b',l.bottomInset ? 'env(safe-area-inset-bottom,0px)' : '0px')
   }
   apply()
   window.addEventListener('resize',apply)

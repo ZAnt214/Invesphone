@@ -20,6 +20,7 @@ export default function Diagnostics(){
         'tela (screen)':`${screen.width}×${screen.height}`,
         'recuo sup/inf (px)':`${px(cs?.paddingTop)} / ${px(cs?.paddingBottom)}`,
         'recuo inf. usado':getComputedStyle(document.documentElement).getPropertyValue('--safe-b').trim() || '—',
+        'altura do jogo':getComputedStyle(document.body).height,
         'app instalado':isStandalone() ? 'sim' : 'não',
         'dpr':String(window.devicePixelRatio),
         'navegador':/CriOS/.test(navigator.userAgent) ? 'Chrome iOS' : /FxiOS/.test(navigator.userAgent) ? 'Firefox iOS' : /EdgiOS/.test(navigator.userAgent) ? 'Edge iOS' : /Safari/.test(navigator.userAgent) ? 'Safari/WebKit' : 'outro'
