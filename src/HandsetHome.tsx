@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BatteryMedium, FileSearch, FolderSearch, Home as HomeIcon, Lock, MessageCircle, Settings, Smartphone, Users } from 'lucide-react'
+import { BatteryMedium, ChevronRight, FileSearch, FolderSearch, Home as HomeIcon, Lock, MessageCircle, Settings, Smartphone } from 'lucide-react'
 import { characters } from './characters/characters'
 import CharacterFace from './characters/CharacterFace'
 import './desk-home.css'
@@ -8,29 +8,27 @@ type HomeTarget = 'team'|'clues'|'interrogate'|'victim'|'chapters'|'settings'
 
 type Props = {
   chapterNumber:number
-  taskTitle:string
   chapterTitle:string
-  taskNumber:number
-  taskCount:number
-  /** Tipo da tarefa atual: a cena tem o botão "Abrir cena". */
-  taskKind:string
+  caseStatus:string
+  updateSource:string
+  updateText:string
+  updateActionLabel?:string
   teamBadge:number
   clueBadge:number
-  /** Apps que o jogo já liberou (informação gera ação: nada abre sem motivo narrativo). */
   peopleOpen:boolean
   helenaOpen:boolean
   archiveOpen:boolean
   onOpenApp:(app:HomeTarget)=>void
-  onOpenTask:()=>void
+  onOpenUpdate?:()=>void
 }
 
-/** O que o Lemos acredita a cada capítulo, sem adiantar a solução. */
+/** O que Lemos considera mais plausível neste ponto, sem transformar a investigação em checklist. */
 const HYPOTHESIS = [
-  'Roubo seguido de morte (primeira leitura)',
-  'As versões não se encaixam',
-  'A janela de horário não fecha',
-  'Um valor específico foi levado',
-  'Papéis diferentes no mesmo crime'
+  'Roubo seguido de morte — leitura inicial',
+  'A cena pode ter sido montada',
+  'O álibi não cobre toda a madrugada',
+  'Uma quantia específica foi procurada',
+  'É preciso separar execução de planejamento'
 ]
 
 function Obj({label,icon,badge=0,locked,hint,onClick,cls}:{label:string;icon:React.ReactNode;badge?:number;locked?:boolean;hint?:string;onClick?:()=>void;cls:string}){
@@ -60,7 +58,6 @@ export default function HandsetHome(p:Props){
     return ()=>window.clearInterval(id)
   },[])
   const hyp = HYPOTHESIS[Math.min(HYPOTHESIS.length-1,p.chapterNumber-1)]
-  const scene = p.taskKind==='scene'
   return (
     <main className="handset dk">
       <header className="dk-status"><span>VIVO<span className="dk-sig"><s/><s/><s/></span></span><b>DHPP</b><BatteryMedium/></header>
@@ -71,25 +68,31 @@ export default function HandsetHome(p:Props){
         <button className="dk-gear" onClick={()=>p.onOpenApp('settings')} aria-label="Ajustes"><Settings/></button>
       </section>
 
-      <button className="dk-folder" onClick={p.onOpenTask} aria-label={`${scene?'Abrir cena':'Abrir tarefa'}: ${p.taskTitle}`}>
+      <section className="dk-folder" aria-label="Resumo atual do Caso 01">
         <span className="dk-tab">CASO 01 · CAP. {p.chapterNumber}</span>
         <small>{p.chapterTitle.toUpperCase()}</small>
-        <strong>{p.taskTitle}</strong>
+        <strong>{p.caseStatus}</strong>
         <dl>
-          <div><dt>Onde</dt><dd>Rua das Acácias, Campo Belo</dd></div>
-          <div><dt>Quem</dt><dd>Ricardo e Helena Valença (vítimas)</dd></div>
-          <div><dt>Hipótese</dt><dd>{hyp}</dd></div>
+          <div><dt>Local</dt><dd>Rua das Acácias, Campo Belo</dd></div>
+          <div><dt>Vítimas</dt><dd>Ricardo e Helena Valença</dd></div>
+          <div><dt>Leitura</dt><dd>{hyp}</dd></div>
         </dl>
-        <div className="dk-pg"><u><s style={{width:`${Math.round((p.taskNumber/p.taskCount)*100)}%`}}/></u><i>{p.taskNumber} de {p.taskCount}</i></div>
-        <em className="dk-stamp">{scene?'ABRIR CENA':'ABRIR TAREFA'}</em>
-      </button>
+      </section>
+
+      <section className="dk-update" aria-live="polite">
+        <div>
+          <small>ÚLTIMA ATUALIZAÇÃO · {p.updateSource.toUpperCase()}</small>
+          <p>{p.updateText}</p>
+        </div>
+        {p.updateActionLabel&&p.onOpenUpdate&&<button onClick={p.onOpenUpdate}>{p.updateActionLabel}<ChevronRight/></button>}
+      </section>
 
       <div className="dk-desk">
         <Obj cls="o-team" label="Equipe" icon={<MessageCircle/>} badge={p.teamBadge} onClick={()=>p.onOpenApp('team')}/>
         <Obj cls="o-clues" label="Pistas" icon={<FileSearch/>} badge={p.clueBadge} onClick={()=>p.onOpenApp('clues')}/>
-        <Obj cls="o-people" label="Pessoas" icon={<Polaroids/>} locked={!p.peopleOpen} hint="Após a cena" onClick={()=>p.onOpenApp('interrogate')}/>
-        <Obj cls="o-helena" label="Tel. Helena" icon={<Smartphone/>} locked={!p.helenaOpen} hint="Após as versões" onClick={()=>p.onOpenApp('victim')}/>
-        <Obj cls="o-archive" label="Arquivo" icon={<FolderSearch/>} locked={!p.archiveOpen} hint="Após as versões" onClick={()=>p.onOpenApp('chapters')}/>
+        <Obj cls="o-people" label="Pessoas" icon={<Polaroids/>} locked={!p.peopleOpen} hint="Quando houver depoimentos" onClick={()=>p.onOpenApp('interrogate')}/>
+        <Obj cls="o-helena" label="Tel. Helena" icon={<Smartphone/>} locked={!p.helenaOpen} hint="Quando for apreendido" onClick={()=>p.onOpenApp('victim')}/>
+        <Obj cls="o-archive" label="Arquivo" icon={<FolderSearch/>} locked={!p.archiveOpen} hint="Quando houver documentos" onClick={()=>p.onOpenApp('chapters')}/>
       </div>
 
       <nav className="dk-tabs" aria-label="Navegação">
