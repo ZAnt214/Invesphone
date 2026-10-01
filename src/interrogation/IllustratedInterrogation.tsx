@@ -8,6 +8,7 @@ import AnswerNotes from './AnswerNotes'
 import QuestionPager from './QuestionPager'
 import EmotionMeter from './EmotionMeter'
 import DepositionSummary from './DepositionSummary'
+import SignaturePad from './SignaturePad'
 import Tutorial from './Tutorial'
 import { sfx } from '../sfx'
 import type { TutorialStep } from './Tutorial'
@@ -74,6 +75,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
   /** Aviso de que a pressão passou de um estágio (ela está se abalando). */
   /** Mensagem de encerramento, mostrada logo depois da última resposta. */
   const [farewell,setFarewell] = useState(false)
+  const [signing,setSigning] = useState(false)
   const [alert,setAlert] = useState<string|null>(null)
   const [tutorial,setTutorial] = useState(()=>!tutorialSeen())
   const closeTutorial = useCallback(()=>{
@@ -199,7 +201,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
       </header>
       <section className="ii-panel">
         <div className="ii-main">
-          {tab==='ask' && <DepositionSummary config={config} progress={progress} clueTitle={clueTitle}/>}
+          {tab==='ask' && <DepositionSummary config={config} progress={progress} clueTitle={clueTitle} onSign={()=>setSigning(true)}/>}
           {tab==='notes' && (
             <ul className="ii-notes">
               {asked.map(q=>(
@@ -221,6 +223,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
             ANOTAÇÕES{summary.total>0 && <em>{summary.found}/{summary.total}</em>}
           </button>
         </nav>
+        {signing && <SignaturePad onCancel={()=>setSigning(false)} onSave={png=>{ onProgress({...progressRef.current,signature:png,signedAt:new Date().toISOString()}); setSigning(false); sfx.clue() }}/>}
         {toast && <div className="ii-file-toast" key={toast} role="status"><small>NOVA PISTA REGISTRADA</small><b>{toast}</b></div>}
       </section>
     </main>
@@ -270,10 +273,6 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
                 <p>{config.farewell ?? `Obrigado pela colaboração, ${config.name.split(' ')[0]}. Por enquanto é só. Você está liberada.`}</p>
                 <em>{config.name.split(' ')[0]} deixa a sala…</em>
               </button>
-            )}
-
-            {!busy && !review && finished && !farewell && (
-              <DepositionSummary config={config} progress={progress} clueTitle={clueTitle}/>
             )}
 
             {!busy && !review && !finished && (

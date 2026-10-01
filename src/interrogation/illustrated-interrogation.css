@@ -308,3 +308,23 @@
 .ii-file-toast{position:absolute;left:12px;right:12px;bottom:72px;display:grid;gap:2px;padding:9px 12px;border-radius:6px;background:#0e1113;border:1px solid #f0c446;animation:ii-sub .3s ease-out both}
 .ii-file-toast small{font:700 8px var(--mono);letter-spacing:.14em;color:#f0c446}
 .ii-file-toast b{font:700 12px var(--mono)}
+
+/* assinatura na ficha */
+.ds-sign{display:grid;gap:5px}
+.ds-sign h4{margin:0;font:800 11px "Courier New",monospace;letter-spacing:.12em;text-transform:uppercase;border-bottom:1px solid #2a221880;padding-bottom:3px}
+.ds-sign-box{display:grid;place-items:center;width:100%;min-height:74px;border:0;border-bottom:2px solid #2a2218;background:rgba(255,255,255,.18);color:#5b4f3c;font:700 12px "Courier New",monospace;padding:4px}
+.ds-sign-box:not(.signed){border:2px dashed #2a221899;border-radius:3px;animation:ds-pulse 2.2s ease-in-out infinite}
+.ds-sign-box img{width:100%;max-width:230px;max-height:74px;object-fit:contain;mix-blend-mode:multiply}
+.ds-sign small{font:700 9px "Courier New",monospace;color:#5b4f3c}
+@keyframes ds-pulse{50%{background:rgba(255,214,64,.28)}}
+.sp{position:absolute;inset:0;z-index:40;display:grid;place-items:center;padding:16px;background:rgba(0,0,0,.72)}
+.sp-card{width:100%;max-width:380px;display:grid;gap:8px;padding:14px;border-radius:8px;background:#0e1113;border:1px solid rgba(255,255,255,.2)}
+.sp-card small{font:700 9px var(--mono);letter-spacing:.14em;color:#f0c446}
+.sp-card p{margin:0;font-size:12px;color:#c5cdd0}
+.sp-paper{position:relative;border-radius:3px;background:repeating-linear-gradient(transparent 0 35px,rgba(70,90,120,.15) 35px 36px),#e8dfc7;aspect-ratio:600/220}
+.sp-paper canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.sp-paper i{position:absolute;left:10px;bottom:22px;font-style:normal;color:#5b4f3c;font-size:13px;pointer-events:none}
+.sp-actions{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:8px}
+.sp-actions button{min-height:42px;border:1px solid var(--line);border-radius:6px;background:none;color:#c9d0d3;font:700 10px var(--mono);letter-spacing:.1em}
+.sp-actions .go{background:#f0c446;border-color:#f0c446;color:#14110a}
+.sp-actions button:disabled{opacity:.35}

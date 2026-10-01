@@ -55,4 +55,7 @@ export type InterrogationProgress = {
   noted?:string[]
   /** Pressão acumulada de 0 a 100 (saves antigos não têm: começa em 0). */
   pressure?:number
+  /** Assinatura do jogador na ficha do depoimento (PNG em data URL) e quando foi feita. */
+  signature?:string
+  signedAt?:string
 }
