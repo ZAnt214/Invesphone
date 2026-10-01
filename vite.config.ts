@@ -15,7 +15,6 @@ export default defineConfig({
         theme_color: '#050607',
         background_color: '#050607',
         display: 'standalone',
-        display_override: ['fullscreen','standalone'],
         orientation: 'portrait'
       }
     })

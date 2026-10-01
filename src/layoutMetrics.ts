@@ -11,14 +11,11 @@ export type Layout = {
 }
 
 /**
- * Decide a altura do jogo a partir do que o navegador informa.
- * - Safari instalado (barra de status translúcida): `innerHeight` desconta a barra de status (47 px) mas a página é
- *   desenhada por baixo dela; sem corrigir, sobra uma faixa do tamanho da barra no rodapé.
- * - Página que já ocupa a tela inteira: nada a corrigir, vale o recuo do indicador.
- * - Qualquer outra (Chrome, Safari com barras): a área termina acima do indicador, então sem recuo.
+ * Decide o recuo inferior a partir do que o navegador informa.
+ * Medido no iPhone 13 (Safari instalado): innerHeight 797, tela 844, recuo superior 47, e o conteúdo além de 797 é cortado:
+ * a área da página termina 47 px acima do fim da tela. Forçar a altura da tela só corta o rodapé, então a altura é sempre
+ * a do navegador. O recuo do indicador de início só vale quando a página realmente chega ao fim da tela.
  */
-export function decideLayout({inner,full,top,standalone}:Metrics):Layout{
-  if(standalone && top>0 && Math.abs(inner+top-full)<=3) return { height:full, bottomInset:true }
-  if(inner>=full-2) return { height:null, bottomInset:true }
-  return { height:null, bottomInset:false }
+export function decideLayout({inner,full}:Metrics):Layout{
+  return { height:null, bottomInset:inner>=full-2 }
 }
