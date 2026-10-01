@@ -81,3 +81,13 @@ Exemplo de nome:
 Depois que o ChatGPT criar os assets, consuma diretamente os arquivos gerados no caminho registrado pelo pedido concluído.
 
 O canal `creative-requests/` é a forma oficial de comunicação Claude → ChatGPT para demandas visuais do projeto.
+
+
+## Fonte canônica do Caso 01
+
+Antes de criar ou alterar qualquer conteúdo narrativo do Caso 01, leia:
+
+- docs/CASE01_STORY_BIBLE.md — fonte de verdade narrativa completa.
+- docs/CASE01_CANON.json — resumo estruturado das regras imutáveis, horários, solução, provas aceitas e finais.
+
+Se uma fala antiga, placeholder, comentário de código ou tela entrar em conflito com esses arquivos, corrija o conteúdo para ficar de acordo com a bíblia. Não altere culpados, papéis, horários-chave, motivo central ou lógica das pistas sem uma mudança explicitamente aprovada pelo usuário.
