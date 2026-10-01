@@ -7,6 +7,7 @@ import { applyQuality } from './characters/quality'
 import { fitSafeArea } from './safeArea'
 
 applyQuality()
+if((navigator as Navigator & { standalone?:boolean }).standalone || window.matchMedia?.('(display-mode: standalone), (display-mode: fullscreen)').matches) document.documentElement.classList.add('standalone')
 fitSafeArea()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

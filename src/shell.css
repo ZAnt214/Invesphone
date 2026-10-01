@@ -5,7 +5,7 @@
 /* margem inferior segura: o navegador informa o recuo do indicador de início; a variável só o zera quando a área visível já termina acima dele */
 :root{--safe-b:env(safe-area-inset-bottom,0px)}
 html{height:100%;-webkit-text-size-adjust:100%}
-body{position:fixed;top:0;left:0;right:0;width:100%;height:var(--app-h,100%);margin:0;overflow:hidden;overscroll-behavior:none;
+body{position:fixed;top:0;bottom:0;left:0;right:0;width:100%;margin:0;overflow:hidden;overscroll-behavior:none;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 #root{height:100%;min-height:0}
 button{touch-action:manipulation}
@@ -32,3 +32,11 @@ button{touch-action:manipulation}
   .hx-app i{width:34px!important;height:34px!important}
   .hx-task{padding:12px 14px!important}
 }
+
+/*
+ * iPhone, app instalado: o iOS entrega uma janela 47 px menor que a tela (innerHeight 797 numa tela de 844) e corta tudo
+ * o que é `fixed` nessa altura. Medido no aparelho: com um elemento `absolute` de altura 100lvh preso ao html, a página
+ * passa a ser desenhada até o fim físico da tela (faixas absolute e fixed chegaram aos 844 px). Esta peça invisível faz isso.
+ */
+html.standalone{overscroll-behavior:none}
+html.standalone::after{content:"";position:absolute;left:0;top:0;width:1px;height:100lvh;pointer-events:none}

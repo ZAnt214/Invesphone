@@ -12,10 +12,11 @@ export type Layout = {
 
 /**
  * Decide o recuo inferior a partir do que o navegador informa.
- * Medido no iPhone 13 (Safari instalado): innerHeight 797, tela 844, recuo superior 47, e o conteúdo além de 797 é cortado:
- * a área da página termina 47 px acima do fim da tela. Forçar a altura da tela só corta o rodapé, então a altura é sempre
- * a do navegador. O recuo do indicador de início só vale quando a página realmente chega ao fim da tela.
+ * iPhone 13, Safari instalado: innerHeight 797, tela 844, recuo superior 47. A página é desenhada até o fim físico da tela
+ * (veja a peça de 100lvh em shell.css), embora o innerHeight não mostre isso: nesse caso o recuo do indicador de início vale.
+ * Em páginas que já ocupam a tela inteira ele também vale; nos demais casos (área que termina acima do indicador) é 0.
  */
-export function decideLayout({inner,full}:Metrics):Layout{
-  return { height:null, bottomInset:inner>=full-2 }
+export function decideLayout({inner,full,top,standalone}:Metrics):Layout{
+  const quirk = standalone && top>0 && Math.abs(inner+top-full)<=3
+  return { height:null, bottomInset:inner>=full-2 || quirk }
 }
