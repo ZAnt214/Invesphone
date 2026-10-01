@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { BatteryMedium, FileSearch, FolderSearch, Home as HomeIcon, MessageCircle, Smartphone, Users, Settings } from 'lucide-react'
-import './handset-home.css'
+import { BatteryMedium, FileSearch, FolderSearch, Home as HomeIcon, Lock, MessageCircle, Settings, Smartphone, Users } from 'lucide-react'
+import { characters } from './characters/characters'
+import CharacterFace from './characters/CharacterFace'
+import './desk-home.css'
 
 type HomeTarget = 'team'|'clues'|'interrogate'|'victim'|'chapters'|'settings'
 
@@ -10,95 +12,91 @@ type Props = {
   chapterTitle:string
   taskNumber:number
   taskCount:number
+  /** Tipo da tarefa atual: a cena tem o botão "Abrir cena". */
+  taskKind:string
   teamBadge:number
   clueBadge:number
+  /** Apps que o jogo já liberou (informação gera ação: nada abre sem motivo narrativo). */
+  peopleOpen:boolean
+  helenaOpen:boolean
+  archiveOpen:boolean
   onOpenApp:(app:HomeTarget)=>void
   onOpenTask:()=>void
 }
 
-const reduceMotion = () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+/** O que o Lemos acredita a cada capítulo, sem adiantar a solução. */
+const HYPOTHESIS = [
+  'Roubo seguido de morte (primeira leitura)',
+  'As versões não se encaixam',
+  'A janela de horário não fecha',
+  'Um valor específico foi levado',
+  'Papéis diferentes no mesmo crime'
+]
 
-// impressão digital: elipses concêntricas com o traço interrompido
-const dash = (k:number) => Array.from({length:4},(_,j)=>`${4+((k*7+j*11)%17)} ${2+((k*5+j*3)%9)}`).join(' ')
-const rings = Array.from({length:13},(_,k)=>({k,cy:150-k*1.2,rx:8+k*7,ry:11+k*9,dash:dash(k)}))
-
-function Fingerprint(){
-  const Print = ({cls,withDefs}:{cls:string;withDefs?:boolean}) => (
-    <svg className={cls} viewBox="0 0 200 300">
-      {withDefs && <defs><clipPath id="hx-fp-clip"><ellipse cx="100" cy="150" rx="96" ry="138"/></clipPath></defs>}
-      <g clipPath="url(#hx-fp-clip)">
-        {rings.map(r=><ellipse key={r.k} cx="100" cy={r.cy} rx={r.rx} ry={r.ry} strokeDasharray={r.dash}/>)}
-      </g>
-    </svg>
+function Obj({label,icon,badge=0,locked,hint,onClick,cls}:{label:string;icon:React.ReactNode;badge?:number;locked?:boolean;hint?:string;onClick?:()=>void;cls:string}){
+  if(locked) return (
+    <div className={`dk-obj lock ${cls}`} aria-label={`${label} bloqueado`}>
+      <span className="dk-obj-art"><Lock/></span>
+      <b>{label}</b><small>{hint}</small>
+    </div>
   )
-  return <div className="hx-fp" aria-hidden="true"><Print cls="hx-fp-d" withDefs/><Print cls="hx-fp-b"/><div className="hx-fp-l"/><div className="hx-fp-t"/></div>
-}
-
-function TaskCard({chapterNumber,taskTitle,chapterTitle,taskNumber,taskCount,onOpenTask}:Pick<Props,'chapterNumber'|'taskTitle'|'chapterTitle'|'taskNumber'|'taskCount'|'onOpenTask'>){
-  const [n,setN] = useState(()=>reduceMotion()?taskTitle.length:0)
-  useEffect(()=>{
-    if(n>=taskTitle.length) return
-    const id = window.setTimeout(()=>setN(n+1),38)
-    return ()=>window.clearTimeout(id)
-  },[n,taskTitle])
-  const done = n>=taskTitle.length
-  const pct = Math.round((taskNumber/taskCount)*100)
   return (
-    <button className="hx-task" onClick={onOpenTask} aria-label={`Abrir tarefa: ${taskTitle}`}>
-      <small>&gt; abrindo caso 001</small>
-      <small>CASO 001 · CAP. {chapterNumber}</small>
-      <b>
-        <span className="hx-ghost">{taskTitle}</span>
-        <span className="hx-live" aria-hidden="true">{taskTitle.slice(0,n)}<i className={done?'hx-caret idle':'hx-caret'}/></span>
-      </b>
-      <span className={done?'hx-sub on':'hx-sub'}>{chapterTitle}</span>
-      <div className="hx-pg"><u><s style={{width:`${pct}%`}}/></u><i>{taskNumber} de {taskCount}</i></div>
-      <em>ABRIR TAREFA</em>
+    <button className={`dk-obj ${cls}`} onClick={onClick}>
+      <span className="dk-obj-art">{icon}{badge>0 && <em>{Math.min(badge,99)}</em>}</span>
+      <b>{label}</b>
     </button>
   )
 }
 
-function AppTile({label,icon,badge=0,onClick}:{label:string;icon:React.ReactNode;badge?:number;onClick?:()=>void}){
-  return <button className="hx-app" onClick={onClick}><i>{icon}{badge>0&&<em>{Math.min(badge,99)}</em>}</i><span>{label}</span></button>
+function Polaroids(){
+  const ids = ['livia','rafael','cida']
+  return <span className="dk-pola">{ids.map((id,i)=><i key={id} style={{'--i':i} as React.CSSProperties}>{characters[id] && <CharacterFace character={characters[id]}/>}</i>)}</span>
 }
 
 export default function HandsetHome(p:Props){
   const [sec,setSec] = useState(0)
-  const [gps,setGps] = useState('-23.5505 -46.6333')
   useEffect(()=>{
-    let s = 0
-    const id = window.setInterval(()=>{
-      s = (s+1)%60
-      setSec(s)
-      if(s%2===0) setGps(`${(-23.5505+(Math.random()-.5)*.0006).toFixed(4)} ${(-46.6333+(Math.random()-.5)*.0006).toFixed(4)}`)
-    },1000)
+    const id = window.setInterval(()=>setSec(s=>(s+1)%60),1000)
     return ()=>window.clearInterval(id)
   },[])
+  const hyp = HYPOTHESIS[Math.min(HYPOTHESIS.length-1,p.chapterNumber-1)]
+  const scene = p.taskKind==='scene'
   return (
-    <main className="handset hx">
-      <Fingerprint/>
-      <header className="hx-status"><span>VIVO<span className="hx-sig"><s/><s/><s/></span></span><b>DHPP</b><BatteryMedium/></header>
-      <section className="hx-hd">
-        <div className="hx-av">L</div>
-        <div className="hx-hm"><small>DHPP · TERMINAL MÓVEL</small><span>LEMOS / UNIDADE 04</span></div>
-        <span className="hx-st">EM SERVIÇO</span>
-        <h1 className="hx-clk">04:27<span>:{String(sec).padStart(2,'0')}</span></h1>
-        <div className="hx-meta"><span>{gps}</span><span>ISO 3200</span><span>BAT 94%</span></div>
+    <main className="handset dk">
+      <header className="dk-status"><span>VIVO<span className="dk-sig"><s/><s/><s/></span></span><b>DHPP</b><BatteryMedium/></header>
+      <div className="dk-lamp" aria-hidden="true"/>
+      <section className="dk-top">
+        <div className="dk-logo"><b>ARQUIVO</b><b>MORTO</b></div>
+        <div className="dk-clock"><span>LEMOS · UNID. 04</span><h1>04:27<i>:{String(sec).padStart(2,'0')}</i></h1></div>
+        <button className="dk-gear" onClick={()=>p.onOpenApp('settings')} aria-label="Ajustes"><Settings/></button>
       </section>
-      <TaskCard key={p.taskTitle} {...p}/>
-      <div className="hx-apps">
-        <AppTile label="Equipe" icon={<MessageCircle/>} badge={p.teamBadge} onClick={()=>p.onOpenApp('team')}/>
-        <AppTile label="Pistas" icon={<FileSearch/>} badge={p.clueBadge} onClick={()=>p.onOpenApp('clues')}/>
-        <AppTile label="Interrogar" icon={<Users/>} onClick={()=>p.onOpenApp('interrogate')}/>
-        <AppTile label="Tel. Helena" icon={<Smartphone/>} onClick={()=>p.onOpenApp('victim')}/>
-        <AppTile label="Arquivo" icon={<FolderSearch/>} onClick={()=>p.onOpenApp('chapters')}/>
-        <AppTile label="Ajustes" icon={<Settings/>} onClick={()=>p.onOpenApp('settings')}/>
+
+      <button className="dk-folder" onClick={p.onOpenTask} aria-label={`${scene?'Abrir cena':'Abrir tarefa'}: ${p.taskTitle}`}>
+        <span className="dk-tab">CASO 01 · CAP. {p.chapterNumber}</span>
+        <small>{p.chapterTitle.toUpperCase()}</small>
+        <strong>{p.taskTitle}</strong>
+        <dl>
+          <div><dt>Onde</dt><dd>Rua das Acácias, Campo Belo</dd></div>
+          <div><dt>Quem</dt><dd>Ricardo e Helena Valença (vítimas)</dd></div>
+          <div><dt>Hipótese</dt><dd>{hyp}</dd></div>
+        </dl>
+        <div className="dk-pg"><u><s style={{width:`${Math.round((p.taskNumber/p.taskCount)*100)}%`}}/></u><i>{p.taskNumber} de {p.taskCount}</i></div>
+        <em className="dk-stamp">{scene?'ABRIR CENA':'ABRIR TAREFA'}</em>
+      </button>
+
+      <div className="dk-desk">
+        <Obj cls="o-team" label="Equipe" icon={<MessageCircle/>} badge={p.teamBadge} onClick={()=>p.onOpenApp('team')}/>
+        <Obj cls="o-clues" label="Pistas" icon={<FileSearch/>} badge={p.clueBadge} onClick={()=>p.onOpenApp('clues')}/>
+        <Obj cls="o-people" label="Pessoas" icon={<Polaroids/>} locked={!p.peopleOpen} hint="Após a cena" onClick={()=>p.onOpenApp('interrogate')}/>
+        <Obj cls="o-helena" label="Tel. Helena" icon={<Smartphone/>} locked={!p.helenaOpen} hint="Após as versões" onClick={()=>p.onOpenApp('victim')}/>
+        <Obj cls="o-archive" label="Arquivo" icon={<FolderSearch/>} locked={!p.archiveOpen} hint="Após as versões" onClick={()=>p.onOpenApp('chapters')}/>
       </div>
-      <nav className="hx-tabs" aria-label="Navegação">
+
+      <nav className="dk-tabs" aria-label="Navegação">
         <button className="on" aria-current="page"><i><HomeIcon/></i>Início</button>
         <button onClick={()=>p.onOpenApp('team')}><i><MessageCircle/></i>Equipe</button>
         <button onClick={()=>p.onOpenApp('clues')}><i><FileSearch/></i>Pistas</button>
-        <button onClick={()=>p.onOpenApp('chapters')}><i><FolderSearch/></i>Arquivo</button>
+        <button onClick={()=>p.archiveOpen?p.onOpenApp('chapters'):undefined} disabled={!p.archiveOpen}><i><FolderSearch/></i>Arquivo</button>
       </nav>
     </main>
   )
