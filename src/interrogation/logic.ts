@@ -1,4 +1,5 @@
-import type { InterrogationConfig, InterrogationProgress, InterrogationQuestion } from './types'
+import type { InterrogationConfig, InterrogationProgress, InterrogationQuestion, PressureStage } from './types'
+import { emotionLevel, emotionOf } from './emotions'
 
 export const newProgress = (cfg:InterrogationConfig):InterrogationProgress => ({
   asked:[], unlocked:[...cfg.initial], currentQuestion:null, completed:false, noted:[]
@@ -26,9 +27,10 @@ export function applyAnswer(cfg:InterrogationConfig, p:InterrogationProgress, id
   if(!q || p.asked.includes(id)) return { progress:{...p,currentQuestion:null}, clues:[] as string[] }
   const asked = [...p.asked, id]
   const unlocked = new Set([...p.unlocked, ...(q.unlocks ?? [])])
+  const pressure = clampPressure((p.pressure ?? 0) + questionPressure(q))
   if(cfg.requiredForFinal.every(r=>asked.includes(r))) unlocked.add(cfg.finalQuestion)
   return {
-    progress:{ ...p, asked, unlocked:[...unlocked], currentQuestion:null, completed: id===cfg.finalQuestion },
+    progress:{ ...p, asked, unlocked:[...unlocked], pressure, currentQuestion:null, completed: id===cfg.finalQuestion },
     clues:q.highlights ? [] : (q.clues ?? [])
   }
 }
@@ -100,4 +102,47 @@ export function clueSummary(cfg:InterrogationConfig, p:InterrogationProgress){
     })
   }
   return { total:all.size, found:got.size }
+}
+
+export const DEFAULT_STAGES:PressureStage[] = [
+  { at:25, expression:'uncomfortable', label:'TENSA' },
+  { at:50, expression:'nervous', label:'ABALANDO' },
+  { at:75, expression:'shaken', label:'CEDENDO' }
+]
+
+const clampPressure = (n:number) => Math.max(0,Math.min(100,n))
+
+/** Pressão que a pergunta causa: dos dados, ou da intensidade da expressão com que ela responde (confrontos pesam mais). */
+export function questionPressure(q:InterrogationQuestion):number{
+  if(q.pressure!==undefined) return q.pressure
+  const base = Math.max(0,Math.round((emotionLevel(emotionOf(q.expression ?? 'neutral'))-30)/9))
+  return base + (q.requiresClue ? 6 : 0)
+}
+
+export const stagesOf = (cfg:InterrogationConfig) => cfg.pressureStages ?? DEFAULT_STAGES
+
+/** Estágio atingido (índice+1; 0 = nenhum) para uma pressão. */
+export const stageIndex = (cfg:InterrogationConfig, pressure:number) => stagesOf(cfg).filter(s=>pressure>=s.at).length
+
+/** Expressão de espera: a do estágio de pressão atingido, ou a padrão do personagem. */
+export function waitingExpression(cfg:InterrogationConfig, pressure:number){
+  const stages = stagesOf(cfg).filter(s=>pressure>=s.at)
+  return stages.length ? stages[stages.length-1].expression : (cfg.idleExpression ?? 'neutral')
+}
+
+/** Pistas anotadas e pistas que escaparam (com a pergunta onde estavam), para o resumo final. */
+export function clueReport(cfg:InterrogationConfig, p:InterrogationProgress){
+  const noted = p.noted ?? []
+  const found:string[] = [], missed:{ clue:string; question:string }[] = []
+  for(const q of cfg.questions){
+    if(!q.highlights || !p.asked.includes(q.id)) continue
+    const seen = new Set<string>()
+    splitSentences(q.answer).forEach((s,i)=>{
+      const c = clueForSentence(q,s)
+      if(!c || seen.has(c)) return
+      seen.add(c)
+      if(noted.includes(noteKey(q.id,i))) found.push(c); else missed.push({ clue:c, question:q.question })
+    })
+  }
+  return { found, missed }
 }
