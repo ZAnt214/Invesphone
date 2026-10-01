@@ -45,11 +45,11 @@ const cast = (id:string, name:string, m:{cx:number,rim:number,half:number,bottom
 }
 
 export const characters:Record<string,CharacterDef> = {
-  caio:cast('caio','Caio Duarte',{ cx:454, rim:559, half:54, bottom:577, open:24 }),
-  teo:cast('teo','Téo Duarte',{ cx:452, rim:570, half:47, bottom:586, open:26 }),
-  rafael:cast('rafael','Rafael Valença',{ cx:450, rim:576, half:45, bottom:594, open:24 }),
-  cida:cast('cida','Cida',{ cx:442, rim:599, half:57, bottom:616, open:24 }),
-  jorge:cast('jorge','Jorge',{ cx:458, rim:551, half:50, bottom:568, open:32 }),
+  caio:cast('caio','Caio Duarte',{ cx:454, rim:559, half:54, bottom:577, open:20 }),
+  teo:cast('teo','Téo Duarte',{ cx:452, rim:570, half:47, bottom:586, open:20 }),
+  rafael:cast('rafael','Rafael Valença',{ cx:450, rim:576, half:45, bottom:594, open:18 }),
+  cida:cast('cida','Cida',{ cx:442, rim:599, half:57, bottom:616, open:18 }),
+  jorge:cast('jorge','Jorge',{ cx:458, rim:551, half:50, bottom:568, open:26 }),
   livia:{
     id:'livia',
     name:'Lívia Valença',
