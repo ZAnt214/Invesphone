@@ -232,3 +232,4 @@
 .ii-tut-actions .go{color:#14110a;background:#f0c446;border-radius:6px;padding:0 14px}
 .ii-tut-spot{position:absolute;border-radius:8px;outline:2px solid #f0c446;outline-offset:-2px;box-shadow:0 0 0 100vmax rgba(0,0,0,.78);pointer-events:none}
 @keyframes ii-tut-in{from{opacity:0;transform:translateY(6px)}}
+.ii-tut-demo{position:absolute;left:12px;right:12px;background:#0e1113!important;pointer-events:none;z-index:1}
