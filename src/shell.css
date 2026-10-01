@@ -1,0 +1,32 @@
+/*
+ * Casca de app: o jogo ocupa exatamente a tela, sem rolar a página inteira (nada de rubber band do Safari,
+ * seleção de texto ou zoom). Só listas longas rolam, dentro do próprio quadro da tela.
+ */
+html{height:100%;-webkit-text-size-adjust:100%}
+body{position:fixed;inset:0;width:100%;height:100%;margin:0;overflow:hidden;overscroll-behavior:none;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#root{height:100%;min-height:0}
+button{touch-action:manipulation}
+
+.call-screen,.launching,.handset,.task-screen,.ending,.ii{height:100%;min-height:0!important}
+.call-screen,.launching{overflow:hidden}
+
+/* telas com cabeçalho fixo e corpo que rola */
+.handset.page{display:flex;flex-direction:column;overflow:hidden}
+.handset.page>.handset-status,.handset.page>.page-head{flex:none}
+.handset.page .page-head{position:static}
+.handset.page .page-body{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+.task-screen{display:flex;flex-direction:column;overflow:hidden}
+.task-screen>.task-head{flex:none;position:static}
+.task-screen .task-body{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+.ending{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+
+/* tela inicial em aparelhos de tela baixa */
+@media (max-height:720px){
+  .hx-hd{padding:10px 14px}
+  .hx-clk{font-size:40px!important}
+  .hx-apps{padding-top:10px!important;gap:7px!important}
+  .hx-app{padding:8px 4px 6px!important;gap:4px!important}
+  .hx-app i{width:34px!important;height:34px!important}
+  .hx-task{padding:12px 14px!important}
+}
