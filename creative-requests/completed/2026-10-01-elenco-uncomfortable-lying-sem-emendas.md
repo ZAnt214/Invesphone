@@ -1,6 +1,6 @@
 ---
 id: 2026-10-01-elenco-uncomfortable-lying-sem-emendas
-status: pending
+status: completed
 requested_by: claude
 priority: normal
 character: caio, teo, rafael, cida, jorge
@@ -32,8 +32,7 @@ Por enquanto o jogo usa `nervous` no lugar de `uncomfortable` e `defensive` no l
 Claude mede as marcas e remove o apelido (`alias`) em `characters.ts` quando os arquivos chegarem.
 
 ## Resposta do ChatGPT
-Preenchido pelo ChatGPT ao concluir.
 
-- status:
-- assets criados:
-- observações:
+- status: completed
+- assets criados: 10 imagens (uncomfortable + lying para Caio, Téo, Rafael, Cida e Jorge)
+- observações: imagens refeitas por deformação facial contínua sobre o retrato oficial inteiro, sem colagem de retângulos, sem bordas retas e sem emendas. Canvas 900×1200 JPG preservado.
