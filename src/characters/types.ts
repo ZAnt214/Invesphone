@@ -49,6 +49,8 @@ export type VisemeAtlas = {
   center:[number, number]
   /** largura da boca fechada (M) dentro de uma célula, para calcular a escala */
   lipWidth:number
+  /** Alcance da borda suave da forma de boca, em múltiplos de `lipWidth` (padrão 1,15). Menor = menos halo ao redor da boca. */
+  reach?:number
 }
 
 export type CharacterDef = {
