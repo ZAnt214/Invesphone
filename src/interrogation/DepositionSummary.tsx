@@ -6,14 +6,13 @@ type Props = {
   config:InterrogationConfig
   progress:InterrogationProgress
   clueTitle:(id:string)=>string|undefined
-  onReturn:()=>void
 }
 
 /** Cor do ponto da linha do tempo: da calma (verde) à intensidade máxima (rosa), como no medidor. */
 const dot = (level:number) => `hsl(${Math.round(150-level*1.5)} 62% 52%)`
 
 /** Fecho do depoimento: o que ela entregou, o que escapou e como ela reagiu ao longo das perguntas. */
-export default function DepositionSummary({config,progress,clueTitle,onReturn}:Props){
+export default function DepositionSummary({config,progress,clueTitle}:Props){
   const { found, missed } = clueReport(config,progress)
   const pressure = progress.pressure ?? 0
   const reached = stagesOf(config).filter(s=>pressure>=s.at)
@@ -21,8 +20,8 @@ export default function DepositionSummary({config,progress,clueTitle,onReturn}:P
   const trail = progress.asked.map(id=>getQuestion(config,id)).filter(q=>!!q)
   return (
     <div className="ii-complete ii-summary-card">
-      <b>{config.closingLabel}</b>
-      <p>O depoimento foi salvo no arquivo do caso.</p>
+      <b>RESUMO DO DEPOIMENTO</b>
+      <p>{config.name} colaborou e foi liberada. O depoimento está salvo no arquivo do caso.</p>
 
       <section>
         <span>REAÇÃO AO LONGO DO DEPOIMENTO</span>
@@ -50,7 +49,6 @@ export default function DepositionSummary({config,progress,clueTitle,onReturn}:P
         </section>
       )}
 
-      <button onClick={onReturn}>VOLTAR AO CASO</button>
     </div>
   )
 }

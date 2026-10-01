@@ -72,6 +72,8 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
   const [review,setReview] = useState(false)
   const [toast,setToast] = useState<string|null>(null)
   /** Aviso de que a pressão passou de um estágio (ela está se abalando). */
+  /** Mensagem de encerramento, mostrada logo depois da última resposta. */
+  const [farewell,setFarewell] = useState(false)
   const [alert,setAlert] = useState<string|null>(null)
   const [tutorial,setTutorial] = useState(()=>!tutorialSeen())
   const closeTutorial = useCallback(()=>{
@@ -145,7 +147,10 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
           setReview(!!q.highlights)
           setExpression(next.completed ? 'shaken' : waitingExpression(config,after))
           setPhase('idle')
-          if(next.completed) onComplete()
+          if(next.completed){
+            onComplete()
+            setFarewell(true)
+          }
         }, between(450,900))
       }, at+150)
     }, between(700,1200))
@@ -172,6 +177,15 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
   const finished = progress.completed
   const busy = phase!=='idle'
 
+  // a mensagem de encerramento só começa a contar depois que o jogador terminou de anotar a última resposta
+  const showFarewell = finished && farewell && !busy && !review
+  useEffect(()=>{
+    if(!showFarewell) return
+    const t = window.setTimeout(onReturn,6500)
+    return ()=>window.clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[showFarewell])
+
   if(!character) return <main className="ii"><div className="ii-portrait-fallback">Retrato indisponível</div></main>
 
   const hud = !character.portrait.hasBakedHud
@@ -190,7 +204,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
         {alert && <div className="ii-press-alert" key={alert} role="status"><small>PRESSÃO SOBRE {config.name.split(' ')[0].toUpperCase()}</small><b>{alert}</b></div>}
         <div className="ii-sub" aria-live="polite">{subtitle && <span key={subtitle}>{subtitle}</span>}</div>
         <div className="ii-status">
-          <span>{phase==='answering'?'RESPONDENDO':phase==='asking'?'ESCUTANDO':'AGUARDANDO'}</span>
+          <span>{phase==='answering'?'RESPONDENDO':phase==='asking'?'ESCUTANDO':finished?'LIBERADA':'AGUARDANDO'}</span>
           <b>{config.name.toUpperCase()}</b>
         </div>
       </section>
@@ -210,12 +224,20 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
             {!busy && review && last && (
               <>
                 <AnswerNotes question={last} noted={noted} clueTitle={clueTitle} onNote={note} summary={summary}/>
-                <button className="ii-next" onClick={()=>setReview(false)}>PERGUNTAR MAIS</button>
+                <button className="ii-next" onClick={()=>setReview(false)}>{finished ? 'CONTINUAR' : 'PERGUNTAR MAIS'}</button>
               </>
             )}
 
-            {!busy && !review && finished && (
-              <DepositionSummary config={config} progress={progress} clueTitle={clueTitle} onReturn={onReturn}/>
+            {!busy && !review && finished && farewell && (
+              <button type="button" className="ii-farewell" onClick={onReturn}>
+                <small>DETETIVE</small>
+                <p>{config.farewell ?? `Obrigado pela colaboração, ${config.name.split(' ')[0]}. Por enquanto é só. Você está liberada.`}</p>
+                <em>{config.name.split(' ')[0]} deixa a sala…</em>
+              </button>
+            )}
+
+            {!busy && !review && finished && !farewell && (
+              <DepositionSummary config={config} progress={progress} clueTitle={clueTitle}/>
             )}
 
             {!busy && !review && !finished && (

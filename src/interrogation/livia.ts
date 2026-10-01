@@ -14,6 +14,7 @@ export const liviaInterrogation:InterrogationConfig = {
   requiredForFinal:['where_were','after','breakin','caio_code','fights','mother_last'],
   finalQuestion:'untold',
   closingLabel:'DEPOIMENTO ENCERRADO',
+  farewell:'Obrigado pela colaboração, Lívia. Por enquanto é só. Você está liberada.',
   questions:[
     {
       id:'arrival',
