@@ -230,5 +230,5 @@
 .ii-tut-actions{display:flex;justify-content:space-between;align-items:center;margin-top:5px}
 .ii-tut-actions button{min-height:34px;border:0;background:none;font:700 10px var(--mono);letter-spacing:.1em;color:#8b969a;padding:0 6px}
 .ii-tut-actions .go{color:#14110a;background:#f0c446;border-radius:6px;padding:0 14px}
-.ii-tut-target{outline:2px solid rgba(240,196,70,.8);outline-offset:-2px;border-radius:8px;position:relative;z-index:29}
+.ii-tut-spot{position:absolute;border-radius:8px;outline:2px solid #f0c446;outline-offset:-2px;box-shadow:0 0 0 100vmax rgba(0,0,0,.78);pointer-events:none}
 @keyframes ii-tut-in{from{opacity:0;transform:translateY(6px)}}
