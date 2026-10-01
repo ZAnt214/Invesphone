@@ -660,7 +660,10 @@ export class PortraitRenderer {
     this.drawMouthStrips(l)
   }
 
-  /** A parte de baixo da boca desce em tiras, mais no meio do que nos cantos. */
+  /**
+   * A parte de baixo da boca desce em tiras (o lábio de baixo e o queixo do próprio retrato) e a abertura vira uma
+   * cavidade em curva, escura, com a borda dos dentes de cima. Nada é desenhado por cima dos lábios: eles se afastam.
+   */
   private drawMouthStrips(l:Loaded){
     const open = this.mouth
     if(open<.02) return
@@ -669,18 +672,57 @@ export class PortraitRenderer {
     const d = open*m.maxOpen
     const w = 1.3*this.unit()
     const x0 = Math.floor(m.cx-m.halfWidth-1), x1 = Math.ceil(m.cx+m.halfWidth+1)
-    const step = w
-    for(let x=x0;x<x1;x+=step){
-      const u = clamp((x+.5-m.cx)/m.halfWidth,-1,1)
-      const edge = Math.pow(1-u*u,.7)
-      const rim = m.rimY-m.arch*(1-u*u)
-      const s = d*edge
+    const rimAt = (u:number) => m.rimY-m.arch*(1-u*u)
+    const sAt = (u:number) => d*Math.pow(1-u*u,.7)
+    const uAt = (x:number) => clamp((x-m.cx)/m.halfWidth,-1,1)
+
+    // 1) o lábio de baixo e o queixo descem, em tiras que se sobrepõem um pouco (sem frestas)
+    for(let x=x0;x<x1;x+=w){
+      const u = uAt(x+w/2)
+      const s = sAt(u)
       if(s<.2) continue
-      const top = Math.round(rim)
-      // interior da boca: escurece a cor amostrada do canto, para a abertura parecer boca e não lábio esticado
-      ctx.fillStyle = rgb([l.inner[0]*.55,l.inner[1]*.5,l.inner[2]*.5] as Rgb,.85)
-      ctx.fillRect(x,top,w,s+.8)
-      ctx.drawImage(l.img,x,top,w,m.bottom-top,x,top+s,w,m.bottom-top)
+      const top = Math.round(rimAt(u))
+      ctx.drawImage(l.img,x,top,w+.6,m.bottom-top,x,top+s,w+.6,m.bottom-top)
     }
+
+    // 2) a cavidade entre os lábios: curva de cima (borda do lábio de cima) até a de baixo (lábio descido)
+    ctx.save()
+    ctx.beginPath()
+    const pts = Math.max(12,Math.round((x1-x0)/2))
+    for(let i=0;i<=pts;i++){
+      const x = x0+(x1-x0)*i/pts
+      const y = rimAt(uAt(x))
+      i ? ctx.lineTo(x,y) : ctx.moveTo(x,y)
+    }
+    for(let i=pts;i>=0;i--){
+      const x = x0+(x1-x0)*i/pts
+      const u = uAt(x)
+      ctx.lineTo(x,rimAt(u)+sAt(u))
+    }
+    ctx.closePath()
+    const dark = (k:number,a:number) => rgb([l.inner[0]*k,l.inner[1]*k*.9,l.inner[2]*k*.9] as Rgb,a)
+    const g = ctx.createLinearGradient(0,m.rimY,0,m.rimY+d)
+    g.addColorStop(0,dark(.5,.95)); g.addColorStop(1,dark(.3,.98))
+    ctx.fillStyle = g
+    ctx.fill()
+    // dentes de cima: uma faixa clara logo abaixo do lábio de cima, só com a boca bem aberta
+    if(d>5){
+      ctx.clip()
+      const th = Math.min(d*.38,5)
+      ctx.beginPath()
+      for(let i=0;i<=pts;i++){
+        const x = x0+(x1-x0)*i/pts
+        const y = rimAt(uAt(x))
+        i ? ctx.lineTo(x,y) : ctx.moveTo(x,y)
+      }
+      for(let i=pts;i>=0;i--){
+        const x = x0+(x1-x0)*i/pts
+        ctx.lineTo(x,rimAt(uAt(x))+th*Math.pow(1-uAt(x)**2,.5))
+      }
+      ctx.closePath()
+      ctx.fillStyle = 'rgba(236,226,214,.8)'
+      ctx.fill()
+    }
+    ctx.restore()
   }
 }
