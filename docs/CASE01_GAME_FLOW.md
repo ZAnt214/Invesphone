@@ -1386,3 +1386,25 @@ Para ordem, gatilhos e progressão:
 `docs/CASE01_GAME_FLOW.md`
 
 Quando houver conflito entre o fluxo atual no código e este documento, o código deve ser ajustado gradualmente para refletir este game flow, sem apagar mecânicas já boas.
+
+
+# 51. SOLICITAÇÃO DE MATERIAIS À EQUIPE
+
+O app Equipe possui uma mecânica ativa de solicitação de materiais.
+
+Fonte específica:
+`docs/TEAM_MATERIAL_REQUESTS.md`
+
+Ela atravessa o fluxo do caso e segue a regra:
+
+**descoberta → pedido → material → nova ação**
+
+Exemplos:
+- painel encontrado → pedir fotos do painel;
+- Rafael ouvido → pedir comprovante da LAN;
+- primeiras versões concluídas → pedir log do alarme;
+- log recebido → pedir registro do motel;
+- linha financeira aberta → pedir documentos de Ricardo;
+- extrato cruzado → pedir análise da cinta.
+
+O jogador nunca deve conseguir pedir uma prova futura sem ter fundamento narrativo para saber que ela existe.
