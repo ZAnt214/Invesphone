@@ -38,6 +38,8 @@ export type InterrogationConfig = {
   requiredForFinal:string[]
   finalQuestion:string
   closingLabel:string
+  /** Mensagem do detetive ao encerrar: agradece e libera o depoente. Há um texto padrão. */
+  farewell?:string
   /** Estágios de pressão: ao passar de `at`, ela espera o jogador com esta expressão. Há um padrão. */
   pressureStages?:PressureStage[]
 }

@@ -262,3 +262,9 @@
 .ii-summary-card p b{display:inline;font-size:10px;letter-spacing:.06em}
 .ii-trail{display:flex;align-items:flex-end;gap:3px;height:34px}
 .ii-trail i{flex:1;max-width:18px;border-radius:2px 2px 0 0}
+
+/* mensagem de encerramento: o detetive agradece e libera o depoente */
+.ii-farewell{display:grid;gap:6px;text-align:left;width:100%;padding:12px 14px;border:1px solid rgba(255,255,255,.22);border-left:3px solid #eef1f2;border-radius:4px;background:rgba(255,255,255,.05);color:var(--ink);font-family:var(--mono);animation:ii-sub .5s ease-out both}
+.ii-farewell small{font:700 8px var(--mono);letter-spacing:.14em;color:var(--mut)}
+.ii-farewell p{margin:0;font-size:14px;line-height:1.5}
+.ii-farewell em{font-style:normal;font:600 10px var(--mono);color:var(--mut);letter-spacing:.06em}
