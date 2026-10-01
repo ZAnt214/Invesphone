@@ -8,6 +8,7 @@ import { QUALITIES, QUALITY_LABEL, getQuality, setQuality } from '../characters/
 import type { Quality } from '../characters/quality'
 import AnswerNotes from './AnswerNotes'
 import DialogueChoices from './DialogueChoices'
+import EmotionMeter from './EmotionMeter'
 import { applyAnswer, askedQuestions, between, clueSummary, getQuestion, pendingQuestions, subtitleChunks, subtitleDuration } from './logic'
 import type { InterrogationConfig, InterrogationProgress } from './types'
 import './illustrated-interrogation.css'
@@ -20,6 +21,8 @@ type Props = {
   onClue:(id:string)=>void
   /** Nome legível de uma pista, para avisar o jogador quando ela é registrada. */
   clueTitle?:(id:string)=>string|undefined
+  /** Pistas que o jogador já tem (de qualquer depoimento ou cena): liberam as confrontações. */
+  registeredClues?:string[]
   /** Chamado uma vez, quando a pergunta final é respondida. */
   onComplete:()=>void
   /** Sair no meio do depoimento (o progresso fica salvo). */
@@ -49,7 +52,7 @@ function QualityPicker(){
   )
 }
 
-export default function IllustratedInterrogation({config,progress,onProgress,onClue,clueTitle=()=>undefined,onComplete,onBack,onReturn}:Props){
+export default function IllustratedInterrogation({config,progress,onProgress,onClue,clueTitle=()=>undefined,registeredClues=[],onComplete,onBack,onReturn}:Props){
   const character = getCharacter(config.personId)
   const idleExpression:Expression = config.idleExpression ?? 'neutral'
   const [phase,setPhase] = useState<Phase>('idle')
@@ -60,6 +63,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
   /** Última pergunta respondida: a resposta fica na tela para o jogador anotar pistas. */
   const [lastId,setLastId] = useState<string|null>(null)
   const [openId,setOpenId] = useState<string|null>(null)
+  const [toast,setToast] = useState<string|null>(null)
   const timers = useRef<number[]>([])
   const progressRef = useRef(progress)
   progressRef.current = progress
@@ -123,14 +127,18 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
     const cur = progressRef.current
     if((cur.noted ?? []).includes(key)) return
     onProgress({...cur,noted:[...(cur.noted ?? []),key]})
-    if(clue){ onClue(clue); navigator.vibrate?.(14) }
+    if(clue){
+      onClue(clue); navigator.vibrate?.(14)
+      setToast(clueTitle(clue) ?? clue)
+      later(()=>setToast(null),2600)
+    }
   }
 
   const active = activeId ? getQuestion(config,activeId) : undefined
   const last = lastId && !activeId ? getQuestion(config,lastId) : undefined
   const summary = clueSummary(config,progress)
   const noted = progress.noted ?? []
-  const pending = pendingQuestions(config,progress)
+  const pending = pendingQuestions(config,progress,registeredClues)
   const asked = askedQuestions(config,progress)
   const finished = progress.completed
   const busy = phase!=='idle'
@@ -150,6 +158,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
           <div className="ii-deposition">{config.depositionLabel}</div>
         </>}
         <div className="ii-mark" aria-hidden="true"><b>DHPP</b><i/><span>HOMICÍDIOS</span></div>
+        {toast && <div className="ii-toast" key={toast} role="status"><i/><span><small>NOVA PISTA REGISTRADA</small><b>{toast}</b></span></div>}
         <div className="ii-sub" aria-live="polite">{subtitle && <span key={subtitle}>{subtitle}</span>}</div>
         <div className="ii-status">
           <span>{phase==='answering'?'RESPONDENDO':phase==='asking'?'ESCUTANDO':'AGUARDANDO'}</span>
@@ -158,6 +167,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
       </section>
 
       <section className="ii-panel">
+        <EmotionMeter name={config.name} expression={expression}/>
         <QualityPicker/>
 
         {active && busy && (
@@ -170,7 +180,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
         )}
 
         {last && !busy && last.highlights && (
-          <AnswerNotes question={last} noted={noted} clueTitle={clueTitle} onNote={note}/>
+          <AnswerNotes question={last} noted={noted} clueTitle={clueTitle} onNote={note} summary={summary}/>
         )}
 
         {finished && !busy && (
@@ -184,10 +194,10 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
 
         {!busy && (
           <DialogueChoices
-            pending={finished?[]:pending} asked={asked} onPick={ask}
+            pending={finished?[]:pending} asked={asked} onPick={ask} clueTitle={clueTitle}
             openId={openId} onToggle={id=>setOpenId(o=>o===id?null:id)}
             renderAnswer={q=>q.highlights
-              ? <AnswerNotes question={q} withQuestion={false} noted={noted} clueTitle={clueTitle} onNote={note}/>
+              ? <AnswerNotes question={q} compact noted={noted} clueTitle={clueTitle} onNote={note}/>
               : <article className="ii-line ii-answer"><p>{q.answer}</p></article>}
           />
         )}

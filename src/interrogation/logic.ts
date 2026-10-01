@@ -11,8 +11,8 @@ export function getQuestion(cfg:InterrogationConfig, id:string):InterrogationQue
 }
 
 /** Perguntas liberadas que ainda não foram feitas, na ordem em que estão nos dados. */
-export function pendingQuestions(cfg:InterrogationConfig, p:InterrogationProgress){
-  return cfg.questions.filter(q=>p.unlocked.includes(q.id) && !p.asked.includes(q.id))
+export function pendingQuestions(cfg:InterrogationConfig, p:InterrogationProgress, registeredClues:string[] = []){
+  return cfg.questions.filter(q=>p.unlocked.includes(q.id) && !p.asked.includes(q.id) && (!q.requiresClue || registeredClues.includes(q.requiresClue)))
 }
 
 /** Perguntas já feitas, na ordem em que o jogador as fez. */

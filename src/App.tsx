@@ -342,7 +342,7 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
  const chapter=chapters[current.chapter]
  const openApp=(app:AppName)=>setGame(g=>({...g,app}))
  const leaveLivia=()=>setGame(g=>g.interrogationOrigin==='task'?{...g,screen:'task',app:'home'}:{...g,app:'interrogate'})
- if(game.app==='livia')return <IllustratedInterrogation config={liviaInterrogation} progress={game.liviaInterrogation} onProgress={p=>setGame(g=>({...g,liviaInterrogation:p}))} onClue={id=>setGame(g=>({...g,clues:g.clues.includes(id)?g.clues:[...g.clues,id]}))} clueTitle={id=>clues.find(c=>c.id===id)?.title} onComplete={()=>setGame(g=>({...g,interviewed:g.interviewed.includes('livia')?g.interviewed:[...g.interviewed,'livia']}))} onBack={leaveLivia} onReturn={leaveLivia}/>
+ if(game.app==='livia')return <IllustratedInterrogation config={liviaInterrogation} progress={game.liviaInterrogation} onProgress={p=>setGame(g=>({...g,liviaInterrogation:p}))} onClue={id=>setGame(g=>({...g,clues:g.clues.includes(id)?g.clues:[...g.clues,id]}))} clueTitle={id=>clues.find(c=>c.id===id)?.title} registeredClues={game.clues} onComplete={()=>setGame(g=>({...g,interviewed:g.interviewed.includes('livia')?g.interviewed:[...g.interviewed,'livia']}))} onBack={leaveLivia} onReturn={leaveLivia}/>
  if(game.app==='team')return <PhonePage title="Equipe" back={()=>openApp('home')}><Team game={game}/></PhonePage>
  if(game.app==='clues')return <PhonePage title="Pistas" back={()=>openApp('home')}><ClueList ids={game.clues}/></PhonePage>
  if(game.app==='interrogate')return <PhonePage title="Interrogar" back={()=>openApp('home')}><People game={game} setGame={setGame}/></PhonePage>

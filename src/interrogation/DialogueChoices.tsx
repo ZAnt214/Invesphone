@@ -1,4 +1,4 @@
-import { Check, ChevronDown } from 'lucide-react'
+import { Check, ChevronDown, FileSearch } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { InterrogationQuestion } from './types'
 
@@ -7,6 +7,8 @@ type Props = {
   asked:InterrogationQuestion[]
   disabled?:boolean
   onPick:(id:string)=>void
+  /** Nome legível de uma pista (para as confrontações). */
+  clueTitle?:(id:string)=>string|undefined
   /** Pergunta já feita aberta para rever a resposta (e anotar pistas). */
   openId?:string|null
   onToggle?:(id:string)=>void
@@ -14,13 +16,24 @@ type Props = {
 }
 
 /** Lista de perguntas: as disponíveis em cima, as já feitas embaixo (tocar numa revê a resposta). */
-export default function DialogueChoices({pending,asked,disabled,onPick,openId,onToggle,renderAnswer}:Props){
+export default function DialogueChoices({pending,asked,disabled,onPick,clueTitle,openId,onToggle,renderAnswer}:Props){
+  const normal = pending.filter(q=>!q.requiresClue)
+  const confront = pending.filter(q=>q.requiresClue)
   return (
     <div className="iv-choices">
-      {pending.length>0 && <>
+      {normal.length>0 && <>
         <small>PERGUNTAR</small>
-        {pending.map(q=>(
+        {normal.map(q=>(
           <button key={q.id} className="iv-ask" disabled={disabled} onClick={()=>onPick(q.id)}>{q.question}</button>
+        ))}
+      </>}
+      {confront.length>0 && <>
+        <small className="iv-confront-title">CONFRONTAR COM UMA PISTA</small>
+        {confront.map(q=>(
+          <button key={q.id} className="iv-ask iv-confront" disabled={disabled} onClick={()=>onPick(q.id)}>
+            <span className="iv-evidence"><FileSearch/> {clueTitle?.(q.requiresClue!) ?? q.requiresClue}</span>
+            {q.question}
+          </button>
         ))}
       </>}
       {asked.length>0 && <>

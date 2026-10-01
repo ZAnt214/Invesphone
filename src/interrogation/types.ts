@@ -6,6 +6,11 @@ export type InterrogationQuestion = {
   answer:string
   /** Expressão do personagem enquanto responde. */
   expression?:Expression
+  /**
+   * Confrontação: só aparece depois que o jogador registrou esta pista (em qualquer depoimento ou cena),
+   * além de ter sido liberada por outra pergunta.
+   */
+  requiresClue?:string
   /** Perguntas liberadas depois desta. */
   unlocks?:string[]
   /** Pistas registradas automaticamente depois desta resposta (só para perguntas sem `highlights`). */
