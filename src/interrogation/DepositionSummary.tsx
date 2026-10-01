@@ -81,6 +81,7 @@ export default function DepositionSummary({config,progress,clueTitle,onSign}:Pro
   return (
     <div className="ds-desk" ref={desk}>
       <article className="ds" ref={paper} style={{transform:`rotate(-.5deg) scale(${fit})`}}>
+        <div className="ds-mark" aria-hidden="true"><b>DHPP</b><i/><span>HOMICÍDIOS</span></div>
         <i className="ds-clip" aria-hidden="true"/>
         <header className="ds-head">
           <small>DHPP · HOMICÍDIOS · {config.depositionLabel.replace('DEPOIMENTO','Nº')}</small>
@@ -119,13 +120,10 @@ export default function DepositionSummary({config,progress,clueTitle,onSign}:Pro
 
         <section className="ds-sign">
           <h4>Assinatura do responsável</h4>
-          <button type="button" className={`ds-sign-box${progress.signature ? ' signed' : ''}`} onClick={onSign}
-            aria-label={progress.signature ? 'Assinar de novo' : 'Assinar o depoimento'}>
-            {progress.signature
-              ? <img src={progress.signature} alt="Assinatura"/>
-              : <span>✎ Toque aqui para assinar</span>}
-          </button>
-          {progress.signedAt && <small>Assinado em {new Date(progress.signedAt).toLocaleDateString('pt-BR')} · toque para refazer</small>}
+          {progress.signature
+            ? <div className="ds-sign-box signed"><img src={progress.signature} alt="Assinatura do responsável"/></div>
+            : <button type="button" className="ds-sign-box" onClick={onSign} aria-label="Assinar o depoimento"><span>✎ Toque aqui para assinar</span></button>}
+          {progress.signedAt && <small>Assinado em {new Date(progress.signedAt).toLocaleDateString('pt-BR')} · assinatura definitiva</small>}
         </section>
 
         <footer className="ds-foot">Registrado no arquivo do caso. {first}, liberada.</footer>

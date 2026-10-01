@@ -49,7 +49,7 @@ export default function SignaturePad({onSave,onCancel}:Props){
     <div className="sp" role="dialog" aria-label="Assinar o depoimento">
       <div className="sp-card">
         <small>ASSINATURA DO RESPONSÁVEL</small>
-        <p>Assine com o dedo dentro do quadro.</p>
+        <p>Assine com o dedo dentro do quadro. Depois de confirmar, a assinatura <b>não pode ser desfeita</b>.</p>
         <div className="sp-paper">
           <canvas ref={cv} width={W} height={H} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}/>
           <i aria-hidden="true">✕</i>
