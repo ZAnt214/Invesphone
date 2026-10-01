@@ -6,7 +6,7 @@
 .qp-buttons button+button{border-left:1px solid rgba(255,255,255,.16)}
 .qp-buttons button.on{background:rgba(255,255,255,.14);color:#fff}
 .qp p{margin:0;font-size:12px;line-height:1.5;color:#b0b9bc}
-.qp:not(.compact){padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:6px;background:rgba(255,255,255,.03)}
+.qp{padding:14px;border:1px solid rgba(255,255,255,.12);border-radius:6px;background:rgba(255,255,255,.03)}
 
 /* qualidade baixa: sem animações nem efeitos pesados em todo o jogo */
 [data-quality="low"] .hx *,[data-quality="low"] .hx-hd,[data-quality="low"] .hx-fp,[data-quality="low"] .call-backdrop,[data-quality="low"] .avatar-pulse i{animation:none!important}

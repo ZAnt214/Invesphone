@@ -4,7 +4,6 @@ import CharacterPortrait from '../characters/CharacterPortrait'
 import type { Speech } from '../characters/CharacterPortrait'
 import { getCharacter } from '../characters/characters'
 import type { Expression } from '../characters/types'
-import QualityPicker from '../QualityPicker'
 import AnswerNotes from './AnswerNotes'
 import DialogueChoices from './DialogueChoices'
 import EmotionMeter from './EmotionMeter'
@@ -153,7 +152,6 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
 
       <section className="ii-panel">
         <EmotionMeter name={config.name} expression={expression}/>
-        <QualityPicker compact/>
 
         {active && busy && (
           <div className="ii-conversation">
