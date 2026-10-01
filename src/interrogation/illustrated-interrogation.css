@@ -329,3 +329,10 @@
 .sp-actions button{min-height:42px;border:1px solid var(--line);border-radius:6px;background:none;color:#c9d0d3;font:700 10px var(--mono);letter-spacing:.1em}
 .sp-actions .go{background:#f0c446;border-color:#f0c446;color:#14110a}
 .sp-actions button:disabled{opacity:.35}
+
+/* marca d'água do DHPP no papel */
+.ds-mark{position:absolute;left:50%;top:52%;z-index:-1;transform:translate(-50%,-50%) rotate(-16deg);display:flex;flex-direction:column;align-items:flex-end;gap:5px;opacity:.1;color:#2a2218;pointer-events:none;user-select:none}
+.ds-mark b{font:800 84px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;letter-spacing:.02em}
+.ds-mark i{display:block;width:100%;height:4px;background:currentColor}
+.ds-mark span{font:700 17px "Courier New",monospace;letter-spacing:.34em;margin-right:-.34em}
+.ds-sign-box.signed{cursor:default}
