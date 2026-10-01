@@ -22,27 +22,42 @@
     "caio": {
       "displayName": "Caio Duarte",
       "role": "Namorado de Lívia",
-      "portrait": "/characters/caio/portrait.jpg"
+      "portrait": "/characters/caio/portrait.jpg",
+      "expressionPack": "/characters/caio/expressions/",
+      "visemes": "/characters/caio/visemes.png",
+      "hasExpressionPack": true
     },
     "teo": {
       "displayName": "Téo Duarte",
       "role": "Irmão de Caio",
-      "portrait": "/characters/teo/portrait.jpg"
+      "portrait": "/characters/teo/portrait.jpg",
+      "expressionPack": "/characters/teo/expressions/",
+      "visemes": "/characters/teo/visemes.png",
+      "hasExpressionPack": true
     },
     "rafael": {
       "displayName": "Rafael Valença",
       "role": "Filho do casal",
-      "portrait": "/characters/rafael/portrait.jpg"
+      "portrait": "/characters/rafael/portrait.jpg",
+      "expressionPack": "/characters/rafael/expressions/",
+      "visemes": "/characters/rafael/visemes.png",
+      "hasExpressionPack": true
     },
     "cida": {
       "displayName": "Cida",
       "role": "Funcionária da família",
-      "portrait": "/characters/cida/portrait.jpg"
+      "portrait": "/characters/cida/portrait.jpg",
+      "expressionPack": "/characters/cida/expressions/",
+      "visemes": "/characters/cida/visemes.png",
+      "hasExpressionPack": true
     },
     "jorge": {
       "displayName": "Jorge",
       "role": "Vigia da rua",
-      "portrait": "/characters/jorge/portrait.jpg"
+      "portrait": "/characters/jorge/portrait.jpg",
+      "expressionPack": "/characters/jorge/expressions/",
+      "visemes": "/characters/jorge/visemes.png",
+      "hasExpressionPack": true
     },
     "ricardo": {
       "displayName": "Ricardo Valença",

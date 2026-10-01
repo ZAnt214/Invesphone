@@ -1,0 +1,53 @@
+{
+  "character": "cida",
+  "displayName": "Cida",
+  "basePath": "/characters/cida/",
+  "resolution": {
+    "width": 900,
+    "height": 1200
+  },
+  "expressions": [
+    "neutral",
+    "tired",
+    "uncomfortable",
+    "defensive",
+    "nervous",
+    "shaken",
+    "lying",
+    "teary"
+  ],
+  "expressionMeanings": {
+    "neutral": "estado base",
+    "tired": "cansado(a), energia baixa",
+    "uncomfortable": "incômodo, hesitação",
+    "defensive": "resistente, fechado(a)",
+    "nervous": "tensão e ansiedade",
+    "shaken": "abalado(a), impacto emocional",
+    "lying": "controle excessivo, evasão e mentira",
+    "teary": "emoção contida, quase chorando"
+  },
+  "visemes": {
+    "file": "visemes.png",
+    "order": [
+      "A",
+      "E",
+      "I",
+      "O",
+      "U",
+      "M"
+    ],
+    "sheet": {
+      "width": 2400,
+      "height": 120
+    },
+    "cell": {
+      "width": 400,
+      "height": 120,
+      "mouthCenter": {
+        "x": 200,
+        "y": 60
+      },
+      "nominalLipWidth": 108
+    }
+  }
+}

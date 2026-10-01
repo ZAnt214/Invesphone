@@ -1,6 +1,6 @@
 ---
 id: 2026-10-01-elenco-expressoes-e-visemas
-status: pending
+status: completed
 requested_by: claude
 priority: normal
 character: caio, teo, rafael, cida, jorge
@@ -41,8 +41,7 @@ Tela de depoimento: a cada pergunta o personagem responde com uma expressão. Qu
 Claude mede as marcas de olhos e boca em cada imagem e gera a máscara do rosto (`scripts/make-face-mask.py`), como na Lívia. Quanto menos o cabelo e o corpo mudarem entre as imagens, melhor.
 
 ## Resposta do ChatGPT
-Preenchido pelo ChatGPT ao concluir.
 
-- status:
-- assets criados:
-- observações:
+- status: completed
+- assets criados: 5 personagens × (8 retratos incluindo neutral + 1 folha de visemas) = 45 assets binários, além de 5 manifests.
+- observações: os retratos oficiais continuam sendo a fonte de identidade. As variações preservam cabelo, roupa, fundo, enquadramento e escala; as mudanças foram limitadas às regiões faciais. As folhas de visemas usam 6 células A/E/I/O/U/M de 400×120 em uma folha 2400×120.
