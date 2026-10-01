@@ -17,3 +17,9 @@
 .fs-btn{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:8px 14px;font:700 11px var(--mono,monospace);letter-spacing:.06em}
 .fs-btn svg{width:15px;height:15px}
 .qp b{color:#fff}
+
+.qp.dg{margin-top:12px}
+.qp.dg dl{margin:0;display:grid;gap:5px}
+.qp.dg dl div{display:flex;justify-content:space-between;gap:10px;font:600 10px var(--mono,monospace);letter-spacing:.03em}
+.qp.dg dt{color:#7d878c}
+.qp.dg dd{margin:0;color:#dfe5e7;text-align:right}
