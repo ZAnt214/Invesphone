@@ -7,9 +7,11 @@ import type { Expression } from '../characters/types'
 import AnswerNotes from './AnswerNotes'
 import QuestionPager from './QuestionPager'
 import EmotionMeter from './EmotionMeter'
+import DepositionSummary from './DepositionSummary'
 import Tutorial from './Tutorial'
+import { sfx } from '../sfx'
 import type { TutorialStep } from './Tutorial'
-import { applyAnswer, askedQuestions, between, clueSummary, getQuestion, pendingQuestions, subtitleChunks, subtitleDuration } from './logic'
+import { applyAnswer, askedQuestions, between, clueSummary, getQuestion, pendingQuestions, stageIndex, stagesOf, subtitleChunks, subtitleDuration, waitingExpression } from './logic'
 import type { InterrogationConfig, InterrogationProgress } from './types'
 import './illustrated-interrogation.css'
 
@@ -38,7 +40,7 @@ const tutorialSteps = (name:string):TutorialStep[] => [
   { target:'.ii-stage', place:'panel', title:'Observe '+name.split(' ')[0],
     text:'Ela responde em legendas. A expressão e o jeito de falar mostram quando algo a incomoda.' },
   { target:'.ii-emo', place:'panel', title:'Medidor de emoção',
-    text:'Mostra como a pessoa está se sentindo. Quando ela se abala, vale insistir naquele assunto.' },
+    text:'Mostra como a pessoa se sente. A barra fina é a pressão: cada pergunta dura aumenta. Nos marcadores ela muda de postura e pode ceder.' },
   { target:'.ii-main', place:'stage', title:'Perguntas',
     text:'Toque numa pergunta para fazê-la. Cada resposta pode liberar novas perguntas. As de confronto só abrem com a pista certa.' },
   { target:'.ii-main', place:'stage', demo:true, title:'Anote as pistas',
@@ -56,10 +58,9 @@ const speakingTime = (text:string) => Math.min(subtitleDuration(text)-150, Math.
  */
 export default function IllustratedInterrogation({config,progress,onProgress,onClue,clueTitle=()=>undefined,registeredClues=[],onComplete,onBack,onReturn}:Props){
   const character = getCharacter(config.personId)
-  const idleExpression:Expression = config.idleExpression ?? 'neutral'
   const [phase,setPhase] = useState<Phase>('idle')
   const [activeId,setActiveId] = useState<string|null>(null)
-  const [expression,setExpression] = useState<Expression>(idleExpression)
+  const [expression,setExpression] = useState<Expression>(()=>waitingExpression(config,progress.pressure ?? 0))
   const [subtitle,setSubtitle] = useState<string|null>(null)
   const [speech,setSpeech] = useState<Speech|null>(null)
   /** Última pergunta respondida: a resposta fica na tela para o jogador anotar pistas. */
@@ -70,6 +71,8 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
   /** Mostra a resposta recém-dada para anotar pistas, até o jogador seguir em frente. */
   const [review,setReview] = useState(false)
   const [toast,setToast] = useState<string|null>(null)
+  /** Aviso de que a pressão passou de um estágio (ela está se abalando). */
+  const [alert,setAlert] = useState<string|null>(null)
   const [tutorial,setTutorial] = useState(()=>!tutorialSeen())
   const closeTutorial = useCallback(()=>{
     setTutorial(false)
@@ -90,6 +93,8 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[])
 
+  useEffect(()=>{ sfx.rec() },[])
+
   const later = useCallback((fn:()=>void,ms:number)=>{
     timers.current.push(window.setTimeout(fn,ms))
   },[])
@@ -101,6 +106,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
     setLastId(null)
     setReview(false)
     setPhase('asking')
+    sfx.ask()
     onProgress({...progressRef.current,currentQuestion:id})
 
     // ela ouve a pergunta antes de responder
@@ -121,14 +127,23 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
         setSpeech(null)
         setPhase('holding')
         later(()=>{
+          const before = progressRef.current.pressure ?? 0
           const { progress:next, clues } = applyAnswer(config,progressRef.current,id)
+          const after = next.pressure ?? 0
+          const crossed = stageIndex(config,after) > stageIndex(config,before)
+          if(crossed){
+            const stage = stageIndex(config,after)
+            sfx.pressure(stage)
+            setAlert(stagesOf(config)[stage-1].label)
+            later(()=>setAlert(null),3000)
+          }
           clues.forEach(onClue)
           onProgress(next)
           setSubtitle(null)
           setActiveId(null)
           setLastId(id)
           setReview(!!q.highlights)
-          setExpression(next.completed ? 'shaken' : idleExpression)
+          setExpression(next.completed ? 'shaken' : waitingExpression(config,after))
           setPhase('idle')
           if(next.completed) onComplete()
         }, between(450,900))
@@ -140,8 +155,9 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
     const cur = progressRef.current
     if((cur.noted ?? []).includes(key)) return
     onProgress({...cur,noted:[...(cur.noted ?? []),key]})
+    if(!clue) sfx.note()
     if(clue){
-      onClue(clue); navigator.vibrate?.(14)
+      onClue(clue); sfx.clue()
       setToast(clueTitle(clue) ?? clue)
       later(()=>setToast(null),2600)
     }
@@ -171,6 +187,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
         </>}
         <div className="ii-mark" aria-hidden="true"><b>DHPP</b><i/><span>HOMICÍDIOS</span></div>
         {toast && <div className="ii-toast" key={toast} role="status"><i/><span><small>NOVA PISTA REGISTRADA</small><b>{toast}</b></span></div>}
+        {alert && <div className="ii-press-alert" key={alert} role="status"><small>PRESSÃO SOBRE {config.name.split(' ')[0].toUpperCase()}</small><b>{alert}</b></div>}
         <div className="ii-sub" aria-live="polite">{subtitle && <span key={subtitle}>{subtitle}</span>}</div>
         <div className="ii-status">
           <span>{phase==='answering'?'RESPONDENDO':phase==='asking'?'ESCUTANDO':'AGUARDANDO'}</span>
@@ -179,7 +196,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
       </section>
 
       <section className="ii-panel">
-        <EmotionMeter name={config.name} expression={expression}/>
+        <EmotionMeter name={config.name} expression={expression} pressure={progress.pressure ?? 0} stages={stagesOf(config)}/>
 
         <div className="ii-main">
           {tab==='ask' && <>
@@ -198,12 +215,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
             )}
 
             {!busy && !review && finished && (
-              <div className="ii-complete">
-                <b>{config.closingLabel}</b>
-                <p>O depoimento foi salvo no arquivo do caso.</p>
-                {summary.total>0 && <p className="ii-summary">Pistas anotadas: {summary.found} de {summary.total}. Veja as respostas em Anotações.</p>}
-                <button onClick={onReturn}>VOLTAR AO CASO</button>
-              </div>
+              <DepositionSummary config={config} progress={progress} clueTitle={clueTitle} onReturn={onReturn}/>
             )}
 
             {!busy && !review && !finished && (

@@ -20,6 +20,8 @@ export type InterrogationQuestion = {
    * resposta; a frase que a contém vale a pista. Frases sem trecho são anotações sem valor para o caso.
    */
   highlights?:{ phrase:string; clue:string }[]
+  /** Quanto esta pergunta aumenta a pressão sobre ela (negativo alivia). Padrão: vem da intensidade da expressão. */
+  pressure?:number
 }
 
 export type InterrogationConfig = {
@@ -36,7 +38,11 @@ export type InterrogationConfig = {
   requiredForFinal:string[]
   finalQuestion:string
   closingLabel:string
+  /** Estágios de pressão: ao passar de `at`, ela espera o jogador com esta expressão. Há um padrão. */
+  pressureStages?:PressureStage[]
 }
+
+export type PressureStage = { at:number; expression:Expression; label:string }
 
 export type InterrogationProgress = {
   asked:string[]
@@ -45,4 +51,6 @@ export type InterrogationProgress = {
   completed:boolean
   /** Frases já anotadas pelo jogador (`<pergunta>:<índice da frase>`). */
   noted?:string[]
+  /** Pressão acumulada de 0 a 100 (saves antigos não têm: começa em 0). */
+  pressure?:number
 }
