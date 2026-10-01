@@ -14,8 +14,7 @@ export default defineConfig({
         description: 'Investigação criminal narrativa em formato found-phone.',
         theme_color: '#050607',
         background_color: '#050607',
-        display: 'standalone',
-        orientation: 'portrait'
+        display: 'standalone'
       }
     })
   ]
