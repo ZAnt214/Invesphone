@@ -9,11 +9,11 @@ const DESCRIPTION:Record<Quality,string> = {
   high:'Resolução nativa da tela e todos os quadros que o aparelho entregar. Experiência completa.'
 }
 
-/** Qualidade gráfica do jogo inteiro. `compact` mostra só a linha com os três botões. */
-export default function QualityPicker({compact}:{compact?:boolean}){
+/** Qualidade gráfica do jogo inteiro. Fica em Gráficos, na tela inicial. */
+export default function QualityPicker(){
   const [q,setQ] = useState<Quality>(getQuality)
   return (
-    <div className={`qp${compact ? ' compact' : ''}`} role="radiogroup" aria-label="Qualidade gráfica">
+    <div className="qp" role="radiogroup" aria-label="Qualidade gráfica">
       <div className="qp-row">
         <small>QUALIDADE GRÁFICA</small>
         <div className="qp-buttons">
@@ -22,7 +22,7 @@ export default function QualityPicker({compact}:{compact?:boolean}){
           ))}
         </div>
       </div>
-      {!compact && <p>{DESCRIPTION[q]}</p>}
+      <p>{DESCRIPTION[q]}</p>
     </div>
   )
 }

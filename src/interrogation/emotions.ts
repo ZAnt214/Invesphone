@@ -35,6 +35,9 @@ export const EXPRESSION_EMOTION:Record<Expression,EmotionVector> = {
 
 export const emotionOf = (e:Expression):EmotionVector => EXPRESSION_EMOTION[e] ?? EXPRESSION_EMOTION.neutral
 
+/** Intensidade geral do que ela sente (a emoção mais forte), de 0 a 100. */
+export const emotionLevel = (x:EmotionVector) => Math.max(x.tension,x.defense,x.distress)
+
 /** Rótulo do estado dominante. */
 export function emotionLabel(x:EmotionVector):string{
   const top = EMOTIONS.reduce((a,b)=>x[b.id]>x[a.id]?b:a)
