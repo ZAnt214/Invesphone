@@ -1,7 +1,7 @@
 import type { InterrogationConfig, InterrogationProgress, InterrogationQuestion } from './types'
 
 export const newProgress = (cfg:InterrogationConfig):InterrogationProgress => ({
-  asked:[], unlocked:[...cfg.initial], currentQuestion:null, completed:false
+  asked:[], unlocked:[...cfg.initial], currentQuestion:null, completed:false, noted:[]
 })
 
 const byId = (cfg:InterrogationConfig, id:string) => cfg.questions.find(q=>q.id===id)
@@ -28,8 +28,8 @@ export function applyAnswer(cfg:InterrogationConfig, p:InterrogationProgress, id
   const unlocked = new Set([...p.unlocked, ...(q.unlocks ?? [])])
   if(cfg.requiredForFinal.every(r=>asked.includes(r))) unlocked.add(cfg.finalQuestion)
   return {
-    progress:{ asked, unlocked:[...unlocked], currentQuestion:null, completed: id===cfg.finalQuestion },
-    clues:q.clues ?? []
+    progress:{ ...p, asked, unlocked:[...unlocked], currentQuestion:null, completed: id===cfg.finalQuestion },
+    clues:q.highlights ? [] : (q.clues ?? [])
   }
 }
 
@@ -62,3 +62,42 @@ export function subtitleChunks(text:string, max=80):string[]{
 
 /** Tempo de leitura de uma legenda, em ms. */
 export const subtitleDuration = (s:string) => Math.max(1500, s.length*55)
+
+/** Frases de uma resposta, na ordem; é nelas que o jogador toca para anotar. */
+export function splitSentences(text:string):string[]{
+  const raw = text.match(/[^.!?…]+[.!?…]+["”]?\s*|[^.!?…]+$/g)?.map(s=>s.trim()).filter(Boolean) ?? [text]
+  // fragmentos muito curtos ("Não…", "Eu…") se juntam à frase seguinte
+  const out:string[] = []
+  let carry = ''
+  for(const part of raw){
+    const joined = carry ? carry+' '+part : part
+    if(joined.length<10){ carry = joined; continue }
+    out.push(joined); carry = ''
+  }
+  if(carry) out.push(carry)
+  return out
+}
+
+/** Pista que a frase vale, se valer alguma. */
+export function clueForSentence(q:InterrogationQuestion, sentence:string):string|undefined{
+  const s = sentence.toLowerCase()
+  return q.highlights?.find(h=>s.includes(h.phrase.toLowerCase()))?.clue
+}
+
+export const noteKey = (questionId:string, index:number) => `${questionId}:${index}`
+
+/** Quantas pistas do depoimento existem e quantas o jogador já anotou. */
+export function clueSummary(cfg:InterrogationConfig, p:InterrogationProgress){
+  const all = new Set<string>(), got = new Set<string>()
+  const noted = p.noted ?? []
+  for(const q of cfg.questions){
+    if(!q.highlights) continue
+    splitSentences(q.answer).forEach((s,i)=>{
+      const c = clueForSentence(q,s)
+      if(!c) return
+      all.add(c)
+      if(noted.includes(noteKey(q.id,i))) got.add(c)
+    })
+  }
+  return { total:all.size, found:got.size }
+}

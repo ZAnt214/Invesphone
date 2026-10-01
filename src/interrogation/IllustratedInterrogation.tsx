@@ -6,8 +6,9 @@ import { getCharacter } from '../characters/characters'
 import type { Expression } from '../characters/types'
 import { QUALITIES, QUALITY_LABEL, getQuality, setQuality } from '../characters/quality'
 import type { Quality } from '../characters/quality'
+import AnswerNotes from './AnswerNotes'
 import DialogueChoices from './DialogueChoices'
-import { applyAnswer, askedQuestions, between, getQuestion, pendingQuestions, subtitleChunks, subtitleDuration } from './logic'
+import { applyAnswer, askedQuestions, between, clueSummary, getQuestion, pendingQuestions, subtitleChunks, subtitleDuration } from './logic'
 import type { InterrogationConfig, InterrogationProgress } from './types'
 import './illustrated-interrogation.css'
 
@@ -17,6 +18,8 @@ type Props = {
   progress:InterrogationProgress
   onProgress:(p:InterrogationProgress)=>void
   onClue:(id:string)=>void
+  /** Nome legível de uma pista, para avisar o jogador quando ela é registrada. */
+  clueTitle?:(id:string)=>string|undefined
   /** Chamado uma vez, quando a pergunta final é respondida. */
   onComplete:()=>void
   /** Sair no meio do depoimento (o progresso fica salvo). */
@@ -46,7 +49,7 @@ function QualityPicker(){
   )
 }
 
-export default function IllustratedInterrogation({config,progress,onProgress,onClue,onComplete,onBack,onReturn}:Props){
+export default function IllustratedInterrogation({config,progress,onProgress,onClue,clueTitle=()=>undefined,onComplete,onBack,onReturn}:Props){
   const character = getCharacter(config.personId)
   const idleExpression:Expression = config.idleExpression ?? 'neutral'
   const [phase,setPhase] = useState<Phase>('idle')
@@ -54,6 +57,9 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
   const [expression,setExpression] = useState<Expression>(idleExpression)
   const [subtitle,setSubtitle] = useState<string|null>(null)
   const [speech,setSpeech] = useState<Speech|null>(null)
+  /** Última pergunta respondida: a resposta fica na tela para o jogador anotar pistas. */
+  const [lastId,setLastId] = useState<string|null>(null)
+  const [openId,setOpenId] = useState<string|null>(null)
   const timers = useRef<number[]>([])
   const progressRef = useRef(progress)
   progressRef.current = progress
@@ -77,6 +83,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
     const q = getQuestion(config,id)
     if(!q || phase!=='idle') return
     setActiveId(id)
+    setLastId(null)
     setPhase('asking')
     onProgress({...progressRef.current,currentQuestion:id})
 
@@ -103,6 +110,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
           onProgress(next)
           setSubtitle(null)
           setActiveId(null)
+          setLastId(id)
           setExpression(next.completed ? 'shaken' : idleExpression)
           setPhase('idle')
           if(next.completed) onComplete()
@@ -111,7 +119,17 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
     }, between(700,1200))
   }
 
+  const note = (key:string, clue:string|undefined)=>{
+    const cur = progressRef.current
+    if((cur.noted ?? []).includes(key)) return
+    onProgress({...cur,noted:[...(cur.noted ?? []),key]})
+    if(clue){ onClue(clue); navigator.vibrate?.(14) }
+  }
+
   const active = activeId ? getQuestion(config,activeId) : undefined
+  const last = lastId && !activeId ? getQuestion(config,lastId) : undefined
+  const summary = clueSummary(config,progress)
+  const noted = progress.noted ?? []
   const pending = pendingQuestions(config,progress)
   const asked = askedQuestions(config,progress)
   const finished = progress.completed
@@ -140,6 +158,8 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
       </section>
 
       <section className="ii-panel">
+        <QualityPicker/>
+
         {active && busy && (
           <div className="ii-conversation">
             <article className="ii-line ii-question">
@@ -149,19 +169,28 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
           </div>
         )}
 
+        {last && !busy && last.highlights && (
+          <AnswerNotes question={last} noted={noted} clueTitle={clueTitle} onNote={note}/>
+        )}
+
         {finished && !busy && (
           <div className="ii-complete">
             <b>{config.closingLabel}</b>
             <p>O depoimento foi salvo no arquivo do caso.</p>
+            {summary.total>0 && <p className="ii-summary">Pistas anotadas: {summary.found} de {summary.total}. Toque numa pergunta abaixo para rever a resposta e anotar o que faltou.</p>}
             <button onClick={onReturn}>VOLTAR AO CASO</button>
           </div>
         )}
 
         {!busy && (
-          <DialogueChoices pending={finished?[]:pending} asked={asked} onPick={ask}/>
+          <DialogueChoices
+            pending={finished?[]:pending} asked={asked} onPick={ask}
+            openId={openId} onToggle={id=>setOpenId(o=>o===id?null:id)}
+            renderAnswer={q=>q.highlights
+              ? <AnswerNotes question={q} withQuestion={false} noted={noted} clueTitle={clueTitle} onNote={note}/>
+              : <article className="ii-line ii-answer"><p>{q.answer}</p></article>}
+          />
         )}
-
-        <QualityPicker/>
       </section>
     </main>
   )

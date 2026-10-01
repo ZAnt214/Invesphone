@@ -8,8 +8,13 @@ export type InterrogationQuestion = {
   expression?:Expression
   /** Perguntas liberadas depois desta. */
   unlocks?:string[]
-  /** Pistas registradas depois desta resposta. */
+  /** Pistas registradas automaticamente depois desta resposta (só para perguntas sem `highlights`). */
   clues?:string[]
+  /**
+   * Trechos da resposta que o jogador pode anotar como pista tocando na frase. `phrase` precisa aparecer na
+   * resposta; a frase que a contém vale a pista. Frases sem trecho são anotações sem valor para o caso.
+   */
+  highlights?:{ phrase:string; clue:string }[]
 }
 
 export type InterrogationConfig = {
@@ -33,4 +38,6 @@ export type InterrogationProgress = {
   unlocked:string[]
   currentQuestion:string|null
   completed:boolean
+  /** Frases já anotadas pelo jogador (`<pergunta>:<índice da frase>`). */
+  noted?:string[]
 }
