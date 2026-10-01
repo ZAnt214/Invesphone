@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { InterrogationConfig, InterrogationProgress } from './types'
 import { clueReport, clueSummary, getQuestion, questionPressure, stagesOf } from './logic'
 import { emotionLevel, emotionOf } from './emotions'
@@ -13,7 +14,7 @@ type Props = {
 /** Cor de cada ponto: da calma (verde) à intensidade máxima (rosa), como no medidor de emoção. */
 const dot = (level:number) => `hsl(${Math.round(150-level*1.5)} 62% 52%)`
 
-const W = 320, H = 96, PX = 10, PY = 10
+const W = 320, H = 72, PX = 10, PY = 10
 
 /** Curva da pressão acumulada a cada resposta, com os estágios e a emoção de cada resposta em pontos. */
 function PressureCurve({config,progress}:{config:InterrogationConfig;progress:InterrogationProgress}){
@@ -60,15 +61,31 @@ export default function DepositionSummary({config,progress,clueTitle,onSign}:Pro
   const verdict = ratio>=1 ? 'COMPLETO' : ratio>=.5 ? 'PARCIAL' : 'INCOMPLETO'
   const first = config.name.split(' ')[0]
 
+  // a ficha sempre aparece inteira, sem rolar: se o conteúdo passar da altura disponível, a folha encolhe para caber
+  const desk = useRef<HTMLDivElement>(null)
+  const paper = useRef<HTMLElement>(null)
+  const [fit,setFit] = useState(1)
+  useLayoutEffect(()=>{
+    const d = desk.current, p = paper.current
+    if(!d || !p) return
+    const measure = () => {
+      const avail = d.clientHeight - 16
+      setFit(Math.max(.5,Math.min(1,avail/p.offsetHeight)))
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(d); ro.observe(p)
+    return ()=>ro.disconnect()
+  },[])
+
   return (
-    <div className="ds-desk">
-      <article className="ds">
+    <div className="ds-desk" ref={desk}>
+      <article className="ds" ref={paper} style={{transform:`rotate(-.5deg) scale(${fit})`}}>
         <i className="ds-clip" aria-hidden="true"/>
         <header className="ds-head">
-          <small>DHPP · DIVISÃO DE HOMICÍDIOS</small>
+          <small>DHPP · HOMICÍDIOS · {config.depositionLabel.replace('DEPOIMENTO','Nº')}</small>
           <h3>FICHA DE DEPOIMENTO</h3>
-          <span>{config.depositionLabel.replace('DEPOIMENTO','Nº')}</span>
-          <span className={`ds-stamp ${verdict.toLowerCase()}`}>{verdict}</span>
+                    <span className={`ds-stamp ${verdict.toLowerCase()}`}>{verdict}</span>
         </header>
 
         <dl className="ds-fields">
@@ -93,12 +110,11 @@ export default function DepositionSummary({config,progress,clueTitle,onSign}:Pro
 
         {missed.length>0 && (
           <section className="ds-block">
-            <h4>III. Não anotado</h4>
+            <h4>III. Não anotado · reveja em Anotações</h4>
             <ul className="ds-tags missed">
               {missed.map(m=><li key={m.clue}><span className="redact" aria-hidden="true"/><em>em: “{m.question}”</em></li>)}
             </ul>
-            <p className="ds-empty">Reveja em Anotações e marque as frases que faltaram.</p>
-          </section>
+            </section>
         )}
 
         <section className="ds-sign">
@@ -109,7 +125,7 @@ export default function DepositionSummary({config,progress,clueTitle,onSign}:Pro
               ? <img src={progress.signature} alt="Assinatura"/>
               : <span>✎ Toque aqui para assinar</span>}
           </button>
-          {progress.signedAt && <small>Assinado em {new Date(progress.signedAt).toLocaleDateString('pt-BR')}{' · '}toque para refazer</small>}
+          {progress.signedAt && <small>Assinado em {new Date(progress.signedAt).toLocaleDateString('pt-BR')} · toque para refazer</small>}
         </section>
 
         <footer className="ds-foot">Registrado no arquivo do caso. {first}, liberada.</footer>

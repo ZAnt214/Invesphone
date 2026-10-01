@@ -43,6 +43,7 @@ Quando o ChatGPT criar as imagens de alguém: localizar os assets, entender os e
 ## Como entregar
 
 - Analisar o código existente antes de mexer. Não recriar o que já existe. Preservar save e compatibilidade.
+- **Nenhuma tela do jogo exige arrastar para ver o conteúdo principal.** Resumos, fichas, mensagens, painéis e finais precisam caber inteiros na tela do celular (testar em 390×844 e 375×667): compactar o layout e, se o conteúdo variar, encolher o conjunto para caber. Só listas longas e naturalmente roláveis (ex.: anotações, mensagens) podem rolar, dentro do próprio componente. Nunca rolagem da página.
 - Testar no mobile e pensar em Safari/iPhone. Rodar `npm run build` e corrigir erros de TypeScript/Vite. Verificar regressões.
 - Só está pronto quando funciona, não quando o código foi escrito.
 - Trabalhar em branch, abrir PR e mergear na `main` (squash). Não commitar `package-lock.json` nem `tsconfig.tsbuildinfo`.
