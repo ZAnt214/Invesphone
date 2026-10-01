@@ -1408,3 +1408,53 @@ Exemplos:
 - extrato cruzado → pedir análise da cinta.
 
 O jogador nunca deve conseguir pedir uma prova futura sem ter fundamento narrativo para saber que ela existe.
+
+
+# 52. INVESTIGAÇÃO SEM "TAREFAS"
+
+A camada de `task` pode continuar existindo internamente como estado técnico de compatibilidade, mas **não é um conceito apresentado ao jogador**.
+
+Proibido na experiência visível:
+
+- "Abrir tarefa";
+- "Tarefa atual";
+- "1 de 9 tarefas";
+- barra percentual de conclusão do caso;
+- "missão concluída";
+- puzzles obrigatórios apenas para liberar a próxima fase;
+- tela genérica que o jogador abre só porque o sistema mandou.
+
+A tela inicial mostra:
+
+1. situação atual do caso;
+2. hipótese/leitura atual;
+3. última atualização recebida de uma fonte real da investigação;
+4. quando necessário, uma ação contextual que leva ao local natural da informação.
+
+Exemplos:
+
+- Perícia informou algo da casa → acompanhar a cena.
+- Pessoas estão separadas → abrir Pessoas e ouvir quem fizer sentido.
+- Inteligência pode consultar o alarme → ir para Equipe e solicitar o material.
+- O log chegou → confrontos e novos pedidos passam a existir.
+- Financeiro abriu uma linha → pedir documentos pelo canal da equipe.
+- Téo foi comprometido pelo dinheiro → voltar ao depoimento dele.
+- A investigação convergiu → protocolar relatório.
+
+## Progressão por fatos
+
+O avanço ocorre quando estados do mundo mudam:
+
+- depoimentos relevantes foram colhidos;
+- um documento foi recebido;
+- uma pista foi registrada;
+- uma contradição foi criada;
+- um laudo chegou;
+- um novo personagem entrou na investigação;
+- uma confissão foi obtida.
+
+Não existe botão genérico de "concluir etapa".
+
+## Regra de implementação
+
+Se `game.task` continuar sendo usado no código, ele deve funcionar apenas como marcador interno de fase. Interface, textos e navegação devem usar linguagem de ocorrência, evidência, retorno de equipe, pessoa, documento ou relatório.
