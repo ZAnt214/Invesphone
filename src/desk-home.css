@@ -47,7 +47,7 @@
 @keyframes dk-pulse{50%{transform:rotate(-4deg) scale(1.06)}}
 
 /* objetos da mesa */
-.dk-desk{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-auto-rows:auto;align-content:space-evenly;gap:14px 8px;padding:10px 14px 6px}
+.dk-desk{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-auto-rows:auto;align-content:space-evenly;gap:18px 8px;padding:10px 14px calc(18px + var(--safe-b,0px))}
 .dk-desk>*{grid-column:span 2}
 .dk-desk>.o-helena{grid-column:2/4}
 .dk-desk>.o-archive{grid-column:4/6}
@@ -68,14 +68,6 @@
 .dk-pola{position:relative;display:block;width:78px;height:62px}
 .dk-pola i{position:absolute;left:calc(var(--i)*20px);top:calc(var(--i)*3px);width:36px;padding:3px 3px 9px;background:#fafaf7;box-shadow:0 3px 6px rgba(0,0,0,.45);transform:rotate(calc(var(--i)*7deg - 7deg))}
 .dk-pola i .face-crop{display:block;width:30px;height:30px;filter:grayscale(.45)}
-
-/* abas */
-.dk-tabs{display:flex;border-top:1px solid rgba(240,226,190,.18);background:rgba(18,10,5,.92);padding:0 6px calc(6px + var(--safe-b,0px))}
-.dk-tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0 4px;border:0;background:none;font:600 10px var(--mono);color:#8f7d58}
-.dk-tabs button i{display:grid;place-items:center}
-.dk-tabs button svg{width:21px;height:21px}
-.dk-tabs button.on{color:var(--gold);box-shadow:inset 0 2px 0 var(--gold)}
-.dk-tabs button:disabled{opacity:.4}
 
 @media(max-height:700px){
   .dk-folder{margin-top:16px;padding:10px 12px}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BatteryMedium, FileSearch, FolderSearch, Home as HomeIcon, Lock, MessageCircle, Settings, Smartphone, Users } from 'lucide-react'
+import { BatteryMedium, FileSearch, FolderSearch, Lock, MessageCircle, Settings, Smartphone, Users } from 'lucide-react'
 import { characters } from './characters/characters'
 import CharacterFace from './characters/CharacterFace'
 import './desk-home.css'
@@ -92,12 +92,6 @@ export default function HandsetHome(p:Props){
         <Obj cls="o-archive" label="Arquivo" icon={<FolderSearch/>} locked={!p.archiveOpen} hint="Após as versões" onClick={()=>p.onOpenApp('chapters')}/>
       </div>
 
-      <nav className="dk-tabs" aria-label="Navegação">
-        <button className="on" aria-current="page"><i><HomeIcon/></i>Início</button>
-        <button onClick={()=>p.onOpenApp('team')}><i><MessageCircle/></i>Equipe</button>
-        <button onClick={()=>p.onOpenApp('clues')}><i><FileSearch/></i>Pistas</button>
-        <button onClick={()=>p.archiveOpen?p.onOpenApp('chapters'):undefined} disabled={!p.archiveOpen}><i><FolderSearch/></i>Arquivo</button>
-      </nav>
     </main>
   )
 }
