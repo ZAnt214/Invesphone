@@ -17,10 +17,12 @@ const mouth = (cx:number,rimY:number,halfWidth:number,bottom:number,arch=2,maxOp
  * vêm de castMarks.json (scripts/measure-cast.py); a boca usa a do retrato neutro acompanhando o deslocamento dos olhos.
  */
 const cast = (id:string, name:string, m:{cx:number,rim:number,half:number,bottom:number}):CharacterDef => {
-  const marks = castMarks[id as keyof typeof castMarks] as unknown as Record<string,{eyeMid:[number,number],scale:number,eyes:[number,number,number,number][]}>
+  const marks = castMarks[id as keyof typeof castMarks] as unknown as Record<string,{eyeMid:[number,number],scale:number,eyes:[number,number,number,number][],mouthDy:number}>
   const n = marks.neutral
-  const assets = Object.fromEntries(Object.entries(marks).map(([k,v])=>{
-    const dx = v.eyeMid[0]-n.eyeMid[0], dy = v.eyeMid[1]-n.eyeMid[1]
+  // `uncomfortable` e `lying` do pacote vieram com emendas de retângulos visíveis no rosto: usam a imagem de outra expressão
+  const drop = new Set(['uncomfortable','lying'])
+  const assets = Object.fromEntries(Object.entries(marks).filter(([k])=>!drop.has(k)).map(([k,v])=>{
+    const dx = v.eyeMid[0]-n.eyeMid[0], dy = v.mouthDy
     const asset:ExpressionAsset = {
       src:`${base}characters/${id}/expressions/${k}.jpg`,
       align:{ eyeMid:v.eyeMid, scale:v.scale, neckY:760, shoulderY:673 },
@@ -33,8 +35,9 @@ const cast = (id:string, name:string, m:{cx:number,rim:number,half:number,bottom
     id, name,
     portrait:{ width:900, height:1200, crop:{ x:80, y:10, w:740, h:800 }, eyeMid:n.eyeMid },
     assets,
+    alias:{ uncomfortable:'nervous', lying:'defensive' },
     faceMask:`${base}characters/${id}/face-mask.png`,
-    visemes:{ src:`${base}characters/${id}/visemes.png`, cellW:400, cellH:120, order:['A','E','I','O','U','M'], center:[200,60], lipWidth:108, reach:.8 },
+    visemes:{ src:`${base}characters/${id}/visemes.png`, cellW:400, cellH:120, order:['A','E','I','O','U','M'], center:[200,60], lipWidth:108, reach:.5 },
     face:{ cx:n.eyeMid[0], cy:n.eyeMid[1]+18, size:420 }
   }
 }
