@@ -182,3 +182,27 @@ Regras:
 - personagens essenciais devem preferencialmente ter rota alternativa de descoberta para evitar soft-lock.
 
 Fonte: `docs/TEAM_MATERIAL_REQUESTS.md`, seção "Descoberta progressiva de pessoas".
+
+
+## Pacote oficial de evidências do Caso 01
+
+Os materiais visuais da equipe **já existem** no repositório.
+
+Antes de criar qualquer placeholder, mock, documento, foto de perícia ou anexo do Caso 01, consulte:
+
+- `docs/CASE01_EVIDENCE_ASSETS.md`
+- `public/evidence/case01/manifest.json`
+- `src/evidence/case01Materials.ts`
+
+As diligências em `src/App.tsx` já possuem `assetPaths`.
+
+Regra:
+- reutilize esses arquivos quando implementar anexos e visualizadores;
+- não redesenhe a evidência dentro de JSX/CSS;
+- não invente outro horário, nome, banco, valor ou conteúdo;
+- material recebido deve aparecer na conversa do agente responsável;
+- conjuntos devem abrir como galeria/visualizador;
+- documentos precisam aceitar leitura/zoom no mobile;
+- para gravações, use as falas existentes em `src/interrogation/` como fonte de verdade; o índice visual já está em `public/evidence/case01/cartorio/indice-gravacoes.svg`.
+
+Os SVGs atuais são assets oficiais do Caso 01 e não placeholders.
