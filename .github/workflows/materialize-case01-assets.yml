@@ -1,0 +1,63 @@
+name: Materialize Case 01 evidence assets
+
+on:
+  push:
+    paths:
+      - "creative-requests/payloads/case01_new_assets.ready"
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Rebuild asset archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f creative-requests/payloads/case01_new_assets.part-aa
+          test -f creative-requests/payloads/case01_new_assets.part-ab
+          test -f creative-requests/payloads/case01_new_assets.part-ac
+          test -f creative-requests/payloads/case01_new_assets.part-ad
+          test -f creative-requests/payloads/case01_new_assets.part-ae
+          test -f creative-requests/payloads/case01_new_assets.part-af
+          test -f creative-requests/payloads/case01_new_assets.part-ag
+          cat creative-requests/payloads/case01_new_assets.part-* | base64 -d > /tmp/case01-new-assets.zip
+          rm -rf public/evidence/case01/new
+          mkdir -p public/evidence/case01/new
+          unzip -q /tmp/case01-new-assets.zip -d public/evidence/case01/new
+          test "$(find public/evidence/case01/new -maxdepth 1 -type f | wc -l)" -eq 15
+      - name: Mark creative request complete
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("creative-requests/inbox/2026-10-02-equipe-material-novo.md")
+          text = p.read_text(encoding="utf-8")
+          text = text.replace("status: pending", "status: completed", 1)
+          marker = "## Resposta do ChatGPT"
+          if marker in text:
+              text = text.split(marker)[0].rstrip() + "\n\n" + marker + "\n\n"
+          text += """- status: completed
+- assets criados: 15/15 em `public/evidence/case01/new/`
+- observações: gerados no universo visual do pacote existente; dados ausentes ficaram como \"A APURAR\"; nenhuma das três propostas que alteram a lógica das provas foi criada. Claude pode integrar os gatilhos, conversas, manifesto e `case01Materials.ts` conforme este pedido.
+"""
+          p.write_text(text, encoding="utf-8")
+          PY
+      - name: Remove transfer payload and commit assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f creative-requests/payloads/case01_new_assets.part-*
+          rm -f creative-requests/payloads/case01_new_assets.ready
+          rm -f .github/workflows/materialize-case01-assets.yml
+          git config user.name "ChatGPT Evidence Bot"
+          git config user.email "chatgpt-evidence-bot@users.noreply.github.com"
+          git add public/evidence/case01/new creative-requests/inbox/2026-10-02-equipe-material-novo.md creative-requests/payloads .github/workflows/materialize-case01-assets.yml
+          git commit -m "Add 15 new Case 01 evidence assets for Claude"
+          git push origin HEAD:main
