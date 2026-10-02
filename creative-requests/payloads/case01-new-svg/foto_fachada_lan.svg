@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#756f62"/><stop offset="1" stop-color="#252622"/></linearGradient>
+  <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="3" seed="17" result="n"/><feColorMatrix in="n" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 .11 0"/><feBlend in="SourceGraphic" mode="multiply"/></filter>
+</defs>
+<rect width="1200" height="900" fill="url(#bg)"/>
+<g filter="url(#grain)">
+<rect x="85" y="70" width="1030" height="650" fill="#5d584e"/>
+<rect x="165" y="150" width="870" height="545" fill="#766f5e" stroke="#342f28" stroke-width="6"/>
+<rect x="235" y="255" width="335" height="395" fill="#303634" stroke="#443d34" stroke-width="7"/>
+<rect x="625" y="255" width="340" height="395" fill="#363b37" stroke="#443d34" stroke-width="7"/>
+<rect x="220" y="155" width="760" height="85" fill="#242421" stroke="#ded3b7" stroke-width="3"/>
+<text x="600" y="210" text-anchor="middle" font-family="Arial,sans-serif" font-size="37" font-weight="700" fill="#eee6ce">BYTE HOUSE INTERNET</text>
+<g fill="#555b54" stroke="#20211e" stroke-width="3"><rect x="275" y="360" width="80" height="58"/><rect x="390" y="360" width="80" height="58"/><rect x="505" y="360" width="80" height="58"/></g>
+<rect x="680" y="475" width="235" height="75" fill="#6c523d"/>
+<rect x="745" y="420" width="130" height="58" fill="#e1d8bd" stroke="#34322c" stroke-width="2"/>
+<g stroke="#888170"><path d="M760 435H860M760 449H860M760 463H860"/></g>
+<circle cx="410" cy="400" r="275" fill="none" stroke="#eee7d2" stroke-width="2" opacity=".55"/></g>
+<rect x="28" y="28" width="1144" height="844" fill="none" stroke="#eee5ca" stroke-width="3"/>
+<rect x="28" y="748" width="1144" height="124" fill="#111" opacity=".88"/>
+<text x="60" y="795" font-family="Courier New,monospace" font-size="27" fill="#f0ead9" font-weight="700">CAMPO · FACHADA DA LAN HOUSE</text>
+<text x="60" y="832" font-family="Courier New,monospace" font-size="20" fill="#d1c8b2">FACHADA E BALCÃO COM LIVRO DE SESSÕES</text>
+<text x="1090" y="834" text-anchor="end" font-family="Courier New,monospace" font-size="17" fill="#d1c8b2">DHPP · CASO 01</text>
+</svg>
