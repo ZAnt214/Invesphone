@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   AlertCircle, BatteryMedium, BookOpen, CalendarDays, Camera, Check,
   ChevronLeft, Clock, FileSearch, FileText, FolderSearch, Globe2, Grid3X3,
   Home, Image as ImageIcon, Lock, MessageCircle, MicOff, Phone, PhoneOff,
-  RotateCcw, Search, Shield, Smartphone, Users, Volume2
+  RotateCcw, Search, Send, Shield, Smartphone, Users, Volume2
 } from 'lucide-react'
 import { enableAudio, playConnect, playHangup, playTypingTick, startRingtone, stopRingtone } from './audio'
 import HandsetHome from './HandsetHome'
+import './team-messages.css'
 import QualityPicker from './QualityPicker'
 import FullscreenSetting from './FullscreenSetting'
 import SoundSetting from './SoundSetting'
@@ -630,7 +631,7 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
  return <HandsetHome chapterNumber={chapter.number} chapterTitle={chapter.title} caseStatus={homeState.status} updateSource={homeState.source} updateText={homeState.text} updateActionLabel={homeState.label} peopleOpen={game.task>=2} helenaOpen={game.task>=3} archiveOpen={game.task>=3} teamBadge={game.task<3?1:0} clueBadge={game.clues.length} onOpenApp={openApp} onOpenUpdate={openUpdate}/>
 }
 function HandsetStatus(){return <header className="handset-status"><span>VIVO&nbsp;&nbsp;▮▮▮</span><b>DHPP</b><BatteryMedium/></header>}
-function PhonePage({title,back,children}:{title:string;back:()=>void;children:React.ReactNode}){return <main className="handset page"><HandsetStatus/><header className="page-head"><button onClick={back}><ChevronLeft/></button><b>{title}</b><span/></header><section className="page-body">{children}</section></main>}
+function PhonePage({title,back,children}:{title:string;back:()=>void;children:React.ReactNode}){return <main className={`handset page${title==='Equipe'?' team-page':''}`}><HandsetStatus/><header className="page-head"><button onClick={back}><ChevronLeft/></button><b>{title}</b><span/></header><section className="page-body">{children}</section></main>}
 
 const caseTeam = [
  {id:'sonia',name:'Sônia Prado',initials:'SP',role:'Delegada',specialty:'Coordenação do caso',detail:'Prioridades, decisões e direção investigativa.'},
@@ -723,29 +724,28 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
  const normalized=baseMessages.map(m=>({...m,memberId:teamMemberForSender(m.from),outgoing:false}))
  const allMessages=[...teamIntroMessages,...normalized,...topicMessages,...materialMessages].sort((a,b)=>a.time.localeCompare(b.time))
 
+ const unreadFor=(id:string)=>teamDialogues.filter(t=>t.memberId===id&&topicAvailable(t)&&!discussed.includes(t.id)).length+teamMaterialRequests.filter(r=>r.memberId===id&&requestAvailable(r)&&!requested.includes(r.id)).length
+
  if(!selected){
-  return <div className="team-contacts">
-   <header className="team-directory-head">
-    <small>EQUIPE VINCULADA · OCORRÊNCIA 001</small>
-    <b>Equipe</b>
-    <p>Fale com cada integrante conforme a investigação exigir. Novos assuntos e diligências aparecem quando surgem fatos novos.</p>
-   </header>
-   {caseTeam.map(member=>{
-    const messages=allMessages.filter(m=>m.memberId===member.id)
-    const last=messages[messages.length-1]
-    const newTopics=teamDialogues.filter(t=>t.memberId===member.id&&topicAvailable(t)&&!discussed.includes(t.id))
-    const newRequests=teamMaterialRequests.filter(r=>r.memberId===member.id&&requestAvailable(r)&&!requested.includes(r.id))
-    const unread=newTopics.length+newRequests.length
-    return <button key={member.id} className="team-contact" onClick={()=>setSelected(member.id)}>
-      <i>{member.initials}</i>
-      <div>
-       <small>{member.role.toUpperCase()} · {member.specialty.toUpperCase()}</small>
-       <b>{member.name}</b>
-       <p>{last?.text??member.detail}</p>
-      </div>
-      <span>{unread>0?<em>{unread}</em>:<ChevronLeft/>}</span>
-    </button>
-   })}
+  return <div className="tm tm-list">
+   <SecureStrip/>
+   <header className="tm-title"><b>Equipe</b><span>5 contatos · Ocorrência 001</span></header>
+   <div className="tm-grid">
+    {caseTeam.map(member=>{
+     const unread=unreadFor(member.id)
+     return <button key={member.id} className="tm-card" onClick={()=>setSelected(member.id)}>
+      {unread>0&&<em>{unread}</em>}
+      <TeamFace id={member.id} initials={member.initials} name={member.name}/>
+      <b>{member.name.split(' ')[0]}<Verified/></b>
+      <span>{member.role}</span>
+      <small>{member.specialty}</small>
+      <u><MessageCircle/>Mensagem</u>
+     </button>
+    })}
+    <p className="tm-soon">Novos contatos aparecem conforme o caso avança</p>
+   </div>
+   <footer className="tm-foot">Mensagens e pedidos ficam registrados no inquérito · acesso autenticado</footer>
+   <Watermark/>
   </div>
  }
 
@@ -754,37 +754,46 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
  const availableTopics=teamDialogues.filter(t=>t.memberId===selected&&topicAvailable(t)&&!discussed.includes(t.id))
  const visibleRequests=teamMaterialRequests.filter(r=>r.memberId===selected&&(requested.includes(r.id)||requestAvailable(r)))
 
- return <div className="member-chat">
-  <button className="member-back" onClick={()=>setSelected(null)}><ChevronLeft/> Equipe</button>
-  <header className="member-head">
-   <i>{member.initials}</i>
-   <div><b>{member.name}</b><span>{member.role} · {member.specialty}</span><small>{member.detail}</small></div>
+ return <div className="tm tm-chat">
+  <SecureStrip/>
+  <header className="tm-head">
+   <button className="tm-back" onClick={()=>setSelected(null)} aria-label="Voltar para a equipe"><ChevronLeft/></button>
+   <TeamFace id={member.id} initials={member.initials} name={member.name} small/>
+   <div><b>{member.name}<Verified/></b><span>{member.role} · {member.specialty}</span></div>
   </header>
-
-  <section className="member-thread">
-   {memberMessages.map((m,i)=><article key={m.time+m.from+i} className={m.outgoing?'outgoing':''}>
-    <small>{m.time}</small><p><b>{m.from}</b>{m.text}</p>
-   </article>)}
+  <ChatThread messages={memberMessages} memberName={member.name} count={memberMessages.length}/>
+  <section className="tm-replies" aria-label="Respostas e pedidos">
+   <div className="tm-chips">
+    {availableTopics.map(topic=><button key={topic.id} onClick={()=>discuss(topic)}>{topic.label}</button>)}
+    {visibleRequests.map(item=>{
+     const done=requested.includes(item.id)
+     return <button key={item.id} disabled={done} className={done?'done':''} onClick={()=>request(item)} title={item.description}><b>{item.kind}</b>{item.label}{done&&<i>✓ recebido</i>}</button>
+    })}
+    {availableTopics.length===0&&visibleRequests.length===0&&<p>Nada novo para conversar agora. Novos assuntos aparecem quando surgirem fatos novos.</p>}
+   </div>
+   <div className="tm-input"><span><Lock/>Mensagem segura</span><i><Send/></i></div>
   </section>
+  <footer className="tm-foot">Sessão 0427 · Det. Lemos · registrada no inquérito</footer>
+  <Watermark/>
+ </div>
+}
 
-  <section className="member-conversation-options">
-   <small>CONVERSAR SOBRE O CASO</small>
-   {availableTopics.map(topic=><button key={topic.id} onClick={()=>discuss(topic)}>
-    <MessageCircle/><span>{topic.label}</span>
-   </button>)}
-   {availableTopics.length===0&&<p className="member-empty">Nada novo para conversar agora. Quando surgirem novas pistas ou versões, novos assuntos aparecem aqui.</p>}
-  </section>
-
-  {visibleRequests.length>0&&<section className="member-actions">
-   <small>DILIGÊNCIAS E MATERIAIS</small>
-   {visibleRequests.map(item=>{
-    const done=requested.includes(item.id)
-    return <button key={item.id} disabled={done} className={done?'done':''} onClick={()=>request(item)}>
-      <div><b>{item.label}</b><p>{item.description}</p></div>
-      <span>{done?'RECEBIDO':'PEDIR'}</span>
-    </button>
-   })}
-  </section>}
+/** Identidade do DHPP nas conversas: faixa de canal seguro, selo de contato verificado e marca d'água. */
+function SecureStrip(){return <div className="tm-secure"><Lock/>CANAL SEGURO · DHPP<s/>USO RESTRITO<em><i/>CRIPTOGRAFADO</em></div>}
+function Verified(){return <svg className="tm-ver" viewBox="0 0 24 24" aria-label="contato verificado"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"/><path d="M8.5 12.2l2.5 2.5 4.5-5"/></svg>}
+function Watermark(){return <div className="tm-mark" aria-hidden="true"><b>DHPP</b><i/><span>{[...'HOMICÍDIOS'].map((l,i)=><em key={i}>{l}</em>)}</span></div>}
+function TeamFace({id,initials,name,small}:{id:string;initials:string;name:string;small?:boolean}){
+ return <span className={`tm-face${small?' sm':''}`}>{id==='sonia'?<img src={`${import.meta.env.BASE_URL}characters/sonia/portrait.jpg`} alt={name}/>:initials}</span>
+}
+function ChatThread({messages,memberName,count}:{messages:{time:string;from:string;text:string;outgoing:boolean}[];memberName:string;count:number}){
+ const ref=useRef<HTMLDivElement>(null)
+ useEffect(()=>{ref.current?.scrollTo({top:ref.current.scrollHeight})},[count])
+ return <div className="tm-thread" ref={ref}>
+  <p className="tm-notice"><Lock/>Canal oficial do DHPP. Mensagens criptografadas, registradas no inquérito e sem cópia. Contatos verificados.</p>
+  {messages.map((m,i)=><div key={m.time+m.from+i} className={`tm-msg ${m.outgoing?'out':'in'}`}>
+   {!m.outgoing&&m.from!==memberName&&m.from!==memberName.split(' ')[0]&&<small>{m.from}</small>}
+   <p>{m.text}<span>{m.time}{m.outgoing?' ✓✓':''}</span></p>
+  </div>)}
  </div>
 }
 function ClueList({ids}:{ids:string[]}){if(!ids.length)return <Empty icon={<FileSearch/>} title="Nenhuma pista registrada" text="Abra a tarefa atual e comece pela cena."/>;return <div className="clue-list">{ids.map(id=>{const c=clues.find(x=>x.id===id)!;return <article key={id}><FileText/><div><small>{c.category.toUpperCase()}</small><b>{c.title}</b><p>{c.description}</p></div></article>})}</div>}
