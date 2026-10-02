@@ -24,6 +24,7 @@ import type { InterrogationProgress } from './interrogation/types'
 import './handset-pages.css'
 import { acceptedProofs, chapters, clues, disclaimer, people, teamMessages, victimMessages } from './case01'
 import { case01MaterialAssets } from './evidence/case01Materials'
+import EvidenceViewer, { assetUrl } from './evidence/EvidenceViewer'
 
 const SONIA_PHOTO = `${import.meta.env.BASE_URL}sonia.jpg`
 const SAVE_VERSION = 3
@@ -306,6 +307,68 @@ const teamDialogues:TeamDialogue[] = [
     requiresClues:['inconsistencia_caio_codigo'],
     user:{time:'05:40',text:'Quero as mudanças de versão separadas das simples diferenças de memória.'},
     agent:{time:'05:41',text:'A mais limpa até agora é o código. Primeiro Caio não sabia; depois aparece a explicação de que ele teria visto Lívia digitando. Isso é mudança, não esquecimento.'}
+  },
+
+  // Conversas que abrem as diligências de material novo (cada uma depende de uma base investigativa).
+  {
+    id:'mauricio_porta',memberId:'mauricio',label:'Dá pra afirmar que ninguém forçou a porta?',
+    requiresClues:['porta_intacta'],
+    user:{time:'04:43',text:'Maurício, a porta da frente: dá pra afirmar que ninguém forçou?'},
+    agent:{time:'04:44',text:'Fechadura e batente inteiros. Sem marca de alavanca, sem lasca, sem nada torcido. Quem entrou não precisou forçar. Vou te mandar de perto, com escala, pra ficar registrado.'}
+  },
+  {
+    id:'mauricio_laudo',memberId:'mauricio',label:'Já dá pra ter um laudo preliminar do local?',
+    minInterviews:2,requiresTopics:['mauricio_cena'],
+    user:{time:'05:20',text:'Já ouvi duas versões. Dá pra eu ter um laudo preliminar do local?'},
+    agent:{time:'05:21',text:'Dá. Preliminar mesmo: descreve o que está lá e o que não está, sem apontar ninguém. O que depende de laboratório fica de fora por enquanto. Te mando.'}
+  },
+  {
+    id:'renata_placa',memberId:'renata',label:'Consegue puxar o Gol que o Jorge viu?',
+    requiresClues:['vigia_gol'],
+    user:{time:'05:11',text:'O Jorge viu um Gol branco perto da casa. Consegue puxar de quem é?'},
+    agent:{time:'05:12',text:'Consigo. Gol branco de 98 não é raro, mas com o modelo e o que o Jorge lembrou eu fecho rápido. Te mando a ficha da consulta.'}
+  },
+  {
+    id:'renata_quadro',memberId:'renata',label:'Monta a noite num quadro só?',
+    requiresClues:['log_alarme','nota_motel'],
+    user:{time:'05:36',text:'Monta a noite num quadro pra mim: o que eu tenho com hora certa?'},
+    agent:{time:'05:37',text:'Só duas pontas por registro: o alarme e a entrada no motel. O resto eu deixo em branco de propósito, porque hora de memória não entra no quadro. Te mando a prancheta.'}
+  },
+  {
+    id:'renata_imovel',memberId:'renata',label:'O que consta do imóvel no cartório?',
+    requiresClues:['pergunta_inventario'],
+    user:{time:'05:46',text:'A Lívia perguntou sobre inventário antes das mortes. O que consta do imóvel no cartório?'},
+    agent:{time:'05:47',text:'Posso puxar a matrícula: quem é dono no papel e como o imóvel está registrado. É documento seco, não diz quem queria o quê. Mando assim que sair.'}
+  },
+  {
+    id:'renata_antecedentes',memberId:'renata',label:'Os irmãos Duarte têm antecedentes?',
+    requiresInterviewed:['teo'],
+    user:{time:'06:30',text:'Já ouvi o Téo. Os dois irmãos têm algum antecedente?'},
+    agent:{time:'06:31',text:'Vou consultar os dois. Adianto: ficha limpa não inocenta ninguém, só diz que não há registro anterior. Te mando a consulta.'}
+  },
+  {
+    id:'paulo_cida',memberId:'paulo',label:'Alguém de fora confirma o álibi da Cida?',
+    requiresClues:['alibi_cida'],
+    user:{time:'05:50',text:'A Cida disse que estava com a família. Alguém de fora confirma isso por escrito?'},
+    agent:{time:'05:51',text:'Uma irmã dela, que mora perto, confirmou sem pressão. Tomei por termo pra constar. É versão de família, não é prova de ouro, mas bate com o que a Cida contou.'}
+  },
+  {
+    id:'paulo_lan_foto',memberId:'paulo',label:'Documenta o lugar da LAN, não só o recibo.',
+    requiresClues:['lan_paga'],
+    user:{time:'05:15',text:'Além do recibo, quero o lugar documentado. Fachada da LAN, como está.'},
+    agent:{time:'05:16',text:'Fotografei por fora, a fachada e a vitrine. Não puxei registro de mais ninguém além do que já te entreguei.'}
+  },
+  {
+    id:'denise_capa',memberId:'denise',label:'O inquérito já está formalizado?',
+    minTask:1,
+    user:{time:'04:59',text:'Denise, o inquérito já está formalizado? Quero a capa certa no arquivo.'},
+    agent:{time:'05:00',text:'Instaurado em 17/10. Já numerei e montei a capa. Te mando a imagem pra você ver como ficou.'}
+  },
+  {
+    id:'denise_termo',memberId:'denise',label:'Como fica o termo de depoimento?',
+    minInterviews:1,
+    user:{time:'05:06',text:'Os depoimentos seguem algum modelo de termo? Quero ver como vai ficar o registro.'},
+    agent:{time:'05:07',text:'Seguem. Cabeçalho do DHPP, qualificação, perguntas e respostas, assinatura e testemunhas. Te mando o modelo em branco.'}
   }
 ]
 
@@ -313,9 +376,9 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
   {
     id:'fotos_cena',memberId:'mauricio',label:'Fotos completas da cena',kind:'FOTO',
     assetPaths:case01MaterialAssets.fotos_cena,
-    description:'Entrada, sala, escritório, corredor e quarto do casal em alta resolução.',
+    description:'Entrada, sala, cozinha, escritório, corredor, os dois quartos e o canil.',
     minTask:1,requiresTopics:['mauricio_cena'],requestTime:'04:39',
-    response:{time:'04:42',from:'Perícia',text:'Separei o pacote antes da coleta. Tem entrada, sala, escritório, corredor e quarto. Estou te enviando na ordem em que fotografamos.'}
+    response:{time:'04:42',from:'Perícia',text:'Separei o pacote antes da coleta. Tem entrada, sala, cozinha, escritório, corredor, os dois quartos e o canil. Estou te enviando na ordem em que fotografamos.'}
   },
   {
     id:'fotos_painel',memberId:'mauricio',label:'Close do painel do alarme',kind:'FOTO',
@@ -365,6 +428,112 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
     description:'Conferir banco, agência, data e valor da cinta encontrada com o dinheiro.',
     minTask:6,requiresClues:['extrato_ricardo'],requiresTopics:['renata_cinta'],revealsPeople:['teo'],clueIds:['cinta_bancaria'],requestTime:'06:20',
     response:{time:'06:26',from:'Financeiro',text:'Bateu nos quatro pontos: Banco Meridional, agência 0431, 15/10/2002, US$ 5.000. E apareceu um nome ligado ao dinheiro: Téo Duarte, irmão do Caio. Vale chamar esse rapaz.'}
+  },
+
+  {
+    id:'croqui_residencia',memberId:'mauricio',label:'Croqui da residência',kind:'DOCUMENTO',
+    assetPaths:case01MaterialAssets.croqui_residencia,
+    description:'Planta da casa com os pontos fotografados numerados.',
+    minTask:1,requiresTopics:['mauricio_cena'],requestTime:'04:40',
+    response:{time:'04:45',from:'Perícia',text:'Montei o croqui com os pontos fotografados numerados: casa, canil e circulação. Serve pra você se localizar quando eu falar de um ambiente.'}
+  },
+  {
+    id:'fechadura_porta',memberId:'mauricio',label:'Close da fechadura da porta',kind:'FOTO',
+    assetPaths:case01MaterialAssets.fechadura_porta,
+    description:'Fechadura e batente da porta principal, com escala.',
+    requiresClues:['porta_intacta'],requiresTopics:['mauricio_porta'],requestTime:'04:45',
+    response:{time:'04:46',from:'Perícia',text:'Aqui o close da fechadura com a escala encostada. Sem marca de força.'}
+  },
+  {
+    id:'trava_canil',memberId:'mauricio',label:'Foto da trava do canil',kind:'FOTO',
+    assetPaths:case01MaterialAssets.trava_canil,
+    description:'Trinco do canil por fora, com Thor ao fundo.',
+    requiresClues:['cao_canil'],requiresTopics:['mauricio_canil'],requestTime:'04:52',
+    response:{time:'04:53',from:'Perícia',text:'O ferrolho está fechado por fora, do jeito que se fecha todo dia. O Thor está lá dentro, calmo.'}
+  },
+  {
+    id:'escritorio_comparativo',memberId:'mauricio',label:'Foto comparativa do escritório',kind:'FOTO',
+    assetPaths:case01MaterialAssets.escritorio_comparativo,
+    description:'Gavetas laterais abertas e o que ficou intacto à vista.',
+    requiresClues:['escritorio_revirado','valores_intactos'],requiresTopics:['mauricio_busca'],requestTime:'04:58',
+    response:{time:'05:02',from:'Perícia',text:'Fotografei como está: gavetas laterais abertas, papéis fora do lugar, e o relógio, o notebook e o cofre intactos à vista.'}
+  },
+  {
+    id:'laudo_preliminar_local',memberId:'mauricio',label:'Laudo preliminar do local',kind:'PERÍCIA',
+    assetPaths:case01MaterialAssets.laudo_preliminar_local,
+    description:'Descrição técnica do local, sem apontar autoria.',
+    minInterviews:2,requiresTopics:['mauricio_laudo'],requestTime:'05:21',
+    response:{time:'05:25',from:'Perícia',text:'Segue o laudo preliminar. Ele descreve o estado do local e deixa explícito que não atribui autoria a ninguém.'}
+  },
+  {
+    id:'ficha_veiculo_gol',memberId:'renata',label:'Ficha do Gol que o vigia viu',kind:'DOCUMENTO',
+    assetPaths:case01MaterialAssets.ficha_veiculo_gol,
+    description:'Consulta de veículo do Gol branco citado pelo vigia.',
+    requiresClues:['vigia_gol'],requiresTopics:['renata_placa'],requestTime:'05:12',
+    response:{time:'05:14',from:'Inteligência',text:'Consulta feita: Gol branco, 98, em nome do Caio Duarte, situação regular. Isso diz de quem é o carro, não quem estava dirigindo.'}
+  },
+  {
+    id:'quadro_horarios',memberId:'renata',label:'Quadro de horários da noite',kind:'DOCUMENTO',
+    assetPaths:case01MaterialAssets.quadro_horarios,
+    description:'Linha do tempo feita à mão: só o que tem registro.',
+    requiresClues:['log_alarme','nota_motel'],requiresTopics:['renata_quadro'],requestTime:'05:37',
+    response:{time:'05:40',from:'Inteligência',text:'Montei na prancheta. Alarme às 23:52, motel às 00:56. Marquei o intervalo entre os dois e deixei o resto em branco.'}
+  },
+  {
+    id:'matricula_imovel',memberId:'renata',label:'Matrícula do imóvel',kind:'DOCUMENTO',
+    assetPaths:case01MaterialAssets.matricula_imovel,
+    description:'Certidão de registro do imóvel da Rua das Acácias.',
+    requiresClues:['pergunta_inventario'],requiresTopics:['renata_imovel'],requestTime:'05:47',
+    response:{time:'05:55',from:'Inteligência',text:'Saiu a matrícula. Os proprietários constam como Ricardo e Helena Valença. Não tem valor nenhum no documento, é registro puro.'}
+  },
+  {
+    id:'consulta_antecedentes',memberId:'renata',label:'Consulta de antecedentes dos irmãos Duarte',kind:'DOCUMENTO',
+    assetPaths:case01MaterialAssets.consulta_antecedentes,
+    description:'Resultado da consulta em nome de Caio e Téo.',
+    requiresInterviewed:['teo'],requiresTopics:['renata_antecedentes'],requestTime:'06:31',
+    response:{time:'06:34',from:'Inteligência',text:'Consulta feita para os dois: nada consta. Lembrando que isso é ausência de registro, não é álibi nem acusação.'}
+  },
+  {
+    id:'croqui_rua',memberId:'paulo',label:'Croqui da Rua das Acácias',kind:'DOCUMENTO',
+    assetPaths:case01MaterialAssets.croqui_rua,
+    description:'Guarita, poste, casa e o ponto onde o Gol foi visto.',
+    requiresInterviewed:['jorge'],requiresTopics:['paulo_jorge'],requestTime:'05:09',
+    response:{time:'05:12',from:'Equipe Externa',text:'Desenhei a rua: guarita do Jorge, poste, a casa e o ponto onde ele viu o Gol, com distância aproximada. É o que ele enxergava dali.'}
+  },
+  {
+    id:'termo_declaracao_terceiro_cida',memberId:'paulo',label:'Termo de declaração da irmã de Cida',kind:'DOCUMENTO',
+    assetPaths:case01MaterialAssets.termo_declaracao_terceiro_cida,
+    description:'Declaração de familiar sobre a noite de 16/10.',
+    requiresClues:['alibi_cida'],requiresTopics:['paulo_cida'],requestTime:'05:51',
+    response:{time:'05:58',from:'Equipe Externa',text:'Segue o termo assinado pela irmã dela, com a impressão do polegar. Ela confirma a noite em família.'}
+  },
+  {
+    id:'foto_fachada_lan',memberId:'paulo',label:'Foto da fachada da LAN house',kind:'FOTO',
+    assetPaths:case01MaterialAssets.foto_fachada_lan,
+    description:'Fachada e vitrine do estabelecimento.',
+    requiresClues:['lan_paga'],requiresTopics:['paulo_lan_foto'],requestTime:'05:16',
+    response:{time:'05:19',from:'Equipe Externa',text:'Aqui a fachada. Pra constar no inquérito onde o recibo foi emitido.'}
+  },
+  {
+    id:'termo_apreensao_celular_helena',memberId:'denise',label:'Auto de apreensão do celular de Helena',kind:'DOCUMENTO',
+    assetPaths:case01MaterialAssets.termo_apreensao_celular_helena,
+    description:'Cadeia de custódia do aparelho apreendido na casa.',
+    requiresInterviewed:['livia'],requiresTopics:['denise_livia'],requestTime:'05:06',
+    response:{time:'05:10',from:'Cartório',text:'Lacrei o aparelho de Helena. Está no auto com lacre, testemunhas e etiqueta de custódia. O conteúdo você consulta pelo telefone dela.'}
+  },
+  {
+    id:'capa_inquerito',memberId:'denise',label:'Capa do inquérito',kind:'DOCUMENTO',
+    assetPaths:case01MaterialAssets.capa_inquerito,
+    description:'Capa do inquérito do Caso 01.',
+    minTask:1,requiresTopics:['denise_capa'],requestTime:'05:00',
+    response:{time:'05:02',from:'Cartório',text:'Essa é a capa. Instauração em 17/10 e minha assinatura como escrivã.'}
+  },
+  {
+    id:'termo_depoimento_modelo',memberId:'denise',label:'Modelo do termo de depoimento',kind:'DOCUMENTO',
+    assetPaths:case01MaterialAssets.termo_depoimento_modelo,
+    description:'Formulário em branco usado nos depoimentos.',
+    minInterviews:1,requiresTopics:['denise_termo'],requestTime:'05:07',
+    response:{time:'05:09',from:'Cartório',text:'Esse é o modelo em branco. Todo depoimento sai neste formato, assinado ao final.'}
   }
 ]
 
@@ -674,6 +843,7 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
  /** Envio em andamento: primeiro "enviando…", depois o integrante "digitando…"; só então a conversa é gravada no save. */
  const [sending,setSending]=useState<{id:string;text:string;time:string;phase:'sending'|'typing'}|null>(null)
  const timers=useRef<number[]>([])
+ const [viewer,setViewer]=useState<{title:string;paths:readonly string[];start:number}|null>(null)
  useEffect(()=>()=>timers.current.forEach(window.clearTimeout),[])
  const requested=game.requestedMaterials??[]
  const discussed=game.teamTopics??[]
@@ -731,7 +901,7 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
   if(!item)return []
   return [
    {time:item.requestTime,from:'Lemos',text:`Consegue ${item.label.toLowerCase()} pra mim?`,memberId:item.memberId,outgoing:true},
-   {...item.response,memberId:item.memberId,outgoing:false}
+   {...item.response,memberId:item.memberId,outgoing:false,assets:item.assetPaths,assetsTitle:item.label}
   ]
  })
  const topicMessages=discussed.flatMap(id=>{
@@ -783,7 +953,7 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
    <TeamFace id={member.id} initials={member.initials} name={member.name} small/>
    <div><b>{member.name}<Verified/></b><span>{member.role} · {member.specialty}</span></div>
   </header>
-  <ChatThread messages={memberMessages} memberName={member.name} sending={sending?.id&&(teamDialogues.some(t=>t.id===sending.id&&t.memberId===member.id)||teamMaterialRequests.some(r=>r.id===sending.id&&r.memberId===member.id))?sending:null}/>
+  <ChatThread messages={memberMessages} memberName={member.name} onOpenAsset={(title,paths,start)=>setViewer({title,paths,start})} sending={sending?.id&&(teamDialogues.some(t=>t.id===sending.id&&t.memberId===member.id)||teamMaterialRequests.some(r=>r.id===sending.id&&r.memberId===member.id))?sending:null}/>
   <section className="tm-replies" aria-label="Respostas e pedidos">
    <div className="tm-chips">
     {availableTopics.map(topic=><button key={topic.id} disabled={!!sending} onClick={()=>send(topic.id,topic.user.text,topic.user.time,()=>discuss(topic))}>{topic.label}</button>)}
@@ -797,6 +967,7 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
   </section>
   <footer className="tm-foot">Sessão 0427 · Det. Lemos · registrada no inquérito</footer>
   <Watermark/>
+  {viewer&&<EvidenceViewer title={viewer.title} paths={viewer.paths} start={viewer.start} onClose={()=>setViewer(null)}/>}
  </div>
 }
 
@@ -807,7 +978,7 @@ function Watermark(){return <div className="tm-mark" aria-hidden="true"><b>DHPP<
 function TeamFace({id,initials,name,small}:{id:string;initials:string;name:string;small?:boolean}){
  return <span className={`tm-face${small?' sm':''}`}>{id==='sonia'?<img src={`${import.meta.env.BASE_URL}characters/sonia/portrait.jpg`} alt={name}/>:initials}</span>
 }
-function ChatThread({messages,memberName,sending}:{messages:{time:string;from:string;text:string;outgoing:boolean}[];memberName:string;sending:{text:string;time:string;phase:'sending'|'typing'}|null}){
+function ChatThread({messages,memberName,sending,onOpenAsset}:{messages:{time:string;from:string;text:string;outgoing:boolean;assets?:readonly string[];assetsTitle?:string}[];memberName:string;onOpenAsset?:(title:string,paths:readonly string[],start:number)=>void;sending:{text:string;time:string;phase:'sending'|'typing'}|null}){
  const ref=useRef<HTMLDivElement>(null)
  const key=messages.length+(sending?(sending.phase==='sending'?1:2):0)
  useEffect(()=>{ref.current?.scrollTo({top:ref.current.scrollHeight,behavior:'smooth'})},[key])
@@ -816,6 +987,7 @@ function ChatThread({messages,memberName,sending}:{messages:{time:string;from:st
   {messages.map((m,i)=><div key={m.time+m.from+i} className={`tm-msg ${m.outgoing?'out':'in'}${i>=messages.length-2&&messages.length>2?' fresh':''}`}>
    {!m.outgoing&&m.from!==memberName&&m.from!==memberName.split(' ')[0]&&<small>{m.from}</small>}
    <p>{m.text}<span>{m.time}{m.outgoing?' ✓✓':''}</span></p>
+   {m.assets&&m.assets.length>0&&<div className="tm-attach">{m.assets.map((a,k)=><button key={a} onClick={()=>onOpenAsset?.(m.assetsTitle??'Material',m.assets!,k)} aria-label={`Abrir ${m.assetsTitle??'material'} ${k+1}`}><img src={assetUrl(a)} alt="" loading="lazy"/>{m.assets!.length>1&&k===0&&<b>{m.assets!.length}</b>}</button>)}</div>}
   </div>)}
   {sending&&<div className="tm-msg out fresh pending"><p>{sending.text}<span>{sending.phase==='sending'?<><i className="tm-clock"/>enviando…</>:<>{sending.time} ✓✓</>}</span></p></div>}
   {sending?.phase==='typing'&&<div className="tm-msg in fresh"><p className="tm-typing" aria-label={`${memberName} está digitando`}><i/><i/><i/></p><small className="tm-typing-label">{memberName.split(' ')[0]} está digitando…</small></div>}

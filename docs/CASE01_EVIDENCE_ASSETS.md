@@ -168,3 +168,15 @@ Se no futuro uma evidência fotográfica ganhar versão raster mais realista, ma
 As gravações de depoimento ainda usam as falas do sistema de interrogatório como fonte de verdade. O índice visual está pronto; uma futura camada de áudio deve gerar os trechos a partir dessas falas, sem alterar o conteúdo.
 
 Todo o restante listado no manifesto está pronto como arquivo visual.
+
+## Material novo da equipe (`public/evidence/case01/new/`)
+
+Peças adicionais entregues por Maurício, Renata, Paulo e Denise, cada uma depois de uma conversa e uma diligência (ver `teamDialogues` e `teamMaterialRequests` em `src/App.tsx`):
+
+- **Cômodos** (`new/comodos/`, substituem as fotos de cena antigas em `fotos_cena` e `fotos_painel`): ilustrações no estilo dos retratos, apresentadas como fotografias impressas com data da câmera.
+- **Fotos/croquis**: `fechadura_porta`, `trava_canil`, `escritorio_comparativo`, `foto_fachada_lan`, `croqui_residencia`, `croqui_rua`.
+- **Documentos**: `laudo_preliminar_local`, `ficha_veiculo_gol`, `quadro_horarios`, `matricula_imovel`, `consulta_antecedentes`, `termo_declaracao_terceiro_cida`, `termo_apreensao_celular_helena`, `capa_inquerito`, `termo_depoimento_modelo` (visual chapado e simplificado).
+
+Os anexos aparecem na conversa do integrante e abrem no visualizador (`src/evidence/EvidenceViewer.tsx`) com pinça, arraste e toque duplo para ampliar.
+
+Não existem (e não devem ser criados sem aprovação): extrato de ligações, câmera de comércio e laudo de digitais.
