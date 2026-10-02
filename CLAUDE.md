@@ -131,3 +131,8 @@ Mesmo que `game.task` permaneça temporariamente no código como marcador intern
 - ações contextuais devem levar ao app natural (Equipe, Pessoas, Pistas, Arquivo, cena ou relatório).
 
 Referência: seção 52 de `docs/CASE01_GAME_FLOW.md`.
+
+
+## Nome e logo do órgão
+
+O órgão de investigação do jogo é o **DHPP**. Sempre usar esse nome nos textos da interface (cabeçalhos, ligação, ajustes, finais); não usar "Polícia de São Paulo", "Polícia Civil" nem outro órgão. A logo oficial fica de fundo da tela inicial (`public/dhpp-logo.svg`, referenciada em `src/desk-home.css`); hoje é uma logo provisória e o pedido da oficial está em `creative-requests/inbox/`.

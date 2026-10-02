@@ -42,15 +42,6 @@ function Orb({n,angle,onOpen}:{n:Node;angle:number;onOpen:()=>void}){
     : <button className="hm-orb" style={style} onClick={onOpen}>{inner}</button>
 }
 
-function Emblem(){
-  return (
-    <svg className="hm-emblem" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z" className="hm-sh"/>
-      <path d="M12 7l1.4 2.9 3.1.4-2.3 2.1.6 3.1L12 14l-2.8 1.5.6-3.1-2.3-2.1 3.1-.4z" className="hm-st"/>
-    </svg>
-  )
-}
-
 export default function HandsetHome(p:Props){
   const hyp = HYPOTHESIS[Math.min(HYPOTHESIS.length-1,p.chapterNumber-1)]
   const nodes:Node[] = [
@@ -63,7 +54,7 @@ export default function HandsetHome(p:Props){
   return (
     <main className="handset hm">
       <header className="hm-head">
-        <div><small>POLÍCIA CIVIL · SP</small><b>SISTEMA DE INVESTIGAÇÃO CRIMINAL</b></div>
+        <div><small>DHPP</small><b>SISTEMA DE INVESTIGAÇÃO</b></div>
         <button onClick={()=>p.onOpenApp('settings')} aria-label="Ajustes"><Settings/></button>
       </header>
 
@@ -74,7 +65,6 @@ export default function HandsetHome(p:Props){
 
       <section className="hm-wheel" aria-label="Módulos do sistema">
         <span className="hm-ring" aria-hidden="true"/>
-        <Emblem/>
         {nodes.map((n,i)=><Orb key={n.key} n={n} angle={-90+i*72} onOpen={()=>p.onOpenApp(n.key)}/>)}
       </section>
 
