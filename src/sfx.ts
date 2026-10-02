@@ -39,6 +39,8 @@ const play = (tones:Tone[]) => {
 const buzz = (p:number|number[]) => { if(!sfxEnabled()) return; try { navigator.vibrate?.(p) } catch { /* sem vibração */ } }
 
 export const sfx = {
+  /** Toque discreto em qualquer opção (menus, listas, botões). */
+  tap(){ play([{f:460,to:340,dur:.045,vol:.022,type:'triangle'}]) },
   /** Gravador ligando, ao começar o depoimento. */
   rec(){ play([{f:1200,dur:.05,vol:.035,type:'square'},{f:800,at:.09,dur:.07,vol:.03,type:'square'}]) },
   /** Pergunta feita. */
