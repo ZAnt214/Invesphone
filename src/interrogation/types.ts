@@ -13,6 +13,8 @@ export type InterrogationQuestion = {
   requiresClue?:string
   /** Perguntas liberadas depois desta. */
   unlocks?:string[]
+  /** Pessoas citadas/identificadas por esta resposta e que passam a integrar a investigação. */
+  revealsPeople?:string[]
   /** Pistas registradas automaticamente depois desta resposta (só para perguntas sem `highlights`). */
   clues?:string[]
   /**
