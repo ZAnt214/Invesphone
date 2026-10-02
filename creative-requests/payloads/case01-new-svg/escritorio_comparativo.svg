@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#756f62"/><stop offset="1" stop-color="#252622"/></linearGradient>
+  <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="3" seed="17" result="n"/><feColorMatrix in="n" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 .11 0"/><feBlend in="SourceGraphic" mode="multiply"/></filter>
+</defs>
+<rect width="1200" height="900" fill="url(#bg)"/>
+<g filter="url(#grain)">
+<rect x="55" y="65" width="520" height="660" fill="#6b5f50" stroke="#e9dfc3" stroke-width="3"/>
+<rect x="625" y="65" width="520" height="660" fill="#665b4c" stroke="#e9dfc3" stroke-width="3"/>
+<text x="315" y="125" text-anchor="middle" font-family="Courier New,monospace" font-size="23" font-weight="700" fill="#eee5ca">ÁREA A</text>
+<text x="315" y="160" text-anchor="middle" font-family="Courier New,monospace" font-size="17" fill="#ddd3b8">GAVETAS SECUNDÁRIAS ABERTAS</text>
+<rect x="125" y="265" width="360" height="180" fill="#6e513c" stroke="#342d27" stroke-width="5"/>
+<g fill="#8e694d" stroke="#3a3028" stroke-width="3"><rect x="150" y="295" width="195" height="38"/><path d="M345 295l105 18v52l-105-32z"/><rect x="150" y="352" width="195" height="38"/><path d="M345 352l105 18v52l-105-32z"/></g>
+<text x="885" y="125" text-anchor="middle" font-family="Courier New,monospace" font-size="23" font-weight="700" fill="#eee5ca">ÁREA B</text>
+<text x="885" y="160" text-anchor="middle" font-family="Courier New,monospace" font-size="17" fill="#ddd3b8">GAVETA PRINCIPAL E COFRE À VISTA</text>
+<rect x="700" y="265" width="360" height="165" fill="#6f523c" stroke="#342d27" stroke-width="5"/>
+<rect x="735" y="305" width="290" height="85" fill="#8d684b" stroke="#3a3028" stroke-width="3"/><circle cx="882" cy="347" r="13" fill="#d1b76d"/>
+<rect x="770" y="485" width="250" height="175" fill="#454641" stroke="#2b2b29" stroke-width="6"/>
+<rect x="800" y="515" width="190" height="115" fill="none" stroke="#99917a" stroke-width="3"/><circle cx="895" cy="572" r="22" fill="none" stroke="#aaa18a" stroke-width="4"/></g>
+<rect x="28" y="28" width="1144" height="844" fill="none" stroke="#eee5ca" stroke-width="3"/>
+<rect x="28" y="748" width="1144" height="124" fill="#111" opacity=".88"/>
+<text x="60" y="795" font-family="Courier New,monospace" font-size="27" fill="#f0ead9" font-weight="700">COMPARATIVO · ESCRITÓRIO</text>
+<text x="60" y="832" font-family="Courier New,monospace" font-size="20" fill="#d1c8b2">REGISTRO TÉCNICO NEUTRO · ÁREAS NO MESMO AMBIENTE</text>
+<text x="1090" y="834" text-anchor="end" font-family="Courier New,monospace" font-size="17" fill="#d1c8b2">DHPP · CASO 01</text>
+</svg>
