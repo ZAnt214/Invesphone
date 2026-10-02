@@ -16,9 +16,12 @@ supersedes: 2026-10-02-equipe-material-novo-v2-realismo
 ## 0. Contexto em duas linhas
 O jogo (Arquivo Morto / Invesphone) é um app de investigação policial para celular, com **visual ilustrado**: os retratos dos personagens são ilustração digital **estilizada** (formas simplificadas, cores sóbrias, sombreamento suave, fundos escuros). Já existe uma versão provisória de todas as 24 imagens, feita em código por Claude. **Ela acerta o conteúdo, a composição e o canon, mas a arte é simples demais.** Este pedido é para você **refazer cada imagem com qualidade de arte final**.
 
-**Decisão de estilo do dono do projeto (importante):** as imagens **não precisam ser "2D chapado"**. Use a técnica e o nível de acabamento que o melhor modelo entregar de melhor qualidade. **A única exigência é que elas COMBINEM com os retratos dos personagens**, a ponto de aparecerem lado a lado no mesmo jogo sem estranhamento (ver seção 1).
+**Decisões do dono do projeto (valem acima de qualquer outra instrução deste arquivo) — revisadas depois de ver a primeira entrega:**
+1. **Ponto de vista de foto de verdade:** cada cena deve parecer uma **foto tirada por uma pessoa com um celular**, de pé, no local: perspectiva real, ângulo em 3/4, enquadramento imperfeito. **Não** pode parecer uma elevação frontal simétrica nem um pôster (a primeira entrega, do escritório, ficou bonita mas frontal e polida demais).
+2. **Estilo mais simples, de recortes de papel**, na linha de animação de recortes (a linguagem visual de *South Park*): formas geométricas simples, **cores chapadas**, **contorno escuro fino**, sombra mínima, sem gradiente. Ao mesmo tempo precisa **combinar com os retratos dos personagens** do jogo.
+3. **Qualidade de celular baixa:** **não** é para você entregar a imagem já suja. **Entregue limpa e em alta resolução**; o efeito de câmera de celular barato (baixa resolução, ruído, flash estourado, vinheta, compressão) **é aplicado por Claude por código depois**.
 
-**Como usar as referências provisórias:** cada ficha indica o arquivo atual em `public/evidence/case01/new/...`. Ele define **conteúdo, objetos e posições aproximadas — NÃO a técnica nem o nível de acabamento**. Reproduza os mesmos elementos, e eleve: desenho dos objetos, proporção, riqueza de detalhe, iluminação, materiais, acabamento. **Não copie os defeitos de acabamento** (formas de caixa, sombras uniformes, chapado demais). Nas fotos, os arquivos atuais já vêm com moldura de foto, plaqueta e data aplicadas por pós-processamento; **você NÃO deve desenhar moldura, plaqueta, régua nem data** (ver seção 2).
+**Como usar as referências provisórias:** cada ficha indica o arquivo atual em `public/evidence/case01/new/...`. Ele define **somente a lista de elementos e o que cada um representa — NÃO o enquadramento (que agora é o "Ponto de vista" de cada ficha), a técnica nem o acabamento**. Reproduza os mesmos elementos, e eleve: desenho dos objetos, proporção, riqueza de detalhe, iluminação, materiais, acabamento. **Não copie os defeitos de acabamento** (formas de caixa, sombras uniformes, chapado demais). Nas fotos, os arquivos atuais já vêm com moldura de foto, plaqueta e data aplicadas por pós-processamento; **você NÃO deve desenhar moldura, plaqueta, régua nem data** (ver seção 2).
 
 **Referência de ESTILO oficial (obrigatória, olhe antes de gerar):**
 - `public/characters/livia/expressions/defensive.jpg` e as demais expressões em `public/characters/*/expressions/` — é o padrão visual do jogo: ilustração digital **estilizada**, formas limpas e simplificadas, sombreamento suave, **sem contorno preto grosso**, paleta fechada e sóbria, fundo azul-petróleo escuro.
@@ -26,52 +29,61 @@ O jogo (Arquivo Morto / Invesphone) é um app de investigação policial para ce
 
 ---
 
-## 1. GUIA DE ESTILO — "COMBINAR COM OS PERSONAGENS"
+## 1. GUIA DE ESTILO — "FOTO DE CELULAR DESENHADA EM RECORTES DE PAPEL"
 
 ### 1.1 Em uma frase
-**"Uma fotografia de perícia de 2002 vista como ilustração digital estilizada, do mesmo universo visual dos retratos do jogo: como se fosse uma foto, mas desenhada."**
+**"Uma foto tirada por um policial com um celular no local do crime, mas desenhada como animação de recortes de papel: formas simples, cores chapadas, contorno escuro fino, perspectiva de foto real."**
 
-### 1.2 O que PRECISA ser igual aos retratos (âncora de estilo — não negociável)
-Abra `public/characters/livia/expressions/defensive.jpg` e mais duas expressões de outro personagem em `public/characters/*/expressions/` antes de gerar. Observe e replique:
-- **Tratamento de forma:** formas **simplificadas e limpas**, silhuetas claras, **sem contorno preto grosso**, **sem hiperdetalhe fotográfico** (nada de poros, fibras, textura de pele/pano realista). Detalhes são **sugeridos**, não renderizados.
-- **Cor:** **paleta fechada, sóbria e levemente dessaturada**, tons terrosos quentes (madeira, latão, tecido) contra **azuis-petróleo e cinzas frios**; o fundo geral é **escuro** (o jogo é noturno/sombrio). Nada de cores saturadas ou neon.
-- **Luz:** **suave e direcional**, com **sombreamento macio** que dá volume sem endurecer (como nos rostos dos retratos), clima **contido, sério, um pouco melancólico**.
-- **Nível de abstração:** o mesmo dos retratos. Se um personagem aparecesse dentro da cena, ele precisaria parecer **da mesma mão**. (Não desenhe pessoas — é só o teste mental.)
-- **Teste de aprovação:** coloque a imagem lado a lado com `defensive.jpg`. Se parecerem de **jogos diferentes**, refaça. Se parecerem **do mesmo jogo**, está aprovada.
+### 1.2 Estilo visual: recortes de papel (linguagem de *South Park*) + combinar com os retratos
+- **Inspiração:** animação de **recortes de papel / colagem digital**, como a de *South Park*. **Referência apenas de linguagem visual** (formas básicas, cor chapada, contorno fino, sombra mínima). **Não copie** personagens, cenários, logotipos nem elementos reconhecíveis da série.
+- **Âncora dos personagens:** abra `public/characters/livia/expressions/defensive.jpg` (e uma expressão de outro personagem em `public/characters/*/expressions/`). Eles já são simples, chapados e sóbrios. As cenas devem parecer **irmãs** dos retratos: mesmo clima **escuro, sério, contido**. Não pode ficar colorido demais, engraçado, infantil nem caricato. **Teste de aprovação:** ao lado de `defensive.jpg`, devem parecer do mesmo jogo.
+- **Construção:** cada objeto é feito de **formas simples** (retângulos, círculos, trapézios, elipses) como **peças recortadas**, com cantos levemente irregulares ou arredondados.
+- **Contorno:** **linha escura fina e uniforme** (`#0b141c`) em volta dos objetos e das divisões principais. Espessura aproximada de 0,25% da largura da imagem.
+- **Cor:** **uma cor chapada por superfície**, no máximo **um tom de sombra plano** por objeto (uma forma mais escura, de borda nítida). **Sem gradiente suave, sem brilho especular realista, sem textura de madeira ou tecido.**
+- **Detalhe por símbolo, não por textura:** livros = retângulos coloridos; papel = retângulo claro com 2 a 3 riscos; madeira = cor lisa com no máximo uma linha de veio; vidro = azul-claro chapado com um reflexo diagonal simples; metal = cinza chapado com uma faixa clara.
+- **Riqueza vem da quantidade e da escolha dos objetos** (o ambiente precisa parecer habitado e crível), não de acabamento fotográfico.
+- **Paleta:** sóbria e levemente dessaturada (seção 1.7). Fundo geral escuro; tons terrosos quentes (madeira, latão) contra azuis-petróleo e cinzas.
+- Textura de papel só se for **muito sutil**; nunca realista.
 
-### 1.3 O que você pode decidir livremente (use o que o melhor modelo faz melhor)
-- **Técnica e acabamento:** pode ser mais **rico, com profundidade, textura sutil, gradientes e iluminação mais elaborada**, desde que mantenha a âncora da seção 1.2. **Não é obrigatório ser vetorial nem chapado.** Pode lembrar pintura digital estilizada ou ilustração editorial, nunca fotografia.
-- **Perspectiva:** a composição das referências é **frontal**; se uma **leve perspectiva** (câmera um pouco mais natural, como numa foto real tirada na altura dos olhos) deixar a cena mais convincente, **pode usar**, desde que **todos os elementos obrigatórios da ficha continuem visíveis** e a **zona livre** do canto inferior direito seja respeitada. Evite perspectivas extremas, grande-angular distorcida, vista de cima ou isométrica.
-- **Detalhes de objetos:** livros com lombadas variadas, papéis, tecidos com dobras, vidro, metal, madeira com veio sutil, vista pela janela. **Quanto mais rico e crível, melhor**, sempre dentro da âncora.
-- **Mantenha a coerência entre as 13 cenas:** mesma paleta, mesmo tipo de luz, mesma "mão". As 13 precisam parecer de **um único conjunto**.
+### 1.3 Ponto de vista e enquadramento — OBRIGATÓRIO (corrige a primeira entrega)
+A imagem tem que parecer **tirada de verdade por uma pessoa de pé, com um celular na mão**:
+- **Perspectiva real de foto**: paredes e piso **convergindo**, móveis vistos em **3/4**, objetos do primeiro plano maiores. **Proibido** elevação frontal simétrica, vista "de catálogo", vista isométrica ou de cima.
+- **Câmera na altura do peito/olhos (≈ 1,4 a 1,6 m)** nas cenas de cômodo; nos closes, a poucas dezenas de centímetros do objeto.
+- **Enquadramento imperfeito, de quem tirou rápido:** assunto principal **levemente fora do centro**, **horizonte inclinado 2° a 4°**, **algo cortado pela borda** (canto de móvel, batente, objeto em primeiro plano), composição **assimétrica**. Nada de simetria perfeita.
+- **Lente de celular:** leve grande-angular (paredes um pouco esticadas nas bordas), sem distorção exagerada.
+- Mesmo com perspectiva, **mantenha o desenho simples e chapado**: pense em planos de papel inclinados em colagem, **nunca em render 3D**.
+- Cada ficha da seção 3 traz o **"Ponto de vista"** exato desta cena. **Ele manda sobre a composição frontal das imagens de referência.**
 
-### 1.4 Obrigatório em todas as cenas
-- **Efeito de "foto desenhada":** luz ambiente coerente (janela, abajur, poste), **sombras de contato** sob móveis e objetos, **vinheta suave** nos cantos, e uma pitada de **granulado fino** (bem discreto).
+### 1.4 Luz e acabamento (o efeito de câmera ruim é de Claude)
+- **Iluminação chapada e uniforme**, como de flash ou luz ambiente neutra: superfícies voltadas para a câmera claras, laterais mais escuras (um único tom plano).
+- **Sombras recortadas simples:** uma forma escura de borda nítida sob/atrás dos móveis e objetos. Sem sombra difusa.
+- **NÃO desenhe**: vinheta, granulado, desfoque, estouro de flash, aberração cromática, baixa resolução, artefato de compressão nem "aspecto de foto ruim". **Claude aplica tudo isso por código depois**, e se você aplicar também, a imagem fica destruída. **Entregue a arte limpa, nítida e em alta resolução.**
+
+### 1.5 Obrigatório em todas as cenas
 - **Mundo de 2002**: TV de tubo, monitor CRT, telefone fixo com fio, celular grafite de antena curta e tela monocromática, abajur de pano, móveis de madeira de classe média alta. **Nenhum smartphone, tela plana, notebook fino moderno, LED, QR code, logotipo ou marca real.**
-- **Escala e proporção plausíveis** dos objetos (porta ≈ 2 m, sofá ≈ 2 m, mesa ≈ 1,4 m).
+- **Escala e proporção plausíveis** dos objetos (porta ≈ 2 m, sofá ≈ 2 m, mesa ≈ 1,4 m), mesmo na versão simplificada.
 - **Sem pessoas** em nenhuma imagem. **Sem sangue, corpo, ferimento ou qualquer violência.** Sem armas.
 
-### 1.5 Proibido
-- **Fotorrealismo** (a imagem não pode parecer uma fotografia), render 3D, estilo anime, cartoon infantil ou "low poly", pintura com pinceladas muito aparentes.
+### 1.6 Proibido
+- **Fotorrealismo** (não pode parecer fotografia), render 3D, gradientes suaves, sombras difusas, pintura com pincelada, estilo anime, "low poly", brilho especular realista, texturas realistas de madeira/tecido.
 - Qualquer texto, letreiro, legenda, assinatura, marca d'água ou numeração desenhada na imagem — **exceto** os textos explicitamente listados na ficha (letreiro "LAN HOUSE", visor "DESARMADO", teclas 1–9, *, 0, #).
-- Moldura, borda branca, data da câmera, **plaqueta amarela numerada, régua pericial** (Claude aplica esses elementos depois, por código, para garantir números e posição corretos).
+- Moldura, borda, data da câmera, **plaqueta amarela numerada, régua pericial** (Claude aplica depois, por código).
 - Qualquer elemento que mude o canon (seção 6).
 
-### 1.6 Paleta de referência (ponto de partida; variações de luz e matiz permitidas)
+### 1.7 Paleta de referência (ponto de partida; variações de luz e matiz permitidas)
 | Uso | Hex aproximado |
 |---|---|
-| Fundo escuro do jogo / sombras profundas | `#16222c` · `#0b141c` |
+| Fundo escuro do jogo / contornos / sombras | `#16222c` · `#0b141c` |
 | Paredes (azul-petróleo/acinzentado) | `#3f5568` · `#47586a` · `#2f414f` · `#56627a` |
 | Madeira de móveis e portas | `#a97a48` · `#8a5a32` · `#9b6a3d` · `#6a4a2a` |
 | Piso de tábuas | `#5d4a3a` · `#4a4036` |
 | Tecidos (acentos) | vinho `#7a3f3a` · azul `#3d6a8a` · mostarda `#d6b257` · lilás `#7a85c0` |
 | Latão/metal quente | `#d6b257` · `#bf9644` |
 | Metal frio | `#9aa4aa` · `#c9d1d5` |
-| Luz quente | `#ffd9a0` |
 | Papel (documentos) | `#ece8dc` |
 
-### 1.7 Composição e margem de segurança
-- **4:3 horizontal.** Conteúdo importante dentro de 92% central.
+### 1.8 Composição e margem de segurança
+- **4:3 horizontal.** Conteúdo importante dentro de 92% central (lembre: "algo cortado pela borda" deve ser **secundário**, nunca um elemento obrigatório da ficha).
 - **Zona livre obrigatória:** o **canto inferior direito** (aprox. 20% da largura × 24% da altura) deve conter **apenas piso/solo/parede lisa**, sem objeto importante, porque ali Claude coloca a plaqueta amarela e a régua.
 
 ---
@@ -88,7 +100,7 @@ Abra `public/characters/livia/expressions/defensive.jpg` e mais duas expressões
 
 **Nomes de arquivo (exatos, minúsculas, sem acento):** os mesmos da ficha, com extensão `.png`. Subpasta `final/comodos/` para as 9 cenas de cômodo (`comodo_0X_*.png`); as demais ficam direto em `final/`.
 
-**Pós-processamento que Claude fará (não faça você):** aplicar a moldura de foto impressa (borda branca, leve inclinação, brilho), a data "17 10 '02" na foto, a plaqueta amarela numerada e a régua; converter para JPG; ligar ao jogo. Por isso as cenas precisam chegar **limpas**, com a zona livre do canto inferior direito.
+**Pós-processamento que Claude fará (não faça você):** aplicar o **efeito de foto de celular de baixa qualidade** (resolução baixa, ruído, flash estourado, vinheta, compressão, leve aberração de lente), a data da câmera, a plaqueta amarela numerada e a régua; converter para JPG; ligar ao jogo. Por isso as cenas precisam chegar **limpas**, com a zona livre do canto inferior direito.
 
 **Se você não conseguir garantir texto 100% correto em algum documento**, entregue assim mesmo a melhor tentativa **e avise** na seção "Resposta do ChatGPT"; Claude conferirá letra por letra e, se houver erro, a versão provisória atual permanece até a correção.
 
@@ -96,12 +108,15 @@ Abra `public/characters/livia/expressions/defensive.jpg` e mais duas expressões
 
 ## 3. FICHAS DAS 13 CENAS (ilustrações com efeito de foto)
 
-> Em todas: estilo da seção 1 (combinar com os retratos), 4:3, 2400×1800 PNG, sem pessoas, sem texto (salvo indicado), zona livre no canto inferior direito.
+> Em todas: estilo da seção 1 (**recortes de papel + combinar com os retratos**) e **ponto de vista de foto de celular (seção 1.3)**, 4:3, 2400×1800 PNG, sem pessoas, sem texto (salvo indicado), zona livre no canto inferior direito.
 > "Referência atual" = arquivo provisório com a composição a seguir (veja o arquivo antes de gerar).
+
+> **Leitura obrigatória das fichas:** as descrições abaixo listam **os elementos** de cada cena. O **enquadramento** é o "Ponto de vista" de cada ficha (foto de celular, perspectiva real). Onde a descrição falar em luz em cone, brilhos, reflexos ou sombras suaves, **simplifique para formas chapadas** de recortes de papel (um reflexo = uma faixa clara; um feixe de luz = um polígono claro e plano; uma sombra = uma forma escura de borda nítida).
 
 ### 3.1 `comodo_01_entrada.png` — Entrada / porta principal
 - **Uso no jogo:** foto nº 1 do pacote "Fotos completas da cena" (Maurício). Mostra que a entrada **não foi arrombada**.
 - **Referência atual:** `public/evidence/case01/new/comodos/comodo_01_entrada.jpg`
+- **Ponto de vista (foto tirada por uma pessoa):** Câmera na altura do peito, a ~2 m da porta e deslocada para a **esquerda** dela, em **3/4**: a porta aparece levemente de lado, o aparador e o espelho entram pela direita em perspectiva, o capacho em primeiro plano cortado pela borda inferior. Horizonte inclinado ~3°.
 - **Cena:** hall de entrada de casa de classe média alta, noite/interior iluminado, parede azul-petróleo com listras discretas, piso de tábuas escuras.
 - **Elementos (esquerda → direita):**
   1. Cabideiro de madeira na parede com prateleira de chapéu e dois casacos pendurados (um vinho, um azul-aço), um chapéu na prateleira. Arandela de parede pequena e acesa (luz quente em cone suave para baixo), ao lado da porta.
@@ -115,6 +130,7 @@ Abra `public/characters/livia/expressions/defensive.jpg` e mais duas expressões
 ### 3.2 `comodo_02_sala.png` — Sala
 - **Uso:** foto nº 2 do pacote de cena. Mostra os **bens de valor preservados** (contradiz roubo comum).
 - **Referência atual:** `public/evidence/case01/new/comodos/comodo_02_sala.jpg`
+- **Ponto de vista (foto tirada por uma pessoa):** Câmera no **canto de entrada da sala**, em diagonal: o sofá em 3/4 no centro, a TV e a estante à direita em perspectiva, a janela ao fundo à esquerda; a mesa de centro parcialmente cortada pela borda inferior.
 - **Cena:** sala de estar arrumada, parede azul-acinzentada com listras, piso de tábuas, **tapete vinho** retangular com franjas e leve estampa de listras verticais.
 - **Elementos:**
   1. **Janela** à esquerda com cortinas vinho/rosadas, vista de céu claro + morro verde + árvore; feixe de luz suave no chão.
@@ -128,6 +144,7 @@ Abra `public/characters/livia/expressions/defensive.jpg` e mais duas expressões
 ### 3.3 `comodo_03_cozinha.png` — Cozinha
 - **Uso:** foto do pacote de cena; mostra que a cozinha **não foi tocada**.
 - **Referência atual:** `public/evidence/case01/new/comodos/comodo_03_cozinha.jpg`
+- **Ponto de vista (foto tirada por uma pessoa):** Da **porta da cozinha**, diagonal para o fundo: geladeira à direita em 3/4, mesa e bancos no centro, balcão e janela ao fundo; o batente da porta aparece cortado na borda esquerda.
 - **Cena:** cozinha clara (parede creme com **azulejo branco-acinzentado** quadriculado até a altura do balcão), piso cinza-oliva.
 - **Elementos:** janela ao centro com **cortinas vermelhas** e vista externa; sob ela um parapeito de madeira; **panelas penduradas** (3 cacarolas) acima da janela; **relógio de parede** redondo; **armário alto de madeira** à esquerda; **balcão com gabinete azul-petróleo** e tampo cinza, sobre ele **fruteira** (maçã vermelha, laranja, folha verde), **leiteira/chaleira**, pano de prato; **geladeira branca** à direita com **ímãs** (um amarelo, um vermelho) e puxadores cinza; **mesa de madeira com toalha vermelha listrada**, com **dois bancos** (assento mostarda), sobre a mesa um **livro/caderno**, **maçã** e **pão**; tapete azul pequeno embaixo.
 - **Obrigatório:** tudo em ordem, nada fora do lugar. **Proibido:** utensílios no chão, gavetas abertas.
@@ -135,6 +152,7 @@ Abra `public/characters/livia/expressions/defensive.jpg` e mais duas expressões
 ### 3.4 `comodo_04_escritorio.png` — Escritório (cena-chave)
 - **Uso:** foto nº 3 do pacote de cena. **É a cena mais importante**: mostra o escritório **revirado de forma seletiva** enquanto **tudo que vale dinheiro continua à vista**.
 - **Referência atual:** `public/evidence/case01/new/comodos/comodo_04_escritorio.jpg`
+- **Ponto de vista (foto tirada por uma pessoa):** Da **porta do escritório**, um pouco acima da altura da mesa, em diagonal: a escrivaninha em 3/4 (o lado esquerdo mais perto da câmera), a estante cortada na borda esquerda, o **cofre** visível no fundo da parede direita, a **cadeira em primeiro plano, parcialmente cortada**, e papéis no chão em primeiro plano. (Todos os elementos obrigatórios da ficha continuam visíveis.)
 - **Cena:** escritório doméstico, parede azul-petróleo escura com listras, piso de tábuas.
 - **Elementos:**
   1. **Estante de madeira alta** à esquerda, **4 prateleiras totalmente cheias de livros** de lombadas variadas (com etiquetas), arrumadas.
@@ -149,13 +167,15 @@ Abra `public/characters/livia/expressions/defensive.jpg` e mais duas expressões
 ### 3.5 `comodo_05_corredor.png` — Corredor
 - **Uso:** foto do pacote de cena; circulação **preservada**.
 - **Referência atual:** `public/evidence/case01/new/comodos/comodo_05_corredor.jpg`
-- **Cena (composição frontal como na referência; leve perspectiva aceitável, desde que as quatro portas, os três quadros e a luminária continuem visíveis):** parede longa de corredor, piso de tábuas com **passadeira vinho** comprida e franjas.
+- **Ponto de vista (foto tirada por uma pessoa):** De uma **ponta do corredor**, olhando para o fundo, com **perspectiva de fuga real** (paredes, teto e piso convergem): portas dos dois lados, quadros nas paredes, luminária de teto, passadeira vinho no piso. Ponto de fuga levemente fora do centro.
+- **Cena:** corredor (pelo ponto de vista acima, **com perspectiva de fuga**), piso de tábuas com **passadeira vinho** comprida e franjas.
 - **Elementos:** **quatro portas de madeira** (quatro painéis cada, puxador latão), espaçadas ao longo da parede, **todas fechadas**; entre elas **três quadros** (paisagens azul-acinzentada, verde-oliva e rosa); **luminária de teto** no centro (cúpula de vidro creme) com cone de luz suave; um **banco/aparador baixo** à esquerda com vasinho vermelho e garrafa; um **pequeno móvel** à direita com telefone/objeto escuro.
 - **Obrigatório:** tudo em ordem, portas fechadas. **Proibido:** objetos caídos, portas arrombadas.
 
 ### 3.6 `comodo_06_quarto_casal.png` — Quarto do casal (sem pessoas, sem violência)
 - **Uso:** foto do pacote de cena; local dos fatos, **sem nenhum conteúdo gráfico**.
 - **Referência atual:** `public/evidence/case01/new/comodos/comodo_06_quarto_casal.jpg`
+- **Ponto de vista (foto tirada por uma pessoa):** Da **porta do quarto**, no pé da cama, em diagonal: a cama em 3/4, o criado-mudo da direita com o celular visível, a janela com a lua ao fundo; o guarda-roupa cortado na borda esquerda.
 - **Cena:** quarto, parede azul-petróleo, **janela noturna à direita** (céu azul-escuro, **lua crescente**, árvore) com cortinas vinho; piso de tábuas.
 - **Elementos:** **cama de casal** de madeira com **cabeceira alta de painéis** e roupa de cama **azul-cinza clara, com travesseiros e dobras na colcha (levemente desarrumada, como de quem estava dormindo)**; **dois criados-mudos**; sobre o da **esquerda um abajur de pano aceso**; sobre o da **direita um celular antigo grafite de antena curta, tela monocromática verde-clara** (aparelho de 2002, **sem tela sensível, sem câmera**); **guarda-roupa de madeira** à esquerda; **chinelos** no chão ao lado da cama; um **pufe lilás** aos pés da cama.
 - **Obrigatório:** **nenhuma pessoa, nenhum corpo, nenhuma mancha, nenhum sinal de violência.** O celular de Helena é o objeto discreto de interesse.
@@ -164,6 +184,7 @@ Abra `public/characters/livia/expressions/defensive.jpg` e mais duas expressões
 ### 3.7 `comodo_07_quarto_livia.png` — Quarto de Lívia
 - **Uso:** foto do pacote de cena; o quarto de Lívia está **preservado** (assimetria narrativa importante).
 - **Referência atual:** `public/evidence/case01/new/comodos/comodo_07_quarto_livia.jpg`
+- **Ponto de vista (foto tirada por uma pessoa):** Da **porta do quarto**, em diagonal: a cama arrumada à esquerda em 3/4, a mesa com o computador ao fundo à direita, a janela à esquerda.
 - **Cena:** quarto de jovem de 19 anos em 2002, parede azul-acinzentada, **janela** à esquerda com cortinas lilás e vista de morro/árvore.
 - **Elementos:** três quadros/pôsteres coloridos (rosa-vermelho, azul, mostarda); **prateleira** com livros e pequenos objetos; **cama de solteiro bem arrumada** (colcha lilás, travesseiro branco); **mesa/estante de estudo** de madeira à direita com **computador de tubo (CRT)** de tela azulada, teclado, papéis e um bloco de notas, **lixeira verde** ao lado; **pufe/tapete rosa-arroxeado** no chão; **mochila** e **tênis** perto da mesa; uma **almofada**.
 - **Obrigatório:** **tudo arrumado e intacto.** **Proibido:** gavetas abertas, roupas pelo chão, qualquer sinal de busca.
@@ -171,7 +192,8 @@ Abra `public/characters/livia/expressions/defensive.jpg` e mais duas expressões
 ### 3.8 `comodo_08_canil.png` — Canil (noite, quintal)
 - **Uso:** foto do pacote de cena (e referência de "Thor estava preso"). O canil está **trancado por fora**, com Thor dentro e **calmo** (sem sinal de contenção improvisada).
 - **Referência atual:** `public/evidence/case01/new/comodos/comodo_08_canil.jpg`
-- **Cena:** quintal de casa à noite, vista frontal. Céu azul-petróleo com **estrelas** e **lua crescente** no alto à esquerda; **cerca de tábuas de madeira** atravessando o fundo; **gramado verde-escuro** com tufos de grama; à direita, **fundos da casa** (parede bege, **janela acesa** amarela com cone de luz suave no gramado, **porta de madeira** escura com maçaneta).
+- **Ponto de vista (foto tirada por uma pessoa):** A ~2 m do canil, câmera na altura do peito, ângulo **levemente de cima para baixo**, canil deslocado para o **lado esquerdo** do quadro, trinco visível na lateral direita da grade; a casa ao fundo em perspectiva. Cena noturna, tons escuros, com a frente do canil bem visível.
+- **Cena:** quintal de casa à noite. Céu azul-petróleo com **estrelas** e **lua crescente** no alto à esquerda; **cerca de tábuas de madeira** atravessando o fundo; **gramado verde-escuro** com tufos de grama; à direita, **fundos da casa** (parede bege, **janela acesa** amarela com cone de luz suave no gramado, **porta de madeira** escura com maçaneta).
 - **Elementos principais (centro-esquerda):** **canil de alvenaria** com **telhado de duas águas** (triângulo marrom-terracota) e **frente de grade de ferro** (grade quadriculada metálica cinza, moldura metálica). **Dentro, atrás da grade, Thor**: cão **grande**, sem raça definida, **pelagem marrom**, focinho claro (areia), orelhas pequenas e erguidas, **coleira vermelha com plaquinha dourada**, sentado e **calmo**, olhos amarelados, olhando para a frente.
 - **À direita do canil, na lateral da grade, o FERROLHO/TRINCO metálico FECHADO por fora** (barra de aço deslizante encaixada na argola), com **um cadeado pequeno dourado pendurado**; ao lado, no chão, uma **bolinha vermelha** e à esquerda uma **vasilha de água azul**.
 - **Obrigatório:** trinco **por fora e fechado**, Thor **dentro e calmo**, sem corda/improviso. **Proibido:** cão agitado, canil aberto, ferimento, sangue.
@@ -180,7 +202,8 @@ Abra `public/characters/livia/expressions/defensive.jpg` e mais duas expressões
 ### 3.9 `comodo_09_painel_alarme.png` — Painel do alarme (close)
 - **Uso:** "Close do painel do alarme" (Maurício). Mostra que o painel **não foi violado/forçado**.
 - **Referência atual:** `public/evidence/case01/new/comodos/comodo_09_painel_alarme.jpg`
-- **Cena:** close frontal de um **teclado de alarme residencial de parede** de 2002, centralizado, sobre parede cinza-azulada lisa (ligeiro gradiente e vinheta).
+- **Ponto de vista (foto tirada por uma pessoa):** **Close** a ~40 cm, **de lado (≈15°)**, o painel levemente inclinado no quadro e a parede em perspectiva suave, como foto tirada com a câmera do celular na mão.
+- **Cena:** close de um **teclado de alarme residencial de parede** de 2002, sobre parede cinza-azulada lisa.
 - **Elementos:** caixa **cinza-claro** com moldura escura; faixa branca no topo; **visor LCD verde-claro** com o texto exato **`DESARMADO`** em fonte monoespaçada escura; abaixo do visor **três LEDs** (o da esquerda **verde aceso**, os outros dois apagados); **teclado numérico de 12 teclas** em grade 3×4: **1 2 3 / 4 5 6 / 7 8 9 / * 0 #**, teclas cinza com relevo e sombra.
 - **Obrigatório:** painel **inteiro e limpo**: tampa no lugar, **sem arranhões, sem fios soltos, sem parafusos faltando**. **Proibido:** qualquer outro texto, marca, logotipo, horário no visor.
 - **Zona livre:** canto inferior direito (parede lisa).
@@ -188,21 +211,24 @@ Abra `public/characters/livia/expressions/defensive.jpg` e mais duas expressões
 ### 3.10 `fechadura_porta.png` — Close da fechadura
 - **Uso:** "Close da fechadura da porta" (Maurício). Prova de que **não houve arrombamento**.
 - **Referência atual:** `public/evidence/case01/new/fechadura_porta.jpg`
-- **Cena:** close muito próximo, **frontal**: porta de madeira **pintada de azul-acinzentado** (`#42586a`), com **dois painéis em relevo** de cada lado (bordas chanfradas mais claras) e uma faixa central; **ao centro, fechadura de embutir em latão**: **roseta externa grande** (círculo de latão envelhecido) → **anel** mais escuro → **disco/cilindro dourado** claro → **placa interna acinzentada** com **buraco de chave** (forma clássica: círculo + fenda vertical), brilhos curvos suaves, sombra de contato projetada para baixo-direita sobre a porta.
+- **Ponto de vista (foto tirada por uma pessoa):** **Close** a ~30 cm, **um pouco de baixo e de lado (≈20°)**: a porta inclinada no quadro e a roseta aparecendo como elipse leve.
+- **Cena:** close muito próximo: porta de madeira **pintada de azul-acinzentado** (`#42586a`), com **dois painéis em relevo** de cada lado (bordas chanfradas mais claras) e uma faixa central; **ao centro, fechadura de embutir em latão**: **roseta externa grande** (círculo de latão envelhecido) → **anel** mais escuro → **disco/cilindro dourado** claro → **placa interna acinzentada** com **buraco de chave** (forma clássica: círculo + fenda vertical), brilhos curvos suaves, sombra de contato projetada para baixo-direita sobre a porta.
 - **Obrigatório:** metal e madeira **perfeitos**: **sem arranhão, sem lasca, sem marca de alavanca, sem amassado, sem tinta descascada.**
 - **Zona livre:** canto inferior direito (parte do painel da porta, lisa).
 
 ### 3.11 `trava_canil.png` — Close do trinco do canil
 - **Uso:** "Foto da trava do canil" (Maurício). Mostra a trava **fechada por fora**, normal, sem contenção improvisada.
 - **Referência atual:** `public/evidence/case01/new/trava_canil.jpg`
-- **Cena:** close frontal: **tela/grade de arame galvanizado** (malha quadriculada fina, reflexos prateados) cobrindo toda a imagem; **dois postes redondos de metal galvanizado** verticais ao centro-direita (brilho claro na esquerda, tom médio no centro, escuro na direita); **trinco de ferrolho em aço**: uma **placa retangular** fixa no poste da direita com **4 parafusos**, uma **barra deslizante** horizontal encaixada na **argola/bucha** do poste da esquerda (**fechada**), com **puxador curvo em gancho**; **leve ferrugem** discreta nas juntas. Ao fundo, desfocado/chapado: **parede bege de alvenaria** (canto superior esquerdo), **gramado** verde-escuro, **balde azul de plástico** e **vasilha vermelha** no chão.
+- **Ponto de vista (foto tirada por uma pessoa):** **Close** a ~40 cm, **em ângulo (≈25°)** em relação à tela: a malha em perspectiva leve, o trinco no centro-direita.
+- **Cena:** close: **tela/grade de arame galvanizado** (malha quadriculada fina, reflexos prateados) cobrindo toda a imagem; **dois postes redondos de metal galvanizado** verticais ao centro-direita (brilho claro na esquerda, tom médio no centro, escuro na direita); **trinco de ferrolho em aço**: uma **placa retangular** fixa no poste da direita com **4 parafusos**, uma **barra deslizante** horizontal encaixada na **argola/bucha** do poste da esquerda (**fechada**), com **puxador curvo em gancho**; **leve ferrugem** discreta nas juntas. Ao fundo, desfocado/chapado: **parede bege de alvenaria** (canto superior esquerdo), **gramado** verde-escuro, **balde azul de plástico** e **vasilha vermelha** no chão.
 - **Obrigatório:** trinco **fechado e íntegro**, sem corrente/corda extra. **Thor não aparece.**
 - **Zona livre:** canto inferior direito.
 
 ### 3.12 `escritorio_comparativo.png` — Escritório, foto comparativa
 - **Uso:** "Foto comparativa do escritório" (Maurício): **gavetas laterais abertas × valores e cofre intactos**.
 - **Referência atual:** `public/evidence/case01/new/escritorio_comparativo.jpg`
-- **Cena:** **vista frontal da escrivaninha** em primeiro plano (a escrivaninha ocupa a metade inferior), parede azul-petróleo escura ao fundo.
+- **Ponto de vista (foto tirada por uma pessoa):** Da altura do peito, a ~1,5 m, **deslocada para a esquerda**, em 3/4 leve: a escrivaninha ocupa a metade inferior, uma das gavetas laterais abertas em primeiro plano, a parede ao fundo.
+- **Cena:** **a escrivaninha** em primeiro plano (a escrivaninha ocupa a metade inferior), parede azul-petróleo escura ao fundo.
 - **Elementos:** **tampo de madeira** com borda mais clara; sobre ele **abajur de pano** aceso (esquerda), **notebook cinza fechado** (centro-esquerda), **relógio de mesa redondo** (centro-direita), uma **garrafinha** (direita) — **tudo intacto**; na parede atrás: **persiana/ripas** à esquerda, **quadro de paisagem**, **quadrinho** à direita e uma **poltrona/cadeira** de espaldar escuro. Frente da escrivaninha, com **dois pedestais de gavetas laterais** (esquerdo e direito) e **uma gaveta principal larga no centro, logo abaixo do tampo**: **a gaveta principal está FECHADA**, com **pequena fechadura/puxador de latão bem visível**; **as gavetas LATERAIS estão ABERTAS** (pelo menos uma aberta em cada pedestal), com **papéis saindo e amassados**; as demais gavetas laterais ficam fechadas. O contraste que a imagem precisa mostrar é: gavetas "sem importância" abertas e bagunçadas × gaveta principal fechada e valores intactos sobre a mesa.
 - **Nota:** o cofre de parede não aparece neste quadro (aparece em `comodo_04_escritorio`).
 - **Zona livre:** canto inferior direito.
@@ -210,7 +236,8 @@ Abra `public/characters/livia/expressions/defensive.jpg` e mais duas expressões
 ### 3.13 `foto_fachada_lan.png` — Fachada da LAN house (noite)
 - **Uso:** "Foto da fachada da LAN house" (Paulo). Documenta o local onde o recibo foi emitido.
 - **Referência atual:** `public/evidence/case01/new/foto_fachada_lan.jpg` — **ATENÇÃO: a referência atual tem um carro branco na rua. NÃO desenhe carro nenhum.** (Um Gol branco aparece no caso como o carro de Caio; ele **não pode** aparecer junto da LAN house, senão a imagem sugere uma ligação falsa.)
-- **Cena:** noite, rua de bairro, vista frontal. Céu azul-marinho muito escuro com poucas estrelas. **Prédio comercial térreo** de fachada azul-acinzentada (platibanda mais escura no topo). **Letreiro retangular** acima, painel escuro com moldura, **texto exato `LAN HOUSE`** em maiúsculas amarelo-dourado (`#f2c94c`), fonte grossa e legível; **vitrine grande** à esquerda com vidro azul-claro iluminado, **quatro monitores CRT** bege alinhados (telas azul-claras acesas) sobre um **balcão de madeira**, e um **cartaz de papel** colado no canto superior esquerdo do vidro (**apenas linhas cinza abstratas, sem texto nem números legíveis**); **porta cinza** à direita com maçaneta dourada e moldura escura; **calçada** cinza e **rua** escura com **faixa central tracejada amarela** (sem nenhum veículo); à direita um **poste de luz** com **luminária alaranjada** projetando **cone de luz suave** sobre a calçada e a porta.
+- **Ponto de vista (foto tirada por uma pessoa):** Da **calçada oposta**, câmera na altura dos olhos, **levemente de lado (≈20° em relação à fachada)**, em perspectiva, enquadramento um pouco torto, o poste de luz cortado na borda direita. **Sem carro, sem pessoas.**
+- **Cena:** noite, rua de bairro. Céu azul-marinho muito escuro com poucas estrelas. **Prédio comercial térreo** de fachada azul-acinzentada (platibanda mais escura no topo). **Letreiro retangular** acima, painel escuro com moldura, **texto exato `LAN HOUSE`** em maiúsculas amarelo-dourado (`#f2c94c`), fonte grossa e legível; **vitrine grande** à esquerda com vidro azul-claro iluminado, **quatro monitores CRT** bege alinhados (telas azul-claras acesas) sobre um **balcão de madeira**, e um **cartaz de papel** colado no canto superior esquerdo do vidro (**apenas linhas cinza abstratas, sem texto nem números legíveis**); **porta cinza** à direita com maçaneta dourada e moldura escura; **calçada** cinza e **rua** escura com **faixa central tracejada amarela** (sem nenhum veículo); à direita um **poste de luz** com **luminária alaranjada** projetando **cone de luz suave** sobre a calçada e a porta.
 - **Obrigatório:** o letreiro "LAN HOUSE" correto, **sem nenhum carro, sem nenhuma pessoa**, sem nome de pessoa legível.
 - **Zona livre:** canto inferior direito (rua escura).
 
@@ -459,8 +486,9 @@ Arquivos esperados (24):
 
 **Cenas e plantas**
 - [ ] 4:3, 2400×1800 (≥ 1600×1200), PNG, sem moldura, sem borda, sem data, **sem plaqueta, sem régua**.
-- [ ] **Combina com `defensive.jpg`** (teste lado a lado): formas simplificadas, sem contorno grosso, paleta sóbria, luz suave. **Não parece fotografia.** As 13 cenas parecem do mesmo conjunto.
-- [ ] Efeito de "foto desenhada": luz ambiente coerente, sombras de contato, vinheta suave, granulado discreto.
+- [ ] **Estilo de recortes de papel**: formas simples, cor chapada, contorno escuro fino, sombra plana, sem gradiente. **Combina com `defensive.jpg`** (teste lado a lado). Não parece fotografia nem render 3D.
+- [ ] **Ponto de vista da ficha respeitado**: perspectiva real em 3/4, assimétrica, horizonte levemente inclinado, algo secundário cortado pela borda. **Não é elevação frontal simétrica.**
+- [ ] Arte **limpa e nítida**: sem vinheta, granulado, desfoque, flash estourado nem aspecto de foto ruim (Claude aplica).
 - [ ] **Sem pessoas**, sem sangue, sem armas.
 - [ ] Nenhum texto desenhado além dos permitidos (`LAN HOUSE`, `DESARMADO`, teclas, rótulos dos croquis).
 - [ ] **Zona livre** no canto inferior direito.
@@ -479,7 +507,7 @@ Arquivos esperados (24):
 - [ ] "DHPP" correto; nenhum órgão proibido.
 
 ## 8. Contexto da cena (para ajustar o tom)
-Estas imagens aparecem como **anexos dentro da conversa do integrante da equipe** (app Equipe, estilo mensageiro) e abrem em visualizador de tela cheia com zoom (pinça) no iPhone. As fotos de cena aparecem como **fotografias impressas** (Claude aplica a moldura). Os documentos aparecem como **cartões de papel** sobre o fundo escuro do jogo. A emoção geral é de **investigação sóbria**: nada espalhafatoso, nada de suspense exagerado.
+Estas imagens aparecem como **anexos dentro da conversa do integrante da equipe** (app Equipe, estilo mensageiro) e abrem em visualizador de tela cheia com zoom (pinça) no iPhone. As fotos de cena aparecem como **fotos de celular de baixa qualidade** (Claude aplica o efeito). Os documentos aparecem como **cartões de papel** sobre o fundo escuro do jogo. A emoção geral é de **investigação sóbria**: nada espalhafatoso, nada de suspense exagerado.
 
 ## 9. Observações técnicas finais para integração
 - Claude só precisa dos arquivos no caminho e nome certos; **não é necessário alterar código** (Claude troca os caminhos, aplica moldura/plaqueta/régua/data e converte para JPG).
