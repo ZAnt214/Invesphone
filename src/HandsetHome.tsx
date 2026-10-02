@@ -55,7 +55,7 @@ export default function HandsetHome(p:Props){
 
       <div className="hm-center">
         <section className="hm-wheel" aria-label="Módulos do sistema">
-          <div className="hm-mark" aria-hidden="true"><b>DHPP</b><i/><span>HOMICÍDIOS</span></div>
+          <div className="hm-mark" aria-hidden="true"><b>DHPP</b><i/><span>{[...'HOMICÍDIOS'].map((l,i)=><em key={i}>{l}</em>)}</span></div>
           <span className="hm-ring" aria-hidden="true"/>
           {nodes.map((n,i)=><Orb key={n.key} n={n} angle={-90+i*72} onOpen={()=>p.onOpenApp(n.key)}/>)}
         </section>

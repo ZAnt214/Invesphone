@@ -26,10 +26,12 @@
 /* A roda fica centralizada na área livre. Tudo mede a partir do centro: o anel tem diâmetro 2R e passa exatamente pelo centro de cada atalho. */
 .hm-center{flex:1 1 auto!important;min-height:0;display:grid;place-items:center}
 .hm-wheel{position:relative;width:calc(2*var(--R) + var(--node) + 18px);height:calc(2*var(--R) + var(--node) + 18px)}
-.hm-mark{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:flex-end;gap:4px;color:#fff;opacity:.13;pointer-events:none;user-select:none}
-.hm-mark b{font:800 calc(var(--R)*.5)/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;letter-spacing:.02em}
-.hm-mark i{display:block;width:100%;height:3px;background:currentColor}
-.hm-mark span{font:700 calc(var(--R)*.1) var(--mono);letter-spacing:.34em;margin-right:-.34em}
+.hm-mark{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;justify-items:stretch;gap:5px;color:#fff;opacity:.13;pointer-events:none;user-select:none;text-align:center}
+.hm-mark b{font:800 calc(var(--R)*.5)/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;letter-spacing:.02em;padding-left:.02em}
+.hm-mark i{display:block;height:3px;background:currentColor}
+/* HOMICÍDIOS ocupa exatamente a largura de DHPP: width:0 + min-width:100% não alarga o bloco e as letras se distribuem de ponta a ponta */
+.hm-mark span{width:0;min-width:100%;display:flex;justify-content:space-between;font:700 calc(var(--R)*.11) var(--mono)}
+.hm-mark em{font-style:normal}
 .hm-ring{position:absolute;left:50%;top:50%;width:calc(2*var(--R));height:calc(2*var(--R));margin:calc(-1*var(--R)) 0 0 calc(-1*var(--R));border-radius:50%;border:2px dashed rgba(255,255,255,.22);animation:hm-spin 60s linear infinite}
 @keyframes hm-spin{to{transform:rotate(360deg)}}
 .hm-orb{position:absolute;left:50%;top:50%;width:0;height:0;padding:0;border:0;background:none;transform:rotate(var(--a)) translateX(var(--R)) rotate(calc(-1*var(--a)))}
