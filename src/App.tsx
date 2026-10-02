@@ -136,8 +136,9 @@ const orderResultMessages:Record<string,{time:string;from:string;text:string}> =
 
 type TeamMaterialRequest = {
   id:string
+  memberId:'sonia'|'mauricio'|'renata'|'paulo'|'denise'
   label:string
-  kind:'FOTO'|'GRAVAÇÃO'|'DOCUMENTO'|'PERÍCIA'
+  kind:'FOTO'|'GRAVAÇÃO'|'DOCUMENTO'|'PERÍCIA'|'COORDENAÇÃO'
   description:string
   minTask?:number
   minInterviews?:number
@@ -150,49 +151,55 @@ type TeamMaterialRequest = {
 
 const teamMaterialRequests:TeamMaterialRequest[] = [
   {
-    id:'fotos_cena',label:'Fotos completas da cena',kind:'FOTO',
+    id:'orientacao_sonia',memberId:'sonia',label:'Pedir leitura da delegada',kind:'COORDENAÇÃO',
+    description:'Pedir à Sônia uma orientação de prioridade sem receber a solução do caso.',
+    requestTime:'04:33',
+    response:{time:'04:34',from:'Sônia',text:'Começa pelo que é objetivo. Entrada, alarme, cachorro e o que ficou para trás. Depois compara isso com o que cada um disser.'}
+  },
+  {
+    id:'fotos_cena',memberId:'mauricio',label:'Fotos completas da cena',kind:'FOTO',
     description:'Entrada, sala, escritório, corredor e quarto do casal em alta resolução.',
     minTask:1,requestTime:'04:35',
     response:{time:'04:41',from:'Perícia',text:'Pacote fotográfico da cena anexado. Entrada, sala, escritório e quarto do casal documentados antes da coleta.'}
   },
   {
-    id:'fotos_painel',label:'Close do painel do alarme',kind:'FOTO',
+    id:'fotos_painel',memberId:'mauricio',label:'Close do painel do alarme',kind:'FOTO',
     description:'Fotografias do teclado, visor e estado do painel antes da manipulação.',
     requiresClues:['painel_alarme'],requestTime:'04:47',
     response:{time:'04:50',from:'Perícia',text:'Close do painel do alarme enviado. O equipamento foi fotografado e preservado antes da análise.'}
   },
   {
-    id:'gravacoes_depoimentos',label:'Gravações dos depoimentos',kind:'GRAVAÇÃO',
+    id:'gravacoes_depoimentos',memberId:'denise',label:'Gravações dos depoimentos',kind:'GRAVAÇÃO',
     description:'Cópias de áudio dos depoimentos já colhidos para comparação de versões.',
     minInterviews:1,requestTime:'05:06',
     response:{time:'05:09',from:'Cartório',text:'Áudios dos depoimentos já realizados anexados ao arquivo da ocorrência.'}
   },
   {
-    id:'comprovante_lan',label:'Comprovante da LAN house',kind:'DOCUMENTO',
+    id:'comprovante_lan',memberId:'paulo',label:'Comprovante da LAN house',kind:'DOCUMENTO',
     description:'Registro de pagamento e horário vinculado a Rafael.',
     requiresInterviewed:['rafael'],clueIds:['lan_paga'],requestTime:'05:11',
     response:{time:'05:14',from:'Equipe Externa',text:'LAN house confirmou o registro de Rafael. Comprovante e horário foram anexados ao caso.'}
   },
   {
-    id:'log_alarme',label:'Log completo do alarme',kind:'PERÍCIA',
+    id:'log_alarme',memberId:'renata',label:'Log completo do alarme',kind:'PERÍCIA',
     description:'Histórico de ativações e desativações do sistema da residência.',
     minInterviews:4,clueIds:['log_alarme'],requestTime:'05:15',
     response:{time:'05:18',from:'Inteligência',text:'Log completo recebido. Há uma desativação por código mestre às 23:52.'}
   },
   {
-    id:'registro_motel',label:'Registro de entrada do motel',kind:'DOCUMENTO',
+    id:'registro_motel',memberId:'paulo',label:'Registro de entrada do motel',kind:'DOCUMENTO',
     description:'Comprovante com horário de entrada atribuído a Lívia e Caio.',
     requiresClues:['log_alarme'],clueIds:['nota_motel'],requestTime:'05:26',
     response:{time:'05:31',from:'Equipe Externa',text:'Motel localizou o registro. Entrada de Lívia e Caio consta às 00:56.'}
   },
   {
-    id:'docs_financeiros',label:'Documentos financeiros de Ricardo',kind:'DOCUMENTO',
+    id:'docs_financeiros',memberId:'renata',label:'Documentos financeiros de Ricardo',kind:'DOCUMENTO',
     description:'Extratos e cobranças recolhidos no escritório para cruzamento financeiro.',
     minTask:5,clueIds:['extrato_ricardo','carta_cobranca'],requestTime:'06:03',
     response:{time:'06:10',from:'Financeiro',text:'Extrato e carta de cobrança de Ricardo digitalizados e anexados para análise.'}
   },
   {
-    id:'analise_cinta',label:'Análise da cinta bancária',kind:'PERÍCIA',
+    id:'analise_cinta',memberId:'renata',label:'Análise da cinta bancária',kind:'PERÍCIA',
     description:'Conferência de origem, agência, data e valor da cinta encontrada com o dinheiro.',
     minTask:6,requiresClues:['extrato_ricardo'],clueIds:['cinta_bancaria'],requestTime:'06:20',
     response:{time:'06:26',from:'Financeiro',text:'Cinta identificada: Banco Meridional, ag. 0431, 15/10/2002, US$ 5.000.'}
@@ -475,19 +482,27 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
 function HandsetStatus(){return <header className="handset-status"><span>VIVO&nbsp;&nbsp;▮▮▮</span><b>DHPP</b><BatteryMedium/></header>}
 function PhonePage({title,back,children}:{title:string;back:()=>void;children:React.ReactNode}){return <main className="handset page"><HandsetStatus/><header className="page-head"><button onClick={back}><ChevronLeft/></button><b>{title}</b><span/></header><section className="page-body">{children}</section></main>}
 
+const caseTeam = [
+ {id:'sonia',name:'Sônia Prado',initials:'SP',role:'Delegada',specialty:'Coordenação do caso',detail:'Prioridades, decisões e direção investigativa.'},
+ {id:'mauricio',name:'Maurício Farias',initials:'MF',role:'Perito criminal',specialty:'Cena e vestígios',detail:'Fotos, coleta, objetos, painel e laudos da residência.'},
+ {id:'renata',name:'Renata Leal',initials:'RL',role:'Investigadora',specialty:'Inteligência e registros',detail:'Alarmes, veículos, cruzamentos e linha financeira.'},
+ {id:'paulo',name:'Paulo Vieira',initials:'PV',role:'Investigador',specialty:'Diligências de campo',detail:'Testemunhas, estabelecimentos, endereços e verificações externas.'},
+ {id:'denise',name:'Denise Rocha',initials:'DR',role:'Escrivã',specialty:'Cartório e depoimentos',detail:'Gravações, transcrições e organização documental.'}
+] as const
+
+const teamMemberForSender=(from:string)=>{
+ if(from==='Sônia')return 'sonia'
+ if(from==='Perícia')return 'mauricio'
+ if(from==='Inteligência'||from==='Financeiro')return 'renata'
+ if(from==='Em Campo'||from==='Equipe Externa')return 'paulo'
+ if(from==='Cartório')return 'denise'
+ return 'sonia'
+}
+
 function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStateAction<GameSave>>}){
- const [mode,setMode]=useState<'thread'|'requests'>('thread')
- const ordered=game.orders.map(id=>orderResultMessages[id]).filter(Boolean)
+ const [selected,setSelected]=useState<string|null>(null)
  const requested=game.requestedMaterials??[]
- const materialMessages=requested.flatMap(id=>{
-  const item=teamMaterialRequests.find(r=>r.id===id)
-  if(!item)return []
-  return [
-   {time:item.requestTime,from:'Lemos',text:`Solicitação de material: ${item.label}.`},
-   item.response
-  ]
- })
- const messages=[...teamMessages,...ordered,...materialMessages].sort((a,b)=>a.time.localeCompare(b.time))
+
  const available=(item:TeamMaterialRequest)=>{
   if((item.minTask??0)>game.task)return false
   if((item.minInterviews??0)>game.interviewed.length)return false
@@ -495,38 +510,84 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
   if(item.requiresInterviewed?.some(id=>!game.interviewed.includes(id)))return false
   return true
  }
+
  const request=(item:TeamMaterialRequest)=>{
   if(requested.includes(item.id)||!available(item))return
   setGame(g=>{
    const material=[...(g.requestedMaterials??[]),item.id]
-   const gained=item.clueIds??[]
    const nextClues=[...g.clues]
-   gained.forEach(id=>{if(!nextClues.includes(id))nextClues.push(id)})
+   ;(item.clueIds??[]).forEach(id=>{if(!nextClues.includes(id))nextClues.push(id)})
    return {...g,requestedMaterials:material,clues:nextClues}
   })
-  setMode('thread')
  }
- return <div className="team-hub">
-  <div className="team-tabs">
-   <button className={mode==='thread'?'active':''} onClick={()=>setMode('thread')}>Canal</button>
-   <button className={mode==='requests'?'active':''} onClick={()=>setMode('requests')}>Solicitar material</button>
-  </div>
-  {mode==='thread'?<div className="thread">
-   <div className="thread-head"><img className="mini-avatar" src={SONIA_PHOTO} alt="Sônia Prado"/><div><b>Ocorrência 001</b><span>canal operacional · 4 participantes</span></div></div>
-   {messages.map((m,i)=><article key={m.time+m.from+i}><small>{m.time}</small><p><b>{m.from}</b>{m.text}</p></article>)}
-   <div className="typing"><i/><i/><i/> equipe em campo</div>
-  </div>:<div className="material-requests">
-   <header><small>CENTRAL DE SOLICITAÇÕES</small><b>O que você precisa da equipe?</b><p>Peça materiais conforme novas linhas de investigação forem abertas.</p></header>
-   {teamMaterialRequests.map(item=>{
-    const done=requested.includes(item.id)
-    const can=available(item)
-    return <button key={item.id} className={done?'received':''} disabled={!can||done} onClick={()=>request(item)}>
-     <i>{item.kind==='FOTO'?<Camera/>:item.kind==='GRAVAÇÃO'?<Volume2/>:item.kind==='PERÍCIA'?<Search/>:<FileText/>}</i>
-     <div><small>{item.kind}</small><b>{item.label}</b><p>{item.description}</p><span>{done?'RECEBIDO':can?'SOLICITAR':'AGUARDANDO BASE INVESTIGATIVA'}</span></div>
-     {done&&<Check/>}
+
+ const ordered=game.orders.map(id=>orderResultMessages[id]).filter(Boolean)
+ const baseMessages=[...teamMessages,...ordered]
+ const materialMessages=requested.flatMap(id=>{
+  const item=teamMaterialRequests.find(r=>r.id===id)
+  if(!item)return []
+  return [
+   {time:item.requestTime,from:'Lemos',text:`Solicitação: ${item.label}.`,memberId:item.memberId,outgoing:true},
+   {...item.response,memberId:item.memberId,outgoing:false}
+  ]
+ })
+ const normalized=baseMessages.map(m=>({...m,memberId:teamMemberForSender(m.from),outgoing:false}))
+ const allMessages=[...normalized,...materialMessages].sort((a,b)=>a.time.localeCompare(b.time))
+
+ if(!selected){
+  return <div className="team-contacts">
+   <header className="team-directory-head">
+    <small>EQUIPE VINCULADA · OCORRÊNCIA 001</small>
+    <b>Com quem você precisa falar?</b>
+    <p>Cada integrante responde apenas pela própria área.</p>
+   </header>
+   {caseTeam.map(member=>{
+    const messages=allMessages.filter(m=>m.memberId===member.id)
+    const last=messages[messages.length-1]
+    const actions=teamMaterialRequests.filter(r=>r.memberId===member.id&&available(r)&&!requested.includes(r.id))
+    return <button key={member.id} className="team-contact" onClick={()=>setSelected(member.id)}>
+      <i>{member.initials}</i>
+      <div>
+       <small>{member.role.toUpperCase()} · {member.specialty.toUpperCase()}</small>
+       <b>{member.name}</b>
+       <p>{last?.text??member.detail}</p>
+      </div>
+      <span>{actions.length>0?<em>{actions.length}</em>:<ChevronLeft/>}</span>
     </button>
    })}
-  </div>}
+  </div>
+ }
+
+ const member=caseTeam.find(m=>m.id===selected)!
+ const memberMessages=allMessages.filter(m=>m.memberId===selected)
+ const requests=teamMaterialRequests.filter(r=>r.memberId===selected)
+
+ return <div className="member-chat">
+  <button className="member-back" onClick={()=>setSelected(null)}><ChevronLeft/> Equipe</button>
+  <header className="member-head">
+   <i>{member.initials}</i>
+   <div><b>{member.name}</b><span>{member.role} · {member.specialty}</span><small>{member.detail}</small></div>
+  </header>
+
+  <section className="member-thread">
+   {memberMessages.length===0&&<p className="member-empty">Nenhuma mensagem ainda. Você pode iniciar a conversa com uma solicitação pertinente à função de {member.name}.</p>}
+   {memberMessages.map((m,i)=><article key={m.time+m.from+i} className={m.outgoing?'outgoing':''}>
+    <small>{m.time}</small><p><b>{m.from}</b>{m.text}</p>
+   </article>)}
+  </section>
+
+  <section className="member-actions">
+   <small>O QUE PEDIR A {member.name.split(' ')[0].toUpperCase()}</small>
+   {requests.map(item=>{
+    const done=requested.includes(item.id)
+    const can=available(item)
+    return <button key={item.id} disabled={done||!can} className={done?'done':''} onClick={()=>request(item)}>
+      <div><b>{item.label}</b><p>{item.description}</p></div>
+      <span>{done?'RECEBIDO':can?'PEDIR':'AINDA NÃO HÁ BASE'}</span>
+    </button>
+   })}
+   {requests.length===0&&<p className="member-empty">Nenhuma solicitação específica disponível neste momento.</p>}
+  </section>
  </div>
 }
 function ClueList({ids}:{ids:string[]}){if(!ids.length)return <Empty icon={<FileSearch/>} title="Nenhuma pista registrada" text="Abra a tarefa atual e comece pela cena."/>;return <div className="clue-list">{ids.map(id=>{const c=clues.find(x=>x.id===id)!;return <article key={id}><FileText/><div><small>{c.category.toUpperCase()}</small><b>{c.title}</b><p>{c.description}</p></div></article>})}</div>}

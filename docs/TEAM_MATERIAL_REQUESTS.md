@@ -1,196 +1,198 @@
-# MECÂNICA — SOLICITAÇÃO DE MATERIAIS À EQUIPE
+# MECÂNICA — EQUIPE OPERACIONAL E SOLICITAÇÕES
 
 Status: OFICIAL  
 Caso atual: Caso 01 — A Casa da Rua das Acácias
 
-## Objetivo
+## Conceito
 
-O app **Equipe** não deve funcionar apenas como feed passivo de mensagens.
+O app **Equipe** é um diretório de contatos operacionais do caso.
 
-O jogador, como Lemos, pode solicitar materiais operacionais à equipe conforme novas linhas investigativas forem abertas.
+O jogador não entra em um catálogo genérico de pedidos. Ele escolhe **com qual integrante falar** e conversa com essa pessoa em um canal individual.
 
-Categorias:
+Cada integrante:
+- tem nome;
+- função;
+- especialidade;
+- histórico próprio de mensagens;
+- solicitações compatíveis com a sua área;
+- respostas próprias.
 
-- FOTO
-- GRAVAÇÃO
-- DOCUMENTO
-- PERÍCIA
+A fantasia é: **Lemos coordena uma equipe real pelo telefone**.
 
-A mecânica deve reforçar a fantasia de comandar uma investigação remotamente pelo celular.
+---
+
+## Integrantes
+
+### Sônia Prado
+Cargo: Delegada  
+Especialidade: coordenação do caso
+
+Responsável por:
+- prioridades;
+- direção investigativa;
+- decisões;
+- orientação;
+- autorização e organização da equipe.
+
+Ela não entrega a solução.  
+Pode orientar Lemos sobre qual linha merece atenção.
+
+Pedido inicial:
+- pedir leitura/orientação da delegada.
+
+### Maurício Farias
+Cargo: Perito criminal  
+Especialidade: cena e vestígios
+
+Responsável por:
+- fotografias da cena;
+- close de objetos;
+- painel do alarme;
+- vestígios;
+- coleta;
+- laudos e observações técnicas.
+
+Pedidos atuais:
+- fotos completas da cena;
+- close do painel do alarme.
+
+### Renata Leal
+Cargo: Investigadora  
+Especialidade: inteligência e registros
+
+Responsável por:
+- log do alarme;
+- consulta de veículos;
+- cruzamento de registros;
+- linhas financeiras;
+- registros bancários;
+- análise da cinta bancária.
+
+Pedidos atuais:
+- log completo do alarme;
+- documentos financeiros de Ricardo;
+- análise da cinta bancária.
+
+### Paulo Vieira
+Cargo: Investigador  
+Especialidade: diligências de campo
+
+Responsável por:
+- localizar testemunhas;
+- falar com estabelecimentos;
+- buscar comprovantes;
+- verificar endereços;
+- motel;
+- LAN house;
+- checagens externas.
+
+Pedidos atuais:
+- comprovante da LAN house;
+- registro de entrada do motel.
+
+### Denise Rocha
+Cargo: Escrivã  
+Especialidade: cartório e depoimentos
+
+Responsável por:
+- gravações;
+- transcrições;
+- organização de depoimentos;
+- documentação formal;
+- cópias de termos.
+
+Pedido atual:
+- gravações dos depoimentos.
+
+---
+
+## Interface
+
+Ao abrir **Equipe**:
+
+1. mostrar os integrantes do caso;
+2. mostrar cargo e especialidade;
+3. mostrar a última mensagem daquela pessoa;
+4. indicar quando existe uma nova solicitação possível;
+5. ao tocar, abrir conversa individual.
+
+Dentro da conversa:
+- histórico daquela pessoa;
+- mensagens enviadas por Lemos;
+- respostas do integrante;
+- seção contextual "O que pedir a [nome]";
+- pedidos bloqueados aparecem como indisponíveis até haver base investigativa;
+- pedidos recebidos permanecem visíveis como concluídos.
+
+Não existe mais uma aba global "Solicitar material".
+
+---
 
 ## Regra central
 
-**Descoberta abre solicitação. Solicitação entrega material. Material abre nova ação.**
+**A necessidade investigativa determina com quem Lemos fala.**
 
-Nunca liberar um material sensível antes de haver fundamento narrativo para pedi-lo.
+Exemplos:
 
-## Fluxo de interface
+- quer foto ou laudo da cena → Maurício;
+- quer log do alarme → Renata;
+- quer confirmação da LAN house → Paulo;
+- quer gravação de depoimento → Denise;
+- quer definir prioridade → Sônia.
 
-No app Equipe existem duas abas:
+O jogador aprende naturalmente a função de cada integrante e passa a saber quem procurar.
 
-### Canal
-Mostra:
-- atualizações da equipe;
-- consequências das ordens da ligação;
-- pedidos feitos por Lemos;
-- retorno dos materiais solicitados.
+---
 
-### Solicitar material
-Mostra:
-- materiais já disponíveis para solicitação;
-- materiais ainda bloqueados;
-- materiais já recebidos.
+## Progressão
 
-Estados:
-- SOLICITAR
-- AGUARDANDO BASE INVESTIGATIVA
-- RECEBIDO
+Pedidos continuam obedecendo a requisitos narrativos.
 
-## Materiais do Caso 01
+Exemplos:
 
-### Fotos completas da cena
-Categoria: FOTO
+- painel encontrado → Maurício pode fornecer close do painel;
+- Rafael ouvido → Paulo pode verificar a LAN;
+- primeiras versões colhidas → Renata pode puxar o log;
+- log recebido → Paulo pode verificar o motel;
+- linha financeira aberta → Renata pode buscar documentos;
+- extrato cruzado → Renata pode analisar a cinta.
 
-Disponível após o início da varredura.
+Nenhum integrante deve oferecer uma prova que Lemos ainda não tem motivo para procurar.
 
-Entrega:
-fotografias da entrada, sala, escritório e quarto do casal.
+---
 
-Não cria prova nova automaticamente; serve como material de consulta e base visual.
+## Regras
 
-### Close do painel do alarme
-Categoria: FOTO
+1. Não criar catálogo central de provas.
+2. Não permitir que qualquer pessoa faça qualquer coisa.
+3. Toda solicitação tem um responsável claro.
+4. Conversas devem parecer humanas, não retorno de API.
+5. O integrante pode dizer que algo não está disponível ainda.
+6. Não exigir espera real.
+7. A resposta pode simular passagem de minutos dentro da ficção.
+8. Material recebido pode registrar pista no save.
+9. Sônia orienta, mas não resolve deduções.
+10. Especialidades devem respeitar a polícia e a tecnologia de 2002.
 
-Pré-requisito:
-`painel_alarme`
+---
 
-Entrega:
-fotografias do teclado/visor antes da manipulação.
-
-### Gravações dos depoimentos
-Categoria: GRAVAÇÃO
-
-Pré-requisito:
-pelo menos um depoimento realizado.
-
-Entrega:
-cópias de áudio dos depoimentos já colhidos.
-
-Uso futuro:
-comparação de versões, reprodução de trechos, análise de contradição.
-
-### Comprovante da LAN house
-Categoria: DOCUMENTO
-
-Pré-requisito:
-Rafael já ouvido.
-
-Entrega:
-`lan_paga`
-
-Função:
-confirmar o álibi de Rafael.
-
-### Log completo do alarme
-Categoria: PERÍCIA
-
-Pré-requisito:
-pelo menos quatro depoimentos iniciais.
-
-Entrega:
-`log_alarme`
-
-Dado canônico:
-23:52 — desativação por código mestre.
-
-### Registro de entrada do motel
-Categoria: DOCUMENTO
-
-Pré-requisito:
-`log_alarme`
-
-Entrega:
-`nota_motel`
-
-Dado canônico:
-00:56 — entrada registrada.
-
-### Documentos financeiros de Ricardo
-Categoria: DOCUMENTO
-
-Disponível quando a linha financeira é aberta.
-
-Entrega:
-- `extrato_ricardo`
-- `carta_cobranca`
-
-### Análise da cinta bancária
-Categoria: PERÍCIA
-
-Pré-requisito:
-linha financeira ativa + extrato de Ricardo.
-
-Entrega:
-`cinta_bancaria`
-
-Dado canônico:
-Banco Meridional · ag. 0431 · 15/10/2002 · US$ 5.000.
-
-## Regras de design
-
-1. O jogador pode pedir materiais opcionais sem medo de quebrar o caso.
-2. Materiais obrigatórios nunca podem ficar inacessíveis por uma escolha anterior.
-3. Pedidos não devem exigir espera em tempo real.
-4. O retorno pode ser apresentado como se alguns minutos tivessem passado dentro da ficção.
-5. O canal registra o pedido de Lemos e a resposta da equipe.
-6. Se um material entrega uma pista, a pista entra no save quando o retorno é recebido.
-7. Materiais visuais reais podem ser adicionados futuramente ao Arquivo sem mudar a lógica desta mecânica.
-8. A equipe não deve permitir pedidos absurdos ou incompatíveis com 2002.
-9. O jogador não solicita uma “solução”; solicita evidência bruta.
-10. Sônia não interpreta automaticamente o material pelo jogador.
-
-## Expansão futura
-
-O sistema deve aceitar novos tipos de solicitação, como:
-
-- foto ampliada de detalhe;
-- laudo parcial;
-- gravação específica;
-- segunda via de documento;
-- confronto de assinatura;
-- consulta de placa;
-- histórico bancário;
-- fotografia de objeto apreendido;
-- fita de câmera/portaria;
-- transcrição;
-- comparação pericial;
-- retorno de testemunha;
-- nova busca na residência.
-
-Cada novo item precisa definir:
+## Modelo de solicitação futura
 
 ```
 id
+memberId
 label
 kind
 description
 availabilityCondition
-resultMessage
+requestMessage
+responseMessage
 outputClues
 assetPaths (opcional)
 ```
 
-## Relação com o GAME FLOW
+## Fonte de verdade
 
-A mecânica é transversal aos três atos.
+Esta mecânica substitui o modelo antigo "Canal / Solicitar material".
 
-Ato 1:
-fotos, painel, gravações e comprovante da LAN.
-
-Ato 2:
-log, motel e documentos financeiros.
-
-Ato 3:
-análises finais e materiais usados para sustentar o relatório.
-
-O jogador deve sentir que está **pedindo trabalho à equipe**, não abrindo uma loja de pistas.
+O app Equipe deve ser tratado como **contatos + conversas individuais + solicitações por especialidade**.
