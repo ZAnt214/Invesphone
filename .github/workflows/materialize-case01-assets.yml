@@ -3,7 +3,7 @@ name: Materialize Case 01 evidence assets
 on:
   push:
     paths:
-      - "creative-requests/payloads/case01_new_assets.ready"
+      - "creative-requests/payloads/case01-new-svg/termo_depoimento_modelo.svg"
 
 permissions:
   contents: write
