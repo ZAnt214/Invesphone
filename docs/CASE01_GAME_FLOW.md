@@ -1458,3 +1458,26 @@ Não existe botão genérico de "concluir etapa".
 ## Regra de implementação
 
 Se `game.task` continuar sendo usado no código, ele deve funcionar apenas como marcador interno de fase. Interface, textos e navegação devem usar linguagem de ocorrência, evidência, retorno de equipe, pessoa, documento ou relatório.
+
+
+# 53. EQUIPE COMO CONVERSA PROGRESSIVA
+
+A equipe não funciona como menu de serviços.
+
+Cada contato possui conversas que são liberadas por:
+- pistas;
+- depoimentos;
+- contradições;
+- fase da investigação;
+- conversas anteriores.
+
+Algumas diligências exigem que Lemos discuta primeiro a linha investigativa com o responsável.
+
+Exemplo:
+
+Rafael ouvido → conversar com Paulo sobre o álibi → pedir comprovante da LAN.
+
+O objetivo é que o jogador sinta que está **investigando com pessoas**, e não comprando pistas em uma lista.
+
+Fonte:
+`docs/TEAM_MATERIAL_REQUESTS.md`
