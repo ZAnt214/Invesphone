@@ -14,37 +14,50 @@ supersedes: 2026-10-02-equipe-material-novo-v2-realismo
 > **Leia tudo antes de gerar. Este pedido foi escrito para ser feito uma única vez.** Ele tem: (1) o guia de estilo, (2) as regras técnicas, (3) uma ficha completa para cada uma das 24 imagens, (4) o texto exato de cada documento e (5) uma lista de conferência final. Se algo estiver ambíguo, escolha a opção que **mais se parece com o arquivo de referência atual** indicado na ficha.
 
 ## 0. Contexto em duas linhas
-O jogo (Arquivo Morto / Invesphone) é um app de investigação policial para celular, com visual **ilustrado em 2D** (os retratos dos personagens são ilustração vetorial chapada, tons escuros e sóbrios). Já existe uma versão provisória de todas as 24 imagens, feita em código por Claude. **Ela acerta o conteúdo, a composição e o canon, mas a arte é simples demais.** Este pedido é para você **refazer cada imagem com qualidade de arte final**, mantendo composição e conteúdo.
+O jogo (Arquivo Morto / Invesphone) é um app de investigação policial para celular, com **visual ilustrado**: os retratos dos personagens são ilustração digital **estilizada** (formas simplificadas, cores sóbrias, sombreamento suave, fundos escuros). Já existe uma versão provisória de todas as 24 imagens, feita em código por Claude. **Ela acerta o conteúdo, a composição e o canon, mas a arte é simples demais.** Este pedido é para você **refazer cada imagem com qualidade de arte final**.
 
-**Como usar as referências provisórias:** cada ficha indica o arquivo atual em `public/evidence/case01/new/...`. Ele é a referência de **layout, enquadramento, objetos e posições**. Reproduza os mesmos elementos nas mesmas posições aproximadas, e eleve: desenho dos objetos, proporção, riqueza de detalhe, iluminação, acabamento. **Não é para copiar os defeitos de acabamento** (formas de caixa, sombras uniformes). Nas fotos, os arquivos atuais já vêm com moldura de foto, plaqueta e data aplicadas por pós-processamento; **você NÃO deve desenhar moldura, plaqueta, régua nem data** (ver seção 2).
+**Decisão de estilo do dono do projeto (importante):** as imagens **não precisam ser "2D chapado"**. Use a técnica e o nível de acabamento que o melhor modelo entregar de melhor qualidade. **A única exigência é que elas COMBINEM com os retratos dos personagens**, a ponto de aparecerem lado a lado no mesmo jogo sem estranhamento (ver seção 1).
+
+**Como usar as referências provisórias:** cada ficha indica o arquivo atual em `public/evidence/case01/new/...`. Ele define **conteúdo, objetos e posições aproximadas — NÃO a técnica nem o nível de acabamento**. Reproduza os mesmos elementos, e eleve: desenho dos objetos, proporção, riqueza de detalhe, iluminação, materiais, acabamento. **Não copie os defeitos de acabamento** (formas de caixa, sombras uniformes, chapado demais). Nas fotos, os arquivos atuais já vêm com moldura de foto, plaqueta e data aplicadas por pós-processamento; **você NÃO deve desenhar moldura, plaqueta, régua nem data** (ver seção 2).
 
 **Referência de ESTILO oficial (obrigatória, olhe antes de gerar):**
-- `public/characters/livia/expressions/defensive.jpg` e as demais expressões em `public/characters/*/expressions/` — é o padrão visual do jogo: ilustração vetorial **chapada**, formas limpas, sombreamento suave e discreto, **sem contorno preto grosso**, paleta fechada e sóbria, fundo azul-petróleo escuro.
-- Imagens provisórias aprovadas em direção (o dono do projeto pediu: "mais 2D", "um efeito a mais, como se fosse uma foto, mas em desenho"): `public/evidence/case01/new/comodos/*.jpg` e `public/evidence/case01/new/*.jpg`.
+- `public/characters/livia/expressions/defensive.jpg` e as demais expressões em `public/characters/*/expressions/` — é o padrão visual do jogo: ilustração digital **estilizada**, formas limpas e simplificadas, sombreamento suave, **sem contorno preto grosso**, paleta fechada e sóbria, fundo azul-petróleo escuro.
+- Imagens provisórias (só como referência de conteúdo e composição; o dono do projeto pediu "como se fosse uma foto, mas em desenho"): `public/evidence/case01/new/comodos/*.jpg` e `public/evidence/case01/new/*.jpg`.
 
 ---
 
-## 1. GUIA DE ESTILO (vale para as 13 cenas e as 2 plantas; os documentos têm guia próprio na seção 4)
+## 1. GUIA DE ESTILO — "COMBINAR COM OS PERSONAGENS"
 
 ### 1.1 Em uma frase
-**"Uma fotografia de perícia de 2002, redesenhada como ilustração vetorial 2D chapada, com luz suave e sombras de contato — como se fosse uma foto, mas desenhada."**
+**"Uma fotografia de perícia de 2002 vista como ilustração digital estilizada, do mesmo universo visual dos retratos do jogo: como se fosse uma foto, mas desenhada."**
 
-### 1.2 Obrigatório
-- **Vista frontal ortogonal (elevação 2D)**, câmera na altura dos olhos, **sem perspectiva** de fuga, sem vista isométrica, sem vista em 3/4. Paredes de frente, chão como faixa horizontal na parte de baixo. Objetos vistos de frente (um sofá é visto de frente, uma cama é vista de frente/lateral pelo pé).
-- **Formas vetoriais limpas**, bordas nítidas, cantos levemente arredondados nos móveis, **sem linha de contorno escura** (o volume vem da diferença de cor, não de traço).
-- **Profundidade suave** que dá o efeito de "foto": (a) **sombras de contato** macias sob e atrás dos móveis, (b) **brilho fino** na borda superior de móveis e objetos, (c) **luz ambiente quente** vinda de janela ou abajur, com leve feixe de luz projetado no chão, (d) **vinheta suave** escurecendo os cantos (≈ 35–40%), (e) **granulado fino** quase imperceptível (≈ 4–6%).
-- **Detalhe rico de objetos**, mas em estilo chapado: livros com lombadas de cores variadas e etiquetas, almofadas com dobras, papéis com linhas de texto abstratas, tábuas do piso com juntas, listras discretas no papel de parede, cortinas com dobras, janelas com vista (céu claro, morro verde, uma árvore).
-- **Escala e proporção plausíveis** de objetos reais (porta ≈ 2 m, sofá ≈ 2 m, mesa ≈ 1,4 m). Nada de proporção infantil.
+### 1.2 O que PRECISA ser igual aos retratos (âncora de estilo — não negociável)
+Abra `public/characters/livia/expressions/defensive.jpg` e mais duas expressões de outro personagem em `public/characters/*/expressions/` antes de gerar. Observe e replique:
+- **Tratamento de forma:** formas **simplificadas e limpas**, silhuetas claras, **sem contorno preto grosso**, **sem hiperdetalhe fotográfico** (nada de poros, fibras, textura de pele/pano realista). Detalhes são **sugeridos**, não renderizados.
+- **Cor:** **paleta fechada, sóbria e levemente dessaturada**, tons terrosos quentes (madeira, latão, tecido) contra **azuis-petróleo e cinzas frios**; o fundo geral é **escuro** (o jogo é noturno/sombrio). Nada de cores saturadas ou neon.
+- **Luz:** **suave e direcional**, com **sombreamento macio** que dá volume sem endurecer (como nos rostos dos retratos), clima **contido, sério, um pouco melancólico**.
+- **Nível de abstração:** o mesmo dos retratos. Se um personagem aparecesse dentro da cena, ele precisaria parecer **da mesma mão**. (Não desenhe pessoas — é só o teste mental.)
+- **Teste de aprovação:** coloque a imagem lado a lado com `defensive.jpg`. Se parecerem de **jogos diferentes**, refaça. Se parecerem **do mesmo jogo**, está aprovada.
+
+### 1.3 O que você pode decidir livremente (use o que o melhor modelo faz melhor)
+- **Técnica e acabamento:** pode ser mais **rico, com profundidade, textura sutil, gradientes e iluminação mais elaborada**, desde que mantenha a âncora da seção 1.2. **Não é obrigatório ser vetorial nem chapado.** Pode lembrar pintura digital estilizada ou ilustração editorial, nunca fotografia.
+- **Perspectiva:** a composição das referências é **frontal**; se uma **leve perspectiva** (câmera um pouco mais natural, como numa foto real tirada na altura dos olhos) deixar a cena mais convincente, **pode usar**, desde que **todos os elementos obrigatórios da ficha continuem visíveis** e a **zona livre** do canto inferior direito seja respeitada. Evite perspectivas extremas, grande-angular distorcida, vista de cima ou isométrica.
+- **Detalhes de objetos:** livros com lombadas variadas, papéis, tecidos com dobras, vidro, metal, madeira com veio sutil, vista pela janela. **Quanto mais rico e crível, melhor**, sempre dentro da âncora.
+- **Mantenha a coerência entre as 13 cenas:** mesma paleta, mesmo tipo de luz, mesma "mão". As 13 precisam parecer de **um único conjunto**.
+
+### 1.4 Obrigatório em todas as cenas
+- **Efeito de "foto desenhada":** luz ambiente coerente (janela, abajur, poste), **sombras de contato** sob móveis e objetos, **vinheta suave** nos cantos, e uma pitada de **granulado fino** (bem discreto).
 - **Mundo de 2002**: TV de tubo, monitor CRT, telefone fixo com fio, celular grafite de antena curta e tela monocromática, abajur de pano, móveis de madeira de classe média alta. **Nenhum smartphone, tela plana, notebook fino moderno, LED, QR code, logotipo ou marca real.**
+- **Escala e proporção plausíveis** dos objetos (porta ≈ 2 m, sofá ≈ 2 m, mesa ≈ 1,4 m).
 - **Sem pessoas** em nenhuma imagem. **Sem sangue, corpo, ferimento ou qualquer violência.** Sem armas.
 
-### 1.3 Proibido
-- Fotorrealismo, render 3D, pintura a óleo/aquarela, textura de pincel, estilo anime ou cartoon infantil, estilo "low poly".
+### 1.5 Proibido
+- **Fotorrealismo** (a imagem não pode parecer uma fotografia), render 3D, estilo anime, cartoon infantil ou "low poly", pintura com pinceladas muito aparentes.
 - Qualquer texto, letreiro, legenda, assinatura, marca d'água ou numeração desenhada na imagem — **exceto** os textos explicitamente listados na ficha (letreiro "LAN HOUSE", visor "DESARMADO", teclas 1–9, *, 0, #).
 - Moldura, borda branca, data da câmera, **plaqueta amarela numerada, régua pericial** (Claude aplica esses elementos depois, por código, para garantir números e posição corretos).
 - Qualquer elemento que mude o canon (seção 6).
 
-### 1.4 Paleta de referência (use estes tons como base; variações de luz permitidas)
+### 1.6 Paleta de referência (ponto de partida; variações de luz e matiz permitidas)
 | Uso | Hex aproximado |
 |---|---|
 | Fundo escuro do jogo / sombras profundas | `#16222c` · `#0b141c` |
@@ -54,12 +67,12 @@ O jogo (Arquivo Morto / Invesphone) é um app de investigação policial para ce
 | Tecidos (acentos) | vinho `#7a3f3a` · azul `#3d6a8a` · mostarda `#d6b257` · lilás `#7a85c0` |
 | Latão/metal quente | `#d6b257` · `#bf9644` |
 | Metal frio | `#9aa4aa` · `#c9d1d5` |
-| Luz quente | `#ffd9a0` (sobre áreas iluminadas) |
+| Luz quente | `#ffd9a0` |
 | Papel (documentos) | `#ece8dc` |
 
-### 1.5 Composição e margem de segurança
-- **4:3 horizontal.** Conteúdo importante dentro de 92% central (margem de 4% por lado).
-- **Zona livre obrigatória:** o **canto inferior direito** (aprox. 20% da largura × 24% da altura) deve conter **apenas piso/solo/parede lisa**, sem objeto importante, porque ali Claude coloca a plaqueta amarela e a régua. Em algumas fichas há uma segunda zona livre indicada.
+### 1.7 Composição e margem de segurança
+- **4:3 horizontal.** Conteúdo importante dentro de 92% central.
+- **Zona livre obrigatória:** o **canto inferior direito** (aprox. 20% da largura × 24% da altura) deve conter **apenas piso/solo/parede lisa**, sem objeto importante, porque ali Claude coloca a plaqueta amarela e a régua.
 
 ---
 
@@ -83,7 +96,7 @@ O jogo (Arquivo Morto / Invesphone) é um app de investigação policial para ce
 
 ## 3. FICHAS DAS 13 CENAS (ilustrações com efeito de foto)
 
-> Em todas: estilo da seção 1, 4:3, 2400×1800 PNG, sem pessoas, sem texto (salvo indicado), zona livre no canto inferior direito.
+> Em todas: estilo da seção 1 (combinar com os retratos), 4:3, 2400×1800 PNG, sem pessoas, sem texto (salvo indicado), zona livre no canto inferior direito.
 > "Referência atual" = arquivo provisório com a composição a seguir (veja o arquivo antes de gerar).
 
 ### 3.1 `comodo_01_entrada.png` — Entrada / porta principal
@@ -136,9 +149,9 @@ O jogo (Arquivo Morto / Invesphone) é um app de investigação policial para ce
 ### 3.5 `comodo_05_corredor.png` — Corredor
 - **Uso:** foto do pacote de cena; circulação **preservada**.
 - **Referência atual:** `public/evidence/case01/new/comodos/comodo_05_corredor.jpg`
-- **Cena (vista frontal chapada, NÃO em perspectiva):** parede longa de corredor vista de frente, piso de tábuas com **passadeira vinho** comprida e franjas.
+- **Cena (composição frontal como na referência; leve perspectiva aceitável, desde que as quatro portas, os três quadros e a luminária continuem visíveis):** parede longa de corredor, piso de tábuas com **passadeira vinho** comprida e franjas.
 - **Elementos:** **quatro portas de madeira** (quatro painéis cada, puxador latão), espaçadas ao longo da parede, **todas fechadas**; entre elas **três quadros** (paisagens azul-acinzentada, verde-oliva e rosa); **luminária de teto** no centro (cúpula de vidro creme) com cone de luz suave; um **banco/aparador baixo** à esquerda com vasinho vermelho e garrafa; um **pequeno móvel** à direita com telefone/objeto escuro.
-- **Obrigatório:** tudo em ordem, portas fechadas. **Proibido:** objetos caídos, portas arrombadas, perspectiva de fuga.
+- **Obrigatório:** tudo em ordem, portas fechadas. **Proibido:** objetos caídos, portas arrombadas.
 
 ### 3.6 `comodo_06_quarto_casal.png` — Quarto do casal (sem pessoas, sem violência)
 - **Uso:** foto do pacote de cena; local dos fatos, **sem nenhum conteúdo gráfico**.
@@ -158,7 +171,7 @@ O jogo (Arquivo Morto / Invesphone) é um app de investigação policial para ce
 ### 3.8 `comodo_08_canil.png` — Canil (noite, quintal)
 - **Uso:** foto do pacote de cena (e referência de "Thor estava preso"). O canil está **trancado por fora**, com Thor dentro e **calmo** (sem sinal de contenção improvisada).
 - **Referência atual:** `public/evidence/case01/new/comodos/comodo_08_canil.jpg`
-- **Cena:** quintal de casa à noite, vista frontal chapada. Céu azul-petróleo com **estrelas** e **lua crescente** no alto à esquerda; **cerca de tábuas de madeira** atravessando o fundo; **gramado verde-escuro** com tufos de grama; à direita, **fundos da casa** (parede bege, **janela acesa** amarela com cone de luz suave no gramado, **porta de madeira** escura com maçaneta).
+- **Cena:** quintal de casa à noite, vista frontal. Céu azul-petróleo com **estrelas** e **lua crescente** no alto à esquerda; **cerca de tábuas de madeira** atravessando o fundo; **gramado verde-escuro** com tufos de grama; à direita, **fundos da casa** (parede bege, **janela acesa** amarela com cone de luz suave no gramado, **porta de madeira** escura com maçaneta).
 - **Elementos principais (centro-esquerda):** **canil de alvenaria** com **telhado de duas águas** (triângulo marrom-terracota) e **frente de grade de ferro** (grade quadriculada metálica cinza, moldura metálica). **Dentro, atrás da grade, Thor**: cão **grande**, sem raça definida, **pelagem marrom**, focinho claro (areia), orelhas pequenas e erguidas, **coleira vermelha com plaquinha dourada**, sentado e **calmo**, olhos amarelados, olhando para a frente.
 - **À direita do canil, na lateral da grade, o FERROLHO/TRINCO metálico FECHADO por fora** (barra de aço deslizante encaixada na argola), com **um cadeado pequeno dourado pendurado**; ao lado, no chão, uma **bolinha vermelha** e à esquerda uma **vasilha de água azul**.
 - **Obrigatório:** trinco **por fora e fechado**, Thor **dentro e calmo**, sem corda/improviso. **Proibido:** cão agitado, canil aberto, ferimento, sangue.
@@ -175,7 +188,7 @@ O jogo (Arquivo Morto / Invesphone) é um app de investigação policial para ce
 ### 3.10 `fechadura_porta.png` — Close da fechadura
 - **Uso:** "Close da fechadura da porta" (Maurício). Prova de que **não houve arrombamento**.
 - **Referência atual:** `public/evidence/case01/new/fechadura_porta.jpg`
-- **Cena:** close muito próximo, **frontal chapado**: porta de madeira **pintada de azul-acinzentado** (`#42586a`), com **dois painéis em relevo** de cada lado (bordas chanfradas mais claras) e uma faixa central; **ao centro, fechadura de embutir em latão**: **roseta externa grande** (círculo de latão envelhecido) → **anel** mais escuro → **disco/cilindro dourado** claro → **placa interna acinzentada** com **buraco de chave** (forma clássica: círculo + fenda vertical), brilhos curvos suaves, sombra de contato projetada para baixo-direita sobre a porta.
+- **Cena:** close muito próximo, **frontal**: porta de madeira **pintada de azul-acinzentado** (`#42586a`), com **dois painéis em relevo** de cada lado (bordas chanfradas mais claras) e uma faixa central; **ao centro, fechadura de embutir em latão**: **roseta externa grande** (círculo de latão envelhecido) → **anel** mais escuro → **disco/cilindro dourado** claro → **placa interna acinzentada** com **buraco de chave** (forma clássica: círculo + fenda vertical), brilhos curvos suaves, sombra de contato projetada para baixo-direita sobre a porta.
 - **Obrigatório:** metal e madeira **perfeitos**: **sem arranhão, sem lasca, sem marca de alavanca, sem amassado, sem tinta descascada.**
 - **Zona livre:** canto inferior direito (parte do painel da porta, lisa).
 
@@ -197,15 +210,15 @@ O jogo (Arquivo Morto / Invesphone) é um app de investigação policial para ce
 ### 3.13 `foto_fachada_lan.png` — Fachada da LAN house (noite)
 - **Uso:** "Foto da fachada da LAN house" (Paulo). Documenta o local onde o recibo foi emitido.
 - **Referência atual:** `public/evidence/case01/new/foto_fachada_lan.jpg` — **ATENÇÃO: a referência atual tem um carro branco na rua. NÃO desenhe carro nenhum.** (Um Gol branco aparece no caso como o carro de Caio; ele **não pode** aparecer junto da LAN house, senão a imagem sugere uma ligação falsa.)
-- **Cena:** noite, rua de bairro, vista frontal chapada. Céu azul-marinho muito escuro com poucas estrelas. **Prédio comercial térreo** de fachada azul-acinzentada (platibanda mais escura no topo). **Letreiro retangular** acima, painel escuro com moldura, **texto exato `LAN HOUSE`** em maiúsculas amarelo-dourado (`#f2c94c`), fonte grossa e legível; **vitrine grande** à esquerda com vidro azul-claro iluminado, **quatro monitores CRT** bege alinhados (telas azul-claras acesas) sobre um **balcão de madeira**, e um **cartaz de papel** colado no canto superior esquerdo do vidro (**apenas linhas cinza abstratas, sem texto nem números legíveis**); **porta cinza** à direita com maçaneta dourada e moldura escura; **calçada** cinza e **rua** escura com **faixa central tracejada amarela** (sem nenhum veículo); à direita um **poste de luz** com **luminária alaranjada** projetando **cone de luz suave** sobre a calçada e a porta.
+- **Cena:** noite, rua de bairro, vista frontal. Céu azul-marinho muito escuro com poucas estrelas. **Prédio comercial térreo** de fachada azul-acinzentada (platibanda mais escura no topo). **Letreiro retangular** acima, painel escuro com moldura, **texto exato `LAN HOUSE`** em maiúsculas amarelo-dourado (`#f2c94c`), fonte grossa e legível; **vitrine grande** à esquerda com vidro azul-claro iluminado, **quatro monitores CRT** bege alinhados (telas azul-claras acesas) sobre um **balcão de madeira**, e um **cartaz de papel** colado no canto superior esquerdo do vidro (**apenas linhas cinza abstratas, sem texto nem números legíveis**); **porta cinza** à direita com maçaneta dourada e moldura escura; **calçada** cinza e **rua** escura com **faixa central tracejada amarela** (sem nenhum veículo); à direita um **poste de luz** com **luminária alaranjada** projetando **cone de luz suave** sobre a calçada e a porta.
 - **Obrigatório:** o letreiro "LAN HOUSE" correto, **sem nenhum carro, sem nenhuma pessoa**, sem nome de pessoa legível.
 - **Zona livre:** canto inferior direito (rua escura).
 
 ---
 
-## 3-B. FICHAS DAS 2 PLANTAS (croquis periciais, ilustração chapada)
+## 3-B. FICHAS DAS 2 PLANTAS (croquis periciais)
 
-> Estilo: **desenho técnico limpo, vetorial chapado**, sobre **cartão cor creme `#ece8dc`** (sem quadrícula, sem textura, sem sombra, sem dobra), com margem escura `#16222c` de 10 px ao redor (como um cartão sobre o fundo do jogo). Traços em **preto-azulado `#1c1c20`**, espessura média nas paredes, fina nas cotas; letras em **fonte manuscrita legível** (estilo "Caveat"); marcadores em **círculos amarelos `#f1c93a`** com número escuro, **NUNCA cobrindo texto**. 4:3 horizontal, 2400×1800. Todos os textos abaixo são **exatos**.
+> Estilo: **desenho técnico limpo e legível**, no mesmo clima sóbrio do jogo (pode ter acabamento um pouco mais refinado que a referência), sobre **cartão cor creme `#ece8dc`** (sem quadrícula, sem textura, sem sombra, sem dobra), com margem escura `#16222c` de 10 px ao redor (como um cartão sobre o fundo do jogo). Traços em **preto-azulado `#1c1c20`**, espessura média nas paredes, fina nas cotas; letras em **fonte manuscrita legível** (estilo "Caveat"); marcadores em **círculos amarelos `#f1c93a`** com número escuro, **NUNCA cobrindo texto**. 4:3 horizontal, 2400×1800. Todos os textos abaixo são **exatos**.
 
 ### 3.14 `croqui_residencia.png` — Croqui nº 01 — Residência
 - **Referência atual:** `public/evidence/case01/new/croqui_residencia.jpg` (siga o layout; melhore o acabamento: espessura de linha uniforme, portas e janelas bem desenhadas, mobiliário simples bem proporcionado).
@@ -239,10 +252,10 @@ O jogo (Arquivo Morto / Invesphone) é um app de investigação policial para ce
 ## 4. DOCUMENTOS (9 imagens) — GUIA PRÓPRIO
 
 ### 4.1 Estilo comum dos documentos (leia antes de qualquer ficha)
-O dono do projeto reprovou o realismo anterior ("muito realista, com linhagem e aparência muito realista") e aprovou o visual **simplificado e chapado**. Portanto:
+O dono do projeto reprovou o realismo anterior ("muito realista, com linhagem e aparência muito realista") e aprovou o visual **simplificado**. Portanto, **sem aspecto de papel escaneado ou fotografado**. Um acabamento **um pouco mais refinado** que a referência é permitido (tipografia mais bonita, carimbos bem feitos, uma sombra mínima sob o cartão), desde que continue **limpo, plano e simples**:
 
 - **Cartão de papel liso** `#ece8dc` com cantos levemente arredondados (raio ≈ 6 px na escala 1350), ocupando a imagem com **margem de 14 px** (na escala 1350×1920; proporcional em 2025×2880) sobre **fundo azul-petróleo escuro `#16222c`**.
-- **Zero efeito de realismo:** sem textura de papel, sem fibras, sem granulado, sem dobras, sem manchas de café, sem sombra projetada, sem rotação/perspectiva, sem grampo, sem fita, sem desfoque de tinta. Tudo **reto, nítido e plano**.
+- **Zero efeito de realismo:** sem textura de papel, sem fibras, sem granulado, sem dobras, sem manchas de café, sem sombra pesada, sem rotação/perspectiva, sem grampo, sem fita, sem desfoque de tinta. Tudo **reto, nítido e plano**.
 - **Tipografia:** títulos e cabeçalhos em **máquina de escrever** (estilo "Special Elite"); corpo em **Courier** (estilo "Courier Prime"); consultas de terminal em **monoespaçada pixelada** (estilo "VT323"); anotações manuscritas em **caneta azul `#1b3a8a`** (estilo "Caveat"); assinaturas em script manuscrito azul.
 - **Cabeçalho padrão DHPP** (nos documentos timbrados): à esquerda o **escudo** (contorno de escudo navy `#1d2a52` com **estrela cheia** dentro), ao lado `DHPP` (Courier **negrito grande**, navy), abaixo `HOMICÍDIOS · <SETOR>` em caixa alta espaçada e `Estado de São Paulo · Brasil` pequeno; à direita, **bloco de identificação** do documento em 3 linhas alinhadas à direita; **linha dupla navy** separando o cabeçalho do corpo.
 - **Carimbos planos** (retângulos com borda, texto em máquina de escrever, ligeiramente inclinados −4° a −12°, **cor sólida sem textura**): azul `#2a3f9a` ou vermelho `#8a1f1f`. **Assinaturas e anotações** em azul-caneta.
@@ -446,7 +459,8 @@ Arquivos esperados (24):
 
 **Cenas e plantas**
 - [ ] 4:3, 2400×1800 (≥ 1600×1200), PNG, sem moldura, sem borda, sem data, **sem plaqueta, sem régua**.
-- [ ] Estilo vetorial chapado 2D, **vista frontal sem perspectiva**; sombras de contato suaves + brilho de borda + luz quente + vinheta leve + granulado fino.
+- [ ] **Combina com `defensive.jpg`** (teste lado a lado): formas simplificadas, sem contorno grosso, paleta sóbria, luz suave. **Não parece fotografia.** As 13 cenas parecem do mesmo conjunto.
+- [ ] Efeito de "foto desenhada": luz ambiente coerente, sombras de contato, vinheta suave, granulado discreto.
 - [ ] **Sem pessoas**, sem sangue, sem armas.
 - [ ] Nenhum texto desenhado além dos permitidos (`LAN HOUSE`, `DESARMADO`, teclas, rótulos dos croquis).
 - [ ] **Zona livre** no canto inferior direito.
