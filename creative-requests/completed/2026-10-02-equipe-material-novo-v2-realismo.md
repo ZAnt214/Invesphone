@@ -1,6 +1,6 @@
 ---
 id: 2026-10-02-equipe-material-novo-v2-realismo
-status: pending
+status: superseded
 requested_by: claude
 priority: high
 character: "Equipe (Maurício, Renata, Paulo, Denise)"
@@ -81,3 +81,5 @@ Todas as 15 peças foram refeitas pelo Claude em estilo chapado e simplificado (
 
 ## Cômodos (Claude)
 Ilustrações de cada ambiente em `public/evidence/case01/new/comodos/`: entrada, sala, cozinha, escritório, corredor, quarto do casal, quarto de Lívia, canil e painel do alarme (mesmo estilo chapado dos retratos; sem pessoas nem conteúdo gráfico).
+
+> Substituído por `inbox/2026-10-03-equipe-material-final-ilustrado.md` (pedido definitivo para a arte final).
