@@ -18,6 +18,7 @@ jobs:
       - name: Install SVG renderers
         shell: bash
         run: |
+          set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y -qq librsvg2-bin imagemagick
       - name: Render final JPG and PNG evidence
@@ -50,26 +51,29 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           p = Path("creative-requests/inbox/2026-10-02-equipe-material-novo.md")
-          text = p.read_text(encoding="utf-8")
-          text = text.replace("status: pending", "status: completed", 1)
+          s = p.read_text(encoding="utf-8")
+          s = s.replace("status: pending", "status: completed", 1)
           marker = "## Resposta do ChatGPT"
-          if marker in text:
-              text = text.split(marker)[0].rstrip() + "\n\n" + marker + "\n\n"
-          text += """- status: completed
-- assets criados: 15/15 em `public/evidence/case01/new/`
-- observações: materiais novos criados no universo visual do pacote existente, com leitura limpa no iPhone e estética de evidência de 2002. Dados não definidos pelo cânone ficaram como \"A APURAR\". Nenhuma das três propostas que alteram a lógica das provas foi criada. Claude pode agora registrar os novos gatilhos/conversas em `src/App.tsx`, `manifest.json` e `src/evidence/case01Materials.ts`.
-"""
-          p.write_text(text, encoding="utf-8")
+          if marker in s:
+              s = s.split(marker)[0].rstrip() + "\n\n" + marker + "\n\n"
+          response = (
+              "- status: completed\n"
+              "- assets criados: 15/15 em `public/evidence/case01/new/`\n"
+              "- observações: materiais novos criados no universo visual do pacote existente, "
+              "com leitura limpa no iPhone e estética de evidência de 2002. Dados não definidos "
+              "pelo cânone ficaram como \"A APURAR\". Nenhuma das três propostas que alteram "
+              "a lógica das provas foi criada. Claude pode agora registrar os novos gatilhos/"
+              "conversas em `src/App.tsx`, `manifest.json` e "
+              "`src/evidence/case01Materials.ts`.\n"
+          )
+          p.write_text(s + response, encoding="utf-8")
           PY
-      - name: Commit final assets and clean temporary transfer
+      - name: Commit final assets
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf creative-requests/payloads/case01-new-svg
-          rm -f creative-requests/payloads/case01_new_assets.ready
-          rm -f .github/workflows/materialize-case01-assets.yml
           git config user.name "ChatGPT Evidence Bot"
           git config user.email "chatgpt-evidence-bot@users.noreply.github.com"
-          git add -A
+          git add public/evidence/case01/new creative-requests/inbox/2026-10-02-equipe-material-novo.md
           git commit -m "Add 15 new Case 01 evidence assets for Claude"
           git push origin HEAD:main
