@@ -67,3 +67,19 @@
 .tm-input i{width:38px;height:38px;border-radius:50%;background:#33423f;display:grid;place-items:center}
 .tm-input i svg{width:17px;height:17px;color:#fff}
 @media (max-height:700px){.tm-title{padding:8px 16px 2px}.tm-title b{font-size:22px}.tm-grid{gap:7px;padding:6px 12px 8px}.tm-card{padding:8px 6px 7px;gap:2px}.tm-card small{display:none}.tm-card u{margin-top:4px;padding:4px 10px}.tm-face{width:44px;height:44px}}
+
+/* envio e digitando */
+.tm-msg.fresh{animation:tm-pop .28s ease-out both}
+@keyframes tm-pop{from{opacity:0;transform:translateY(8px) scale(.97)}}
+.tm-msg.pending p{opacity:.92}
+.tm-msg.pending.out p{background:#2a3634}
+.tm-clock{display:inline-block;width:9px;height:9px;margin-right:4px;border:1.5px solid rgba(255,255,255,.6);border-radius:50%;vertical-align:-1px;position:relative}
+.tm-clock::after{content:"";position:absolute;left:3px;top:1px;width:1px;height:3px;background:rgba(255,255,255,.7);transform-origin:50% 100%;animation:tm-tick 1s linear infinite}
+@keyframes tm-tick{to{transform:rotate(360deg)}}
+.tm-msg p.tm-typing{display:flex;gap:5px;align-items:center;padding:13px 15px}
+.tm-typing i{width:7px;height:7px;border-radius:50%;background:#9aa3a8;animation:tm-dot 1.2s ease-in-out infinite}
+.tm-typing i:nth-child(2){animation-delay:.18s}.tm-typing i:nth-child(3){animation-delay:.36s}
+@keyframes tm-dot{0%,60%,100%{transform:translateY(0);opacity:.45}30%{transform:translateY(-4px);opacity:1}}
+.tm-msg small.tm-typing-label{margin:3px 0 0 8px;font-size:10px;color:#7a8287}
+.tm-chips button:disabled:not(.done){opacity:.5}
+@media (prefers-reduced-motion:reduce){.tm-msg.fresh,.tm-typing i,.tm-clock::after{animation:none}}

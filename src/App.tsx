@@ -671,6 +671,10 @@ const teamIntroMessages = [
 
 function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStateAction<GameSave>>}){
  const [selected,setSelected]=useState<string|null>(null)
+ /** Envio em andamento: primeiro "enviando…", depois o integrante "digitando…"; só então a conversa é gravada no save. */
+ const [sending,setSending]=useState<{id:string;text:string;time:string;phase:'sending'|'typing'}|null>(null)
+ const timers=useRef<number[]>([])
+ useEffect(()=>()=>timers.current.forEach(window.clearTimeout),[])
  const requested=game.requestedMaterials??[]
  const discussed=game.teamTopics??[]
 
@@ -713,6 +717,13 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
   })
  }
 
+ const send=(id:string,text:string,time:string,commit:()=>void)=>{
+  if(sending)return
+  setSending({id,text,time,phase:'sending'})
+  const typingMs=900+Math.min(1400,text.length*8)
+  timers.current.push(window.setTimeout(()=>setSending(v=>v&&{...v,phase:'typing'}),650))
+  timers.current.push(window.setTimeout(()=>{commit();setSending(null)},650+typingMs))
+ }
  const ordered=game.orders.map(id=>orderResultMessages[id]).filter(Boolean)
  const baseMessages=[...teamMessages,...ordered]
  const materialMessages=requested.flatMap(id=>{
@@ -772,15 +783,15 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
    <TeamFace id={member.id} initials={member.initials} name={member.name} small/>
    <div><b>{member.name}<Verified/></b><span>{member.role} · {member.specialty}</span></div>
   </header>
-  <ChatThread messages={memberMessages} memberName={member.name} count={memberMessages.length}/>
+  <ChatThread messages={memberMessages} memberName={member.name} sending={sending?.id&&(teamDialogues.some(t=>t.id===sending.id&&t.memberId===member.id)||teamMaterialRequests.some(r=>r.id===sending.id&&r.memberId===member.id))?sending:null}/>
   <section className="tm-replies" aria-label="Respostas e pedidos">
    <div className="tm-chips">
-    {availableTopics.map(topic=><button key={topic.id} onClick={()=>discuss(topic)}>{topic.label}</button>)}
+    {availableTopics.map(topic=><button key={topic.id} disabled={!!sending} onClick={()=>send(topic.id,topic.user.text,topic.user.time,()=>discuss(topic))}>{topic.label}</button>)}
     {visibleRequests.map(item=>{
      const done=requested.includes(item.id)
-     return <button key={item.id} disabled={done} className={done?'done':''} onClick={()=>request(item)} title={item.description}><b>{item.kind}</b>{item.label}{done&&<i>✓ recebido</i>}</button>
+     return <button key={item.id} disabled={done||!!sending} className={done?'done':''} onClick={()=>send(item.id,`Consegue ${item.label.toLowerCase()} pra mim?`,item.requestTime,()=>request(item))} title={item.description}><b>{item.kind}</b>{item.label}{done&&<i>✓ recebido</i>}</button>
     })}
-    {availableTopics.length===0&&visibleRequests.length===0&&<p>Nada novo para conversar agora. Novos assuntos aparecem quando surgirem fatos novos.</p>}
+    {availableTopics.length===0&&visibleRequests.length===0&&!sending&&<p>Nada novo para conversar agora. Novos assuntos aparecem quando surgirem fatos novos.</p>}
    </div>
    <div className="tm-input"><span><Lock/>Mensagem segura</span><i><Send/></i></div>
   </section>
@@ -796,15 +807,18 @@ function Watermark(){return <div className="tm-mark" aria-hidden="true"><b>DHPP<
 function TeamFace({id,initials,name,small}:{id:string;initials:string;name:string;small?:boolean}){
  return <span className={`tm-face${small?' sm':''}`}>{id==='sonia'?<img src={`${import.meta.env.BASE_URL}characters/sonia/portrait.jpg`} alt={name}/>:initials}</span>
 }
-function ChatThread({messages,memberName,count}:{messages:{time:string;from:string;text:string;outgoing:boolean}[];memberName:string;count:number}){
+function ChatThread({messages,memberName,sending}:{messages:{time:string;from:string;text:string;outgoing:boolean}[];memberName:string;sending:{text:string;time:string;phase:'sending'|'typing'}|null}){
  const ref=useRef<HTMLDivElement>(null)
- useEffect(()=>{ref.current?.scrollTo({top:ref.current.scrollHeight})},[count])
+ const key=messages.length+(sending?(sending.phase==='sending'?1:2):0)
+ useEffect(()=>{ref.current?.scrollTo({top:ref.current.scrollHeight,behavior:'smooth'})},[key])
  return <div className="tm-thread" ref={ref}>
   <p className="tm-notice"><Lock/>Canal oficial do DHPP. Mensagens criptografadas, registradas no inquérito e sem cópia. Contatos verificados.</p>
-  {messages.map((m,i)=><div key={m.time+m.from+i} className={`tm-msg ${m.outgoing?'out':'in'}`}>
+  {messages.map((m,i)=><div key={m.time+m.from+i} className={`tm-msg ${m.outgoing?'out':'in'}${i>=messages.length-2&&messages.length>2?' fresh':''}`}>
    {!m.outgoing&&m.from!==memberName&&m.from!==memberName.split(' ')[0]&&<small>{m.from}</small>}
    <p>{m.text}<span>{m.time}{m.outgoing?' ✓✓':''}</span></p>
   </div>)}
+  {sending&&<div className="tm-msg out fresh pending"><p>{sending.text}<span>{sending.phase==='sending'?<><i className="tm-clock"/>enviando…</>:<>{sending.time} ✓✓</>}</span></p></div>}
+  {sending?.phase==='typing'&&<div className="tm-msg in fresh"><p className="tm-typing" aria-label={`${memberName} está digitando`}><i/><i/><i/></p><small className="tm-typing-label">{memberName.split(' ')[0]} está digitando…</small></div>}
  </div>
 }
 function ClueList({ids}:{ids:string[]}){if(!ids.length)return <Empty icon={<FileSearch/>} title="Nenhuma pista registrada" text="Abra a tarefa atual e comece pela cena."/>;return <div className="clue-list">{ids.map(id=>{const c=clues.find(x=>x.id===id)!;return <article key={id}><FileText/><div><small>{c.category.toUpperCase()}</small><b>{c.title}</b><p>{c.description}</p></div></article>})}</div>}
