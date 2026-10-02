@@ -1,56 +1,54 @@
-/* Visual "mesa do detetive" em todo o jogo: madeira escura, papel e dourado (mesma linguagem da tela inicial). */
-:root{--wood:#3a2416;--wood-d:#1d120a;--paper:#e9dfc4;--paper-ink:#2a1a0f;--gold:#f0c446;--cream:#f2e9d0;--tan:#c9b58a;--seal:#c8102e}
+/* Visual do sistema de investigação da Polícia Civil em todo o jogo: azul-noite, contornos discretos e acento azul-aço (mesma linguagem da tela inicial). */
+:root{--bg:#0a1020;--bg2:#101a36;--panel:#141f3d;--acc:#2b4a8a;--acc2:#8aa4de;--txt:#e3eaf8;--mut:#93a3c4;--gold:#b89a4a;--paper:#dfe6f3;--paper-ink:#142038}
 
 .handset.page,.task-screen{
-  --hud:var(--cream);--ink:var(--cream);--mut:#b7a47a;--line:rgba(240,226,190,.22);--surf:rgba(20,12,6,.55);
-  background:radial-gradient(80% 50% at 50% 30%,#5e3d25,#3a2416 65%,#1d120a) fixed;color:var(--cream);position:relative;isolation:isolate
+  --hud:var(--txt);--ink:var(--txt);--mut:#93a3c4;--line:rgba(148,163,184,.28);--surf:rgba(20,31,61,.72);
+  background:radial-gradient(80% 50% at 50% 30%,#14224a,var(--bg) 72%) fixed;color:var(--txt);position:relative;isolation:isolate
 }
-.handset.page::before,.task-screen::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:repeating-linear-gradient(3deg,rgba(0,0,0,.09) 0 2px,transparent 2px 9px)}
-.handset.page::after,.task-screen::after{content:"";position:fixed;inset:0;z-index:7;pointer-events:none;box-shadow:inset 0 0 80px rgba(0,0,0,.6)}
 
 /* barras de topo */
-.handset.page .handset-status{color:#e6d9b8}
-.handset.page .page-head,.task-head{background:linear-gradient(#2a1a0f,#1d120a);border-bottom:1px solid rgba(240,226,190,.2);color:var(--cream)}
-.handset.page .page-head b{color:var(--gold);letter-spacing:.14em}
-.handset.page .page-head button,.task-head button{color:var(--cream)}
-.task-head small{color:var(--tan)}
-.task-head>svg{color:var(--tan)}
+.handset.page .handset-status{color:#b9c6e4}
+.handset.page .page-head,.task-head{background:linear-gradient(#0e1730,#0a1020);border-bottom:1px solid var(--line);color:var(--txt)}
+.handset.page .page-head b{color:var(--acc2);letter-spacing:.14em}
+.handset.page .page-head button,.task-head button{color:var(--txt)}
+.task-head small{color:var(--mut)}
+.task-head>svg{color:var(--mut)}
 
-/* cartões e listas: couro escuro com contorno dourado fosco */
+/* cartões e listas */
 .handset.page .thread-head,.handset.page .thread article p,.handset.page .clue-list article,.handset.page .people-list button,.handset.page .victim-grid button,.handset.page .bubble.in,.handset.page .chapter-map article.open,.handset.page .subback,
-.interview-cards button,.doc-list button,.choices button,.proof-grid button,.interrogation p,.match,.qp{background:var(--surf);border-color:var(--line);color:var(--cream)}
+.interview-cards button,.doc-list button,.choices button,.proof-grid button,.interrogation p,.match,.qp{background:var(--surf);border-color:var(--line);color:var(--txt)}
 .handset.page .chapter-map article{border-color:var(--line)}
-.handset.page .mini-avatar,.handset.page .people-list button>i{background:var(--paper);color:var(--paper-ink)}
-.handset.page .bubble.out{background:var(--paper);color:var(--paper-ink)}
-.handset.page .photo-grid figure{background:linear-gradient(145deg,#2a1a0f,#150c06);border-color:var(--line)}
-.interview-cards button.done,.doc-list button.done{border-color:var(--gold);background:rgba(240,196,70,.1)}
-.choices button.selected,.proof-grid button.selected{background:var(--gold);border-color:var(--gold);color:#1a1200}
-.handset.page .clue-list article>svg,.handset.page .people-list svg,.handset.page .victim-grid svg,.handset.page .chapter-map>article>svg{color:var(--gold)}
-.handset.page .clue-list small,.handset.page .clue-list p,.handset.page .people-list span,.handset.page .thread article>small,.handset.page .thread-head span,.handset.page .empty,.handset.page .legal-access,.handset.page .victim-home>small,.handset.page .chapter-map small,.interview-cards span,.doc-list span,.task-title p,.settings-note,.qp p{color:var(--tan)}
-.qp small{color:var(--tan)}
+.handset.page .mini-avatar,.handset.page .people-list button>i{background:#1d2c55;color:var(--acc2)}
+.handset.page .bubble.out{background:var(--acc);color:#eaf1ff}
+.handset.page .photo-grid figure{background:linear-gradient(145deg,#16213f,#0c1226);border-color:var(--line)}
+.interview-cards button.done,.doc-list button.done{border-color:var(--acc2);background:rgba(138,164,222,.1)}
+.choices button.selected,.proof-grid button.selected{background:var(--acc2);border-color:var(--acc2);color:#0a1020}
+.handset.page .clue-list article>svg,.handset.page .people-list svg,.handset.page .victim-grid svg,.handset.page .chapter-map>article>svg{color:var(--acc2)}
+.handset.page .clue-list small,.handset.page .clue-list p,.handset.page .people-list span,.handset.page .thread article>small,.handset.page .thread-head span,.handset.page .empty,.handset.page .legal-access,.handset.page .victim-home>small,.handset.page .chapter-map small,.interview-cards span,.doc-list span,.task-title p,.settings-note,.qp p{color:var(--mut)}
+.qp small{color:var(--mut)}
 .qp-buttons{border-color:var(--line)}
-.qp-buttons button{color:var(--tan)}
-.qp-buttons button.on{background:var(--gold);color:#1a1200}
-.settings-note{color:var(--tan)}
+.qp-buttons button{color:var(--mut)}
+.qp-buttons button.on{background:var(--acc2);color:#0a1020}
+.settings-note{color:var(--mut)}
 
 /* títulos e botões principais */
-.task-title small,.story-card>small{color:var(--gold)}
-.task-title h2,.story-card h2{color:var(--cream)}
-.story-card p{color:#d9ccaa}
-.task-body h3{color:var(--tan)}
-.primary{background:linear-gradient(#f0c446,#d9a92c);border:2px solid rgba(0,0,0,.4);color:#1a1200;border-radius:10px;box-shadow:0 5px 0 rgba(0,0,0,.55),inset 0 2px 0 rgba(255,255,255,.3);font-weight:800;letter-spacing:.06em;text-transform:uppercase}
-.primary:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.55)}
-.match{border-color:var(--gold);color:var(--gold)}
-.handset.page .tabs button.on,.handset.page .tabs .on{background:var(--gold);color:#1a1200}
+.task-title small,.story-card>small{color:var(--acc2)}
+.task-title h2,.story-card h2{color:var(--txt)}
+.story-card p{color:#c4cfe8}
+.task-body h3{color:var(--mut)}
+.primary{background:linear-gradient(#34559e,#24407d);border:1px solid rgba(255,255,255,.18);color:#eaf1ff;border-radius:12px;box-shadow:0 4px 0 rgba(0,0,0,.45);font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+.primary:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.45)}
+.match{border-color:var(--acc2);color:var(--acc2)}
+.handset.page .tabs button.on,.handset.page .tabs .on{background:var(--acc2);color:#0a1020}
 
 /* peças que são papel */
-.document,.bank-slip{background:var(--paper);color:var(--paper-ink);border-color:#8a6a2e}
-.terminal{background:#0d140a;border-color:#3d5a2e}
-.scene-map{border-color:var(--line);background:linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),radial-gradient(circle at 30% 18%,#4a3322,#2a1a0f 45%,#150c06 85%);background-size:26px 26px,26px 26px,auto}
-.interrogation{border-color:var(--line);background:linear-gradient(#2a1a0f,#150c06)}
-.result.ok{background:rgba(40,70,40,.5);border-color:#5f8f5f;color:#cfe8cf}
-.result.bad{background:rgba(90,25,25,.5);border-color:#a85a52;color:#f0cbc6}
+.document,.bank-slip{background:var(--paper);color:var(--paper-ink);border-color:#8b9bbd}
+.terminal{background:#08110d;border-color:#2f5a44}
+.scene-map{border-color:var(--line);background:linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),radial-gradient(circle at 30% 18%,#1b2c5a,#101a36 45%,#0a1020 85%);background-size:26px 26px,26px 26px,auto}
+.interrogation{border-color:var(--line);background:linear-gradient(#101a36,#0a1020)}
+.result.ok{background:rgba(40,70,60,.5);border-color:#5f8f7a;color:#cfe8dc}
+.result.bad{background:rgba(90,25,35,.5);border-color:#a85a62;color:#f0cbd0}
 
 /* ligação e finais */
-.call-screen,.call-screen.active,.launching,.ending{background:radial-gradient(70% 40% at 50% 0,#6a4329,transparent 70%),linear-gradient(#2a1a0f,#0d0805 70%)}
-.skip-call{border-color:rgba(240,226,190,.35);color:var(--tan)}
+.call-screen,.call-screen.active,.launching,.ending{background:radial-gradient(70% 40% at 50% 0,#1a2d5c,transparent 70%),linear-gradient(#101a36,#05080f 70%)}
+.skip-call{border-color:rgba(148,163,184,.35);color:var(--mut)}
