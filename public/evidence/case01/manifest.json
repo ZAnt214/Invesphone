@@ -8,39 +8,51 @@
       "owner": "mauricio",
       "kind": "photo_set",
       "assets": [
-        "/evidence/case01/scene/01-entrada.svg",
-        "/evidence/case01/scene/02-sala.svg",
-        "/evidence/case01/scene/03-escritorio.svg",
-        "/evidence/case01/scene/04-corredor.svg",
-        "/evidence/case01/scene/05-quarto.svg",
-        "/evidence/case01/scene/07-canil.svg"
+        "/evidence/case01/new/comodos/comodo_01_entrada.jpg",
+        "/evidence/case01/new/comodos/comodo_02_sala.jpg",
+        "/evidence/case01/new/comodos/comodo_03_cozinha.jpg",
+        "/evidence/case01/new/comodos/comodo_04_escritorio.jpg",
+        "/evidence/case01/new/comodos/comodo_05_corredor.jpg",
+        "/evidence/case01/new/comodos/comodo_06_quarto_casal.jpg",
+        "/evidence/case01/new/comodos/comodo_07_quarto_livia.jpg",
+        "/evidence/case01/new/comodos/comodo_08_canil.jpg"
       ]
     },
     "fotos_painel": {
       "owner": "mauricio",
       "kind": "photo",
-      "assets": ["/evidence/case01/scene/06-painel-teclado.svg"]
+      "assets": [
+        "/evidence/case01/new/comodos/comodo_09_painel_alarme.jpg"
+      ]
     },
     "gravacoes_depoimentos": {
       "owner": "denise",
       "kind": "recording_index",
-      "assets": ["/evidence/case01/cartorio/indice-gravacoes.svg"],
+      "assets": [
+        "/evidence/case01/cartorio/indice-gravacoes.svg"
+      ],
       "runtimePlayback": "Use the existing interrogation dialogue/progress as the source of the playable deposition excerpts; do not invent new testimony."
     },
     "comprovante_lan": {
       "owner": "paulo",
       "kind": "document",
-      "assets": ["/evidence/case01/docs/lan-house-recibo.svg"]
+      "assets": [
+        "/evidence/case01/docs/lan-house-recibo.svg"
+      ]
     },
     "log_alarme": {
       "owner": "renata",
       "kind": "technical_log",
-      "assets": ["/evidence/case01/docs/log-alarme.svg"]
+      "assets": [
+        "/evidence/case01/docs/log-alarme.svg"
+      ]
     },
     "registro_motel": {
       "owner": "paulo",
       "kind": "document",
-      "assets": ["/evidence/case01/docs/motel-cupom.svg"]
+      "assets": [
+        "/evidence/case01/docs/motel-cupom.svg"
+      ]
     },
     "docs_financeiros": {
       "owner": "renata",
@@ -58,6 +70,111 @@
         "/evidence/case01/docs/apreensao-dolares.svg",
         "/evidence/case01/docs/cinta-bancaria.svg",
         "/evidence/case01/docs/analise-cinta.svg"
+      ]
+    },
+    "croqui_residencia": {
+      "owner": "mauricio",
+      "kind": "document",
+      "assets": [
+        "/evidence/case01/new/croqui_residencia.jpg"
+      ]
+    },
+    "fechadura_porta": {
+      "owner": "mauricio",
+      "kind": "photo",
+      "assets": [
+        "/evidence/case01/new/fechadura_porta.jpg"
+      ]
+    },
+    "trava_canil": {
+      "owner": "mauricio",
+      "kind": "photo",
+      "assets": [
+        "/evidence/case01/new/trava_canil.jpg"
+      ]
+    },
+    "escritorio_comparativo": {
+      "owner": "mauricio",
+      "kind": "photo",
+      "assets": [
+        "/evidence/case01/new/escritorio_comparativo.jpg"
+      ]
+    },
+    "laudo_preliminar_local": {
+      "owner": "mauricio",
+      "kind": "document",
+      "assets": [
+        "/evidence/case01/new/laudo_preliminar_local.jpg"
+      ]
+    },
+    "ficha_veiculo_gol": {
+      "owner": "renata",
+      "kind": "document",
+      "assets": [
+        "/evidence/case01/new/ficha_veiculo_gol.jpg"
+      ]
+    },
+    "quadro_horarios": {
+      "owner": "renata",
+      "kind": "document",
+      "assets": [
+        "/evidence/case01/new/quadro_horarios.jpg"
+      ]
+    },
+    "matricula_imovel": {
+      "owner": "renata",
+      "kind": "document",
+      "assets": [
+        "/evidence/case01/new/matricula_imovel.jpg"
+      ]
+    },
+    "consulta_antecedentes": {
+      "owner": "renata",
+      "kind": "document",
+      "assets": [
+        "/evidence/case01/new/consulta_antecedentes.jpg"
+      ]
+    },
+    "croqui_rua": {
+      "owner": "paulo",
+      "kind": "document",
+      "assets": [
+        "/evidence/case01/new/croqui_rua.jpg"
+      ]
+    },
+    "termo_declaracao_terceiro_cida": {
+      "owner": "paulo",
+      "kind": "document",
+      "assets": [
+        "/evidence/case01/new/termo_declaracao_terceiro_cida.jpg"
+      ]
+    },
+    "foto_fachada_lan": {
+      "owner": "paulo",
+      "kind": "photo",
+      "assets": [
+        "/evidence/case01/new/foto_fachada_lan.jpg"
+      ]
+    },
+    "termo_apreensao_celular_helena": {
+      "owner": "denise",
+      "kind": "document",
+      "assets": [
+        "/evidence/case01/new/termo_apreensao_celular_helena.jpg"
+      ]
+    },
+    "capa_inquerito": {
+      "owner": "denise",
+      "kind": "document",
+      "assets": [
+        "/evidence/case01/new/capa_inquerito.jpg"
+      ]
+    },
+    "termo_depoimento_modelo": {
+      "owner": "denise",
+      "kind": "document",
+      "assets": [
+        "/evidence/case01/new/termo_depoimento_modelo.jpg"
       ]
     }
   }

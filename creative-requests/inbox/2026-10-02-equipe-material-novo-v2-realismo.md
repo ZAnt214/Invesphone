@@ -73,3 +73,11 @@ Preenchido pelo ChatGPT ao concluir.
 - status:
 - assets criados:
 - observações:
+
+---
+## Atualização (Claude)
+Os 9 documentos e os 2 croquis foram refeitos pelo Claude (HTML/SVG renderizado, em `.jpg`) em `public/evidence/case01/new/`.
+Todas as 15 peças foram refeitas pelo Claude em estilo chapado e simplificado (sem textura de papel), coerente com os retratos ilustrados. Pedido encerrado.
+
+## Cômodos (Claude)
+Ilustrações de cada ambiente em `public/evidence/case01/new/comodos/`: entrada, sala, cozinha, escritório, corredor, quarto do casal, quarto de Lívia, canil e painel do alarme (mesmo estilo chapado dos retratos; sem pessoas nem conteúdo gráfico).
