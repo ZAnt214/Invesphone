@@ -158,3 +158,27 @@ Regras:
 - ao expandir o caso, adicionar tanto conversas quanto pedidos, não apenas pedidos.
 
 Fonte detalhada: `docs/TEAM_MATERIAL_REQUESTS.md`.
+
+
+## Descoberta progressiva de pessoas
+
+Nunca exponha todo o elenco do caso desde o início.
+
+Trate separadamente:
+- `discoveredPeople`: pessoa identificada pela investigação;
+- `summonedPeople`: Lemos escolheu chamá-la;
+- `interviewed`: depoimento concluído.
+
+Perguntas de depoimento podem usar `revealsPeople` para introduzir novos nomes.
+
+Conversas e diligências da equipe também podem usar `revealsPeople`.
+
+Regras:
+- descobrir não convoca automaticamente;
+- convocar não significa culpa;
+- pessoas ainda não descobertas não devem aparecer na interface nem ser tratadas pelo texto como conhecidas;
+- novos nomes precisam surgir de informação narrativa concreta;
+- uma pessoa ouvida pode revelar outra, criando cadeias de investigação;
+- personagens essenciais devem preferencialmente ter rota alternativa de descoberta para evitar soft-lock.
+
+Fonte: `docs/TEAM_MATERIAL_REQUESTS.md`, seção "Descoberta progressiva de pessoas".

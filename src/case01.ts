@@ -48,7 +48,7 @@ export const clues: Clue[] = [
   {id:'ameaca_heranca',title:'Ameaça da herança',description:'O pai ameaçou cortar a parte de Lívia na herança se ela continuasse com Caio.',category:'depoimento'},
   {id:'log_alarme',title:'Log do alarme',description:'23:52 — sistema desativado com o código mestre.',category:'digital'},
   {id:'nota_motel',title:'Nota do motel',description:'Entrada registrada às 00:56, incompatível com parte do álibi.',category:'documento'},
-  {id:'moto_dolares',title:'Moto e dólares',description:'Investigação conecta dinheiro em espécie a Téo.',category:'financeiro'},
+  {id:'moto_dolares',title:'Dinheiro em espécie',description:'Uma quantia em dólares apreendida precisa ter sua origem e seu portador identificados.',category:'financeiro'},
   {id:'cinta_bancaria',title:'Cinta bancária',description:'Banco Meridional · ag. 0431 · 15/10/2002 · US$ 5.000.',category:'financeiro'},
   {id:'caio_horario',title:'Horário do motel (Caio)',description:'Caio diz que chegou ao motel por volta das 23h e que o Gol não saiu de lá.',category:'depoimento'},
   {id:'busca_dirigida',title:'Bagunça encenada',description:'Gavetas pouco importantes foram abertas enquanto as mais óbvias ficaram intactas.',category:'depoimento'},

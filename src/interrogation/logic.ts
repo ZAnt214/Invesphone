@@ -24,14 +24,15 @@ export function askedQuestions(cfg:InterrogationConfig, p:InterrogationProgress)
 /** Aplica o efeito de uma pergunta respondida: marca como feita, libera novas e devolve as pistas. */
 export function applyAnswer(cfg:InterrogationConfig, p:InterrogationProgress, id:string){
   const q = byId(cfg,id)
-  if(!q || p.asked.includes(id)) return { progress:{...p,currentQuestion:null}, clues:[] as string[] }
+  if(!q || p.asked.includes(id)) return { progress:{...p,currentQuestion:null}, clues:[] as string[], people:[] as string[] }
   const asked = [...p.asked, id]
   const unlocked = new Set([...p.unlocked, ...(q.unlocks ?? [])])
   const pressure = clampPressure((p.pressure ?? 0) + questionPressure(q))
   if(cfg.requiredForFinal.every(r=>asked.includes(r))) unlocked.add(cfg.finalQuestion)
   return {
     progress:{ ...p, asked, unlocked:[...unlocked], pressure, currentQuestion:null, completed: id===cfg.finalQuestion },
-    clues:q.highlights ? [] : (q.clues ?? [])
+    clues:q.highlights ? [] : (q.clues ?? []),
+    people:q.revealsPeople ?? []
   }
 }
 

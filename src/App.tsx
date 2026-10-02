@@ -42,6 +42,10 @@ type GameSave = {
   requestedMaterials?:string[]
   /** Assuntos já conversados com os integrantes da equipe. */
   teamTopics?:string[]
+  /** Pessoas que já entraram formalmente no radar da investigação. */
+  discoveredPeople?:string[]
+  /** Pessoas que Lemos decidiu chamar para depoimento. */
+  summonedPeople?:string[]
   score:number
   liviaInterrogation:InterrogationProgress
   /** Progresso dos depoimentos dos demais personagens, por id (Lívia tem campo próprio, de saves antigos). */
@@ -53,7 +57,7 @@ type GameSave = {
 }
 
 const initialGame:GameSave = {
-  version:SAVE_VERSION,screen:'incoming',app:'home',task:1,clues:[],interviewed:[],orders:[],score:1000,liviaInterrogation:newProgress(liviaInterrogation)
+  version:SAVE_VERSION,screen:'incoming',app:'home',task:1,clues:[],interviewed:[],orders:[],discoveredPeople:['livia','caio','rafael','cida'],summonedPeople:['livia','caio'],score:1000,liviaInterrogation:newProgress(liviaInterrogation)
 }
 
 const progressOf = (g:GameSave, id:string):InterrogationProgress => id==='livia' ? g.liviaInterrogation : (g.depositions?.[id] ?? newProgress(interrogations[id]))
@@ -149,6 +153,7 @@ type TeamMaterialRequest = {
   requiresClues?:string[]
   requiresInterviewed?:string[]
   requiresTopics?:string[]
+  revealsPeople?:string[]
   clueIds?:string[]
   requestTime:string
   response:{time:string;from:string;text:string}
@@ -163,6 +168,7 @@ type TeamDialogue = {
   requiresClues?:string[]
   requiresInterviewed?:string[]
   requiresTopics?:string[]
+  revealsPeople?:string[]
   user:{time:string;text:string}
   agent:{time:string;text:string}
 }
@@ -255,9 +261,9 @@ const teamDialogues:TeamDialogue[] = [
   // Paulo: rua, testemunhas e estabelecimentos.
   {
     id:'paulo_rua',memberId:'paulo',label:'O que você conseguiu da rua até agora?',
-    minTask:1,
+    minTask:1,revealsPeople:['jorge'],
     user:{time:'04:40',text:'Paulo, o que tem do lado de fora? Vizinho, porteiro, vigia, carro?'},
-    agent:{time:'04:41',text:'Pouco movimento. Estou rodando os pontos fixos da rua. Tem um vigia que presta atenção em carro; vou separar ele dos curiosos e conversar direito.'}
+    agent:{time:'04:41',text:'Achei um nome útil: Jorge. É vigia da rua e presta atenção em carro e movimento. Vou separar ele dos curiosos. Se você quiser, já dá pra chamar ele pra depor.'}
   },
   {
     id:'paulo_jorge',memberId:'paulo',label:'Jorge parece confiável sobre o Gol?',
@@ -345,8 +351,8 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
   {
     id:'analise_cinta',memberId:'renata',label:'Cruzar a cinta bancária',kind:'PERÍCIA',
     description:'Conferir banco, agência, data e valor da cinta encontrada com o dinheiro.',
-    minTask:6,requiresClues:['extrato_ricardo'],requiresTopics:['renata_cinta'],clueIds:['cinta_bancaria'],requestTime:'06:20',
-    response:{time:'06:26',from:'Financeiro',text:'Bateu nos quatro pontos: Banco Meridional, agência 0431, 15/10/2002, US$ 5.000. Isso liga a origem do dinheiro à movimentação do Ricardo.'}
+    minTask:6,requiresClues:['extrato_ricardo'],requiresTopics:['renata_cinta'],revealsPeople:['teo'],clueIds:['cinta_bancaria'],requestTime:'06:20',
+    response:{time:'06:26',from:'Financeiro',text:'Bateu nos quatro pontos: Banco Meridional, agência 0431, 15/10/2002, US$ 5.000. E apareceu um nome ligado ao dinheiro: Téo Duarte, irmão do Caio. Vale chamar esse rapaz.'}
   }
 ]
 
@@ -411,11 +417,11 @@ export default function App(){
       if(next===3&&g.clues.includes('log_alarme'))next=4
       if(next===4&&g.clues.includes('nota_motel'))next=5
       if(next===5&&g.clues.includes('extrato_ricardo')&&g.clues.includes('carta_cobranca'))next=6
-      if(next===6&&g.clues.includes('cinta_bancaria'))next=7
+      if(next===6&&g.clues.includes('cinta_bancaria')&&(g.discoveredPeople??[]).includes('teo'))next=7
       if(next===7&&g.clues.includes('confissao_teo'))next=8
       return next===g.task?g:{...g,task:next}
     })
-  },[game.clues,game.interviewed])
+  },[game.clues,game.interviewed,game.discoveredPeople])
 
   const setScreen=(screen:Screen)=>setGame(g=>({...g,screen}))
   const activateSound=async()=>{if(await enableAudio()){setAudioOn(true);if(game.screen==='incoming')startRingtone()}}
@@ -594,7 +600,7 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
  if(game.app==='livia'||game.app==='depo'){
   const id=game.app==='livia'?'livia':(game.depoId??'livia')
   const cfg=interrogations[id]??liviaInterrogation
-  return <IllustratedInterrogation key={id} config={cfg} progress={progressOf(game,cfg.id)} onProgress={p=>setGame(g=>withProgress(g,cfg.id,p))} onClue={cid=>setGame(g=>({...g,clues:g.clues.includes(cid)?g.clues:[...g.clues,cid]}))} clueTitle={cid=>clues.find(c=>c.id===cid)?.title} registeredClues={game.clues} onComplete={()=>setGame(g=>({...g,interviewed:g.interviewed.includes(cfg.id)?g.interviewed:[...g.interviewed,cfg.id]}))} onBack={leaveLivia} onReturn={leaveLivia}/>
+  return <IllustratedInterrogation key={id} config={cfg} progress={progressOf(game,cfg.id)} onProgress={p=>setGame(g=>withProgress(g,cfg.id,p))} onClue={cid=>setGame(g=>({...g,clues:g.clues.includes(cid)?g.clues:[...g.clues,cid]}))} onPersonDiscovered={pid=>setGame(g=>{const known=g.discoveredPeople??['livia','caio','rafael','cida'];return known.includes(pid)?g:{...g,discoveredPeople:[...known,pid]}})} clueTitle={cid=>clues.find(c=>c.id===cid)?.title} registeredClues={game.clues} onComplete={()=>setGame(g=>({...g,interviewed:g.interviewed.includes(cfg.id)?g.interviewed:[...g.interviewed,cfg.id]}))} onBack={leaveLivia} onReturn={leaveLivia}/>
  }
  if(game.app==='team')return <PhonePage title="Equipe" back={()=>openApp('home')}><Team game={game} setGame={setGame}/></PhonePage>
  if(game.app==='clues')return <PhonePage title="Pistas" back={()=>openApp('home')}><ClueList ids={game.clues}/></PhonePage>
@@ -617,7 +623,7 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
   if(game.task===1){setGame(g=>({...g,screen:'task'}));return}
   if(game.task===2){openApp('interrogate');return}
   if(game.task>=3&&game.task<=6){openApp('team');return}
-  if(game.task===7){setGame(openDeposition('teo','app'));return}
+  if(game.task===7){openApp('interrogate');return}
   if(game.task===8){setGame(g=>({...g,screen:'task'}));return}
   openApp('team')
  }
@@ -676,7 +682,12 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
 
  const discuss=(topic:TeamDialogue)=>{
   if(discussed.includes(topic.id)||!topicAvailable(topic))return
-  setGame(g=>({...g,teamTopics:[...(g.teamTopics??[]),topic.id]}))
+  setGame(g=>{
+   const known=g.discoveredPeople??['livia','caio','rafael','cida']
+   const discovered=[...known]
+   ;(topic.revealsPeople??[]).forEach(id=>{if(!discovered.includes(id))discovered.push(id)})
+   return {...g,teamTopics:[...(g.teamTopics??[]),topic.id],discoveredPeople:discovered}
+  })
  }
  const request=(item:TeamMaterialRequest)=>{
   if(requested.includes(item.id)||!requestAvailable(item))return
@@ -684,7 +695,9 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
    const material=[...(g.requestedMaterials??[]),item.id]
    const nextClues=[...g.clues]
    ;(item.clueIds??[]).forEach(id=>{if(!nextClues.includes(id))nextClues.push(id)})
-   return {...g,requestedMaterials:material,clues:nextClues}
+   const discovered=[...(g.discoveredPeople??['livia','caio','rafael','cida'])]
+   ;(item.revealsPeople??[]).forEach(id=>{if(!discovered.includes(id))discovered.push(id)})
+   return {...g,requestedMaterials:material,clues:nextClues,discoveredPeople:discovered}
   })
  }
 
@@ -775,7 +788,25 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
  </div>
 }
 function ClueList({ids}:{ids:string[]}){if(!ids.length)return <Empty icon={<FileSearch/>} title="Nenhuma pista registrada" text="Abra a tarefa atual e comece pela cena."/>;return <div className="clue-list">{ids.map(id=>{const c=clues.find(x=>x.id===id)!;return <article key={id}><FileText/><div><small>{c.category.toUpperCase()}</small><b>{c.title}</b><p>{c.description}</p></div></article>})}</div>}
-function People({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStateAction<GameSave>>}){return <div className="people-list">{people.filter(p=>p.id!=='sonia').map(p=>{const has=!!interrogations[p.id];return <button key={p.id} onClick={()=>has?setGame(openDeposition(p.id,'app')):undefined} disabled={!has}><i><Face p={p}/></i><div><b>{p.name}</b><span>{has?p.role:`${p.role} · sem depoimento`}</span></div>{game.interviewed.includes(p.id)?<Check/>:<ChevronLeft className="right"/>}</button>})}</div>}
+function People({game,setGame,origin='app'}:{game:GameSave;setGame:React.Dispatch<React.SetStateAction<GameSave>>;origin?:'app'|'task'}){
+ const discovered=game.discoveredPeople??['livia','caio','rafael','cida']
+ const summoned=game.summonedPeople??['livia','caio']
+ const visible=people.filter(p=>p.id!=='sonia'&&discovered.includes(p.id))
+ const summon=(id:string)=>setGame(g=>({...g,summonedPeople:(g.summonedPeople??['livia','caio']).includes(id)?(g.summonedPeople??[]):[...(g.summonedPeople??['livia','caio']),id]}))
+ return <div className="people-list">
+  {visible.map(p=>{
+   const has=!!interrogations[p.id]
+   const called=summoned.includes(p.id)
+   const done=game.interviewed.includes(p.id)
+   return <button key={p.id} onClick={()=>called&&has?setGame(openDeposition(p.id,origin)):summon(p.id)} disabled={!has}>
+    <i><Face p={p}/></i>
+    <div><b>{p.name}</b><span>{done?'Depoimento registrado':called?p.role:`NOVO CONTATO · ${p.role}`}</span></div>
+    {done?<Check/>:called?<ChevronLeft className="right"/>:<strong>CHAMAR</strong>}
+   </button>
+  })}
+  <p className="people-discovery-note">Novas pessoas aparecem aqui quando a equipe, documentos ou depoimentos revelam uma ligação com o caso.</p>
+ </div>
+}
 function VictimPhone(){const [tab,setTab]=useState<'home'|'messages'|'photos'|'calls'>('home');if(tab==='messages')return <div><SubBack onClick={()=>setTab('home')} title="Mensagens"/><div className="victim-messages">{victimMessages.map(m=><section key={m.contact}><header><b>{m.contact}</b><small>{m.time}</small></header><p className="bubble in">{m.incoming}</p><p className="bubble out">{m.outgoing}</p></section>)}</div></div>;if(tab==='photos')return <div><SubBack onClick={()=>setTab('home')} title="Fotos"/><div className="photo-grid"><figure><Camera/><figcaption>Família · 12 OUT</figcaption></figure><figure><ImageIcon/><figcaption>Consultório · 15 OUT</figcaption></figure><figure><ImageIcon/><figcaption>Thor · 16 OUT</figcaption></figure><figure><ImageIcon/><figcaption>Casa · 16 OUT</figcaption></figure></div></div>;if(tab==='calls')return <div><SubBack onClick={()=>setTab('home')} title="Chamadas"/><div className="call-log"><p><b>Lívia</b><span>18:39 · 00:43</span></p><p><b>Ricardo</b><span>17:12 · 01:05</span></p><p><b>Rafael</b><span>14:07 · perdida</span></p></div></div>;return <div className="victim-home"><small>DISPOSITIVO APREENDIDO · HELENA VALENÇA</small><h2>04:27</h2><div className="victim-grid"><button onClick={()=>setTab('messages')}><MessageCircle/><span>Mensagens</span></button><button onClick={()=>setTab('photos')}><ImageIcon/><span>Fotos</span></button><button><Globe2/><span>Internet</span></button><button onClick={()=>setTab('calls')}><Phone/><span>Chamadas</span></button></div><p className="legal-access"><Shield/> acesso remoto autorizado pelo DHPP</p></div>}
 function SubBack({onClick,title}:{onClick:()=>void;title:string}){return <button className="subback" onClick={onClick}><ChevronLeft/> {title}</button>}
 function ChapterMap({game}:{game:GameSave}){const currentChapter=tasks[game.task].chapter;return <div className="chapter-map">{chapters.map((c,i)=><article key={c.number} className={i<=currentChapter?'open':''}><i>{i<=currentChapter?String(c.number).padStart(2,'0'):<Lock/>}</i><div><small>{i<currentChapter?'CONCLUÍDO':i===currentChapter?'EM ANDAMENTO':'BLOQUEADO'}</small><b>{c.title}</b><p>{c.summary}</p></div>{i<currentChapter&&<Check/>}</article>)}</div>}
@@ -806,12 +837,19 @@ function Scene({game,addClue,finish}:{game:GameSave;addClue:(id:string)=>void;fi
   {enough&&<div className="scene-conclusion"><b>Leitura preliminar</b><p>Entrada intacta, alarme, cachorro preso e valores deixados para trás justificam ouvir as pessoas antes de tratar isso como um roubo comum.</p><button className="primary" onClick={finish}>Voltar ao aparelho</button></div>}
  </div>
 }
-function Interviews({game,setGame,finish}:{game:GameSave;addClue?:(id:string)=>void;setGame:React.Dispatch<React.SetStateAction<GameSave>>;finish:()=>void}){const items=[['livia','Lívia admite discussões constantes por causa do namoro.'],['cida','Cida tem seu álibi confirmado por familiares.'],['rafael','O pagamento da LAN house confirma Rafael fora de casa.'],['jorge','Jorge viu o Gol de Caio na rua antes do horário declarado.'],['caio','Caio sustenta que passou a noite com Lívia no motel.']] as const;const done=items.filter(([p])=>game.interviewed.includes(p)).length>=4;return <div><TaskTitle tag="DEPOIMENTOS" title="Versões" text="Ouça as pessoas separadamente e anote as pistas de cada resposta. Quatro depoimentos bastam para avançar, mas todos ficam registrados."/><div className="interview-cards">{items.map(([pid,text])=>{const p=people.find(x=>x.id===pid)!;const asked=game.interviewed.includes(pid);return <button key={pid} className={asked?'done':''} onClick={()=>setGame(openDeposition(pid,'task'))}><i><Face p={p}/></i><div><b>{p.name}</b><span>{asked?text:p.role}</span></div>{asked?<Check/>:<MessageCircle/>}</button>})}</div>{done&&<button className="primary" onClick={finish}>Cruzar versões</button>}</div>}
+function Interviews({game,setGame,finish}:{game:GameSave;addClue?:(id:string)=>void;setGame:React.Dispatch<React.SetStateAction<GameSave>>;finish:()=>void}){
+ const done=game.interviewed.length>=4
+ return <div>
+  <TaskTitle tag="DEPOIMENTOS" title="Versões" text="Nem todo mundo ligado ao caso está identificado ainda. Chame quem já está no radar; a equipe e os próprios depoimentos podem revelar novos nomes."/>
+  <People game={game} setGame={setGame} origin="task"/>
+  {done&&<button className="primary" onClick={finish}>Cruzar versões</button>}
+ </div>
+}
 function Alarm({addClue,finish}:{addClue:(id:string)=>void;finish:()=>void}){const [choice,setChoice]=useState('');const ok=choice==='23:52';return <div><TaskTitle tag="PERÍCIA DIGITAL" title="Log do alarme" text="Qual ocorrência foge do padrão da família?"/><div className="terminal"><p>22:11 · ARMADO · CONTROLE 02</p><p>23:04 · SENSOR FUNDOS · NORMAL</p><p>23:52 · DESATIVADO · CÓDIGO MESTRE</p><p>03:41 · ARMADO · CONTROLE 01</p></div><div className="choices">{['22:11','23:04','23:52','03:41'].map(x=><button className={choice===x?'selected':''} onClick={()=>setChoice(x)} key={x}>{x}</button>)}</div>{choice&&<div className={ok?'result ok':'result bad'}>{ok?'O código mestre foi usado às 23:52.':'Esse evento não explica o acesso sem arrombamento.'}</div>}{ok&&<button className="primary" onClick={()=>{addClue('log_alarme');finish()}}>Registrar quebra do álibi</button>}</div>}
 function Timeline({addClue,finish}:{addClue:(id:string)=>void;finish:()=>void}){const [choice,setChoice]=useState('');const ok=choice==='00:56';return <div><TaskTitle tag="LINHA DO TEMPO" title="A janela" text="Caio diz que chegou ao motel às 23h. A nota fiscal mostra outra coisa."/><div className="document"><FileText/><small>MOTEL IMPERIAL · CUPOM 00871</small><b>ENTRADA: 00:56</b><span>SAÍDA: 02:50</span></div><div className="choices">{['23:00','23:30','23:52','00:56'].map(x=><button className={choice===x?'selected':''} onClick={()=>setChoice(x)} key={x}>{x}</button>)}</div>{ok&&<button className="primary" onClick={()=>{addClue('nota_motel');finish()}}>Marcar contradição</button>}</div>}
 function Finance({addClue,finish}:{addClue:(id:string)=>void;finish:()=>void}){const [picked,setPicked]=useState<string[]>([]);const items=[['extrato_ricardo','Extrato de Ricardo'],['carta_cobranca','Carta de cobrança'],['agenda_helena','Agenda de Helena']];const toggle=(id:string)=>{setPicked(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);addClue(id)};return <div><TaskTitle tag="DOCUMENTOS" title="Siga o dinheiro" text="Marque os documentos que merecem cruzamento financeiro."/><div className="doc-list">{items.map(([id,title])=><button key={id} onClick={()=>toggle(id)} className={picked.includes(id)?'done':''}><FileText/><div><b>{title}</b><span>apreendido na residência</span></div>{picked.includes(id)&&<Check/>}</button>)}</div>{picked.length===3&&<button className="primary" onClick={finish}>Enviar à inteligência</button>}</div>}
-function Bank({addClue,finish}:{addClue:(id:string)=>void;finish:()=>void}){const [ok,setOk]=useState(false);return <div><TaskTitle tag="CRUZAMENTO" title="Cinta bancária" text="Compare os dados encontrados com a origem dos dólares ligados a Téo."/><div className="document bank-slip"><small>BANCO MERIDIONAL</small><b>AG. 0431</b><span>15/10/2002 · US$ 5.000</span></div><button className="match" onClick={()=>setOk(true)}><Search/> Cruzar banco + agência + data + valor</button>{ok&&<div className="result ok">Correspondência exata encontrada. O dinheiro não é aleatório.</div>}{ok&&<button className="primary" onClick={()=>{addClue('cinta_bancaria');addClue('moto_dolares');finish()}}>Registrar vínculo financeiro</button>}</div>}
-function Teo({game,setGame,finish}:{game:GameSave;setGame:React.Dispatch<React.SetStateAction<GameSave>>;finish:()=>void}){const done=game.interviewed.includes('teo');return <div><TaskTitle tag="INTERROGATÓRIO" title="Téo Duarte" text="Confronte Téo com o dinheiro, a cinta bancária e o log do alarme. As confrontações só abrem com as pistas certas."/><div className="interrogation"><div className="suspect-avatar">TD</div><small>SALA 01 · GRAVAÇÃO ATIVA</small><p>{done?'“Eu quero um advogado.” O interrogatório foi encerrado e a confissão está registrada.':'Téo espera na sala de interrogatório.'}</p></div>{done?<button className="primary" onClick={finish}>Registrar confissão</button>:<button className="primary" onClick={()=>setGame(openDeposition('teo','task'))}>Entrar na sala</button>}</div>}
+function Bank({addClue,finish}:{addClue:(id:string)=>void;finish:()=>void}){const [ok,setOk]=useState(false);return <div><TaskTitle tag="CRUZAMENTO" title="Cinta bancária" text="Compare banco, agência, data e valor para descobrir de onde saiu a quantia apreendida."/><div className="document bank-slip"><small>BANCO MERIDIONAL</small><b>AG. 0431</b><span>15/10/2002 · US$ 5.000</span></div><button className="match" onClick={()=>setOk(true)}><Search/> Cruzar banco + agência + data + valor</button>{ok&&<div className="result ok">Correspondência exata encontrada. O dinheiro não é aleatório.</div>}{ok&&<button className="primary" onClick={()=>{addClue('cinta_bancaria');addClue('moto_dolares');finish()}}>Registrar vínculo financeiro</button>}</div>}
+function Teo({game,setGame,finish}:{game:GameSave;setGame:React.Dispatch<React.SetStateAction<GameSave>>;finish:()=>void}){const done=game.interviewed.includes('teo');return <div><TaskTitle tag="INTERROGATÓRIO" title="Téo Duarte" text="Confronte Téo com o dinheiro, a cinta bancária e o log do alarme. As confrontações só abrem com as pistas certas."/><div className="interrogation"><div className="suspect-avatar">TD</div><small>SALA 01 · GRAVAÇÃO ATIVA</small><p>{done?'“Eu quero um advogado.” O interrogatório foi encerrado e a confissão está registrada.':'Téo foi chamado e aguarda na sala de interrogatório.'}</p></div>{done?<button className="primary" onClick={finish}>Registrar confissão</button>:<button className="primary" onClick={()=>setGame(openDeposition('teo','task'))}>Entrar na sala</button>}</div>}
 function Accusation({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStateAction<GameSave>>}){const [executors,setExecutors]=useState<string[]>([]);const [mentor,setMentor]=useState('');const [motive,setMotive]=useState('');const [proofs,setProofs]=useState<string[]>([]);const toggle=(id:string,list:string[],set:(v:string[])=>void)=>set(list.includes(id)?list.filter(x=>x!==id):[...list,id]);const submit=()=>{const execOK=executors.includes('caio')&&executors.includes('teo')&&executors.length===2;const mentorOK=mentor==='livia';const motiveOK=motive==='heranca';const proofOK=proofs.filter(x=>acceptedProofs.includes(x)).length>=3;const ending:GameSave['ending']=execOK&&mentorOK&&motiveOK&&proofOK?'A':execOK?'B':'C';setGame(g=>({...g,ending,screen:'ending'}))};return <div><TaskTitle tag="RELATÓRIO FINAL" title="Quem fez o quê?" text="Separe execução, facilitação e motivo. Selecione ao menos três provas."/><h3>Executores</h3><div className="choices">{['caio','teo','rafael','jorge'].map(id=><button className={executors.includes(id)?'selected':''} onClick={()=>toggle(id,executors,setExecutors)} key={id}>{people.find(p=>p.id===id)?.name}</button>)}</div><h3>Mentor / facilitador</h3><div className="choices">{['livia','caio','teo'].map(id=><button className={mentor===id?'selected':''} onClick={()=>setMentor(id)} key={id}>{people.find(p=>p.id===id)?.name}</button>)}</div><h3>Motivo</h3><div className="choices"><button className={motive==='heranca'?'selected':''} onClick={()=>setMotive('heranca')}>Herança + proibição do namoro</button><button className={motive==='roubo'?'selected':''} onClick={()=>setMotive('roubo')}>Roubo oportunista</button></div><h3>Provas principais</h3><div className="proof-grid">{game.clues.filter(id=>acceptedProofs.includes(id)).map(id=><button key={id} className={proofs.includes(id)?'selected':''} onClick={()=>toggle(id,proofs,setProofs)}>{clues.find(c=>c.id===id)?.title}</button>)}</div><button className="primary" disabled={!mentor||!motive||executors.length===0||proofs.length<3} onClick={submit}>Assinar relatório</button></div>}
 function Ending({game,restart}:{game:GameSave;restart:()=>void}){const data=game.ending==='A'?['CASO ENCERRADO','Caio e Téo são apontados como executores. Lívia é identificada como facilitadora e mentora do plano.','O relatório conecta acesso, cronologia, dinheiro e confissão.']:game.ending==='B'?['MEIA JUSTIÇA','Os executores foram identificados, mas o papel de Lívia não ficou estabelecido no relatório.','Parte da verdade chegou ao processo. Outra parte ficou sem nome.']:['ARQUIVADO','A acusação não sustentou a autoria dos executores.','Sem uma cadeia coerente de provas, o caso perde força.'];return <main className="ending"><small>ARQUIVO 001 · RESULTADO</small><h1>{data[0]}</h1><p>{data[1]}</p><blockquote>{data[2]}</blockquote><div className="score">Pontuação <b>{game.score}</b><span>{game.clues.length}/20 pistas registradas</span></div><p className="disclaimer">{disclaimer}</p><button className="primary" onClick={restart}><RotateCcw/> Jogar novamente</button></main>}
 function TaskTitle({tag,title,text}:{tag:string;title:string;text:string}){return <div className="task-title"><small>{tag}</small><h2>{title}</h2><p>{text}</p></div>}
