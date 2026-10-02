@@ -1481,3 +1481,29 @@ O objetivo é que o jogador sinta que está **investigando com pessoas**, e não
 
 Fonte:
 `docs/TEAM_MATERIAL_REQUESTS.md`
+
+
+# 54. REDE DE PESSOAS DO CASO
+
+O Caso 01 não apresenta todo o elenco ao jogador no começo.
+
+A rede cresce durante a investigação.
+
+Estados:
+- descoberto;
+- chamado;
+- ouvido.
+
+Rotas atuais:
+- Lívia e Caio: presentes desde a ocorrência;
+- Rafael e Cida: conhecidos inicialmente pela relação direta com a família, mas Lemos decide se os chama;
+- Jorge: pode ser localizado por Paulo na investigação da rua;
+- Téo: pode surgir no depoimento de Caio ou pela linha financeira de Renata.
+
+Ao descobrir alguém, o app Pessoas mostra **NOVO CONTATO** e a ação **CHAMAR**.
+
+Somente depois da convocação o depoimento pode ser aberto.
+
+Depoimentos futuros podem usar `revealsPeople` para expandir a rede em cadeia.
+
+Ver `docs/TEAM_MATERIAL_REQUESTS.md`.
