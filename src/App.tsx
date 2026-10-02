@@ -22,6 +22,7 @@ import { newProgress } from './interrogation/logic'
 import type { InterrogationProgress } from './interrogation/types'
 import './handset-pages.css'
 import { acceptedProofs, chapters, clues, disclaimer, people, teamMessages, victimMessages } from './case01'
+import { case01MaterialAssets } from './evidence/case01Materials'
 
 const SONIA_PHOTO = `${import.meta.env.BASE_URL}sonia.jpg`
 const SAVE_VERSION = 3
@@ -154,6 +155,8 @@ type TeamMaterialRequest = {
   requiresInterviewed?:string[]
   requiresTopics?:string[]
   revealsPeople?:string[]
+  /** Arquivos visuais já produzidos para esta diligência. */
+  assetPaths?:readonly string[]
   clueIds?:string[]
   requestTime:string
   response:{time:string;from:string;text:string}
@@ -308,48 +311,56 @@ const teamDialogues:TeamDialogue[] = [
 const teamMaterialRequests:TeamMaterialRequest[] = [
   {
     id:'fotos_cena',memberId:'mauricio',label:'Fotos completas da cena',kind:'FOTO',
+    assetPaths:case01MaterialAssets.fotos_cena,
     description:'Entrada, sala, escritório, corredor e quarto do casal em alta resolução.',
     minTask:1,requiresTopics:['mauricio_cena'],requestTime:'04:39',
     response:{time:'04:42',from:'Perícia',text:'Separei o pacote antes da coleta. Tem entrada, sala, escritório, corredor e quarto. Estou te enviando na ordem em que fotografamos.'}
   },
   {
     id:'fotos_painel',memberId:'mauricio',label:'Close do painel do alarme',kind:'FOTO',
+    assetPaths:case01MaterialAssets.fotos_painel,
     description:'Fotografias do teclado, visor e estado do painel antes da manipulação.',
     requiresClues:['painel_alarme'],requiresTopics:['mauricio_painel'],requestTime:'04:48',
     response:{time:'04:51',from:'Perícia',text:'Enviei os closes. Teclado inteiro, visor e tampa. Fotografei antes de tocar em qualquer coisa.'}
   },
   {
     id:'gravacoes_depoimentos',memberId:'denise',label:'Separar gravações dos depoimentos',kind:'GRAVAÇÃO',
+    assetPaths:case01MaterialAssets.gravacoes_depoimentos,
     description:'Áudios individuais para comparar versões e mudanças de resposta.',
     minInterviews:2,requiresTopics:['denise_caio_livia'],requestTime:'05:18',
     response:{time:'05:20',from:'Cartório',text:'Separei Lívia e Caio em arquivos diferentes e marquei os trechos de horário. Assim dá pra ouvir um sem contaminar a lembrança do outro.'}
   },
   {
     id:'comprovante_lan',memberId:'paulo',label:'Buscar comprovante da LAN house',kind:'DOCUMENTO',
+    assetPaths:case01MaterialAssets.comprovante_lan,
     description:'Registro de pagamento e horário vinculado a Rafael.',
     requiresInterviewed:['rafael'],requiresTopics:['paulo_rafael'],clueIds:['lan_paga'],requestTime:'05:11',
     response:{time:'05:14',from:'Equipe Externa',text:'Fechou. A LAN tinha registro de caixa e sessão. Rafael estava lá no período relevante; estou anexando a cópia.'}
   },
   {
     id:'log_alarme',memberId:'renata',label:'Puxar log completo do alarme',kind:'PERÍCIA',
+    assetPaths:case01MaterialAssets.log_alarme,
     description:'Histórico de ativações e desativações do sistema da residência.',
     minInterviews:4,requiresTopics:['renata_alarme'],clueIds:['log_alarme'],requestTime:'05:15',
     response:{time:'05:18',from:'Inteligência',text:'Chegou. Tem uma desativação por código mestre às 23:52. Esse é o evento fora do padrão que eu estava procurando.'}
   },
   {
     id:'registro_motel',memberId:'paulo',label:'Buscar registro do motel',kind:'DOCUMENTO',
+    assetPaths:case01MaterialAssets.registro_motel,
     description:'Comprovante independente do horário de entrada de Lívia e Caio.',
     requiresClues:['log_alarme'],requiresTopics:['paulo_motel'],clueIds:['nota_motel'],requestTime:'05:26',
     response:{time:'05:31',from:'Equipe Externa',text:'Consegui o cupom. Entrada registrada às 00:56. Não é lembrança de funcionário, está impresso.'}
   },
   {
     id:'docs_financeiros',memberId:'renata',label:'Levantar documentos financeiros de Ricardo',kind:'DOCUMENTO',
+    assetPaths:case01MaterialAssets.docs_financeiros,
     description:'Extratos e cobranças para separar dívida antiga de movimentação recente.',
     minTask:5,requiresTopics:['renata_dinheiro'],clueIds:['extrato_ricardo','carta_cobranca'],requestTime:'06:03',
     response:{time:'06:10',from:'Financeiro',text:'Separei o que é cobrança antiga do que é movimentação recente. Tem um extrato que merece atenção; mandei junto com a carta pra você comparar.'}
   },
   {
     id:'analise_cinta',memberId:'renata',label:'Cruzar a cinta bancária',kind:'PERÍCIA',
+    assetPaths:case01MaterialAssets.analise_cinta,
     description:'Conferir banco, agência, data e valor da cinta encontrada com o dinheiro.',
     minTask:6,requiresClues:['extrato_ricardo'],requiresTopics:['renata_cinta'],revealsPeople:['teo'],clueIds:['cinta_bancaria'],requestTime:'06:20',
     response:{time:'06:26',from:'Financeiro',text:'Bateu nos quatro pontos: Banco Meridional, agência 0431, 15/10/2002, US$ 5.000. E apareceu um nome ligado ao dinheiro: Téo Duarte, irmão do Caio. Vale chamar esse rapaz.'}
