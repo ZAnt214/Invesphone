@@ -349,3 +349,93 @@ O app Equipe deve ser tratado como:
 
 Nunca voltar ao modelo:
 **Canal / Solicitar material** ou **lista de pedidos genérica**.
+
+
+# 11. DESCOBERTA PROGRESSIVA DE PESSOAS
+
+O elenco do caso **não fica todo disponível desde o início**.
+
+Existem três estados diferentes:
+
+1. **Descoberta** — o nome entrou no radar da investigação.
+2. **Chamada** — Lemos decidiu convocar essa pessoa para depoimento.
+3. **Ouvida** — o depoimento foi realizado e ficou registrado.
+
+Descobrir alguém nunca abre automaticamente o interrogatório.
+
+## Fontes de descoberta
+
+Uma pessoa pode ser descoberta por:
+- conversa com a equipe;
+- diligência;
+- documento;
+- telefone apreendido;
+- depoimento de outra pessoa;
+- cruzamento de registros.
+
+## Cadeias
+
+Exemplo — Jorge:
+
+Paulo procura testemunhas da rua  
+→ informa a Lemos que localizou **Jorge, vigia da rua**  
+→ Jorge aparece em Pessoas como **NOVO CONTATO**  
+→ jogador escolhe **CHAMAR**  
+→ Jorge fica disponível para depoimento  
+→ o que Jorge disser pode abrir novas linhas.
+
+Exemplo — Téo:
+
+Caio é ouvido  
+→ pergunta sobre o irmão pode revelar **Téo Duarte**  
+→ Téo entra no radar.
+
+Existe também uma rota independente:
+linha financeira  
+→ Renata cruza a origem do dinheiro  
+→ identifica **Téo Duarte** ligado à quantia  
+→ Téo entra no radar mesmo se Caio não tiver falado dele.
+
+Isso evita uma única rota obrigatória para descobrir uma pessoa importante.
+
+## Depoimentos revelando nomes
+
+Perguntas de depoimento podem declarar `revealsPeople`.
+
+Quando a resposta é concluída:
+- a pessoa citada entra em `discoveredPeople`;
+- aparece no app Pessoas;
+- ainda não está convocada;
+- o jogador decide se quer chamar.
+
+Uma nova pessoa pode, em seu próprio depoimento, revelar outra.
+
+Portanto a mecânica suporta cadeias:
+
+**Pessoa A → cita B → jogador chama B → B cita C → jogador decide chamar C.**
+
+## Regras
+
+- Nome citado casualmente não precisa virar contato investigável.
+- Use `revealsPeople` apenas quando houver identidade suficiente e relevância investigativa.
+- A equipe deve explicar por que o novo nome interessa.
+- Não chamar automaticamente.
+- Não marcar automaticamente como suspeito.
+- Uma pessoa descoberta pode ser testemunha, familiar, funcionário, proprietário de estabelecimento ou suspeito.
+- A interface não deve revelar pessoas ainda desconhecidas.
+- Textos, pistas e tarefas não podem mencionar como conhecido um personagem que ainda não foi descoberto.
+- Pessoas centrais devem ter, quando possível, mais de uma rota plausível de descoberta para evitar travar o caso.
+
+## Save
+
+`discoveredPeople`: nomes formalmente conhecidos pela investigação.
+
+`summonedPeople`: pessoas que Lemos escolheu chamar.
+
+`interviewed`: pessoas cujo depoimento foi concluído.
+
+## Fonte de verdade
+
+A progressão de pessoas segue:
+
+**descoberta → decisão do jogador → convocação → depoimento → possíveis novas descobertas**.
