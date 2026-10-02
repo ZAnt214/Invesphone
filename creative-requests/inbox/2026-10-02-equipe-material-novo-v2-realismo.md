@@ -77,4 +77,4 @@ Preenchido pelo ChatGPT ao concluir.
 ---
 ## Atualização (Claude)
 Os 9 documentos e os 2 croquis foram refeitos pelo Claude (HTML/SVG renderizado, em `.jpg`) em `public/evidence/case01/new/`.
-**Resta apenas a foto `foto_fachada_lan`** (as outras 3 fotos foram geradas pelo Claude; a fachada bateu o limite diário de imagens).
+As 4 fotos foram refeitas pelo Claude em ilustração vetorial chapada (mesmo estilo dos retratos). Pedido encerrado.
