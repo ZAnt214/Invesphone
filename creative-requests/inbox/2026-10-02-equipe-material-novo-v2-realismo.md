@@ -77,4 +77,4 @@ Preenchido pelo ChatGPT ao concluir.
 ---
 ## Atualização (Claude)
 Os 9 documentos e os 2 croquis foram refeitos pelo Claude (HTML/SVG renderizado, em `.jpg`) em `public/evidence/case01/new/`.
-As 4 fotos foram refeitas pelo Claude em ilustração vetorial chapada (mesmo estilo dos retratos). Pedido encerrado.
+Todas as 15 peças foram refeitas pelo Claude em estilo chapado e simplificado (sem textura de papel), coerente com os retratos ilustrados. Pedido encerrado.
