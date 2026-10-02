@@ -107,16 +107,21 @@ O princípio de implementação é: **informação gera ação**. Não libere te
 Se o fluxo atual em `src/App.tsx` for mais simples que o GAME FLOW, faça a migração gradualmente, preservando mecânicas boas e save. Não invente uma ordem nova em paralelo.
 
 
-## Solicitações de material à equipe
+## Equipe operacional e solicitações
 
 A mecânica oficial está em `docs/TEAM_MATERIAL_REQUESTS.md`.
 
-Ao alterar o app Equipe ou progressão do Caso 01:
-- preserve as abas Canal / Solicitar material;
+O app Equipe funciona como **lista de integrantes + conversa individual por especialista**.
+
+Ao alterar essa área:
+- não recriar abas globais "Canal / Solicitar material";
+- cada integrante tem função e especialidade próprias;
+- pedidos aparecem dentro da conversa da pessoa responsável;
 - pedidos só ficam disponíveis quando há base investigativa;
 - materiais podem registrar pistas no save;
-- nenhum pedido deve revelar uma prova futura antes do gatilho narrativo;
-- novos materiais devem seguir o padrão documentado.
+- nenhum integrante deve oferecer prova futura antes do gatilho narrativo;
+- Sônia coordena e orienta, mas não resolve o caso;
+- novos pedidos precisam declarar `memberId`.
 
 
 ## Investigação orientada por eventos — sem tarefas visíveis
