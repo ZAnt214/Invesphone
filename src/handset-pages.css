@@ -130,3 +130,13 @@
 .member-actions>button>span{font:800 7px/1.15 var(--mono);letter-spacing:.05em;color:var(--ink);text-align:right}
 .member-actions>button:disabled{opacity:.42}
 .member-actions>button.done{opacity:.7}
+
+
+.member-conversation-options{display:flex;flex-direction:column;gap:7px;padding-top:4px}
+.member-conversation-options>small{color:var(--mut);font:700 8px/1.2 var(--mono);letter-spacing:.08em}
+.member-conversation-options>button{width:100%;display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:center;text-align:left;padding:9px;border:1px solid var(--line);background:transparent;color:var(--ink)}
+.member-conversation-options>button svg{width:15px;height:15px;color:var(--mut)}
+.member-conversation-options>button span{font:600 9px/1.35 var(--mono)}
+.member-conversation-options>button:active{background:var(--surf)}
+.member-actions{border-top:1px solid var(--line);padding-top:10px}
+.member-thread{max-height:40vh;overflow:auto;padding-right:2px}

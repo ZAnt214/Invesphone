@@ -141,3 +141,20 @@ Referência: seção 52 de `docs/CASE01_GAME_FLOW.md`.
 ## Nome e marca do órgão
 
 O órgão de investigação do jogo é o **DHPP** (Homicídios). Sempre usar esse nome nos textos da interface (cabeçalhos, ligação, ajustes, finais); não usar "Polícia de São Paulo", "Polícia Civil" nem outro órgão. A marca d'água do órgão é a mesma em todo o jogo: `DHPP` + linha + `HOMICÍDIOS` (ver `.ii-mark`/`.ds-mark` nos depoimentos e `.hm-mark` na tela inicial).
+
+
+## Conversas naturais da equipe
+
+O app Equipe é uma mecânica narrativa, não um catálogo de ações.
+
+Regras:
+- cada integrante possui personalidade e linguagem próprias;
+- novos assuntos aparecem conforme pistas, depoimentos e contradições;
+- assuntos discutidos são persistidos em `teamTopics`;
+- algumas diligências exigem conversa prévia;
+- respostas devem soar humanas e contextualizadas;
+- não usar textos genéricos como "solicitação recebida";
+- o agente pode interpretar tecnicamente, mas não resolver a dedução para o jogador;
+- ao expandir o caso, adicionar tanto conversas quanto pedidos, não apenas pedidos.
+
+Fonte detalhada: `docs/TEAM_MATERIAL_REQUESTS.md`.

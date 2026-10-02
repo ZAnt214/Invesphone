@@ -38,8 +38,10 @@ type GameSave = {
   clues:string[]
   interviewed:string[]
   orders:string[]
-  /** Materiais solicitados à equipe (fotos, gravações, documentos e períícia). */
+  /** Materiais solicitados à equipe (fotos, gravações, documentos e perícia). */
   requestedMaterials?:string[]
+  /** Assuntos já conversados com os integrantes da equipe. */
+  teamTopics?:string[]
   score:number
   liviaInterrogation:InterrogationProgress
   /** Progresso dos depoimentos dos demais personagens, por id (Lívia tem campo próprio, de saves antigos). */
@@ -134,75 +136,217 @@ const orderResultMessages:Record<string,{time:string;from:string;text:string}> =
 }
 
 
+type TeamMemberId = 'sonia'|'mauricio'|'renata'|'paulo'|'denise'
+
 type TeamMaterialRequest = {
   id:string
-  memberId:'sonia'|'mauricio'|'renata'|'paulo'|'denise'
+  memberId:TeamMemberId
   label:string
-  kind:'FOTO'|'GRAVAÇÃO'|'DOCUMENTO'|'PERÍCIA'|'COORDENAÇÃO'
+  kind:'FOTO'|'GRAVAÇÃO'|'DOCUMENTO'|'PERÍCIA'
   description:string
   minTask?:number
   minInterviews?:number
   requiresClues?:string[]
   requiresInterviewed?:string[]
+  requiresTopics?:string[]
   clueIds?:string[]
   requestTime:string
   response:{time:string;from:string;text:string}
 }
 
-const teamMaterialRequests:TeamMaterialRequest[] = [
+type TeamDialogue = {
+  id:string
+  memberId:TeamMemberId
+  label:string
+  minTask?:number
+  minInterviews?:number
+  requiresClues?:string[]
+  requiresInterviewed?:string[]
+  requiresTopics?:string[]
+  user:{time:string;text:string}
+  agent:{time:string;text:string}
+}
+
+const teamDialogues:TeamDialogue[] = [
+  // Sônia: direção e leitura estratégica. Ela orienta, nunca entrega a solução.
   {
-    id:'orientacao_sonia',memberId:'sonia',label:'Pedir leitura da delegada',kind:'COORDENAÇÃO',
-    description:'Pedir à Sônia uma orientação de prioridade sem receber a solução do caso.',
-    requestTime:'04:33',
-    response:{time:'04:34',from:'Sônia',text:'Começa pelo que é objetivo. Entrada, alarme, cachorro e o que ficou para trás. Depois compara isso com o que cada um disser.'}
+    id:'sonia_primeira_leitura',memberId:'sonia',label:'O que está te incomodando nessa cena?',
+    minTask:1,
+    user:{time:'04:33',text:'Sônia, antes de eu falar com eles: o que mais te incomoda nessa primeira leitura?'},
+    agent:{time:'04:34',text:'A pressa em chamar de roubo. Porta intacta, cachorro preso e coisa de valor no lugar. Eu começaria separando fato de cenário.'}
   },
+  {
+    id:'sonia_roubo_encenado',memberId:'sonia',label:'Você também acha que a bagunça foi montada?',
+    requiresClues:['escritorio_revirado','valores_intactos'],
+    user:{time:'04:53',text:'Quanto mais olho, mais essa bagunça me parece feita pra ser vista. Você está com a mesma impressão?'},
+    agent:{time:'04:54',text:'Impressão, sim. Prova, ainda não. Guarda isso como hipótese e vê se a perícia e os depoimentos sustentam. Não casa com uma versão cedo demais.'}
+  },
+  {
+    id:'sonia_janela',memberId:'sonia',label:'Temos uma hora sem explicação no álibi.',
+    requiresClues:['log_alarme','nota_motel'],
+    user:{time:'05:34',text:'Alarme às 23:52. Motel às 00:56. Tem mais de uma hora que os dois não conseguem cobrir.'},
+    agent:{time:'05:35',text:'Então não pergunta mais se o álibi existe. Pergunta o que aconteceu dentro dessa janela. E fala com eles separados de novo.'}
+  },
+  {
+    id:'sonia_papeis',memberId:'sonia',label:'Acho que não foi todo mundo com o mesmo papel.',
+    requiresClues:['cinta_bancaria','confissao_teo'],
+    user:{time:'06:42',text:'A participação está ficando clara, mas não acho que todo mundo entrou nisso do mesmo jeito.'},
+    agent:{time:'06:43',text:'É aí que você fecha o caso de verdade. Quem planejou, quem abriu caminho, quem entrou e quem recebeu. Não mistura participação com função.'}
+  },
+
+  // Maurício: cena, vestígios e leitura física.
+  {
+    id:'mauricio_cena',memberId:'mauricio',label:'Me dá sua leitura da casa antes da coleta.',
+    minTask:1,
+    user:{time:'04:37',text:'Maurício, me fala da casa antes de vocês começarem a recolher. O que não bate?'},
+    agent:{time:'04:38',text:'A entrada está limpa demais pra invasão. E o escritório está bagunçado, mas tem coisa óbvia de valor que ninguém tocou. Eu não chamaria isso de busca às cegas.'}
+  },
+  {
+    id:'mauricio_painel',memberId:'mauricio',label:'O painel do alarme foi mexido ou forçado?',
+    requiresClues:['painel_alarme'],
+    user:{time:'04:46',text:'E o painel? Tem sinal de violação ou alguém operou normalmente?'},
+    agent:{time:'04:47',text:'Nada de força. Teclado inteiro, tampa no lugar. Quem desligou sabia o que estava fazendo ou tinha o código. Posso te mandar o registro fotográfico de perto.'}
+  },
+  {
+    id:'mauricio_canil',memberId:'mauricio',label:'Thor poderia ter sido preso depois?',
+    requiresClues:['cao_canil'],
+    user:{time:'04:49',text:'Sobre o cachorro: dá pra saber se colocaram ele no canil durante a confusão?'},
+    agent:{time:'04:50',text:'Não parece. O canil está normal, sem sinal de contenção improvisada. Pra mim ele foi colocado ali antes de a casa virar cena.'}
+  },
+  {
+    id:'mauricio_busca',memberId:'mauricio',label:'Essa bagunça parece uma busca real?',
+    requiresClues:['escritorio_revirado','valores_intactos'],
+    user:{time:'04:56',text:'Olha o escritório pra mim como perito, não como policial. Isso parece alguém procurando coisa de verdade?'},
+    agent:{time:'04:57',text:'Parece alguém tentando produzir bagunça. Gaveta sem importância aberta, ponto óbvio intacto, objeto caro à vista. Se procuraram algo, sabiam exatamente o que queriam.'}
+  },
+
+  // Renata: cruzamentos, registros e inteligência.
+  {
+    id:'renata_prioridades',memberId:'renata',label:'O que você consegue cruzar já?',
+    minInterviews:2,
+    user:{time:'05:02',text:'Renata, com essas primeiras versões, o que dá pra cruzar sem depender de suposição?'},
+    agent:{time:'05:03',text:'Horário, veículo e sistema da casa. Se eu tiver os nomes fechados e a janela aproximada, consigo puxar alarme e começar pelos registros objetivos.'}
+  },
+  {
+    id:'renata_alarme',memberId:'renata',label:'Vale puxar o histórico completo do alarme?',
+    minInterviews:4,requiresTopics:['renata_prioridades'],
+    user:{time:'05:13',text:'As versões já estão minimamente separadas. Puxa o alarme inteiro ou só a madrugada?'},
+    agent:{time:'05:14',text:'Inteiro. Quero ver padrão, quem costuma armar e qualquer desativação fora do horário. Se tiver código mestre no meio, isso muda bastante a leitura.'}
+  },
+  {
+    id:'renata_gol',memberId:'renata',label:'O Gol e o horário do alarme se cruzam?',
+    requiresClues:['vigia_gol','log_alarme'],
+    user:{time:'05:22',text:'Jorge coloca o Gol na rua e o alarme cai às 23:52. Isso está perto demais pra ignorar.'},
+    agent:{time:'05:23',text:'Concordo, mas ainda são duas peças separadas. O próximo passo é descobrir onde Caio diz que estava nesse intervalo e achar um registro independente.'}
+  },
+  {
+    id:'renata_dinheiro',memberId:'renata',label:'Quero abrir uma linha financeira sobre Ricardo.',
+    minTask:5,
+    user:{time:'06:01',text:'A cena não parece roubo comum, mas tem uma quantia específica faltando. Abre a parte financeira do Ricardo.'},
+    agent:{time:'06:02',text:'Faço isso. Vou separar movimentação recente de dívida antiga. Se o dinheiro estava em casa e alguém sabia, a origem tem que deixar rastro.'}
+  },
+  {
+    id:'renata_cinta',memberId:'renata',label:'Essa cinta pode ligar o dinheiro ao Ricardo?',
+    minTask:6,requiresClues:['extrato_ricardo'],
+    user:{time:'06:18',text:'Tem uma cinta bancária junto do dinheiro ligado ao Téo. Dá pra fechar origem?'},
+    agent:{time:'06:19',text:'Se agência, data e valor baterem com a movimentação do Ricardo, deixa de ser dinheiro genérico. Me manda os dados da cinta e eu cruzo.'}
+  },
+
+  // Paulo: rua, testemunhas e estabelecimentos.
+  {
+    id:'paulo_rua',memberId:'paulo',label:'O que você conseguiu da rua até agora?',
+    minTask:1,
+    user:{time:'04:40',text:'Paulo, o que tem do lado de fora? Vizinho, porteiro, vigia, carro?'},
+    agent:{time:'04:41',text:'Pouco movimento. Estou rodando os pontos fixos da rua. Tem um vigia que presta atenção em carro; vou separar ele dos curiosos e conversar direito.'}
+  },
+  {
+    id:'paulo_jorge',memberId:'paulo',label:'Jorge parece confiável sobre o Gol?',
+    requiresInterviewed:['jorge'],
+    user:{time:'05:07',text:'Falei com o Jorge. Ele cravou o Gol, mas não quem estava dentro. Você compra essa lembrança?'},
+    agent:{time:'05:08',text:'Do carro, sim. Ele trabalha olhando placa, modelo e movimento da rua. Pessoa dentro ele não viu. Eu usaria o carro, não inventaria ocupante.'}
+  },
+  {
+    id:'paulo_rafael',memberId:'paulo',label:'Confere a história da LAN do Rafael.',
+    requiresInterviewed:['rafael'],
+    user:{time:'05:09',text:'Rafael diz que ficou na LAN. Consegue verificar sem avisar ele antes?'},
+    agent:{time:'05:10',text:'Consigo. Vou no caixa, peço registro e horário. Se pagou sessão e ficou logado, dá pra fechar esse pedaço sem depender da palavra dele.'}
+  },
+  {
+    id:'paulo_motel',memberId:'paulo',label:'Precisamos de um horário independente do motel.',
+    requiresClues:['log_alarme'],
+    user:{time:'05:24',text:'O alarme me deu 23:52. Agora eu preciso saber quando Lívia e Caio realmente chegaram no motel.'},
+    agent:{time:'05:25',text:'Vou direto no estabelecimento. Não quero memória de atendente; quero cupom, ficha ou qualquer registro com hora impressa.'}
+  },
+
+  // Denise: versões, gravações e consistência dos depoimentos.
+  {
+    id:'denise_livia',memberId:'denise',label:'Como a Lívia se comportou no primeiro depoimento?',
+    requiresInterviewed:['livia'],
+    user:{time:'05:04',text:'Denise, você ficou no registro da Lívia. Alguma coisa no jeito dela te chamou atenção?'},
+    agent:{time:'05:05',text:'Ela controla bem a fala. Fica emocional quando fala da mãe, mas nos horários responde mais rápido e com menos detalhe. Não é prova de nada, só vale comparar depois.'}
+  },
+  {
+    id:'denise_caio_livia',memberId:'denise',label:'As versões de Lívia e Caio estão iguais demais?',
+    requiresInterviewed:['livia','caio'],
+    user:{time:'05:16',text:'Compara os dois pra mim. Eles lembram das mesmas coisas ou estão repetindo a mesma estrutura?'},
+    agent:{time:'05:17',text:'A estrutura está parecida demais: noite juntos, motel, volta depois. Mas quando você olha detalhe de horário, cada um escorrega pra um lado. Eu guardaria os áudios.'}
+  },
+  {
+    id:'denise_contradicoes',memberId:'denise',label:'Quais respostas mudaram depois das provas?',
+    requiresClues:['inconsistencia_caio_codigo'],
+    user:{time:'05:40',text:'Quero as mudanças de versão separadas das simples diferenças de memória.'},
+    agent:{time:'05:41',text:'A mais limpa até agora é o código. Primeiro Caio não sabia; depois aparece a explicação de que ele teria visto Lívia digitando. Isso é mudança, não esquecimento.'}
+  }
+]
+
+const teamMaterialRequests:TeamMaterialRequest[] = [
   {
     id:'fotos_cena',memberId:'mauricio',label:'Fotos completas da cena',kind:'FOTO',
     description:'Entrada, sala, escritório, corredor e quarto do casal em alta resolução.',
-    minTask:1,requestTime:'04:35',
-    response:{time:'04:41',from:'Perícia',text:'Pacote fotográfico da cena anexado. Entrada, sala, escritório e quarto do casal documentados antes da coleta.'}
+    minTask:1,requiresTopics:['mauricio_cena'],requestTime:'04:39',
+    response:{time:'04:42',from:'Perícia',text:'Separei o pacote antes da coleta. Tem entrada, sala, escritório, corredor e quarto. Estou te enviando na ordem em que fotografamos.'}
   },
   {
     id:'fotos_painel',memberId:'mauricio',label:'Close do painel do alarme',kind:'FOTO',
     description:'Fotografias do teclado, visor e estado do painel antes da manipulação.',
-    requiresClues:['painel_alarme'],requestTime:'04:47',
-    response:{time:'04:50',from:'Perícia',text:'Close do painel do alarme enviado. O equipamento foi fotografado e preservado antes da análise.'}
+    requiresClues:['painel_alarme'],requiresTopics:['mauricio_painel'],requestTime:'04:48',
+    response:{time:'04:51',from:'Perícia',text:'Enviei os closes. Teclado inteiro, visor e tampa. Fotografei antes de tocar em qualquer coisa.'}
   },
   {
-    id:'gravacoes_depoimentos',memberId:'denise',label:'Gravações dos depoimentos',kind:'GRAVAÇÃO',
-    description:'Cópias de áudio dos depoimentos já colhidos para comparação de versões.',
-    minInterviews:1,requestTime:'05:06',
-    response:{time:'05:09',from:'Cartório',text:'Áudios dos depoimentos já realizados anexados ao arquivo da ocorrência.'}
+    id:'gravacoes_depoimentos',memberId:'denise',label:'Separar gravações dos depoimentos',kind:'GRAVAÇÃO',
+    description:'Áudios individuais para comparar versões e mudanças de resposta.',
+    minInterviews:2,requiresTopics:['denise_caio_livia'],requestTime:'05:18',
+    response:{time:'05:20',from:'Cartório',text:'Separei Lívia e Caio em arquivos diferentes e marquei os trechos de horário. Assim dá pra ouvir um sem contaminar a lembrança do outro.'}
   },
   {
-    id:'comprovante_lan',memberId:'paulo',label:'Comprovante da LAN house',kind:'DOCUMENTO',
+    id:'comprovante_lan',memberId:'paulo',label:'Buscar comprovante da LAN house',kind:'DOCUMENTO',
     description:'Registro de pagamento e horário vinculado a Rafael.',
-    requiresInterviewed:['rafael'],clueIds:['lan_paga'],requestTime:'05:11',
-    response:{time:'05:14',from:'Equipe Externa',text:'LAN house confirmou o registro de Rafael. Comprovante e horário foram anexados ao caso.'}
+    requiresInterviewed:['rafael'],requiresTopics:['paulo_rafael'],clueIds:['lan_paga'],requestTime:'05:11',
+    response:{time:'05:14',from:'Equipe Externa',text:'Fechou. A LAN tinha registro de caixa e sessão. Rafael estava lá no período relevante; estou anexando a cópia.'}
   },
   {
-    id:'log_alarme',memberId:'renata',label:'Log completo do alarme',kind:'PERÍCIA',
+    id:'log_alarme',memberId:'renata',label:'Puxar log completo do alarme',kind:'PERÍCIA',
     description:'Histórico de ativações e desativações do sistema da residência.',
-    minInterviews:4,clueIds:['log_alarme'],requestTime:'05:15',
-    response:{time:'05:18',from:'Inteligência',text:'Log completo recebido. Há uma desativação por código mestre às 23:52.'}
+    minInterviews:4,requiresTopics:['renata_alarme'],clueIds:['log_alarme'],requestTime:'05:15',
+    response:{time:'05:18',from:'Inteligência',text:'Chegou. Tem uma desativação por código mestre às 23:52. Esse é o evento fora do padrão que eu estava procurando.'}
   },
   {
-    id:'registro_motel',memberId:'paulo',label:'Registro de entrada do motel',kind:'DOCUMENTO',
-    description:'Comprovante com horário de entrada atribuído a Lívia e Caio.',
-    requiresClues:['log_alarme'],clueIds:['nota_motel'],requestTime:'05:26',
-    response:{time:'05:31',from:'Equipe Externa',text:'Motel localizou o registro. Entrada de Lívia e Caio consta às 00:56.'}
+    id:'registro_motel',memberId:'paulo',label:'Buscar registro do motel',kind:'DOCUMENTO',
+    description:'Comprovante independente do horário de entrada de Lívia e Caio.',
+    requiresClues:['log_alarme'],requiresTopics:['paulo_motel'],clueIds:['nota_motel'],requestTime:'05:26',
+    response:{time:'05:31',from:'Equipe Externa',text:'Consegui o cupom. Entrada registrada às 00:56. Não é lembrança de funcionário, está impresso.'}
   },
   {
-    id:'docs_financeiros',memberId:'renata',label:'Documentos financeiros de Ricardo',kind:'DOCUMENTO',
-    description:'Extratos e cobranças recolhidos no escritório para cruzamento financeiro.',
-    minTask:5,clueIds:['extrato_ricardo','carta_cobranca'],requestTime:'06:03',
-    response:{time:'06:10',from:'Financeiro',text:'Extrato e carta de cobrança de Ricardo digitalizados e anexados para análise.'}
+    id:'docs_financeiros',memberId:'renata',label:'Levantar documentos financeiros de Ricardo',kind:'DOCUMENTO',
+    description:'Extratos e cobranças para separar dívida antiga de movimentação recente.',
+    minTask:5,requiresTopics:['renata_dinheiro'],clueIds:['extrato_ricardo','carta_cobranca'],requestTime:'06:03',
+    response:{time:'06:10',from:'Financeiro',text:'Separei o que é cobrança antiga do que é movimentação recente. Tem um extrato que merece atenção; mandei junto com a carta pra você comparar.'}
   },
   {
-    id:'analise_cinta',memberId:'renata',label:'Análise da cinta bancária',kind:'PERÍCIA',
-    description:'Conferência de origem, agência, data e valor da cinta encontrada com o dinheiro.',
-    minTask:6,requiresClues:['extrato_ricardo'],clueIds:['cinta_bancaria'],requestTime:'06:20',
-    response:{time:'06:26',from:'Financeiro',text:'Cinta identificada: Banco Meridional, ag. 0431, 15/10/2002, US$ 5.000.'}
+    id:'analise_cinta',memberId:'renata',label:'Cruzar a cinta bancária',kind:'PERÍCIA',
+    description:'Conferir banco, agência, data e valor da cinta encontrada com o dinheiro.',
+    minTask:6,requiresClues:['extrato_ricardo'],requiresTopics:['renata_cinta'],clueIds:['cinta_bancaria'],requestTime:'06:20',
+    response:{time:'06:26',from:'Financeiro',text:'Bateu nos quatro pontos: Banco Meridional, agência 0431, 15/10/2002, US$ 5.000. Isso liga a origem do dinheiro à movimentação do Ricardo.'}
   }
 ]
 
@@ -499,20 +643,43 @@ const teamMemberForSender=(from:string)=>{
  return 'sonia'
 }
 
+const teamIntroMessages = [
+ {time:'04:32',from:'Sônia',text:'Estou no canal. Me chama quando uma peça mudar a direção do caso.',memberId:'sonia' as TeamMemberId,outgoing:false},
+ {time:'04:35',from:'Maurício',text:'Entrei na residência agora. Vou te avisando o que for objetivo antes de qualquer interpretação.',memberId:'mauricio' as TeamMemberId,outgoing:false},
+ {time:'04:44',from:'Renata',text:'Assim que você fechar os primeiros nomes e horários, começo os cruzamentos.',memberId:'renata' as TeamMemberId,outgoing:false},
+ {time:'04:39',from:'Paulo',text:'Estou rodando a rua e separando quem realmente viu alguma coisa de quem só ouviu barulho depois.',memberId:'paulo' as TeamMemberId,outgoing:false},
+ {time:'04:58',from:'Denise',text:'Vou manter os depoimentos separados e registrar qualquer mudança de versão. Se quiser comparar trechos, me chama.',memberId:'denise' as TeamMemberId,outgoing:false}
+]
+
 function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStateAction<GameSave>>}){
  const [selected,setSelected]=useState<string|null>(null)
  const requested=game.requestedMaterials??[]
+ const discussed=game.teamTopics??[]
 
- const available=(item:TeamMaterialRequest)=>{
+ const baseAvailable=(item:{minTask?:number;minInterviews?:number;requiresClues?:string[];requiresInterviewed?:string[]})=>{
   if((item.minTask??0)>game.task)return false
   if((item.minInterviews??0)>game.interviewed.length)return false
   if(item.requiresClues?.some(id=>!game.clues.includes(id)))return false
   if(item.requiresInterviewed?.some(id=>!game.interviewed.includes(id)))return false
   return true
  }
+ const topicAvailable=(item:TeamDialogue)=>{
+  if(!baseAvailable(item))return false
+  if(item.requiresTopics?.some(id=>!discussed.includes(id)))return false
+  return true
+ }
+ const requestAvailable=(item:TeamMaterialRequest)=>{
+  if(!baseAvailable(item))return false
+  if(item.requiresTopics?.some(id=>!discussed.includes(id)))return false
+  return true
+ }
 
+ const discuss=(topic:TeamDialogue)=>{
+  if(discussed.includes(topic.id)||!topicAvailable(topic))return
+  setGame(g=>({...g,teamTopics:[...(g.teamTopics??[]),topic.id]}))
+ }
  const request=(item:TeamMaterialRequest)=>{
-  if(requested.includes(item.id)||!available(item))return
+  if(requested.includes(item.id)||!requestAvailable(item))return
   setGame(g=>{
    const material=[...(g.requestedMaterials??[]),item.id]
    const nextClues=[...g.clues]
@@ -527,24 +694,35 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
   const item=teamMaterialRequests.find(r=>r.id===id)
   if(!item)return []
   return [
-   {time:item.requestTime,from:'Lemos',text:`Solicitação: ${item.label}.`,memberId:item.memberId,outgoing:true},
+   {time:item.requestTime,from:'Lemos',text:`Consegue ${item.label.toLowerCase()} pra mim?`,memberId:item.memberId,outgoing:true},
    {...item.response,memberId:item.memberId,outgoing:false}
   ]
  })
+ const topicMessages=discussed.flatMap(id=>{
+  const item=teamDialogues.find(t=>t.id===id)
+  if(!item)return []
+  const member=caseTeam.find(m=>m.id===item.memberId)
+  return [
+   {time:item.user.time,from:'Lemos',text:item.user.text,memberId:item.memberId,outgoing:true},
+   {time:item.agent.time,from:member?.name??'Equipe',text:item.agent.text,memberId:item.memberId,outgoing:false}
+  ]
+ })
  const normalized=baseMessages.map(m=>({...m,memberId:teamMemberForSender(m.from),outgoing:false}))
- const allMessages=[...normalized,...materialMessages].sort((a,b)=>a.time.localeCompare(b.time))
+ const allMessages=[...teamIntroMessages,...normalized,...topicMessages,...materialMessages].sort((a,b)=>a.time.localeCompare(b.time))
 
  if(!selected){
   return <div className="team-contacts">
    <header className="team-directory-head">
     <small>EQUIPE VINCULADA · OCORRÊNCIA 001</small>
-    <b>Com quem você precisa falar?</b>
-    <p>Cada integrante responde apenas pela própria área.</p>
+    <b>Equipe</b>
+    <p>Fale com cada integrante conforme a investigação exigir. Novos assuntos e diligências aparecem quando surgem fatos novos.</p>
    </header>
    {caseTeam.map(member=>{
     const messages=allMessages.filter(m=>m.memberId===member.id)
     const last=messages[messages.length-1]
-    const actions=teamMaterialRequests.filter(r=>r.memberId===member.id&&available(r)&&!requested.includes(r.id))
+    const newTopics=teamDialogues.filter(t=>t.memberId===member.id&&topicAvailable(t)&&!discussed.includes(t.id))
+    const newRequests=teamMaterialRequests.filter(r=>r.memberId===member.id&&requestAvailable(r)&&!requested.includes(r.id))
+    const unread=newTopics.length+newRequests.length
     return <button key={member.id} className="team-contact" onClick={()=>setSelected(member.id)}>
       <i>{member.initials}</i>
       <div>
@@ -552,7 +730,7 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
        <b>{member.name}</b>
        <p>{last?.text??member.detail}</p>
       </div>
-      <span>{actions.length>0?<em>{actions.length}</em>:<ChevronLeft/>}</span>
+      <span>{unread>0?<em>{unread}</em>:<ChevronLeft/>}</span>
     </button>
    })}
   </div>
@@ -560,7 +738,8 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
 
  const member=caseTeam.find(m=>m.id===selected)!
  const memberMessages=allMessages.filter(m=>m.memberId===selected)
- const requests=teamMaterialRequests.filter(r=>r.memberId===selected)
+ const availableTopics=teamDialogues.filter(t=>t.memberId===selected&&topicAvailable(t)&&!discussed.includes(t.id))
+ const visibleRequests=teamMaterialRequests.filter(r=>r.memberId===selected&&(requested.includes(r.id)||requestAvailable(r)))
 
  return <div className="member-chat">
   <button className="member-back" onClick={()=>setSelected(null)}><ChevronLeft/> Equipe</button>
@@ -570,24 +749,29 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
   </header>
 
   <section className="member-thread">
-   {memberMessages.length===0&&<p className="member-empty">Nenhuma mensagem ainda. Você pode iniciar a conversa com uma solicitação pertinente à função de {member.name}.</p>}
    {memberMessages.map((m,i)=><article key={m.time+m.from+i} className={m.outgoing?'outgoing':''}>
     <small>{m.time}</small><p><b>{m.from}</b>{m.text}</p>
    </article>)}
   </section>
 
-  <section className="member-actions">
-   <small>O QUE PEDIR A {member.name.split(' ')[0].toUpperCase()}</small>
-   {requests.map(item=>{
+  <section className="member-conversation-options">
+   <small>CONVERSAR SOBRE O CASO</small>
+   {availableTopics.map(topic=><button key={topic.id} onClick={()=>discuss(topic)}>
+    <MessageCircle/><span>{topic.label}</span>
+   </button>)}
+   {availableTopics.length===0&&<p className="member-empty">Nada novo para conversar agora. Quando surgirem novas pistas ou versões, novos assuntos aparecem aqui.</p>}
+  </section>
+
+  {visibleRequests.length>0&&<section className="member-actions">
+   <small>DILIGÊNCIAS E MATERIAIS</small>
+   {visibleRequests.map(item=>{
     const done=requested.includes(item.id)
-    const can=available(item)
-    return <button key={item.id} disabled={done||!can} className={done?'done':''} onClick={()=>request(item)}>
+    return <button key={item.id} disabled={done} className={done?'done':''} onClick={()=>request(item)}>
       <div><b>{item.label}</b><p>{item.description}</p></div>
-      <span>{done?'RECEBIDO':can?'PEDIR':'AINDA NÃO HÁ BASE'}</span>
+      <span>{done?'RECEBIDO':'PEDIR'}</span>
     </button>
    })}
-   {requests.length===0&&<p className="member-empty">Nenhuma solicitação específica disponível neste momento.</p>}
-  </section>
+  </section>}
  </div>
 }
 function ClueList({ids}:{ids:string[]}){if(!ids.length)return <Empty icon={<FileSearch/>} title="Nenhuma pista registrada" text="Abra a tarefa atual e comece pela cena."/>;return <div className="clue-list">{ids.map(id=>{const c=clues.find(x=>x.id===id)!;return <article key={id}><FileText/><div><small>{c.category.toUpperCase()}</small><b>{c.title}</b><p>{c.description}</p></div></article>})}</div>}

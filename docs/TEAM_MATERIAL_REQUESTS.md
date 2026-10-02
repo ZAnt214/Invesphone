@@ -1,182 +1,331 @@
-# MECÂNICA — EQUIPE OPERACIONAL E SOLICITAÇÕES
+# MECÂNICA — EQUIPE OPERACIONAL, CONVERSAS E DILIGÊNCIAS
 
 Status: OFICIAL  
 Caso atual: Caso 01 — A Casa da Rua das Acácias
 
 ## Conceito
 
-O app **Equipe** é um diretório de contatos operacionais do caso.
+O app **Equipe** funciona como uma lista de contatos reais da investigação.
 
-O jogador não entra em um catálogo genérico de pedidos. Ele escolhe **com qual integrante falar** e conversa com essa pessoa em um canal individual.
+O jogador não abre um catálogo de provas. Ele fala com pessoas.
 
-Cada integrante:
-- tem nome;
-- função;
+Cada integrante tem:
+- nome;
+- cargo;
 - especialidade;
-- histórico próprio de mensagens;
-- solicitações compatíveis com a sua área;
-- respostas próprias.
+- jeito próprio de falar;
+- histórico individual;
+- assuntos que podem ser discutidos;
+- memória dos assuntos já discutidos;
+- diligências e materiais específicos;
+- novas opções que aparecem conforme o caso muda.
 
-A fantasia é: **Lemos coordena uma equipe real pelo telefone**.
+A fantasia é: **Lemos coordena uma equipe real pelo telefone enquanto a investigação acontece.**
 
 ---
 
-## Integrantes
+# 1. LOOP DA EQUIPE
 
-### Sônia Prado
-Cargo: Delegada  
-Especialidade: coordenação do caso
+O loop não é:
 
-Responsável por:
-- prioridades;
-- direção investigativa;
-- decisões;
-- orientação;
-- autorização e organização da equipe.
+pedido → resposta → próximo pedido.
 
-Ela não entrega a solução.  
-Pode orientar Lemos sobre qual linha merece atenção.
+O loop correto é:
 
-Pedido inicial:
-- pedir leitura/orientação da delegada.
+**fato novo → conversa → interpretação profissional → nova hipótese/necessidade → diligência → retorno → nova conversa**
 
-### Maurício Farias
-Cargo: Perito criminal  
-Especialidade: cena e vestígios
+Exemplo:
 
-Responsável por:
-- fotografias da cena;
-- close de objetos;
+Rafael diz que estava na LAN  
+→ Lemos fala com Paulo sobre essa versão  
+→ Paulo explica como consegue verificar sem depender da palavra de Rafael  
+→ surge a ação "Buscar comprovante da LAN house"  
+→ Paulo retorna com o documento  
+→ o álibi de Rafael ganha sustentação.
+
+Outro exemplo:
+
+Painel do alarme encontrado  
+→ Lemos pergunta a Maurício se houve violação  
+→ Maurício explica que não há sinal de força  
+→ surge a ação "Close do painel do alarme"  
+→ material é recebido  
+→ a investigação passa a tratar acesso legítimo/código como linha real.
+
+---
+
+# 2. CONVERSAS SÃO PARTE DA INVESTIGAÇÃO
+
+Conversar com a equipe não é decoração.
+
+Os diálogos:
+- contextualizam a evidência;
+- ajudam o jogador a pensar sem entregar a solução;
+- diferenciam opinião profissional de prova;
+- liberam diligências;
+- introduzem novas perguntas;
+- registram mudanças de direção do caso.
+
+Assuntos concluídos ficam salvos em `teamTopics`.
+
+Ao voltar à conversa:
+- mensagens antigas continuam ali;
+- o assunto já discutido não reaparece como botão;
+- novos assuntos podem ter sido liberados por pistas/depoimentos obtidos desde a última visita.
+
+---
+
+# 3. PERSONALIDADE DOS INTEGRANTES
+
+## Sônia Prado — Delegada
+
+Função:
+coordenação, prioridades e leitura estratégica.
+
+Jeito:
+- curta;
+- direta;
+- experiente;
+- não dramatiza;
+- não entrega a resposta;
+- frequentemente separa "impressão" de "prova".
+
+Exemplo:
+> "Impressão, sim. Prova, ainda não."
+
+Papel narrativo:
+ajudar o jogador a não casar cedo demais com uma hipótese.
+
+Assuntos progressivos:
+- primeira leitura da cena;
+- possibilidade de roubo encenado;
+- janela do álibi;
+- separação dos papéis no final.
+
+Não possui catálogo de materiais.
+
+---
+
+## Maurício Farias — Perito criminal
+
+Função:
+cena e vestígios.
+
+Jeito:
+- técnico;
+- observador;
+- fala do que viu fisicamente;
+- evita especular sobre culpado;
+- compara padrões de cena.
+
+Exemplo:
+> "Eu não chamaria isso de busca às cegas."
+
+Assuntos progressivos:
+- leitura inicial da residência;
 - painel do alarme;
-- vestígios;
-- coleta;
-- laudos e observações técnicas.
+- Thor no canil;
+- bagunça seletiva.
 
-Pedidos atuais:
+Diligências:
 - fotos completas da cena;
-- close do painel do alarme.
+- close do painel.
 
-### Renata Leal
-Cargo: Investigadora  
-Especialidade: inteligência e registros
+---
 
-Responsável por:
-- log do alarme;
-- consulta de veículos;
-- cruzamento de registros;
-- linhas financeiras;
-- registros bancários;
-- análise da cinta bancária.
+## Renata Leal — Investigadora
 
-Pedidos atuais:
+Função:
+inteligência, registros e cruzamentos.
+
+Jeito:
+- analítica;
+- pensa em horário e correlação;
+- sempre procura fonte independente;
+- não confunde coincidência com vínculo.
+
+Exemplo:
+> "Ainda são duas peças separadas."
+
+Assuntos progressivos:
+- quais registros cruzar;
+- histórico do alarme;
+- Gol + horário do alarme;
+- dinheiro de Ricardo;
+- origem da cinta bancária.
+
+Diligências:
 - log completo do alarme;
-- documentos financeiros de Ricardo;
-- análise da cinta bancária.
-
-### Paulo Vieira
-Cargo: Investigador  
-Especialidade: diligências de campo
-
-Responsável por:
-- localizar testemunhas;
-- falar com estabelecimentos;
-- buscar comprovantes;
-- verificar endereços;
-- motel;
-- LAN house;
-- checagens externas.
-
-Pedidos atuais:
-- comprovante da LAN house;
-- registro de entrada do motel.
-
-### Denise Rocha
-Cargo: Escrivã  
-Especialidade: cartório e depoimentos
-
-Responsável por:
-- gravações;
-- transcrições;
-- organização de depoimentos;
-- documentação formal;
-- cópias de termos.
-
-Pedido atual:
-- gravações dos depoimentos.
+- documentos financeiros;
+- análise da cinta.
 
 ---
 
-## Interface
+## Paulo Vieira — Investigador de campo
 
-Ao abrir **Equipe**:
+Função:
+rua, testemunhas e estabelecimentos.
 
-1. mostrar os integrantes do caso;
-2. mostrar cargo e especialidade;
-3. mostrar a última mensagem daquela pessoa;
-4. indicar quando existe uma nova solicitação possível;
-5. ao tocar, abrir conversa individual.
+Jeito:
+- prático;
+- linguagem simples;
+- conhece diferença entre boato e testemunha útil;
+- prefere documento a lembrança quando consegue.
 
-Dentro da conversa:
-- histórico daquela pessoa;
-- mensagens enviadas por Lemos;
-- respostas do integrante;
-- seção contextual "O que pedir a [nome]";
-- pedidos bloqueados aparecem como indisponíveis até haver base investigativa;
-- pedidos recebidos permanecem visíveis como concluídos.
+Exemplo:
+> "Eu usaria o carro, não inventaria ocupante."
 
-Não existe mais uma aba global "Solicitar material".
+Assuntos progressivos:
+- situação da rua;
+- credibilidade de Jorge;
+- álibi de Rafael;
+- registro do motel.
+
+Diligências:
+- comprovante da LAN;
+- registro do motel.
 
 ---
 
-## Regra central
+## Denise Rocha — Escrivã
 
-**A necessidade investigativa determina com quem Lemos fala.**
+Função:
+depoimentos, gravações e consistência de versões.
+
+Jeito:
+- atenta a formulação;
+- percebe mudança de versão;
+- não interpreta nervosismo como culpa;
+- compara palavra, horário e repetição.
+
+Exemplo:
+> "Isso é mudança, não esquecimento."
+
+Assuntos progressivos:
+- comportamento de Lívia;
+- comparação Lívia/Caio;
+- mudanças de versão.
+
+Diligências:
+- separar gravações dos depoimentos.
+
+---
+
+# 4. DESBLOQUEIOS PROGRESSIVOS
+
+Novas conversas aparecem quando surge base factual.
 
 Exemplos:
 
-- quer foto ou laudo da cena → Maurício;
-- quer log do alarme → Renata;
-- quer confirmação da LAN house → Paulo;
-- quer gravação de depoimento → Denise;
-- quer definir prioridade → Sônia.
+`painel_alarme`
+→ libera conversa com Maurício sobre o painel.
 
-O jogador aprende naturalmente a função de cada integrante e passa a saber quem procurar.
+`cao_canil`
+→ libera conversa com Maurício sobre Thor.
 
----
+Lívia entrevistada
+→ libera conversa com Denise sobre o primeiro depoimento.
 
-## Progressão
+Lívia + Caio entrevistados
+→ libera comparação de versões com Denise.
 
-Pedidos continuam obedecendo a requisitos narrativos.
+4 depoimentos
+→ Renata pode discutir histórico completo do alarme.
 
-Exemplos:
+`vigia_gol` + `log_alarme`
+→ libera conversa com Renata sobre correlação de horário.
 
-- painel encontrado → Maurício pode fornecer close do painel;
-- Rafael ouvido → Paulo pode verificar a LAN;
-- primeiras versões colhidas → Renata pode puxar o log;
-- log recebido → Paulo pode verificar o motel;
-- linha financeira aberta → Renata pode buscar documentos;
-- extrato cruzado → Renata pode analisar a cinta.
+`log_alarme`
+→ libera conversa com Paulo sobre encontrar registro independente do motel.
 
-Nenhum integrante deve oferecer uma prova que Lemos ainda não tem motivo para procurar.
+`extrato_ricardo`
+→ libera conversa sobre origem da cinta.
 
----
-
-## Regras
-
-1. Não criar catálogo central de provas.
-2. Não permitir que qualquer pessoa faça qualquer coisa.
-3. Toda solicitação tem um responsável claro.
-4. Conversas devem parecer humanas, não retorno de API.
-5. O integrante pode dizer que algo não está disponível ainda.
-6. Não exigir espera real.
-7. A resposta pode simular passagem de minutos dentro da ficção.
-8. Material recebido pode registrar pista no save.
-9. Sônia orienta, mas não resolve deduções.
-10. Especialidades devem respeitar a polícia e a tecnologia de 2002.
+`cinta_bancaria` + `confissao_teo`
+→ libera conversa final com Sônia sobre separar papéis.
 
 ---
 
-## Modelo de solicitação futura
+# 5. DILIGÊNCIAS TAMBÉM DEPENDEM DE CONVERSA
+
+Uma diligência pode exigir:
+- fato/pista;
+- entrevista;
+- fase do caso;
+- conversa prévia com o agente.
+
+Exemplo:
+
+Não basta ter ouvido Rafael.
+
+Para aparecer "Buscar comprovante da LAN", Lemos primeiro conversa com Paulo sobre como verificar o álibi.
+
+Isso faz o pedido nascer de uma conversa real, e não de um menu mágico.
+
+---
+
+# 6. INTERFACE
+
+## Lista de equipe
+
+Mostra:
+- nome;
+- cargo;
+- especialidade;
+- última mensagem;
+- contador de novos assuntos/diligências disponíveis.
+
+O contador não significa "missões".
+Ele significa **há algo novo que pode ser discutido ou solicitado**.
+
+## Conversa individual
+
+Ordem:
+
+1. cabeçalho da pessoa;
+2. histórico;
+3. seção "Conversar sobre o caso";
+4. seção "Diligências e materiais", quando houver algo disponível.
+
+Novos assuntos aparecem conforme o caso progride.
+
+Assuntos já discutidos permanecem no histórico, mas somem da lista de opções.
+
+Diligências recebidas continuam registradas.
+
+---
+
+# 7. REGRAS DE ESCRITA
+
+1. Agentes não falam como API.
+2. Não responder "Solicitação recebida".
+3. Não dizer "material disponível".
+4. Não listar metadados como resposta humana.
+5. Cada pessoa tem vocabulário próprio.
+6. Respostas podem conter dúvida e limite de certeza.
+7. Opinião profissional nunca vale automaticamente como prova.
+8. Nenhum agente sabe fatos que ainda não descobriu.
+9. Nenhum agente resolve o caso para Lemos.
+10. Conversas precisam reagir ao estágio atual da investigação.
+11. Não repetir o mesmo texto em momentos diferentes.
+12. Quando uma evidência contradiz uma fala antiga, a conversa pode mudar de tom.
+
+---
+
+# 8. MODELO DE ASSUNTO
+
+```
+id
+memberId
+label
+availabilityCondition
+requiresTopics
+userLine
+agentLine
+unlocks (opcional)
+```
+
+# 9. MODELO DE DILIGÊNCIA
 
 ```
 id
@@ -185,14 +334,18 @@ label
 kind
 description
 availabilityCondition
+requiresTopics
 requestMessage
 responseMessage
 outputClues
 assetPaths (opcional)
 ```
 
-## Fonte de verdade
+# 10. FONTE DE VERDADE
 
-Esta mecânica substitui o modelo antigo "Canal / Solicitar material".
+O app Equipe deve ser tratado como:
 
-O app Equipe deve ser tratado como **contatos + conversas individuais + solicitações por especialidade**.
+**contatos individuais + conversas progressivas + diligências por especialidade + memória**
+
+Nunca voltar ao modelo:
+**Canal / Solicitar material** ou **lista de pedidos genérica**.
