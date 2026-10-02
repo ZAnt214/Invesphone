@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#756f62"/><stop offset="1" stop-color="#252622"/></linearGradient>
+  <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="3" seed="17" result="n"/><feColorMatrix in="n" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 .11 0"/><feBlend in="SourceGraphic" mode="multiply"/></filter>
+</defs>
+<rect width="1200" height="900" fill="url(#bg)"/>
+<g filter="url(#grain)">
+<rect x="70" y="65" width="1060" height="660" fill="#56574d"/>
+<g stroke="#ada58c" stroke-width="10"><path d="M150 105V710"/><path d="M240 105V710"/><path d="M330 105V710"/><path d="M420 105V710"/><path d="M510 105V710"/><path d="M600 105V710"/><path d="M690 105V710"/><path d="M780 105V710"/><path d="M870 105V710"/><path d="M960 105V710"/><path d="M1050 105V710"/><path d="M110 250H1090M110 565H1090"/></g>
+<g fill="#2f312d"><ellipse cx="810" cy="535" rx="105" ry="70"/><circle cx="875" cy="460" r="50"/><path d="M842 430l18-55 28 50M889 427l48-43 3 70z"/></g>
+<rect x="330" y="300" width="300" height="100" rx="5" fill="#807763" stroke="#2f302c" stroke-width="5"/>
+<rect x="585" y="320" width="135" height="60" fill="#a09578" stroke="#2f302c" stroke-width="5"/>
+<circle cx="725" cy="350" r="32" fill="none" stroke="#b4a57b" stroke-width="10"/>
+<path d="M520 230L560 300" stroke="#eee5ca" stroke-width="3"/>
+<text x="190" y="190" font-family="Courier New,monospace" font-size="22" font-weight="700" fill="#eee5ca">TRINCO FECHADO PELO LADO EXTERNO</text></g>
+<rect x="28" y="28" width="1144" height="844" fill="none" stroke="#eee5ca" stroke-width="3"/>
+<rect x="28" y="748" width="1144" height="124" fill="#111" opacity=".88"/>
+<text x="60" y="795" font-family="Courier New,monospace" font-size="27" fill="#f0ead9" font-weight="700">VESTÍGIO · TRAVA DO CANIL</text>
+<text x="60" y="832" font-family="Courier New,monospace" font-size="20" fill="#d1c8b2">THOR AO FUNDO · SEM CONTENÇÃO IMPROVISADA</text>
+<text x="1090" y="834" text-anchor="end" font-family="Courier New,monospace" font-size="17" fill="#d1c8b2">DHPP · CASO 01</text>
+</svg>
