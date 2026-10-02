@@ -1,9 +1,9 @@
 /* Tela inicial: sistema de investigação da Polícia Civil. O brasão no centro e os módulos sobre o círculo que gira ao fundo. */
 .handset.hm{
-  --bg:#0a1020;--bg2:#101a36;--line:rgba(148,163,184,.28);--txt:#e3eaf8;--mut:#93a3c4;--acc:#2b4a8a;--acc2:#6b83b8;--gold:#b89a4a;--alert:#5b1a22;
+  --bg:#0b0b0d;--bg2:#151618;--line:rgba(255,255,255,.14);--txt:#e8e9eb;--mut:#9a9ea6;--acc:#34373d;--acc2:#8d929b;--gold:#a8a08a;--alert:#2e1c1e;
   --R:clamp(72px,min(17vh,calc((100vw - 124px)/2)),140px);--node:clamp(52px,8.4vh,64px);
   display:flex;flex-direction:column;gap:9px;color:var(--txt);font-family:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden;
-  background:radial-gradient(70% 45% at 50% 44%,#14224a,var(--bg) 78%);
+  background:radial-gradient(70% 45% at 50% 44%,#1c1d20,var(--bg) 78%);
   padding:calc(10px + env(safe-area-inset-top)) 16px calc(14px + env(safe-area-inset-bottom));
 }
 .hm>*{flex:none}
@@ -16,37 +16,37 @@
 .hm-head button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.04);display:grid;place-items:center;padding:0}
 .hm-head button svg{width:17px;height:17px}
 
-.hm-alert{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--alert);border:1px solid rgba(248,180,180,.25);border-radius:10px}
-.hm-alert i{flex:none;width:9px;height:9px;border-radius:50%;background:#e8a0a0;animation:hm-blink 1.6s steps(2) infinite}
+.hm-alert{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--alert);border:1px solid rgba(255,255,255,.12);border-radius:10px}
+.hm-alert i{flex:none;width:9px;height:9px;border-radius:50%;background:#b9605f;animation:hm-blink 1.6s steps(2) infinite}
 .hm-alert div{display:flex;flex-direction:column;line-height:1.25;min-width:0}
-.hm-alert b{font-size:13.5px;font-weight:800;color:#fbe4e4}
-.hm-alert span{font-size:11.5px;font-weight:600;color:#e7bcbc}
+.hm-alert b{font-size:13.5px;font-weight:800;color:#f1e6e6}
+.hm-alert span{font-size:11.5px;font-weight:600;color:#c9b3b3}
 @keyframes hm-blink{50%{opacity:.35}}
 
 /* Roda: tudo mede a partir do centro; o anel tem diâmetro 2R e passa exatamente pelo centro de cada atalho. */
 .hm-wheel{position:relative;align-self:center;width:calc(2*var(--R) + var(--node) + 18px);height:calc(2*var(--R) + var(--node) + 18px);flex:none}
-.hm-ring{position:absolute;left:50%;top:50%;width:calc(2*var(--R));height:calc(2*var(--R));margin:calc(-1*var(--R)) 0 0 calc(-1*var(--R));border-radius:50%;border:2px dashed rgba(148,163,184,.4);animation:hm-spin 60s linear infinite}
+.hm-ring{position:absolute;left:50%;top:50%;width:calc(2*var(--R));height:calc(2*var(--R));margin:calc(-1*var(--R)) 0 0 calc(-1*var(--R));border-radius:50%;border:2px dashed rgba(255,255,255,.22);animation:hm-spin 60s linear infinite}
 @keyframes hm-spin{to{transform:rotate(360deg)}}
 .hm-emblem{position:absolute;left:50%;top:50%;width:calc(var(--R)*1.1);height:calc(var(--R)*1.1);transform:translate(-50%,-50%);filter:drop-shadow(0 4px 14px rgba(0,0,0,.5))}
 .hm-sh{fill:var(--acc)}.hm-st{fill:var(--gold)}
 .hm-orb{position:absolute;left:50%;top:50%;width:0;height:0;padding:0;border:0;background:none;transform:rotate(var(--a)) translateX(var(--R)) rotate(calc(-1*var(--a)))}
-.hm-orb-btn{position:absolute;left:calc(var(--node)/-2);top:calc(var(--node)/-2);width:var(--node);height:var(--node);border-radius:50%;display:grid;place-items:center;background:linear-gradient(#22345f,#182548);border:2px solid var(--acc2);color:var(--txt)}
+.hm-orb-btn{position:absolute;left:calc(var(--node)/-2);top:calc(var(--node)/-2);width:var(--node);height:var(--node);border-radius:50%;display:grid;place-items:center;background:linear-gradient(#2b2d32,#1c1d21);border:2px solid var(--acc2);color:var(--txt)}
 .hm-orb-btn svg{width:46%;height:46%}
 .hm-orb b{position:absolute;left:-40px;width:80px;top:calc(var(--node)/2 + 4px);text-align:center;font:800 9.5px/1 "Rajdhani","Instrument Sans",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--txt);white-space:nowrap}
-.hm-orb em{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;border-radius:9px;background:#b3412f;color:#fff;font:800 10.5px/18px Arial,sans-serif;text-align:center;font-style:normal;border:2px solid var(--bg)}
+.hm-orb em{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;border-radius:9px;background:#a34a3d;color:#fff;font:800 10.5px/18px Arial,sans-serif;text-align:center;font-style:normal;border:2px solid var(--bg)}
 .hm-orb:active .hm-orb-btn{transform:scale(.94)}
-.hm-orb.lock .hm-orb-btn{background:#0d1426;border-color:#252f4d;color:#475577}
-.hm-orb.lock b{color:#475577}
+.hm-orb.lock .hm-orb-btn{background:#101113;border-color:#26282c;color:#555a62}
+.hm-orb.lock b{color:#555a62}
 
 .hm-facts{margin:0;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;font-size:12px;font-weight:600;color:var(--mut)}
-.hm-facts span+span{color:#c9b06a}
+.hm-facts span+span{color:#bdb48f}
 
 .hm-update{display:flex;gap:10px;align-items:center;padding:9px 11px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;font-size:12.5px;line-height:1.4;color:var(--txt)}
 .hm-update b{color:var(--acc2)}
 .hm-av{flex:none;width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid var(--acc2)}
-.hm-av-i{display:grid;place-items:center;background:#16213f;color:var(--acc2);font:800 16px Arial,sans-serif}
+.hm-av-i{display:grid;place-items:center;background:#1f2023;color:var(--acc2);font:800 16px Arial,sans-serif}
 
-.hm-go{display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border-radius:26px;border:1px solid rgba(255,255,255,.18);background:linear-gradient(#34559e,#24407d);color:#eaf1ff!important;font-size:15px;font-weight:800;letter-spacing:.02em}
+.hm-go{display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border-radius:26px;border:1px solid rgba(255,255,255,.2);background:linear-gradient(#41444b,#2c2e33);color:#f1f2f4!important;font-size:15px;font-weight:800;letter-spacing:.02em}
 .hm-go svg{width:20px;height:20px;stroke-width:2.6}
 .hm-go:active{transform:translateY(2px)}
 @media (max-height:700px){.hm{gap:7px}.hm-go{height:48px}}
