@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" fill="none">
-  <!-- Logo provisória do DHPP. Substituir pela oficial (ver creative-requests/inbox). -->
-  <path d="M100 8l86 32v64c0 56-36 98-86 126C50 202 14 160 14 104V40z" fill="#f0f1ee" fill-opacity=".10" stroke="#f0f1ee" stroke-opacity=".55" stroke-width="5"/>
-  <path d="M100 26l70 26v52c0 46-29 80-70 103-41-23-70-57-70-103V52z" stroke="#f0f1ee" stroke-opacity=".3" stroke-width="2"/>
-  <path d="M100 52l11 23 25 3.600-18 17.600 4.300 25L100 109l-22.300 12.200 4.300-25-18-17.600 25-3.600z" fill="#f0f1ee" fill-opacity=".55"/>
-  <text x="100" y="168" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="38" fill="#f0f1ee" fill-opacity=".8" letter-spacing="3">DHPP</text>
-  <path d="M52 182h96" stroke="#f0f1ee" stroke-opacity=".4" stroke-width="3"/>
-</svg>
