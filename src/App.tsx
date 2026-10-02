@@ -643,20 +643,43 @@ const teamMemberForSender=(from:string)=>{
  return 'sonia'
 }
 
+const teamIntroMessages = [
+ {time:'04:32',from:'Sônia',text:'Estou no canal. Me chama quando uma peça mudar a direção do caso.',memberId:'sonia' as TeamMemberId,outgoing:false},
+ {time:'04:35',from:'Maurício',text:'Entrei na residência agora. Vou te avisando o que for objetivo antes de qualquer interpretação.',memberId:'mauricio' as TeamMemberId,outgoing:false},
+ {time:'04:44',from:'Renata',text:'Assim que você fechar os primeiros nomes e horários, começo os cruzamentos.',memberId:'renata' as TeamMemberId,outgoing:false},
+ {time:'04:39',from:'Paulo',text:'Estou rodando a rua e separando quem realmente viu alguma coisa de quem só ouviu barulho depois.',memberId:'paulo' as TeamMemberId,outgoing:false},
+ {time:'04:58',from:'Denise',text:'Vou manter os depoimentos separados e registrar qualquer mudança de versão. Se quiser comparar trechos, me chama.',memberId:'denise' as TeamMemberId,outgoing:false}
+]
+
 function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStateAction<GameSave>>}){
  const [selected,setSelected]=useState<string|null>(null)
  const requested=game.requestedMaterials??[]
+ const discussed=game.teamTopics??[]
 
- const available=(item:TeamMaterialRequest)=>{
+ const baseAvailable=(item:{minTask?:number;minInterviews?:number;requiresClues?:string[];requiresInterviewed?:string[]})=>{
   if((item.minTask??0)>game.task)return false
   if((item.minInterviews??0)>game.interviewed.length)return false
   if(item.requiresClues?.some(id=>!game.clues.includes(id)))return false
   if(item.requiresInterviewed?.some(id=>!game.interviewed.includes(id)))return false
   return true
  }
+ const topicAvailable=(item:TeamDialogue)=>{
+  if(!baseAvailable(item))return false
+  if(item.requiresTopics?.some(id=>!discussed.includes(id)))return false
+  return true
+ }
+ const requestAvailable=(item:TeamMaterialRequest)=>{
+  if(!baseAvailable(item))return false
+  if(item.requiresTopics?.some(id=>!discussed.includes(id)))return false
+  return true
+ }
 
+ const discuss=(topic:TeamDialogue)=>{
+  if(discussed.includes(topic.id)||!topicAvailable(topic))return
+  setGame(g=>({...g,teamTopics:[...(g.teamTopics??[]),topic.id]}))
+ }
  const request=(item:TeamMaterialRequest)=>{
-  if(requested.includes(item.id)||!available(item))return
+  if(requested.includes(item.id)||!requestAvailable(item))return
   setGame(g=>{
    const material=[...(g.requestedMaterials??[]),item.id]
    const nextClues=[...g.clues]
@@ -671,24 +694,35 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
   const item=teamMaterialRequests.find(r=>r.id===id)
   if(!item)return []
   return [
-   {time:item.requestTime,from:'Lemos',text:`Solicitação: ${item.label}.`,memberId:item.memberId,outgoing:true},
+   {time:item.requestTime,from:'Lemos',text:`Consegue ${item.label.toLowerCase()} pra mim?`,memberId:item.memberId,outgoing:true},
    {...item.response,memberId:item.memberId,outgoing:false}
   ]
  })
+ const topicMessages=discussed.flatMap(id=>{
+  const item=teamDialogues.find(t=>t.id===id)
+  if(!item)return []
+  const member=caseTeam.find(m=>m.id===item.memberId)
+  return [
+   {time:item.user.time,from:'Lemos',text:item.user.text,memberId:item.memberId,outgoing:true},
+   {time:item.agent.time,from:member?.name??'Equipe',text:item.agent.text,memberId:item.memberId,outgoing:false}
+  ]
+ })
  const normalized=baseMessages.map(m=>({...m,memberId:teamMemberForSender(m.from),outgoing:false}))
- const allMessages=[...normalized,...materialMessages].sort((a,b)=>a.time.localeCompare(b.time))
+ const allMessages=[...teamIntroMessages,...normalized,...topicMessages,...materialMessages].sort((a,b)=>a.time.localeCompare(b.time))
 
  if(!selected){
   return <div className="team-contacts">
    <header className="team-directory-head">
     <small>EQUIPE VINCULADA · OCORRÊNCIA 001</small>
-    <b>Com quem você precisa falar?</b>
-    <p>Cada integrante responde apenas pela própria área.</p>
+    <b>Equipe</b>
+    <p>Fale com cada integrante conforme a investigação exigir. Novos assuntos e diligências aparecem quando surgem fatos novos.</p>
    </header>
    {caseTeam.map(member=>{
     const messages=allMessages.filter(m=>m.memberId===member.id)
     const last=messages[messages.length-1]
-    const actions=teamMaterialRequests.filter(r=>r.memberId===member.id&&available(r)&&!requested.includes(r.id))
+    const newTopics=teamDialogues.filter(t=>t.memberId===member.id&&topicAvailable(t)&&!discussed.includes(t.id))
+    const newRequests=teamMaterialRequests.filter(r=>r.memberId===member.id&&requestAvailable(r)&&!requested.includes(r.id))
+    const unread=newTopics.length+newRequests.length
     return <button key={member.id} className="team-contact" onClick={()=>setSelected(member.id)}>
       <i>{member.initials}</i>
       <div>
@@ -696,7 +730,7 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
        <b>{member.name}</b>
        <p>{last?.text??member.detail}</p>
       </div>
-      <span>{actions.length>0?<em>{actions.length}</em>:<ChevronLeft/>}</span>
+      <span>{unread>0?<em>{unread}</em>:<ChevronLeft/>}</span>
     </button>
    })}
   </div>
@@ -704,7 +738,8 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
 
  const member=caseTeam.find(m=>m.id===selected)!
  const memberMessages=allMessages.filter(m=>m.memberId===selected)
- const requests=teamMaterialRequests.filter(r=>r.memberId===selected)
+ const availableTopics=teamDialogues.filter(t=>t.memberId===selected&&topicAvailable(t)&&!discussed.includes(t.id))
+ const visibleRequests=teamMaterialRequests.filter(r=>r.memberId===selected&&(requested.includes(r.id)||requestAvailable(r)))
 
  return <div className="member-chat">
   <button className="member-back" onClick={()=>setSelected(null)}><ChevronLeft/> Equipe</button>
@@ -714,24 +749,29 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
   </header>
 
   <section className="member-thread">
-   {memberMessages.length===0&&<p className="member-empty">Nenhuma mensagem ainda. Você pode iniciar a conversa com uma solicitação pertinente à função de {member.name}.</p>}
    {memberMessages.map((m,i)=><article key={m.time+m.from+i} className={m.outgoing?'outgoing':''}>
     <small>{m.time}</small><p><b>{m.from}</b>{m.text}</p>
    </article>)}
   </section>
 
-  <section className="member-actions">
-   <small>O QUE PEDIR A {member.name.split(' ')[0].toUpperCase()}</small>
-   {requests.map(item=>{
+  <section className="member-conversation-options">
+   <small>CONVERSAR SOBRE O CASO</small>
+   {availableTopics.map(topic=><button key={topic.id} onClick={()=>discuss(topic)}>
+    <MessageCircle/><span>{topic.label}</span>
+   </button>)}
+   {availableTopics.length===0&&<p className="member-empty">Nada novo para conversar agora. Quando surgirem novas pistas ou versões, novos assuntos aparecem aqui.</p>}
+  </section>
+
+  {visibleRequests.length>0&&<section className="member-actions">
+   <small>DILIGÊNCIAS E MATERIAIS</small>
+   {visibleRequests.map(item=>{
     const done=requested.includes(item.id)
-    const can=available(item)
-    return <button key={item.id} disabled={done||!can} className={done?'done':''} onClick={()=>request(item)}>
+    return <button key={item.id} disabled={done} className={done?'done':''} onClick={()=>request(item)}>
       <div><b>{item.label}</b><p>{item.description}</p></div>
-      <span>{done?'RECEBIDO':can?'PEDIR':'AINDA NÃO HÁ BASE'}</span>
+      <span>{done?'RECEBIDO':'PEDIR'}</span>
     </button>
    })}
-   {requests.length===0&&<p className="member-empty">Nenhuma solicitação específica disponível neste momento.</p>}
-  </section>
+  </section>}
  </div>
 }
 function ClueList({ids}:{ids:string[]}){if(!ids.length)return <Empty icon={<FileSearch/>} title="Nenhuma pista registrada" text="Abra a tarefa atual e comece pela cena."/>;return <div className="clue-list">{ids.map(id=>{const c=clues.find(x=>x.id===id)!;return <article key={id}><FileText/><div><small>{c.category.toUpperCase()}</small><b>{c.title}</b><p>{c.description}</p></div></article>})}</div>}
