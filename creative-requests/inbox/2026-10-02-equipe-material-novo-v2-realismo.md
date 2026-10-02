@@ -73,3 +73,8 @@ Preenchido pelo ChatGPT ao concluir.
 - status:
 - assets criados:
 - observações:
+
+---
+## Atualização (Claude)
+Os 9 documentos e os 2 croquis foram refeitos pelo Claude (HTML/SVG renderizado, em `.jpg`) em `public/evidence/case01/new/`.
+**Restam apenas as 4 fotos**: `fechadura_porta`, `trava_canil`, `escritorio_comparativo`, `foto_fachada_lan` (as atuais são simples demais).
