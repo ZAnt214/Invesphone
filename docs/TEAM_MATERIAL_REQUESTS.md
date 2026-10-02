@@ -439,3 +439,24 @@ Portanto a mecânica suporta cadeias:
 A progressão de pessoas segue:
 
 **descoberta → decisão do jogador → convocação → depoimento → possíveis novas descobertas**.
+
+
+# 12. ARQUIVOS DE EVIDÊNCIA JÁ PRODUZIDOS
+
+Os materiais visuais das diligências já estão em:
+`public/evidence/case01/`
+
+Fonte detalhada:
+`docs/CASE01_EVIDENCE_ASSETS.md`
+
+Manifesto:
+`public/evidence/case01/manifest.json`
+
+Cada diligência pode carregar `assetPaths`.
+
+Quando o agente retornar:
+- anexar os arquivos indicados à conversa;
+- não substituir o anexo por descrição textual;
+- não criar evidência duplicada;
+- manter o arquivo acessível no histórico;
+- permitir que o jogador examine o material.
