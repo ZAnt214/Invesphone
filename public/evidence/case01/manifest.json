@@ -1,0 +1,64 @@
+{
+  "caseId": "case01",
+  "title": "A Casa da Rua das Acácias",
+  "status": "READY_FOR_IMPLEMENTATION",
+  "basePath": "/evidence/case01",
+  "materials": {
+    "fotos_cena": {
+      "owner": "mauricio",
+      "kind": "photo_set",
+      "assets": [
+        "/evidence/case01/scene/01-entrada.svg",
+        "/evidence/case01/scene/02-sala.svg",
+        "/evidence/case01/scene/03-escritorio.svg",
+        "/evidence/case01/scene/04-corredor.svg",
+        "/evidence/case01/scene/05-quarto.svg",
+        "/evidence/case01/scene/07-canil.svg"
+      ]
+    },
+    "fotos_painel": {
+      "owner": "mauricio",
+      "kind": "photo",
+      "assets": ["/evidence/case01/scene/06-painel-teclado.svg"]
+    },
+    "gravacoes_depoimentos": {
+      "owner": "denise",
+      "kind": "recording_index",
+      "assets": ["/evidence/case01/cartorio/indice-gravacoes.svg"],
+      "runtimePlayback": "Use the existing interrogation dialogue/progress as the source of the playable deposition excerpts; do not invent new testimony."
+    },
+    "comprovante_lan": {
+      "owner": "paulo",
+      "kind": "document",
+      "assets": ["/evidence/case01/docs/lan-house-recibo.svg"]
+    },
+    "log_alarme": {
+      "owner": "renata",
+      "kind": "technical_log",
+      "assets": ["/evidence/case01/docs/log-alarme.svg"]
+    },
+    "registro_motel": {
+      "owner": "paulo",
+      "kind": "document",
+      "assets": ["/evidence/case01/docs/motel-cupom.svg"]
+    },
+    "docs_financeiros": {
+      "owner": "renata",
+      "kind": "document_set",
+      "assets": [
+        "/evidence/case01/docs/extrato-ricardo.svg",
+        "/evidence/case01/docs/carta-cobranca.svg",
+        "/evidence/case01/docs/agenda-helena.svg"
+      ]
+    },
+    "analise_cinta": {
+      "owner": "renata",
+      "kind": "forensic_finance_set",
+      "assets": [
+        "/evidence/case01/docs/apreensao-dolares.svg",
+        "/evidence/case01/docs/cinta-bancaria.svg",
+        "/evidence/case01/docs/analise-cinta.svg"
+      ]
+    }
+  }
+}
