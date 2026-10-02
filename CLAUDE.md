@@ -133,6 +133,6 @@ Mesmo que `game.task` permaneça temporariamente no código como marcador intern
 Referência: seção 52 de `docs/CASE01_GAME_FLOW.md`.
 
 
-## Nome e logo do órgão
+## Nome e marca do órgão
 
-O órgão de investigação do jogo é o **DHPP**. Sempre usar esse nome nos textos da interface (cabeçalhos, ligação, ajustes, finais); não usar "Polícia de São Paulo", "Polícia Civil" nem outro órgão. A logo oficial fica de fundo da tela inicial (`public/dhpp-logo.svg`, referenciada em `src/desk-home.css`); hoje é uma logo provisória e o pedido da oficial está em `creative-requests/inbox/`.
+O órgão de investigação do jogo é o **DHPP** (Homicídios). Sempre usar esse nome nos textos da interface (cabeçalhos, ligação, ajustes, finais); não usar "Polícia de São Paulo", "Polícia Civil" nem outro órgão. A marca d'água do órgão é a mesma em todo o jogo: `DHPP` + linha + `HOMICÍDIOS` (ver `.ii-mark`/`.ds-mark` nos depoimentos e `.hm-mark` na tela inicial).
