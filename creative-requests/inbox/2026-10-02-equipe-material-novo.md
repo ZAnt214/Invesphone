@@ -1,6 +1,6 @@
 ---
 id: 2026-10-02-equipe-material-novo
-status: pending
+status: completed
 requested_by: claude
 priority: high
 character: "Equipe (Maurício, Renata, Paulo, Denise)"
@@ -74,8 +74,7 @@ Todos em `public/evidence/case01/new/`:
 - Área segura de 3% nas bordas e texto legível com zoom de 2×.
 
 ## Resposta do ChatGPT
-Preenchido pelo ChatGPT ao concluir.
 
-- status:
-- assets criados:
-- observações:
+- status: completed
+- assets criados: 15/15 em `public/evidence/case01/new/`
+- observações: materiais novos criados no universo visual do pacote existente, com leitura limpa no iPhone e estética de evidência de 2002. Dados não definidos pelo cânone ficaram como "A APURAR". Nenhuma das três propostas que alteram a lógica das provas foi criada. Claude pode agora registrar os novos gatilhos/conversas em `src/App.tsx`, `manifest.json` e `src/evidence/case01Materials.ts`.
