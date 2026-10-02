@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1280" viewBox="0 0 900 1280">
+<rect width="900" height="1280" fill="#d8d1bb"/>
+<rect x="45" y="35" width="810" height="1210" rx="5" fill="#f7f2df" stroke="#625b4d" stroke-width="2"/>
+<text x="80" y="82" font-family="Arial,sans-serif" font-size="34" font-weight="700" fill="#202020">DHPP</text>
+<text x="80" y="112" font-family="Arial,sans-serif" font-size="17" fill="#555">HOMICÍDIOS</text>
+<text x="790" y="96" text-anchor="end" font-family="Arial,sans-serif" font-size="48" font-weight="700" fill="#e1dccb">DHPP</text>
+<path d="M80 148H820" stroke="#444" stroke-width="2"/>
+<text x="80" y="188" font-family="Georgia,serif" font-size="28" font-weight="700" fill="#171717">TERMO DE DECLARAÇÃO</text>
+<text x="80" y="224" font-family="Arial,sans-serif" font-size="16" fill="#625d52">DECLARAÇÃO DE TERCEIRO · APOIO AO ÁLIBI DE CIDA</text>
+
+<text x="100" y="310" font-family="Georgia,serif" font-size="19" font-weight="700" fill="#282622">DECLARANTE: MARTA SILVA (familiar)</text>
+<text x="105" y="380" font-family="Georgia,serif" font-size="18" fill="#302e2a">
+ <tspan x="105">Declara, para registro, que Cida esteve reunida com familiares</tspan>
+ <tspan x="105" dy="30">durante a noite relacionada aos fatos investigados. A presente</tspan>
+ <tspan x="105" dy="30">declaração registra apenas a informação prestada pela declarante</tspan>
+ <tspan x="105" dy="30">e deverá ser confrontada com os demais elementos do inquérito.</tspan>
+</text>
+<text x="105" y="560" font-family="Georgia,serif" font-size="18" fill="#302e2a">Horário detalhado: A APURAR</text>
+<text x="105" y="610" font-family="Georgia,serif" font-size="18" fill="#302e2a">Local detalhado: A APURAR</text>
+<path d="M120 930H430M500 930H780" stroke="#524d43" stroke-width="2"/>
+<text x="120" y="955" font-family="Georgia,serif" font-size="14" fill="#655e52">Assinatura da declarante</text>
+<text x="500" y="955" font-family="Georgia,serif" font-size="14" fill="#655e52">Recebido por</text>
+<path d="M80 1170H820" stroke="#a79f8c"/>
+<text x="80" y="1200" font-family="Courier New,monospace" font-size="14" fill="#655e50">ARQUIVO FICCIONAL · CASO 01</text>
+</svg>
