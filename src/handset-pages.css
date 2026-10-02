@@ -140,3 +140,6 @@
 .member-conversation-options>button:active{background:var(--surf)}
 .member-actions{border-top:1px solid var(--line);padding-top:10px}
 .member-thread{max-height:40vh;overflow:auto;padding-right:2px}
+
+.people-list button strong{justify-self:end;color:var(--ink);font:800 7px/1 var(--mono);letter-spacing:.07em}
+.people-discovery-note{margin:10px 2px 0;padding:9px;border:1px dashed var(--line);color:var(--mut);font-size:8px;line-height:1.45}
