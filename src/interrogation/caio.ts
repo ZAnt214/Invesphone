@@ -77,7 +77,8 @@ export const caioInterrogation:InterrogationConfig = {
       id:'teo_home',
       question:'Seu irmão Téo estava com você?',
       answer:'O Téo? O que o Téo tem a ver com isso? Ele nem conhecia a família.',
-      expression:'defensive'
+      expression:'defensive',
+      revealsPeople:['teo']
     },
     {
       id:'confront_gol',
