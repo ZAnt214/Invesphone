@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#756f62"/><stop offset="1" stop-color="#252622"/></linearGradient>
+  <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="3" seed="17" result="n"/><feColorMatrix in="n" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 .11 0"/><feBlend in="SourceGraphic" mode="multiply"/></filter>
+</defs>
+<rect width="1200" height="900" fill="url(#bg)"/>
+<g filter="url(#grain)">
+<rect x="85" y="70" width="1030" height="650" fill="#756b59"/>
+<rect x="330" y="90" width="520" height="630" fill="#735942" stroke="#332b23" stroke-width="8"/>
+<rect x="375" y="135" width="430" height="540" fill="none" stroke="#503e30" stroke-width="5"/>
+<rect x="800" y="315" width="85" height="190" rx="5" fill="#998a68" stroke="#383631" stroke-width="4"/>
+<circle cx="842" cy="370" r="17" fill="#c1ac70" stroke="#3d3a32" stroke-width="3"/>
+<rect x="828" y="410" width="28" height="62" fill="#b8a36b" stroke="#3d3a32" stroke-width="3"/>
+<rect x="888" y="340" width="31" height="150" fill="#9d9884" stroke="#45423b" stroke-width="3"/>
+<rect x="620" y="585" width="285" height="42" fill="#e0d5ad" stroke="#3e3b34" stroke-width="2"/>
+<g stroke="#403d35" stroke-width="2"><path d="M637 590V608"/><path d="M654 590V617"/><path d="M671 590V608"/><path d="M688 590V617"/><path d="M705 590V608"/><path d="M722 590V617"/><path d="M739 590V608"/><path d="M756 590V617"/><path d="M773 590V608"/><path d="M790 590V617"/><path d="M807 590V608"/><path d="M824 590V617"/><path d="M841 590V608"/><path d="M858 590V617"/><path d="M875 590V608"/></g>
+<text x="762" y="652" text-anchor="middle" font-family="Courier New,monospace" font-size="17" fill="#eee5ca">ESCALA PERICIAL</text>
+<path d="M330 275L792 365" stroke="#f0ead8" stroke-width="3"/>
+<path d="M792 365l-24-12 8 25z" fill="#f0ead8"/>
+<text x="150" y="235" font-family="Courier New,monospace" font-size="22" font-weight="700" fill="#f3eddc">BATENTE E FECHADURA</text>
+<text x="150" y="266" font-family="Courier New,monospace" font-size="22" font-weight="700" fill="#f3eddc">SEM MARCAS DE FORÇA</text></g>
+<rect x="28" y="28" width="1144" height="844" fill="none" stroke="#eee5ca" stroke-width="3"/>
+<rect x="28" y="748" width="1144" height="124" fill="#111" opacity=".88"/>
+<text x="60" y="795" font-family="Courier New,monospace" font-size="27" fill="#f0ead9" font-weight="700">VESTÍGIO · FECHADURA DA PORTA</text>
+<text x="60" y="832" font-family="Courier New,monospace" font-size="20" fill="#d1c8b2">REGISTRO EM CLOSE · ABERTURA PRESERVADA</text>
+<text x="1090" y="834" text-anchor="end" font-family="Courier New,monospace" font-size="17" fill="#d1c8b2">DHPP · CASO 01</text>
+</svg>
