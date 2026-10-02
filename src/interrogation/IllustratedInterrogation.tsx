@@ -22,6 +22,8 @@ type Props = {
   progress:InterrogationProgress
   onProgress:(p:InterrogationProgress)=>void
   onClue:(id:string)=>void
+  /** Uma resposta pode revelar uma pessoa até então desconhecida no caso. */
+  onPersonDiscovered?:(id:string)=>void
   /** Nome legível de uma pista, para avisar o jogador quando ela é registrada. */
   clueTitle?:(id:string)=>string|undefined
   /** Pistas que o jogador já tem (de qualquer depoimento ou cena): liberam as confrontações. */
@@ -57,7 +59,7 @@ const speakingTime = (text:string) => Math.min(subtitleDuration(text)-150, Math.
  * Interrogatório com retrato ilustrado. Serve para qualquer personagem em src/characters:
  * as perguntas, as expressões, as pistas e os desbloqueios vêm do `config`.
  */
-export default function IllustratedInterrogation({config,progress,onProgress,onClue,clueTitle=()=>undefined,registeredClues=[],onComplete,onBack,onReturn}:Props){
+export default function IllustratedInterrogation({config,progress,onProgress,onClue,onPersonDiscovered=()=>undefined,clueTitle=()=>undefined,registeredClues=[],onComplete,onBack,onReturn}:Props){
   const character = getCharacter(config.personId)
   const [phase,setPhase] = useState<Phase>('idle')
   const [activeId,setActiveId] = useState<string|null>(null)
@@ -132,7 +134,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
         setPhase('holding')
         later(()=>{
           const before = progressRef.current.pressure ?? 0
-          const { progress:next, clues } = applyAnswer(config,progressRef.current,id)
+          const { progress:next, clues, people } = applyAnswer(config,progressRef.current,id)
           const after = next.pressure ?? 0
           const crossed = stageIndex(config,after) > stageIndex(config,before)
           if(crossed){
@@ -142,6 +144,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
             later(()=>setAlert(null),3000)
           }
           clues.forEach(onClue)
+          people.forEach(onPersonDiscovered)
           onProgress(next)
           setSubtitle(null)
           setActiveId(null)
