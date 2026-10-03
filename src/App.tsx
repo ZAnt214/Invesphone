@@ -56,6 +56,8 @@ type GameSave = {
   /** Depoimento aberto quando `app` é 'depo'. */
   depoId?:string
   interrogationOrigin?:'app'|'task'
+  /** Conversa da equipe que o guia abre ao entrar em Equipe (some depois de usada). */
+  teamFocus?:string
   ending?:'A'|'B'|'C'
 }
 
@@ -178,6 +180,8 @@ type TeamDialogue = {
   revealsPeople?:string[]
   /** Pessoas que a resposta põe em jogo: a conversa oferece chamá-las (ou retomar o depoimento). */
   callPeople?:string[]
+  /** Pistas que esta conversa registra (a leitura da cena vem do perito, não de uma tela à parte). */
+  clueIds?:string[]
   user:{time:string;text:string}
   agent:{time:string;text:string}
 }
@@ -212,21 +216,27 @@ const teamDialogues:TeamDialogue[] = [
   // Maurício: cena, vestígios e leitura física.
   {
     id:'mauricio_cena',memberId:'mauricio',label:'Me dá sua leitura da casa antes da coleta.',
-    minTask:1,
+    minTask:1,clueIds:['porta_intacta','escritorio_revirado','valores_intactos'],
     user:{time:'04:37',text:'Maurício, me fala da casa antes de vocês começarem a recolher. O que não bate?'},
     agent:{time:'04:38',text:'A entrada está limpa demais pra invasão. E o escritório está bagunçado, mas tem coisa óbvia de valor que ninguém tocou. Eu não chamaria isso de busca às cegas.'}
   },
   {
     id:'mauricio_painel',memberId:'mauricio',label:'O painel do alarme foi mexido ou forçado?',
-    requiresClues:['painel_alarme'],
+    requiresTopics:['mauricio_cena'],clueIds:['painel_alarme'],
     user:{time:'04:46',text:'E o painel? Tem sinal de violação ou alguém operou normalmente?'},
     agent:{time:'04:47',text:'Nada de força. Teclado inteiro, tampa no lugar. Quem desligou sabia o que estava fazendo ou tinha o código. Posso te mandar o registro fotográfico de perto.'}
   },
   {
     id:'mauricio_canil',memberId:'mauricio',label:'Thor poderia ter sido preso depois?',
-    requiresClues:['cao_canil'],
+    requiresTopics:['mauricio_cena'],clueIds:['cao_canil'],
     user:{time:'04:49',text:'Sobre o cachorro: dá pra saber se colocaram ele no canil durante a confusão?'},
     agent:{time:'04:50',text:'Não parece. O canil está normal, sem sinal de contenção improvisada. Pra mim ele foi colocado ali antes de a casa virar cena.'}
+  },
+  {
+    id:'mauricio_quartos',memberId:'mauricio',label:'E os quartos do andar de cima?',
+    requiresTopics:['mauricio_cena'],clueIds:['quarto_livia','vitimas_dormindo'],
+    user:{time:'04:51',text:'E lá em cima? Os quartos também estão mexidos?'},
+    agent:{time:'04:52',text:'O quarto do casal está como quem foi surpreendido dormindo, sem sinal de luta ao redor. O quarto da Lívia está intacto, arrumado, como se ninguém tivesse passado por lá. A bagunça ficou toda embaixo.'}
   },
   {
     id:'mauricio_busca',memberId:'mauricio',label:'Essa bagunça parece uma busca real?',
@@ -627,6 +637,7 @@ export default function App(){
     setGame(g=>{
       let next=g.task
       const heardInitial=g.interviewed.filter(id=>['livia','rafael','cida','jorge','caio'].includes(id)).length
+      if(next===1&&['porta_intacta','painel_alarme','cao_canil','valores_intactos'].every(id=>g.clues.includes(id)))next=2
       if(next===2&&heardInitial>=4)next=3
       if(next===3&&g.clues.includes('log_alarme'))next=4
       if(next===4&&g.clues.includes('nota_motel'))next=5
@@ -822,26 +833,20 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
  if(game.app==='victim')return <PhonePage title="Telefone de Helena" back={()=>openApp('home')}><VictimPhone/></PhonePage>
  if(game.app==='settings')return <PhonePage title="Ajustes" back={()=>openApp('home')}><QualityPicker/><p className="settings-note">A qualidade vale para o jogo inteiro: telas, animações e retratos.</p><FullscreenSetting/><SoundSetting/><ResetSetting onReset={()=>{localStorage.removeItem(SAVE_KEY);setGame(initialGame)}}/><Diagnostics/></PhonePage>
  if(game.app==='chapters')return <PhonePage title="Arquivo do caso" back={()=>openApp('home')}><ChapterMap game={game}/></PhonePage>
- const homeState = ({
-  0:{status:'Ocorrência recebida',source:'Sônia',text:'A equipe já está na Rua das Acácias. A primeira leitura é de possível roubo.',label:'Abrir canal'},
-  1:{status:'Cena em processamento',source:'Perícia',text:'A residência está preservada. A equipe aguarda sua leitura dos pontos que não combinam com um roubo comum.',label:'Acompanhar cena'},
-  2:{status:'Versões sendo colhidas',source:'Sônia',text:'Lívia, Caio e as testemunhas estão separados. Ouça as versões e deixe as contradições aparecerem.',label:'Ver pessoas'},
-  3:{status:'Aguardando retorno técnico',source:'Inteligência',text:'Já há base para pedir o histórico do alarme e outros materiais à equipe.',label:'Ir para Equipe'},
-  4:{status:'Janela de horário em aberto',source:'Sônia',text:'O alarme foi desligado às 23:52. Agora precisamos verificar quando Lívia e Caio realmente chegaram ao motel.',label:'Solicitar registro'},
-  5:{status:'Linha financeira aberta',source:'Financeiro',text:'Há indícios de que uma quantia específica saiu da casa. Peça os documentos de Ricardo para cruzamento.',label:'Solicitar documentos'},
-  6:{status:'Dinheiro sob análise',source:'Financeiro',text:'A origem do dinheiro ligado a Téo precisa ser confrontada com os registros bancários de Ricardo.',label:'Solicitar análise'},
-  7:{status:'Téo precisa explicar o dinheiro',source:'Sônia',text:'A trilha financeira chegou a Téo. Traga o depoimento dele de volta e pressione com o que já temos.',label:'Ouvir Téo'},
-  8:{status:'Investigação pronta para relatório',source:'Sônia',text:'Separe o que você suspeita do que consegue provar. O relatório final está pronto para ser protocolado.',label:'Abrir relatório'}
- } as Record<number,{status:string;source:string;text:string;label:string}>)[game.task] ?? {status:current.title,source:'Equipe',text:'Há novas informações no caso.',label:'Abrir canal'}
- const openUpdate=()=>{
-  if(game.task===1){setGame(g=>({...g,screen:'task'}));return}
-  if(game.task===2){openApp('interrogate');return}
-  if(game.task>=3&&game.task<=6){openApp('team');return}
-  if(game.task===7){openApp('interrogate');return}
-  if(game.task===8){setGame(g=>({...g,screen:'task'}));return}
-  openApp('team')
+ const status = ({
+  0:'Ocorrência recebida',1:'Cena em processamento',2:'Versões sendo colhidas',3:'Aguardando retorno técnico',4:'Janela de horário em aberto',
+  5:'Linha financeira aberta',6:'Dinheiro sob análise',7:'Téo precisa explicar o dinheiro',8:'Investigação pronta para relatório'
+ } as Record<number,string>)[game.task] ?? current.title
+ const go=(to:StepGo)=>{
+  if(to.kind==='team')setGame(g=>({...g,app:'team',teamFocus:to.memberId}))
+  else if(to.kind==='summon')setGame(g=>({...g,summonedPeople:(g.summonedPeople??['livia','caio']).includes(to.personId)?(g.summonedPeople??[]):[...(g.summonedPeople??['livia','caio']),to.personId]}))
+  else if(to.kind==='depo')setGame(openDeposition(to.personId,'app'))
+  else if(to.kind==='report')setGame(g=>({...g,screen:'task'}))
+  else if(to.kind==='clues')setGame(g=>({...g,app:'clues'}))
  }
- return <HandsetHome chapterNumber={chapter.number} chapterTitle={chapter.title} caseStatus={homeState.status} updateSource={homeState.source} updateText={homeState.text} updateActionLabel={homeState.label} peopleOpen={game.task>=2} helenaOpen={game.task>=3||(game.requestedMaterials??[]).includes('termo_apreensao_celular_helena')} archiveOpen={game.task>=3} teamBadge={game.task<3?1:0} clueBadge={game.clues.length} onOpenApp={openApp} onOpenUpdate={openUpdate}/>
+ const steps=nextSteps(game).map(st=>({id:st.id,tag:st.tag,title:st.title,text:st.text,cta:st.cta,locked:st.locked,run:()=>go(st.go)}))
+ const unread=caseTeam.reduce((n,m)=>n+teamNews(game,m.id).count,0)
+ return <HandsetHome chapterNumber={chapter.number} chapterTitle={chapter.title} caseStatus={status} steps={steps} peopleOpen={game.task>=2} helenaOpen={game.task>=3||(game.requestedMaterials??[]).includes('termo_apreensao_celular_helena')} archiveOpen={game.task>=3} teamBadge={unread} clueBadge={game.clues.length} onOpenApp={openApp}/>
 }
 function HandsetStatus(){return <header className="handset-status"><span>VIVO&nbsp;&nbsp;▮▮▮</span><b>DHPP</b><BatteryMedium/></header>}
 function PhonePage({title,back,children}:{title:string;back:()=>void;children:React.ReactNode}){return <main className={`handset page${title==='Equipe'?' team-page':''}`}><HandsetStatus/><header className="page-head"><button onClick={back}><ChevronLeft/></button><b>{title}</b><span/></header><section className="page-body">{children}</section></main>}
@@ -871,8 +876,104 @@ const teamIntroMessages = [
  {time:'04:58',from:'Denise',text:'Vou manter os depoimentos separados e registrar qualquer mudança de versão. Se quiser comparar trechos, me chama.',memberId:'denise' as TeamMemberId,outgoing:false}
 ]
 
+
+// ---------- disponibilidade na Equipe e guia de próximos passos ----------
+
+type Gated = {minTask?:number;minInterviews?:number;requiresClues?:string[];requiresInterviewed?:string[];requiresTopics?:string[]}
+const gateOk=(game:GameSave,item:Gated)=>{
+  if((item.minTask??0)>game.task)return false
+  if((item.minInterviews??0)>game.interviewed.length)return false
+  if(item.requiresClues?.some(id=>!game.clues.includes(id)))return false
+  if(item.requiresInterviewed?.some(id=>!game.interviewed.includes(id)))return false
+  return true
+}
+const topicOk=(game:GameSave,item:TeamDialogue)=>gateOk(game,item)&&!item.requiresTopics?.some(id=>!(game.teamTopics??[]).includes(id))
+const requestOk=(game:GameSave,item:TeamMaterialRequest)=>gateOk(game,item)&&!item.requiresTopics?.some(id=>!(game.teamTopics??[]).includes(id))
+/** Assuntos e diligências novos de um integrante (ainda não conversados nem pedidos). */
+const teamNews=(game:GameSave,memberId:string)=>{
+  const topics=teamDialogues.filter(t=>t.memberId===memberId&&topicOk(game,t)&&!(game.teamTopics??[]).includes(t.id))
+  const requests=teamMaterialRequests.filter(r=>r.memberId===memberId&&requestOk(game,r)&&!(game.requestedMaterials??[]).includes(r.id))
+  return {topics,requests,count:topics.length+requests.length}
+}
+
+type StepGo =
+  |{kind:'team';memberId:string}
+  |{kind:'summon';personId:string}
+  |{kind:'depo';personId:string}
+  |{kind:'report'}
+  |{kind:'clues'}
+  |{kind:'none'}
+type GuideStepData = {id:string;tag:string;title:string;text:string;cta?:string;locked?:boolean;go:StepGo}
+
+/** Por que cada pessoa vale um depoimento, só com o que o jogador já sabe. */
+const personWhy:Record<string,string> = {
+  livia:'Filha do casal: chegou em casa e viu a cena.',
+  caio:'Namorado de Lívia: diz que estava com ela a noite toda.',
+  rafael:'Filho do casal: estava fora de casa naquela noite.',
+  cida:'Funcionária da família: conhece a rotina da casa.',
+  jorge:'Vigia da rua: costuma reparar em carros e movimento.',
+  teo:'Irmão de Caio: o nome apareceu na investigação e ainda não foi ouvido.'
+}
+
+/** Passos que ajudam o jogador a seguir a história, do mais urgente ao mais livre. A Home mostra os primeiros. */
+const nextSteps=(game:GameSave):GuideStepData[]=>{
+  const out:GuideStepData[]=[]
+  const discovered=game.discoveredPeople??['livia','caio','rafael','cida']
+  const summoned=game.summonedPeople??['livia','caio']
+  const requested=game.requestedMaterials??[]
+  const nameOf=(pid:string)=>people.find(x=>x.id===pid)?.name.split(' ')[0]??pid
+  const clueName=(id:string)=>clues.find(c=>c.id===id)?.title??id
+
+  if(game.task>=8) out.push({id:'report',tag:'RELATÓRIO',title:'O relatório está pronto',text:'Separe execução, facilitação e motivo, e escolha as provas que sustentam cada um.',cta:'Abrir relatório',go:{kind:'report'}})
+
+  if(game.task>=2){
+    const roster=people.filter(x=>x.id!=='sonia'&&interrogations[x.id]&&discovered.includes(x.id))
+    // quem já foi chamado e espera no interrogatório
+    for(const x of roster){
+      if(game.interviewed.includes(x.id)||!summoned.includes(x.id))continue
+      const started=progressOf(game,x.id).asked.length>0
+      out.push({id:'depo-'+x.id,tag:'INTERROGATÓRIO',title:`${nameOf(x.id)} aguarda para ser interrogado`,text:started?'Você já começou: continue de onde parou.':personWhy[x.id]??x.role,cta:`Interrogar ${nameOf(x.id)}`,go:{kind:'depo',personId:x.id}})
+    }
+    // quem apareceu na investigação e ainda não foi chamado
+    for(const x of roster){
+      if(game.interviewed.includes(x.id)||summoned.includes(x.id))continue
+      const missing=(summonRequires[x.id]??[]).filter(c=>!game.clues.includes(c))
+      if(missing.length) out.push({id:'wait-'+x.id,tag:'AINDA NÃO',title:`${nameOf(x.id)} só com provas contra ele`,text:`Falta registrar: ${missing.map(clueName).join(' e ')}. Chamá-lo antes só gasta o depoimento.`,locked:true,go:{kind:'none'}})
+      else out.push({id:'call-'+x.id,tag:'NOVA PESSOA',title:`Chame ${nameOf(x.id)} para depoimento`,text:personWhy[x.id]??x.role,cta:`Chamar ${nameOf(x.id)}`,go:{kind:'summon',personId:x.id}})
+    }
+  }
+
+  // conversas e diligências novas da equipe (no começo, o perito primeiro)
+  const order=game.task<2?['mauricio','sonia','renata','paulo','denise']:caseTeam.map(m=>m.id as string)
+  for(const id of order){
+    const m=caseTeam.find(x=>x.id===id)!
+    const news=teamNews(game,id)
+    if(!news.count)continue
+    const first=m.name.split(' ')[0]
+    const lead=news.requests[0]?`${news.requests[0].kind[0]+news.requests[0].kind.slice(1).toLowerCase()}: ${news.requests[0].label}`:news.topics[0].label
+    out.push(game.task<2&&id==='mauricio'
+      ?{id:'team-'+id,tag:'PRIMEIRO PASSO',title:'Fale com o Maurício, na casa',text:'Peça a leitura do perito sobre a cena antes de falar com qualquer pessoa.',cta:'Abrir conversa',go:{kind:'team',memberId:id}}
+      :{id:'team-'+id,tag:'EQUIPE',title:`${first} tem ${news.count} ${news.count>1?'assuntos novos':'assunto novo'}`,text:lead,cta:'Abrir conversa',go:{kind:'team',memberId:id}})
+  }
+
+  // depoimentos encerrados que ganharam perguntas novas
+  for(const x of people){
+    const cfg=interrogations[x.id]
+    if(!cfg||!game.interviewed.includes(x.id))continue
+    const n=pendingQuestions(cfg,progressOf(game,x.id),game.clues,requested).length
+    if(n>0) out.push({id:'retake-'+x.id,tag:'RETOMAR',title:`Retome o depoimento de ${nameOf(x.id)}`,text:`${n} ${n>1?'perguntas novas':'pergunta nova'} com o que a equipe e as provas trouxeram.`,cta:`Retomar ${nameOf(x.id)}`,go:{kind:'depo',personId:x.id}})
+  }
+
+  if(!out.length){
+    out.push({id:'sonia',tag:'EQUIPE',title:'Peça a leitura da Sônia',text:'Quando nada de novo chega, ela ajuda a separar fato de hipótese.',cta:'Falar com Sônia',go:{kind:'team',memberId:'sonia'}})
+    out.push({id:'clues',tag:'PISTAS',title:'Revise o que você já tem',text:'Releia as pistas e as anotações dos depoimentos antes do próximo passo.',cta:'Abrir pistas',go:{kind:'clues'}})
+  }
+  return out.sort((a,b)=>Number(!!a.locked)-Number(!!b.locked))
+}
+
 function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStateAction<GameSave>>}){
- const [selected,setSelected]=useState<string|null>(null)
+ const [selected,setSelected]=useState<string|null>(game.teamFocus??null)
+ useEffect(()=>{if(game.teamFocus)setGame(g=>({...g,teamFocus:undefined}))},[]) // eslint-disable-line react-hooks/exhaustive-deps
  /** Envio em andamento: primeiro "enviando…", depois o integrante "digitando…"; só então a conversa é gravada no save. */
  const [sending,setSending]=useState<{id:string;text:string;time:string;phase:'sending'|'typing'}|null>(null)
  const timers=useRef<number[]>([])
@@ -881,23 +982,8 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
  const requested=game.requestedMaterials??[]
  const discussed=game.teamTopics??[]
 
- const baseAvailable=(item:{minTask?:number;minInterviews?:number;requiresClues?:string[];requiresInterviewed?:string[]})=>{
-  if((item.minTask??0)>game.task)return false
-  if((item.minInterviews??0)>game.interviewed.length)return false
-  if(item.requiresClues?.some(id=>!game.clues.includes(id)))return false
-  if(item.requiresInterviewed?.some(id=>!game.interviewed.includes(id)))return false
-  return true
- }
- const topicAvailable=(item:TeamDialogue)=>{
-  if(!baseAvailable(item))return false
-  if(item.requiresTopics?.some(id=>!discussed.includes(id)))return false
-  return true
- }
- const requestAvailable=(item:TeamMaterialRequest)=>{
-  if(!baseAvailable(item))return false
-  if(item.requiresTopics?.some(id=>!discussed.includes(id)))return false
-  return true
- }
+ const topicAvailable=(item:TeamDialogue)=>topicOk(game,item)
+ const requestAvailable=(item:TeamMaterialRequest)=>requestOk(game,item)
 
  const discuss=(topic:TeamDialogue)=>{
   if(discussed.includes(topic.id)||!topicAvailable(topic))return
@@ -905,7 +991,9 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
    const known=g.discoveredPeople??['livia','caio','rafael','cida']
    const discovered=[...known]
    ;(topic.revealsPeople??[]).forEach(id=>{if(!discovered.includes(id))discovered.push(id)})
-   return {...g,teamTopics:[...(g.teamTopics??[]),topic.id],discoveredPeople:discovered}
+   const nextClues=[...g.clues]
+   ;(topic.clueIds??[]).forEach(id=>{if(!nextClues.includes(id))nextClues.push(id)})
+   return {...g,teamTopics:[...(g.teamTopics??[]),topic.id],discoveredPeople:discovered,clues:nextClues}
   })
  }
  const request=(item:TeamMaterialRequest)=>{

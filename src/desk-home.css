@@ -16,13 +16,6 @@
 .hm-head button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--surf);display:grid;place-items:center;padding:0}
 .hm-head button svg{width:17px;height:17px}
 
-.hm-alert{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:var(--surf);border:1px solid var(--line);border-radius:2px;text-align:left;color:inherit;font:inherit;width:100%;cursor:pointer}
-.hm-alert i{margin-top:4px}
-.hm-alert i{flex:none;width:9px;height:9px;border-radius:50%;background:var(--rec);animation:hm-blink 1.6s steps(2) infinite}
-.hm-alert div{display:flex;flex-direction:column;gap:2px;line-height:1.25;min-width:0}
-.hm-alert b{font:700 13px var(--mono)}
-.hm-alert span{font:600 11px var(--mono);color:var(--mut)}
-.hm-alert em{font:700 11px var(--mono);font-style:normal;color:#fff;letter-spacing:.04em;text-transform:uppercase;margin-top:3px}
 @keyframes hm-blink{50%{opacity:.35}}
 
 /* A roda fica centralizada na área livre. Tudo mede a partir do centro: o anel tem diâmetro 2R e passa exatamente pelo centro de cada atalho. */
@@ -44,4 +37,23 @@
 .hm-orb:active .hm-orb-btn{transform:scale(.94)}
 .hm-orb.lock .hm-orb-btn{background:#08090a;border-color:rgba(255,255,255,.12);color:#4f575c}
 .hm-orb.lock b{color:#4f575c}
-@media (prefers-reduced-motion:reduce){.hm-ring,.hm-alert i{animation:none}}
+@media (prefers-reduced-motion:reduce){.hm-ring,.hm-guide header i{animation:none}}
+/* Próximos passos: o que fazer agora para seguir a história */
+.hm-guide{display:flex;flex-direction:column;gap:6px;padding:9px 10px 8px;background:var(--surf);border:1px solid var(--line);border-radius:2px}
+.hm-guide header{display:flex;align-items:center;gap:9px;padding:0 2px}
+.hm-guide header i{flex:none;width:9px;height:9px;border-radius:50%;background:var(--rec);animation:hm-blink 1.6s steps(2) infinite}
+.hm-guide header b{font:700 12.5px var(--mono);line-height:1.25}
+.hm-guide ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.hm-guide li button{position:relative;display:grid;grid-template-columns:1fr 20px;grid-template-areas:"tag tag" "title chev" "text chev";column-gap:8px;row-gap:1px;width:100%;padding:7px 8px 7px 10px;text-align:left;color:inherit;border:1px solid var(--line);border-left:3px solid rgba(255,255,255,.28);border-radius:2px;background:rgba(255,255,255,.03);cursor:pointer}
+.hm-guide li.first button{border-left-color:#f0c446;background:rgba(240,196,70,.09)}
+.hm-guide li button:disabled{opacity:.62;cursor:default}
+.hm-guide li em{grid-area:tag;font:800 9.5px var(--mono);font-style:normal;letter-spacing:.1em;color:var(--mut)}
+.hm-guide li.first em{color:#f0c446}
+.hm-guide li b{grid-area:title;font:700 12.5px var(--mono);line-height:1.25}
+.hm-guide li span{grid-area:text;font:600 11px var(--mono);line-height:1.3;color:var(--mut);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hm-guide li svg{grid-area:chev;align-self:center;width:18px;height:18px;color:var(--mut)}
+.hm-guide li.first svg{color:#f0c446}
+.hm-guide small{padding:0 2px;font:600 10.5px var(--mono);color:var(--mut)}
+@media (max-height:720px){.hm-guide li:nth-child(3){display:none}.hm-guide li span{-webkit-line-clamp:1}}
+/* Celulares baixos: a roda encolhe para o guia caber sem rolar a página */
+@media (max-height:720px){.handset.hm{--R:clamp(60px,min(15vh,calc((100vw - 124px)/2)),150px);--node:clamp(46px,7.2vh,66px)}}

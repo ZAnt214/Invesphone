@@ -1,6 +1,7 @@
 // Partida completa pela interface, do primeiro toque ao final "CASO ENCERRADO".
-// Joga como uma pessoa: segue o cartão da Home, vasculha a cena, chama e ouve cada pessoa que aparece,
-// esgota as conversas e diligências da Equipe, e monta o relatório. Registra o ritmo e acusa travas.
+// Joga como uma pessoa que só obedece ao guia de PRÓXIMOS PASSOS da Home: toca no primeiro passo disponível,
+// faz o que ele pede (conversar com a equipe, chamar e interrogar, retomar depoimento) e repete até o relatório.
+// Registra o ritmo e acusa travas, como um passo do guia que não muda nada.
 // Uso: npm run build && npx vite preview --port 4173 & ; node tools/e2e/full-playthrough.mjs
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
@@ -29,11 +30,11 @@ const noPageScroll = async where => {
 const skip = {}   // pessoa cujo depoimento travou → só tenta de novo quando surgir pista nova
 const goHome = async () => {
   for (let i = 0; i < 4; i++) {
-    if (await p.locator('.hm-alert').count()) return
+    if (await p.locator('.hm-guide').count()) return
     const back = p.locator('.ii-back, .ii-filebar button, .tm-back, .page-head button, .task-head button, .subback').first()
     if (await back.count()) { await back.click(); await p.waitForTimeout(350) } else break
   }
-  await p.locator('.hm-alert').waitFor({ timeout: 4000 })
+  await p.locator('.hm-guide').waitFor({ timeout: 4000 })
 }
 
 // ---------- depoimento ----------
@@ -47,6 +48,8 @@ async function interview(name) {
     await p.waitForTimeout(250)
     await dismiss()
     if (await p.locator('.ii-farewell').count()) break
+    if (await p.locator('.ii-retake').count()) { await p.locator('.ii-retake').click(); await p.waitForTimeout(400); continue }
+    if (await p.locator('.ii-retake-end').count() && !(await p.locator('.iv-ask').count()) && !(await p.locator('button.ii-sent:not([disabled])').count())) { await p.locator('.ii-retake-end').click(); await p.waitForTimeout(300); break }
     if (await p.locator('.ii-file').count()) break
     const sents = p.locator('button.ii-sent:not([disabled])')
     if (await sents.count()) {
@@ -72,54 +75,17 @@ async function interview(name) {
   return { asks, blocked }
 }
 
-// ---------- pessoas ----------
-async function peopleRound() {
-  let any = false
-  await goHome()
-  await p.locator('.hm-orb', { hasText: 'Pessoas' }).locator('.hm-orb-btn').click(); await p.waitForTimeout(400)
-  await noPageScroll('lista de pessoas')
-  for (let guard = 0; guard < 12; guard++) {
-    const s = await state()
-    const cards = p.locator('.people-list button:not([disabled])')
-    const n = await cards.count()
-    let acted = false
-    for (let i = 0; i < n; i++) {
-      const c = cards.nth(i)
-      const text = await c.innerText()
-      const nome = text.split('\n')[0].trim()
-      if (text.includes('Depoimento registrado')) continue
-      if (text.includes('CHAMAR')) { log(`chamando ${nome}`); await c.click(); await p.waitForTimeout(300); acted = true; break }
-      if (skip[nome] === s.clues.length) continue
-      log(`ouvindo ${nome}`)
-      await c.click(); const r = await interview(nome); if (r.blocked.length) skip[nome] = (await state()).clues.length; else any = true
-      acted = true
-      break
-    }
-    if (!acted) break
-    if (!(await p.locator('.people-list').count())) { // voltou para a Home ou outra tela
-      await goHome(); await p.locator('.hm-orb', { hasText: 'Pessoas' }).locator('.hm-orb-btn').click(); await p.waitForTimeout(400)
-    }
-  }
-  return any
-}
-
-// ---------- equipe ----------
-async function teamRound() {
-  await goHome()
-  await p.locator('.hm-orb', { hasText: 'Equipe' }).locator('.hm-orb-btn').click(); await p.waitForTimeout(400)
+// ---------- conversa aberta pelo guia ----------
+async function exhaustOpenChat() {
   let did = 0
-  for (const name of ['Sônia', 'Maurício', 'Renata', 'Paulo', 'Denise']) {
-    if (await p.locator('.tm-back').count()) await p.locator('.tm-back').click()
-    await p.locator('.tm-card', { hasText: name }).click(); await p.waitForTimeout(250)
-    for (let i = 0; i < 40; i++) {
-      const btn = p.locator('.tm-chips button:not([disabled]):not(.done)').first()
-      if (!(await btn.count())) break
-      const label = (await btn.innerText()).replace(/\n/g, ' · ')
-      await btn.click(); await p.waitForTimeout(250)
-      await p.waitForFunction(() => !document.querySelector('.tm-msg.pending'), null, { timeout: 15000 })
-      await p.waitForTimeout(150)
-      did++; log(`  ${name}: ${label}`)
-    }
+  for (let i = 0; i < 40; i++) {
+    const btn = p.locator('.tm-chips button:not([disabled]):not(.done)').first()
+    if (!(await btn.count())) break
+    const label = (await btn.innerText()).replace(/\n/g, ' · ')
+    await btn.click(); await p.waitForTimeout(250)
+    await p.waitForFunction(() => !document.querySelector('.tm-msg.pending'), null, { timeout: 15000 })
+    await p.waitForTimeout(150)
+    did++; log('    ' + label)
   }
   await noPageScroll('Equipe')
   return did
@@ -128,61 +94,43 @@ async function teamRound() {
 // ============ partida ============
 log('começo: primeiro toque')
 await p.getByText('Pular ligação').click()
-await p.locator('.hm-alert').waitFor({ timeout: 6000 })
+await p.locator('.hm-guide').waitFor({ timeout: 6000 })
 let s = await state()
-check(s.task === 1, 'depois da ligação o caso está na cena (task 1)')
+check(s.task === 1, 'depois da ligação o caso está no começo (task 1)')
 await noPageScroll('Home')
+const first = await p.locator('.hm-guide li').first().innerText()
+check(first.includes('Maurício'), 'o primeiro passo do guia manda falar com o Maurício')
 
-log('cena: seguindo o cartão da Home')
-await p.locator('.hm-alert').click(); await p.waitForTimeout(500)
-const spots = p.locator('.scene-map button')
-const ns = await spots.count()
-for (let i = 0; i < ns; i++) await spots.nth(i).click()
-await p.locator('.scene-conclusion .primary').click(); await p.waitForTimeout(500)
-s = await state()
-check(s.task === 2, 'varredura da cena libera as versões (task 2): task=' + s.task)
-
-log('versões')
-await p.locator('.hm-alert').click(); await p.waitForTimeout(500)   // task 2 → Pessoas
-for (let guard = 0; guard < 12; guard++) {
-  const cards = p.locator('.people-list button:not([disabled])')
-  const n = await cards.count(); let acted = false
-  for (let i = 0; i < n; i++) {
-    const c = cards.nth(i); const text = await c.innerText(); const nome = text.split('\n')[0].trim()
-    if (text.includes('Depoimento registrado')) continue
-    if (text.includes('CHAMAR')) { log(`chamando ${nome}`); await c.click(); await p.waitForTimeout(300); acted = true; break }
-    if (skip[nome] === s.clues.length) continue
-    log(`ouvindo ${nome}`); await c.click(); const r = await interview(nome); if (r.blocked.length) skip[nome] = (await state()).clues.length; acted = true; break
-  }
-  if (!acted) break
-  if (!(await p.locator('.people-list').count())) { await goHome(); await p.locator('.hm-alert').click(); await p.waitForTimeout(500) }
-  s = await state()
-  if (s.task >= 3) break
-}
-s = await state()
-log(`depois das primeiras versões: task=${s.task}, pistas=${s.clues.length}, ouvidos=${s.interviewed.join(',')}`)
-check(s.task >= 3, 'ouvir as pessoas iniciais leva ao retorno técnico (task ≥ 3)')
-
-// ciclos: equipe → pessoas até chegar ao relatório
-let lastKey = ''
-for (let cycle = 1; cycle <= 8; cycle++) {
+const sig = st => JSON.stringify([st.task, st.clues.length, st.interviewed, (st.teamTopics || []).length, (st.requestedMaterials || []).length, st.summonedPeople, (st.discoveredPeople || []).length, st.depositions ? Object.values(st.depositions).map(d => d.asked.length) : 0, st.liviaInterrogation?.asked.length])
+let guard = 0, lastTitle = '', lastSig = '', repeats = 0
+const seenSteps = []
+while (guard++ < 120) {
   s = await state()
   if (s.task >= 8) break
-  log(`ciclo ${cycle}: task=${s.task} pistas=${s.clues.length} descobertas=${(s.discoveredPeople || []).join(',')}`)
-  const a = await teamRound()
-  const b = await peopleRound()
-  s = await state()
-  const key = `${s.task}|${s.clues.length}|${s.interviewed.length}|${(s.requestedMaterials || []).length}|${(s.teamTopics || []).length}`
-  if (key === lastKey && !a && !b) { check(false, `sem progresso no ciclo ${cycle} (task=${s.task}) — possível trava`); break }
-  lastKey = key
+  await goHome(); await noPageScroll('Home')
+  const rows = p.locator('.hm-guide li button:not([disabled])')
+  if (!(await rows.count())) { check(false, `guia sem passo disponível (task=${s.task})`); break }
+  const row = rows.first()
+  const title = (await row.locator('b').innerText()).trim()
+  const tag = (await row.locator('em').innerText()).trim()
+  if (title === lastTitle && sig(s) === lastSig) { if (++repeats >= 2) { check(false, `passo do guia sem efeito: "${title}" (task=${s.task})`); break } } else repeats = 0
+  lastTitle = title; lastSig = sig(s)
+  seenSteps.push(tag.replace('AGORA · ', '') + ' | ' + title)
+  log(`guia → ${tag.replace('AGORA · ', '')}: ${title}`)
+  await row.click(); await p.waitForTimeout(500)
+  if (await p.locator('.tm-chat').count()) await exhaustOpenChat()
+  else if (await p.locator('.ii').count()) await interview(title.replace(/ aguarda.*/, '').replace('Retome o depoimento de ', ''))
 }
 s = await state()
-check(s.task >= 8, `investigação chega ao relatório (task=${s.task})`)
+check(s.task >= 8, `seguindo só o guia, a investigação chega ao relatório (task=${s.task}, ${guard} passos)`)
+check(seenSteps.some(x => x.startsWith('INTERROGATÓRIO')), 'o guia mandou interrogar pessoas')
+check(seenSteps.some(x => x.startsWith('NOVA PESSOA')), 'o guia mandou chamar pessoas novas')
+check(seenSteps.some(x => x.startsWith('EQUIPE')), 'o guia mandou abrir conversas da Equipe')
 log(`antes do relatório: pistas=${s.clues.length}, materiais=${(s.requestedMaterials || []).length}, conversas=${(s.teamTopics || []).length}, ouvidos=${s.interviewed.join(',')}`)
 
 // relatório
 await goHome()
-await p.locator('.hm-alert').click(); await p.waitForTimeout(500)
+await p.locator('.hm-guide li button').first().click(); await p.waitForTimeout(500)
 await noPageScroll('Relatório (cabe sem rolar a página?)')
 const sel = async (group, text) => p.locator(`h3:has-text("${group}") + .choices button`, { hasText: text }).click()
 await sel('Executores', 'Caio'); await sel('Executores', 'Téo')
