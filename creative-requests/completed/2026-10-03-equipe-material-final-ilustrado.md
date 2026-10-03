@@ -18,7 +18,7 @@ O jogo (Arquivo Morto / Invesphone) é um app de investigação policial para ce
 
 **Decisões do dono do projeto (valem acima de qualquer outra instrução deste arquivo) — revisadas depois de ver a primeira entrega:**
 1. **Ponto de vista de foto de verdade:** cada cena deve parecer uma **foto tirada por uma pessoa com um celular**, de pé, no local: perspectiva real, ângulo em 3/4, enquadramento imperfeito. **Não** pode parecer uma elevação frontal simétrica nem um pôster (a primeira entrega, do escritório, ficou bonita mas frontal e polida demais).
-2. **Estilo mais simples, de recortes de papel**, na linha de animação de recortes (a linguagem visual de *South Park*): formas geométricas simples, **cores chapadas**, **contorno escuro fino**, sombra mínima, sem gradiente. Ao mesmo tempo precisa **combinar com os retratos dos personagens** do jogo.
+2. **Estilo IDÊNTICO ao dos retratos do jogo** (correção após testes): a primeira tentativa de "recortes de papel / South Park" gerou um desenho animado de **contorno grosso**, que **não combina** com o jogo. **Não use contorno grosso nem estética de desenho animado.** O alvo é a **mesma técnica dos retratos**: ilustração digital **semi-realista**, formas planas com **sombreamento suave em poucas camadas**, **sem contorno escuro**, proporções realistas, cores terrosas dessaturadas, fundo escuro (ver 1.2).
 3. **Qualidade de celular baixa:** **não** é para você entregar a imagem já suja. **Entregue limpa e em alta resolução**; o efeito de câmera de celular barato (baixa resolução, ruído, flash estourado, vinheta, compressão) **é aplicado por Claude por código depois**.
 
 **Como usar as referências provisórias:** cada ficha indica o arquivo atual em `public/evidence/case01/new/...`. Ele define **somente a lista de elementos e o que cada um representa — NÃO o enquadramento (que agora é o "Ponto de vista" de cada ficha), a técnica nem o acabamento**. Reproduza os mesmos elementos, e eleve: desenho dos objetos, proporção, riqueza de detalhe, iluminação, materiais, acabamento. **Não copie os defeitos de acabamento** (formas de caixa, sombras uniformes, chapado demais). Nas fotos, os arquivos atuais já vêm com moldura de foto, plaqueta e data aplicadas por pós-processamento; **você NÃO deve desenhar moldura, plaqueta, régua nem data** (ver seção 2).
@@ -29,21 +29,24 @@ O jogo (Arquivo Morto / Invesphone) é um app de investigação policial para ce
 
 ---
 
-## 1. GUIA DE ESTILO — "FOTO DE CELULAR DESENHADA EM RECORTES DE PAPEL"
+## 1. GUIA DE ESTILO — "FOTO DE CELULAR, NO VISUAL DOS RETRATOS"
 
 ### 1.1 Em uma frase
-**"Uma foto tirada por um policial com um celular no local do crime, mas desenhada como animação de recortes de papel: formas simples, cores chapadas, contorno escuro fino, perspectiva de foto real."**
+**"Uma foto tirada por um policial com um celular no local do crime, mas pintada com a mesma técnica dos retratos do jogo: semi-realista, sem contorno, sombreamento suave, paleta escura e dessaturada, perspectiva de foto real."**
 
-### 1.2 Estilo visual: recortes de papel (linguagem de *South Park*) + combinar com os retratos
-- **Inspiração:** animação de **recortes de papel / colagem digital**, como a de *South Park*. **Referência apenas de linguagem visual** (formas básicas, cor chapada, contorno fino, sombra mínima). **Não copie** personagens, cenários, logotipos nem elementos reconhecíveis da série.
-- **Âncora dos personagens:** abra `public/characters/livia/expressions/defensive.jpg` (e uma expressão de outro personagem em `public/characters/*/expressions/`). Eles já são simples, chapados e sóbrios. As cenas devem parecer **irmãs** dos retratos: mesmo clima **escuro, sério, contido**. Não pode ficar colorido demais, engraçado, infantil nem caricato. **Teste de aprovação:** ao lado de `defensive.jpg`, devem parecer do mesmo jogo.
-- **Construção:** cada objeto é feito de **formas simples** (retângulos, círculos, trapézios, elipses) como **peças recortadas**, com cantos levemente irregulares ou arredondados.
-- **Contorno:** **linha escura fina e uniforme** (`#0b141c`) em volta dos objetos e das divisões principais. Espessura aproximada de 0,25% da largura da imagem.
-- **Cor:** **uma cor chapada por superfície**, no máximo **um tom de sombra plano** por objeto (uma forma mais escura, de borda nítida). **Sem gradiente suave, sem brilho especular realista, sem textura de madeira ou tecido.**
-- **Detalhe por símbolo, não por textura:** livros = retângulos coloridos; papel = retângulo claro com 2 a 3 riscos; madeira = cor lisa com no máximo uma linha de veio; vidro = azul-claro chapado com um reflexo diagonal simples; metal = cinza chapado com uma faixa clara.
-- **Riqueza vem da quantidade e da escolha dos objetos** (o ambiente precisa parecer habitado e crível), não de acabamento fotográfico.
-- **Paleta:** sóbria e levemente dessaturada (seção 1.7). Fundo geral escuro; tons terrosos quentes (madeira, latão) contra azuis-petróleo e cinzas.
-- Textura de papel só se for **muito sutil**; nunca realista.
+### 1.2 Estilo visual: A MESMA TÉCNICA DOS RETRATOS DO JOGO (decisão final)
+**Âncora obrigatória:** use como referência **de imagem** (não só de texto) `public/characters/livia/expressions/defensive.jpg` e uma expressão de outro personagem em `public/characters/*/expressions/`. Se o chat permitir anexar imagem, **anexe os retratos**. O resultado precisa parecer **pintado pela mesma mão**. Se você colocar a cena ao lado do retrato e parecerem de jogos diferentes, está errado.
+
+**O que os retratos fazem (replique na cena):**
+- **Ilustração digital semi-realista e estilizada.** Proporções **realistas** (nada de cartoon: sem olhos/objetos exagerados, sem forma "gordinha" de desenho animado).
+- **Sem contorno escuro.** O limite dos objetos vem da **diferença de cor e de luz**, nunca de uma linha. **Proibido contorno preto, grosso ou fino, em volta de objetos.**
+- **Sombreamento suave em poucas camadas:** cada superfície tem uma cor base + uma sombra mais escura + um realce discreto, com transição suave. Nada de brilho plástico, nada de textura hiper-detalhada de poros, madeira ou tecido.
+- **Cor:** **paleta fechada, terrosa e dessaturada**; tons quentes (pele, madeira, latão, tecido) contra **azuis-petróleo e cinzas frios**; **fundo escuro**. Nada saturado, nada "alegre".
+- **Luz:** **suave e direcional**, de uma fonte clara na cena (abajur, janela, flash), com **escuridão nas bordas**. Clima **sério, contido, noturno, levemente melancólico**.
+- **Nível de detalhe:** **simplificado e sugerido** (livros = retângulos de cor com uma marca; papel = folha clara com riscos), mas **crível e bem proporcionado**.
+- **Textura:** nenhuma textura visível, no máximo um grão digital quase imperceptível.
+
+**Tom que NÃO queremos:** desenho animado americano, *South Park*, quadrinhos, anime, jogo infantil, vetor "corporativo", pôster publicitário.
 
 ### 1.3 Ponto de vista e enquadramento — OBRIGATÓRIO (corrige a primeira entrega)
 A imagem tem que parecer **tirada de verdade por uma pessoa de pé, com um celular na mão**:
@@ -51,12 +54,12 @@ A imagem tem que parecer **tirada de verdade por uma pessoa de pé, com um celul
 - **Câmera na altura do peito/olhos (≈ 1,4 a 1,6 m)** nas cenas de cômodo; nos closes, a poucas dezenas de centímetros do objeto.
 - **Enquadramento imperfeito, de quem tirou rápido:** assunto principal **levemente fora do centro**, **horizonte inclinado 2° a 4°**, **algo cortado pela borda** (canto de móvel, batente, objeto em primeiro plano), composição **assimétrica**. Nada de simetria perfeita.
 - **Lente de celular:** leve grande-angular (paredes um pouco esticadas nas bordas), sem distorção exagerada.
-- Mesmo com perspectiva, **mantenha o desenho simples e chapado**: pense em planos de papel inclinados em colagem, **nunca em render 3D**.
+- Mesmo com perspectiva, **mantenha o tratamento dos retratos** (formas planas + sombreamento suave), **nunca render 3D**.
 - Cada ficha da seção 3 traz o **"Ponto de vista"** exato desta cena. **Ele manda sobre a composição frontal das imagens de referência.**
 
 ### 1.4 Luz e acabamento (o efeito de câmera ruim é de Claude)
-- **Iluminação chapada e uniforme**, como de flash ou luz ambiente neutra: superfícies voltadas para a câmera claras, laterais mais escuras (um único tom plano).
-- **Sombras recortadas simples:** uma forma escura de borda nítida sob/atrás dos móveis e objetos. Sem sombra difusa.
+- **Iluminação suave e direcional**, no tratamento dos retratos: uma fonte clara principal, o resto em penumbra.
+- **Sombras suaves de contato** sob e atrás dos móveis e objetos.
 - **NÃO desenhe**: vinheta, granulado, desfoque, estouro de flash, aberração cromática, baixa resolução, artefato de compressão nem "aspecto de foto ruim". **Claude aplica tudo isso por código depois**, e se você aplicar também, a imagem fica destruída. **Entregue a arte limpa, nítida e em alta resolução.**
 
 ### 1.5 Obrigatório em todas as cenas
@@ -65,7 +68,7 @@ A imagem tem que parecer **tirada de verdade por uma pessoa de pé, com um celul
 - **Sem pessoas** em nenhuma imagem. **Sem sangue, corpo, ferimento ou qualquer violência.** Sem armas.
 
 ### 1.6 Proibido
-- **Fotorrealismo** (não pode parecer fotografia), render 3D, gradientes suaves, sombras difusas, pintura com pincelada, estilo anime, "low poly", brilho especular realista, texturas realistas de madeira/tecido.
+- **Contorno escuro em volta de objetos**, estética de **desenho animado / cartoon / South Park / quadrinhos / anime**, **fotorrealismo** (não pode parecer fotografia), render 3D, "low poly", pintura com pincelada aparente, brilho plástico, texturas hiper-realistas de madeira/tecido.
 - Qualquer texto, letreiro, legenda, assinatura, marca d'água ou numeração desenhada na imagem — **exceto** os textos explicitamente listados na ficha (letreiro "LAN HOUSE", visor "DESARMADO", teclas 1–9, *, 0, #).
 - Moldura, borda, data da câmera, **plaqueta amarela numerada, régua pericial** (Claude aplica depois, por código).
 - Qualquer elemento que mude o canon (seção 6).
@@ -73,7 +76,7 @@ A imagem tem que parecer **tirada de verdade por uma pessoa de pé, com um celul
 ### 1.7 Paleta de referência (ponto de partida; variações de luz e matiz permitidas)
 | Uso | Hex aproximado |
 |---|---|
-| Fundo escuro do jogo / contornos / sombras | `#16222c` · `#0b141c` |
+| Fundo escuro do jogo / sombras profundas | `#16222c` · `#0b141c` |
 | Paredes (azul-petróleo/acinzentado) | `#3f5568` · `#47586a` · `#2f414f` · `#56627a` |
 | Madeira de móveis e portas | `#a97a48` · `#8a5a32` · `#9b6a3d` · `#6a4a2a` |
 | Piso de tábuas | `#5d4a3a` · `#4a4036` |
@@ -108,10 +111,10 @@ A imagem tem que parecer **tirada de verdade por uma pessoa de pé, com um celul
 
 ## 3. FICHAS DAS 13 CENAS (ilustrações com efeito de foto)
 
-> Em todas: estilo da seção 1 (**recortes de papel + combinar com os retratos**) e **ponto de vista de foto de celular (seção 1.3)**, 4:3, 2400×1800 PNG, sem pessoas, sem texto (salvo indicado), zona livre no canto inferior direito.
+> Em todas: estilo da seção 1 (**mesma técnica dos retratos, sem contorno**) e **ponto de vista de foto de celular (seção 1.3)**, 4:3, 2400×1800 PNG, sem pessoas, sem texto (salvo indicado), zona livre no canto inferior direito.
 > "Referência atual" = arquivo provisório com a composição a seguir (veja o arquivo antes de gerar).
 
-> **Leitura obrigatória das fichas:** as descrições abaixo listam **os elementos** de cada cena. O **enquadramento** é o "Ponto de vista" de cada ficha (foto de celular, perspectiva real). Onde a descrição falar em luz em cone, brilhos, reflexos ou sombras suaves, **simplifique para formas chapadas** de recortes de papel (um reflexo = uma faixa clara; um feixe de luz = um polígono claro e plano; uma sombra = uma forma escura de borda nítida).
+> **Leitura obrigatória das fichas:** as descrições abaixo listam **os elementos** de cada cena. O **enquadramento** é o "Ponto de vista" de cada ficha (foto de celular, perspectiva real). Onde a descrição falar em luz em cone, brilhos, reflexos ou sombras suaves, mantenha **discreto e suave**, no tratamento dos retratos (um reflexo = uma faixa clara suave; um feixe de luz = um polígono claro translúcido; uma sombra = sombra suave de contato).
 
 ### 3.1 `comodo_01_entrada.png` — Entrada / porta principal
 - **Uso no jogo:** foto nº 1 do pacote "Fotos completas da cena" (Maurício). Mostra que a entrada **não foi arrombada**.
@@ -486,7 +489,7 @@ Arquivos esperados (24):
 
 **Cenas e plantas**
 - [ ] 4:3, 2400×1800 (≥ 1600×1200), PNG, sem moldura, sem borda, sem data, **sem plaqueta, sem régua**.
-- [ ] **Estilo de recortes de papel**: formas simples, cor chapada, contorno escuro fino, sombra plana, sem gradiente. **Combina com `defensive.jpg`** (teste lado a lado). Não parece fotografia nem render 3D.
+- [ ] **Mesma técnica dos retratos**: semi-realista, **sem NENHUM contorno escuro**, sombreamento suave em poucas camadas, paleta terrosa dessaturada, fundo escuro. **Combina com `defensive.jpg`** (teste lado a lado). Não é cartoon, não é fotografia, não é render 3D.
 - [ ] **Ponto de vista da ficha respeitado**: perspectiva real em 3/4, assimétrica, horizonte levemente inclinado, algo secundário cortado pela borda. **Não é elevação frontal simétrica.**
 - [ ] Arte **limpa e nítida**: sem vinheta, granulado, desfoque, flash estourado nem aspecto de foto ruim (Claude aplica).
 - [ ] **Sem pessoas**, sem sangue, sem armas.
