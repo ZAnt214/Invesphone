@@ -76,7 +76,7 @@ async function interview(name) {
 async function peopleRound() {
   let any = false
   await goHome()
-  await p.locator('.hm-orb', { hasText: 'Pessoas' }).click(); await p.waitForTimeout(400)
+  await p.locator('.hm-orb', { hasText: 'Pessoas' }).locator('.hm-orb-btn').click(); await p.waitForTimeout(400)
   await noPageScroll('lista de pessoas')
   for (let guard = 0; guard < 12; guard++) {
     const s = await state()
@@ -97,7 +97,7 @@ async function peopleRound() {
     }
     if (!acted) break
     if (!(await p.locator('.people-list').count())) { // voltou para a Home ou outra tela
-      await goHome(); await p.locator('.hm-orb', { hasText: 'Pessoas' }).click(); await p.waitForTimeout(400)
+      await goHome(); await p.locator('.hm-orb', { hasText: 'Pessoas' }).locator('.hm-orb-btn').click(); await p.waitForTimeout(400)
     }
   }
   return any
@@ -106,7 +106,7 @@ async function peopleRound() {
 // ---------- equipe ----------
 async function teamRound() {
   await goHome()
-  await p.locator('.hm-orb', { hasText: 'Equipe' }).click(); await p.waitForTimeout(400)
+  await p.locator('.hm-orb', { hasText: 'Equipe' }).locator('.hm-orb-btn').click(); await p.waitForTimeout(400)
   let did = 0
   for (const name of ['Sônia', 'Maurício', 'Renata', 'Paulo', 'Denise']) {
     if (await p.locator('.tm-back').count()) await p.locator('.tm-back').click()
