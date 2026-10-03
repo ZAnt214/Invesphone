@@ -26,10 +26,11 @@ const noPageScroll = async where => {
   const o = await p.evaluate(() => document.documentElement.scrollHeight - innerHeight)
   if (o > 1) check(false, `rolagem de página em: ${where} (+${o}px)`)
 }
+const skip = {}   // pessoa cujo depoimento travou → só tenta de novo quando surgir pista nova
 const goHome = async () => {
   for (let i = 0; i < 4; i++) {
     if (await p.locator('.hm-alert').count()) return
-    const back = p.locator('.tm-back, .page-head button, .task-head button, .subback').first()
+    const back = p.locator('.ii-back, .ii-filebar button, .tm-back, .page-head button, .task-head button, .subback').first()
     if (await back.count()) { await back.click(); await p.waitForTimeout(350) } else break
   }
   await p.locator('.hm-alert').waitFor({ timeout: 4000 })
@@ -88,8 +89,10 @@ async function peopleRound() {
       const nome = text.split('\n')[0].trim()
       if (text.includes('Depoimento registrado')) continue
       if (text.includes('CHAMAR')) { log(`chamando ${nome}`); await c.click(); await p.waitForTimeout(300); acted = true; break }
+      if (skip[nome] === s.clues.length) continue
       log(`ouvindo ${nome}`)
-      await c.click(); await interview(nome); any = true; acted = true
+      await c.click(); const r = await interview(nome); if (r.blocked.length) skip[nome] = (await state()).clues.length; else any = true
+      acted = true
       break
     }
     if (!acted) break
@@ -148,7 +151,8 @@ for (let guard = 0; guard < 12; guard++) {
     const c = cards.nth(i); const text = await c.innerText(); const nome = text.split('\n')[0].trim()
     if (text.includes('Depoimento registrado')) continue
     if (text.includes('CHAMAR')) { log(`chamando ${nome}`); await c.click(); await p.waitForTimeout(300); acted = true; break }
-    log(`ouvindo ${nome}`); await c.click(); await interview(nome); acted = true; break
+    if (skip[nome] === s.clues.length) continue
+    log(`ouvindo ${nome}`); await c.click(); const r = await interview(nome); if (r.blocked.length) skip[nome] = (await state()).clues.length; acted = true; break
   }
   if (!acted) break
   if (!(await p.locator('.people-list').count())) { await goHome(); await p.locator('.hm-alert').click(); await p.waitForTimeout(500) }
