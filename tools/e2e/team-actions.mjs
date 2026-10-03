@@ -49,6 +49,11 @@ const member = async (p, n) => { if (await p.locator('.tm-back').count()) await 
   const ask = p.locator('.iv-ask', { hasText: 'fechadura' })
   check(await ask.count() === 1 && (await ask.innerText()).includes('Apresentar'), 'pergunta de apresentar o material aparece')
   await ask.click(); await p.waitForFunction(() => !document.querySelector('.ii-question'), null, { timeout: 60000 }); await p.waitForTimeout(500)
+  // a resposta traz a prova de apoio: tocar na frase a registra
+  const sent = p.locator('button.ii-sent:not([disabled])'); const n = await sent.count()
+  for (let i = 0; i < n; i++) await p.locator('button.ii-sent:not([disabled])').first().click()
+  check(JSON.parse(await p.evaluate(k => localStorage.getItem(k), KEY)).clues.includes('livia_porta_aberta'), 'a resposta registra a prova de apoio "Lívia sugere porta deixada aberta"')
+  await p.locator('.ii-next').click(); await p.waitForTimeout(400)
   check(await p.locator('.ii-retake-end').count() === 1, 'depois da resposta há VOLTAR AO ARQUIVO (sem encerrar de novo)')
   check(await p.locator('.ii-farewell').count() === 0, 'não reabre a despedida')
   await p.locator('.ii-retake-end').click(); await p.waitForTimeout(400)
@@ -56,6 +61,32 @@ const member = async (p, n) => { if (await p.locator('.tm-back').count()) await 
   const o = await p.evaluate(() => document.documentElement.scrollHeight - innerHeight)
   check(o <= 1, 'arquivo sem rolagem de página')
   check(p.errs.length === 0, 'sem erros de script (' + p.errs.join('; ') + ')')
+}
+// 3) provas de apoio no relatório: pessoa descartada, contagem e tela sem rolagem
+for (const [w, h] of [[390, 844], [375, 667]]) {
+  const p = await (await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true })).newPage(); p.errs = []
+  p.on('pageerror', e => p.errs.push(e.message))
+  await p.goto(BASE)
+  await p.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, save({ screen: 'task', app: 'home', task: 8, interviewed: ['livia', 'caio', 'rafael', 'cida', 'jorge', 'teo'], clues: ['log_alarme', 'nota_motel', 'cinta_bancaria', 'confissao_teo', 'agenda_helena', 'valores_intactos', 'lan_paga', 'rafael_lan_confirmada', 'livia_porta_aberta'], discoveredPeople: ['livia', 'caio', 'rafael', 'cida', 'jorge', 'teo'] })]); await p.reload(); await p.waitForTimeout(1000)
+  check(await p.locator('.choices small.cleared').count() === 1, `${w}x${h}: Rafael aparece como descartado pelas provas no relatório`)
+  check((await p.locator('.support-note').innerText()).includes('2/8'), `${w}x${h}: relatório conta as provas de apoio (2/8)`)
+  const fit = await p.evaluate(() => { const b = document.querySelector('.task-body'); return b.scrollHeight - b.clientHeight })
+  check(fit <= 1, `${w}x${h}: relatório cabe sem rolar (${fit}px)`)
+  for (const [g, t] of [['Executores', 'Caio'], ['Executores', 'Téo'], ['Mentor', 'Lívia'], ['Motivo', 'Herança']]) await p.locator(`h3:has-text("${g}") + .choices button`, { hasText: t }).click()
+  const pr = p.locator('.proof-grid button'); for (let i = 0; i < 3; i++) await pr.nth(i).click()
+  await p.locator('.primary', { hasText: 'Assinar relatório' }).click(); await p.waitForTimeout(500)
+  check((await p.locator('body').innerText()).includes('2/8 provas de apoio'), `${w}x${h}: final mostra as provas de apoio`)
+  const over = await p.evaluate(() => document.documentElement.scrollHeight - innerHeight)
+  check(over <= 1, `${w}x${h}: final sem rolagem de página`)
+  check(p.errs.length === 0, `${w}x${h}: sem erros de script`)
+}
+// 4) as provas de apoio abrem conversas novas e marcam descartados em Pessoas
+{
+  const p = await page(save({ task: 5, clues: ['lan_paga', 'rafael_lan_confirmada', 'alibi_cida', 'cida_alibi_termo', 'livia_porta_aberta', 'caio_sem_intervalo'], interviewed: ['livia', 'caio', 'rafael', 'cida'], discoveredPeople: ['livia', 'caio', 'rafael', 'cida'], teamTopics: [] }))
+  await member(p, 'Denise'); check((await p.locator('.tm-chips').innerText()).includes('tirar Rafael e Cida'), 'Denise oferece fechar Rafael e Cida com as provas de apoio')
+  await member(p, 'Sônia'); check((await p.locator('.tm-chips').innerText()).includes('cedendo em pontos diferentes'), 'Sônia comenta as versões cedendo (porta de Lívia + horário de Caio)')
+  const q = await page(save({ app: 'interrogate', task: 5, clues: ['lan_paga', 'rafael_lan_confirmada'], interviewed: ['rafael'], discoveredPeople: ['livia', 'caio', 'rafael', 'cida'] }))
+  check((await q.locator('.people-list').innerText()).includes('descartado pelas provas'), 'Pessoas marca Rafael como descartado pelas provas')
 }
 await browser.close()
 console.log(failures ? `\n${failures} falha(s)` : '\nTodos os testes passaram')

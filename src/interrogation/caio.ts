@@ -100,14 +100,16 @@ export const caioInterrogation:InterrogationConfig = {
       requiresMaterial:'ficha_veiculo_gol',
       question:'O Gol branco que o vigia viu está no seu nome. Onde ele estava às onze e meia?',
       answer:'No motel, já falei. Carro no meu nome não quer dizer que era eu dirigindo. Eu deixei lá e não saí mais.',
-      expression:'lying'
+      expression:'lying',
+      highlights:[{ phrase:'Carro no meu nome', clue:'caio_gol_dele' }]
     },
     {
       id:'show_board',
       requiresMaterial:'quadro_horarios',
       question:'Só duas horas têm registro: o alarme às 23:52 e o motel às 00:56. O que você fez entre uma e outra?',
       answer:'Eu já disse que cheguei onze e pouco. Esse quadro tá errado, ou o motel anotou errado. Eu não fico olhando relógio.',
-      expression:'lying'
+      expression:'lying',
+      highlights:[{ phrase:'Esse quadro tá errado', clue:'caio_sem_intervalo' }]
     },
     {
       id:'untold',

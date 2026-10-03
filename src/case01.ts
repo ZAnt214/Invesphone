@@ -3,6 +3,8 @@ export type Clue = {
   title: string
   description: string
   category: 'local'|'depoimento'|'documento'|'digital'|'financeiro'
+  /** Prova de apoio: nasce de material apresentado em depoimento. Sustenta o relatório, mas não é uma das provas aceitas. */
+  support?: boolean
 }
 
 export type Person = {
@@ -57,6 +59,14 @@ export const clues: Clue[] = [
   {id:'teo_adiantamento',title:'Adiantamento de Caio',description:'Téo admite que Caio dividiu dinheiro com ele antes do crime.',category:'depoimento'},
   {id:'livia_passou_codigo',title:'Lívia passou o código',description:'Téo diz que Lívia passou o código do alarme por telefone, contra o que ela afirmou.',category:'depoimento'},
   {id:'confissao_teo',title:'Confissão de Téo',description:'Téo admite participação e descreve a entrada facilitada na casa.',category:'depoimento'},
+  {id:'livia_porta_aberta',title:'Lívia sugere porta deixada aberta',description:'Diante da fechadura sem marca de força, Lívia passa a dizer que alguém deixou a porta aberta, embora tenha dito que abriu com a chave.',category:'depoimento',support:true},
+  {id:'livia_sabia_heranca',title:'Lívia sabia da herança',description:'Diante da matrícula do imóvel, Lívia admite que o que receberia dependia dos pais.',category:'depoimento',support:true},
+  {id:'caio_gol_dele',title:'Gol é de Caio',description:'Caio não nega que o Gol branco registrado é dele; apenas diz que o carro no nome dele não prova quem dirigia.',category:'depoimento',support:true},
+  {id:'caio_sem_intervalo',title:'Caio não explica o intervalo',description:'Diante do quadro de horários (23:52 e 00:56), Caio insiste em "onze e pouco" e culpa o registro do motel.',category:'depoimento',support:true},
+  {id:'rafael_nao_prendeu',title:'Rafael não prendeu o Thor',description:'Rafael diz que o cão não se tranca sozinho e que não foi ele quem o prendeu.',category:'depoimento',support:true},
+  {id:'rafael_lan_confirmada',title:'LAN house de Rafael confirmada',description:'Rafael reconhece a fachada da LAN house do recibo e diz que o dono o conhece. Com o recibo, o afasta da linha de suspeita.',category:'depoimento',support:true},
+  {id:'cida_alibi_termo',title:'Álibi de Cida por termo',description:'Cida confirma o termo assinado pela irmã sobre a noite em família. Com a confirmação de terceiros, o álibi se sustenta.',category:'depoimento',support:true},
+  {id:'jorge_so_o_carro',title:'Jorge só viu o carro',description:'Com o croqui da rua, Jorge reforça que viu o Gol, mas não o portão nem quem estava dentro.',category:'depoimento',support:true},
 ]
 
 export const chapters = [

@@ -460,3 +460,29 @@ Quando o agente retornar:
 - não criar evidência duplicada;
 - manter o arquivo acessível no histórico;
 - permitir que o jogador examine o material.
+
+## Materiais em depoimento e provas de apoio
+
+Material entregue pela equipe tem **serventia**: aparece "PARA QUE SERVE" na conversa e, quando há pessoa ligada a ele, a conversa oferece levar o material ao depoimento (`requiresMaterial` em `src/interrogation/*.ts`). Depoimentos já encerrados podem ser **retomados** quando há perguntas novas.
+
+A resposta a essas perguntas traz uma **prova de apoio** (`support:true` em `src/case01.ts`), registrada ao tocar na frase marcada em `highlights`:
+
+| Material apresentado | A quem | Prova de apoio |
+| --- | --- | --- |
+| Close da fechadura | Lívia | `livia_porta_aberta` |
+| Matrícula do imóvel | Lívia | `livia_sabia_heranca` |
+| Ficha do Gol | Caio | `caio_gol_dele` |
+| Quadro de horários | Caio | `caio_sem_intervalo` |
+| Foto da trava do canil | Rafael | `rafael_nao_prendeu` |
+| Foto da fachada da LAN | Rafael | `rafael_lan_confirmada` |
+| Termo da irmã de Cida | Cida | `cida_alibi_termo` |
+| Croqui da rua | Jorge | `jorge_so_o_carro` |
+
+Efeitos na história (sem mudar culpados, horários, motivo, provas aceitas nem a ordem do caso):
+
+- aparecem em Pistas como "PROVA DE APOIO";
+- **descartam suspeitos**: Rafael (recibo + fachada) e Cida (álibi + termo) passam a constar como "descartado pelas provas" em Pessoas e no relatório;
+- abrem conversas da equipe: Denise (fechar Rafael e Cida) e Sônia (as versões de Lívia e Caio cedendo em pontos diferentes);
+- contam no relatório e no final: cada prova de apoio vale +100 pontos no final A e o final mostra "N/8 provas de apoio".
+
+Provas de apoio **não** substituem as provas principais (`acceptedProofs`): o relatório continua exigindo ao menos 3 delas.

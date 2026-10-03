@@ -138,14 +138,16 @@ export const liviaInterrogation:InterrogationConfig = {
       requiresMaterial:'fechadura_porta',
       question:'A perícia fotografou a fechadura de perto: nenhuma marca de força. Quem abriu essa porta?',
       answer:'Eu já disse que tenho chave. Mas eu não estava lá. Se ninguém forçou, alguém deixou aberta, sei lá. Por que você está olhando pra mim?',
-      expression:'nervous'
+      expression:'nervous',
+      highlights:[{ phrase:'alguém deixou aberta', clue:'livia_porta_aberta' }]
     },
     {
       id:'show_deed',
       requiresMaterial:'matricula_imovel',
       question:'A casa está no nome dos seus pais. O que você ia receber dependia deles, não é?',
       answer:'Dependia. Mas qualquer filha sabe disso, não é segredo. Eles eram meus pais, eu não queria que nada disso acontecesse.',
-      expression:'defensive'
+      expression:'defensive',
+      highlights:[{ phrase:'Dependia', clue:'livia_sabia_heranca' }]
     },
     {
       id:'untold',
