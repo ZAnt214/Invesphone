@@ -88,6 +88,17 @@ for (const [w, h] of [[390, 844], [375, 667]]) {
   const q = await page(save({ app: 'interrogate', task: 5, clues: ['lan_paga', 'rafael_lan_confirmada'], interviewed: ['rafael'], discoveredPeople: ['livia', 'caio', 'rafael', 'cida'] }))
   check((await q.locator('.people-list').innerText()).includes('descartado pelas provas'), 'Pessoas marca Rafael como descartado pelas provas')
 }
+// 5) a conversa segue a ordem real, não o horário do roteiro, e os horários nunca voltam no tempo
+{
+  const p = await page(save({ task: 4, clues: ['log_alarme', 'vigia_gol'], interviewed: ['livia', 'caio', 'rafael', 'cida'], discoveredPeople: ['livia', 'caio', 'rafael', 'cida'], teamTopics: [] }))
+  await member(p, 'Paulo')
+  await send(p, 'Vou direto no motel'.slice(0, 0) || 'motel')   // roteiro tardio primeiro
+  await send(p, 'O que você conseguiu da rua')                      // roteiro cedo depois
+  const texts = await p.locator('.tm-msg.in p').allInnerTexts()
+  check(texts[texts.length - 1].includes('Jorge'), 'a conversa mais recente aparece por último, mesmo com horário de roteiro anterior')
+  const times = (await p.locator('.tm-msg p span').allInnerTexts()).map(t => t.replace(/[^0-9:]/g, '').slice(0, 5)).filter(t => /^\d\d:\d\d$/.test(t))
+  check(times.every((t, i) => i === 0 || t >= times[i - 1]), 'horários crescentes na conversa (' + times.slice(-4).join(' ') + ')')
+}
 await browser.close()
 console.log(failures ? `\n${failures} falha(s)` : '\nTodos os testes passaram')
 process.exit(failures ? 1 : 0)
