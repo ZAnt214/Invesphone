@@ -29,7 +29,7 @@ def build(cam=None):
             zz=Z0+random.uniform(0,Z1-Z0)
             S.poly([(x,0.001,zz),(x+.16,0.001,zz),(x+.16,0.001,zz+.006),(x,0.001,zz+.006)],'#000000',.5,0,depth=1.85e3,op=.16)
     # rodapés
-    S.box((0,.06,Z1-.02),(4.2,.12,.04),'#2c3e4e',bias=100); S.box((X1-.02,.06,1.7),(.04,.12,6.1),'#2c3e4e',bias=100)
+    S.box((0,.06,Z1-.02),(4.2,.12,.04),'#2c3e4e',depth=2e3-3); S.box((X1-.02,.06,1.7),(.04,.12,6.1),'#2c3e4e',depth=2e3-3)
     # tapete
     S.poly([(-.9,.004,2.35),(1.55,.004,2.35),(1.55,.004,3.55),(-.9,.004,3.55)],'#4a3038',.5,.06,depth=1.7e3)
     S.poly([(-.82,.005,2.43),(1.47,.005,2.43),(1.47,.005,3.47),(-.82,.005,3.47)],'#573a42',.5,.05,depth=1.69e3)
@@ -96,7 +96,7 @@ def build(cam=None):
     # ---- cadeira
     def rot(dx,dz,yaw):
         a=math.radians(yaw);return dx*math.cos(a)+dz*math.sin(a),-dx*math.sin(a)+dz*math.cos(a)
-    cx,cz,yw=-1.32,2.35,-38
+    cx,cz,yw=-1.3,3.05,-48
     S.floor_shadow(cx-.28,cz-.28,cx+.28,cz+.28,.5,.4)
     S.cyl(cx,cz,.03,.13,.43,'#1e262e',top=False,bias=-.2)
     for k in range(5):
