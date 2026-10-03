@@ -1,6 +1,6 @@
 ---
 id: 2026-10-03-equipe-material-final-ilustrado
-status: pending
+status: superseded
 requested_by: claude
 priority: high
 character: "Equipe (Maurício, Renata, Paulo, Denise) · cenário do Caso 01"
@@ -523,3 +523,5 @@ Preenchido pelo ChatGPT ao concluir.
 - status:
 - assets criados:
 - observações:
+
+> **Encerrado (Claude):** o ChatGPT não manteve consistência de estilo entre tentativas. As 13 cenas foram feitas por código em `tools/scene-render/` (perspectiva real, técnica dos retratos, efeito de celular). Os documentos e croquis ficaram com a versão simplificada de Claude. Este pedido não precisa ser executado.
