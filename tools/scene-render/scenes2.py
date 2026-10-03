@@ -54,53 +54,72 @@ def canil():
     for i in range(36): S.dot(rnd.uniform(0,1600),rnd.uniform(0,260),rnd.choice([1.5,2,2.5]),'#dfe8f5',rnd.uniform(.4,.9))
     S.dot(215,170,52,'#ebe6cc',.95)
     S.poly([(-9,0,-1),(9,0,-1),(9,0,14),(-9,0,14)],'#2c4a3a',.5,.12,depth=1.9e3)
-    # grama
-    for i in range(160):
-        x=rnd.uniform(-3,3.5);z=rnd.uniform(.3,8)
-        S.poly([(x,0.002,z),(x+.03,0.002,z),(x+.012,.13+rnd.random()*.1,z+.01)],rnd.choice(['#3a6a48','#2f5a3c','#4a7a50']),.5,.05,depth=1.8e3-z)
-    # cerca
-    for i in range(0,34):
-        x=-4+i*.27;S.box((x,.85,8.0),(.22,1.7,.03),'#6a5240' if i%2 else '#74594a',bias=60)
-    S.box((0,1.55,7.97),(9.6,.07,.03),'#5a4333',bias=59); S.box((0,.4,7.97),(9.6,.07,.03),'#5a4333',bias=59)
-    # casa
-    S.box((3.2,1.3,6.2),(.2,2.6,4.8),'#8a7a62'); 
-    hw=S.plane((2.09,0,0),(0,0,1),(0,1,0))
-    S.shape(hw,rect(.9,1.0,5.0,1.0),'#2a2a2a',.3,0,depth=6.2-.2)
-    S.shape(hw,rect(.8,.9,5.05,1.05),'#f2e3a0',.9,.05,depth=6.2-.3)
-    S.shape(hw,rect(.04,.9,5.45,1.05),'#4a3a2a',.4,0,depth=6.2-.4)
-    S.shape(hw,rect(.9,2.0,6.6,0),'#5a4630',.4,.06,depth=6.2-.3); S.shape(hw,[(7.0+.02*math.cos(i),1.0+.02*math.sin(i)) for i in range(0,7)],'#d6b257',.7,0,depth=6.2-.5)
-    S.poly([(2.09,0,4.3),(2.09,0,5.9),(0.7,0,5.5),(0.3,0,4.2)],'#e8d9a0',.5,0,depth=1.8e3-30,op=.12)
-    # canil
-    kx,kz=-0.45,3.9
-    S.floor_shadow(kx-.8,kz-.6,kx+.8,kz+.6,1.1,.5)
-    S.box((kx,.45,kz+.1),(1.5,.9,1.1),'#a05a36')
-    fr=S.plane((kx-.65,0,kz-.46),(1,0,0),(0,1,0))
-    S.shape(fr,rect(1.3,.7,0,.05),'#16100b',.3,0,depth=kz-.5)
-    # cão dentro (plano ao fundo)
-    dp=S.plane((kx-.65,0,kz-.30),(1,0,0),(0,1,0))
-    cx=.65
-    S.shape(dp,[(cx-.28,.05),(cx+.3,.05),(cx+.28,.35),(cx+.12,.52),(cx-.12,.52),(cx-.26,.35)],'#6b4a2f',.5,.1,depth=kz-.6)
-    S.shape(dp,[(cx-.14,.48),(cx+.14,.48),(cx+.17,.64),(cx+.08,.76),(cx-.08,.76),(cx-.17,.64)],'#7a5636',.5,.1,depth=kz-.65)
-    S.shape(dp,[(cx-.17,.7),(cx-.2,.82),(cx-.08,.76)],'#4e331f',.4,0,depth=kz-.66); S.shape(dp,[(cx+.17,.7),(cx+.2,.82),(cx+.08,.76)],'#4e331f',.4,0,depth=kz-.66)
-    S.shape(dp,[(cx-.08,.55),(cx+.08,.55),(cx+.07,.64),(cx-.07,.64)],'#c9a57a',.6,0,depth=kz-.67)
-    S.shape(dp,[(cx-.025,.62),(cx+.025,.62),(cx+.02,.65),(cx-.02,.65)],'#1b130d',.3,0,depth=kz-.68)
-    for ex in (-.075,.075): S.shape(dp,[(cx+ex+.014*math.cos(i*PI/5),.69+.014*math.sin(i*PI/5)) for i in range(10)],'#f3e1a0',.9,0,depth=kz-.68)
-    S.shape(dp,[(cx-.15,.48),(cx+.15,.48),(cx+.15,.45),(cx-.15,.45)],'#b03a3a',.5,0,depth=kz-.66); S.shape(dp,[(cx+.02+.018*math.cos(i*PI/5),.43+.018*math.sin(i*PI/5)) for i in range(10)],'#e0c068',.8,0,depth=kz-.67)
-    # grade (malha) e postes
-    gm=S.plane((kx-.65,0,kz-.47),(1,0,0),(0,1,0))
-    for i in range(0,27): S.shape(gm,rect(.008,.7,i*.05,.05),'#b7bfc4',.6,0,depth=kz-.8,op=.85)
-    for j in range(0,15): S.shape(gm,rect(1.3,.008,0,.05+j*.05),'#b7bfc4',.6,0,depth=kz-.8,op=.85)
-    S.shape(gm,rect(.07,.78,-.04,.0),'#9aa4aa',.55,.1,depth=kz-.9); S.shape(gm,rect(.07,.78,1.27,.0),'#9aa4aa',.55,.1,depth=kz-.9); S.shape(gm,rect(1.4,.07,-.04,.74),'#9aa4aa',.55,.1,depth=kz-.9)
-    # telhado
-    S.poly([(kx-.85,.9,kz-.5),(kx+.85,.9,kz-.5),(kx+.85,1.28,kz+.1),(kx-.85,1.28,kz+.1)],'#7a4a2a',.45,.1,bias=-.5)
-    S.poly([(kx-.85,1.28,kz+.1),(kx+.85,1.28,kz+.1),(kx+.85,.9,kz+.7),(kx-.85,.9,kz+.7)],'#5a3820',.3,.1,bias=-.5)
-    # ferrolho por fora (lateral direita, fechado) + cadeado
-    lx=kx+.74
-    S.box((lx,.42,kz-.48),(.16,.05,.015),'#aeb6bb',bias=-1.2); S.box((lx-.03,.42,kz-.50),(.2,.02,.02),'#5c666c',bias=-1.25)
-    S.box((lx+.05,.36,kz-.51),(.05,.07,.02),'#d6b257',bias=-1.3)
-    # objetos
-    S.cyl(-1.35,2.5,.12,0,.05,'#2d6b8a',bias=-.1); S.cyl(.9,2.8,.06,0,.12,'#a24b3d',bias=-.1)
-    return S,[(*sp(S,(2.0,1.4,5.2)),600,'#ffe3a0',.32),(*sp(S,(kx,.5,kz-.6)),380,'#ffd9a0',.12)]
+    # grama: tufos curtos e finos, só longe da câmera (sem espinhos gigantes)
+    for i in range(260):
+        x=rnd.uniform(-3.5,4);z=rnd.uniform(1.4,7.6);hgt=.06+rnd.random()*.07
+        for k in range(3):
+            xx=x+k*.025
+            S.poly([(xx,0.002,z),(xx+.014,0.002,z),(xx+.004+(k-1)*.012,hgt+k*.01,z+.004)],rnd.choice(['#3a6a48','#2f5a3c','#4a7a50']),.5,.05,depth=1.8e3-z)
+    # cerca ao fundo (tábuas e travessas)
+    for i in range(0,40):
+        x=-4.5+i*.27;S.box((x,.85,8.3),(.22,1.7,.03),'#6a5240' if i%2 else '#74594a',bias=60)
+    S.box((0,1.5,8.27),(11,.07,.03),'#5a4333',bias=59); S.box((0,.4,8.27),(11,.07,.03),'#5a4333',bias=59)
+    # casa (caixa com duas faces visíveis, telhado e porta)
+    hx0,hz0=1.3,4.6
+    S.box((hx0+1.6,1.35,hz0+1.9),(3.2,2.7,3.8),'#8a7a62')
+    S.box((hx0+1.6,2.76,hz0+1.9),(3.5,.14,4.1),'#4a3a2c',bias=-.2)
+    hw=S.plane((hx0-.004,0,0),(0,0,1),(0,1,0))
+    dh=float(S.cam.cs((hx0,1.35,hz0+1.9))[2]);k=[0]
+    def D():
+        k[0]+=.01;return dh-k[0]
+    S.shape(hw,rect(1.0,1.0,hz0+.5,.95),'#241f1a',.3,0,depth=D())
+    S.shape(hw,rect(.9,.9,hz0+.55,1.0),'#f2e3a0',.9,.05,depth=D())
+    S.shape(hw,rect(.04,.9,hz0+1.0,1.0),'#4a3a2a',.4,0,depth=D()); S.shape(hw,rect(.9,.04,hz0+.55,1.43),'#4a3a2a',.4,0,depth=D())
+    S.shape(hw,rect(1.0,2.05,hz0+2.3,0),'#2a2018',.3,0,depth=D()); S.shape(hw,rect(.88,1.97,hz0+2.36,0),'#5a4630',.45,.06,depth=D())
+    S.shape(hw,[(hz0+3.1+.025*math.cos(i*PI/6),1.0+.025*math.sin(i*PI/6)) for i in range(12)],'#d6b257',.7,0,depth=D())
+    S.box((hx0-.2,.06,hz0+2.8),(.4,.12,1.1),'#6a6258',bias=-.5)
+    S.poly([(hx0,.01,hz0+.5),(hx0,.01,hz0+1.5),(hx0-1.7,.01,hz0+1.9),(hx0-1.7,.01,hz0-.1)],'#f2e3a0',.6,0,depth=1.7e3,op=.10,extra='filter="url(#bl2)"')
+    # ---- canil
+    kx,kz=-0.35,3.6;L,Rr,F,B=kx-.7,kx+.7,kz-.5,kz+.5
+    S.floor_shadow(L-.1,F-.1,Rr+.1,B+.1,1.1,.5)
+    d0=float(S.cam.cs((kx,.5,kz))[2]);j=[0]
+    def E():
+        j[0]+=.01;return d0-j[0]
+    S.poly([(L,0,F),(L,0,B),(L,1.15,B),(L,.95,F)],'#a05a36',S.faceT(np.array([-1,0,0])),.06,depth=d0+.5)
+    S.poly([(L,0,F),(Rr,0,F),(Rr,.95,F),(L,.95,F)],'#a8603a',S.faceT(np.array([0,0,-1])),.06,depth=d0+.4)
+    fr=S.plane((L+.1,0,F-.004),(1,0,0),(0,1,0))
+    S.shape(fr,rect(1.2,.7,0,.08),'#14100b',.3,0,depth=E())
+    # cão sentado, de frente, dentro do canil
+    cx=.6
+    dp=S.plane((L+.1,0,F+.18),(1,0,0),(0,1,0));dd=E()
+    def P(pts,col,t=.5,g=.1,o=1): S.shape(dp,pts,col,t,g,depth=E(),op=o)
+    P([(cx-.27,.08),(cx+.27,.08),(cx+.30,.22),(cx+.22,.40),(cx+.12,.46),(cx-.12,.46),(cx-.22,.40),(cx-.30,.22)],'#6b4a2f')
+    P([(cx-.10,.10),(cx+.10,.10),(cx+.12,.40),(cx-.12,.40)],'#a98456',.55,.08)
+    P([(cx-.17,.08),(cx-.07,.08),(cx-.08,.34),(cx-.16,.34)],'#7a5636',.5,.1); P([(cx+.07,.08),(cx+.17,.08),(cx+.16,.34),(cx+.08,.34)],'#7a5636',.5,.1)
+    P([(cx-.14,.44),(cx-.16,.58),(cx-.09,.69),(cx,.72),(cx+.09,.69),(cx+.16,.58),(cx+.14,.44),(cx+.07,.40),(cx-.07,.40)],'#7a5636',.55,.1)
+    P([(cx-.17,.64),(cx-.22,.80),(cx-.07,.71)],'#4e331f',.4,.05); P([(cx+.17,.64),(cx+.22,.80),(cx+.07,.71)],'#4e331f',.4,.05)
+    P([(cx-.075,.46),(cx+.075,.46),(cx+.08,.55),(cx+.04,.60),(cx-.04,.60),(cx-.08,.55)],'#c9a57a',.6,.08)
+    P([(cx-.026,.555),(cx+.026,.555),(cx+.02,.59),(cx-.02,.59)],'#1b130d',.3,0)
+    for ex in (-.07,.07):
+        P([(cx+ex+.022*math.cos(i*PI/6),.635+.014*math.sin(i*PI/6)) for i in range(12)],'#f3e1a0',.9,0)
+        P([(cx+ex+.008*math.cos(i*PI/6),.635+.008*math.sin(i*PI/6)) for i in range(12)],'#15100a',.3,0)
+    P([(cx-.14,.43),(cx+.14,.43),(cx+.14,.405),(cx-.14,.405)],'#b03a3a',.5,.05); P([(cx+.012+.018*math.cos(i*PI/6),.385+.018*math.sin(i*PI/6)) for i in range(12)],'#e0c068',.8,0)
+    # grade e postes
+    gm=S.plane((L+.1,0,F-.01),(1,0,0),(0,1,0))
+    for i in range(0,21): S.shape(gm,rect(.007,.74,i*.06,.06),'#b7bfc4',.6,0,depth=E()-.5,op=.8)
+    for jj in range(0,13): S.shape(gm,rect(1.2,.007,0,.06+jj*.06),'#b7bfc4',.6,0,depth=E()-.5,op=.8)
+    for ux,wd in ((-.06,.07),(1.2,.07)): S.shape(gm,rect(wd,.84,ux,0),'#9aa4aa',.55,.1,depth=E()-.6)
+    S.shape(gm,rect(1.34,.07,-.06,.77),'#9aa4aa',.55,.1,depth=E()-.6)
+    # telhado inclinado com espessura (baixo na frente, alto atrás)
+    S.poly([(L-.08,.92,F-.12),(Rr+.08,.92,F-.12),(Rr+.08,1.2,B+.1),(L-.08,1.2,B+.1)],'#7a4a2a',.5,.1,depth=E()-.7)
+    S.poly([(L-.08,.88,F-.12),(Rr+.08,.88,F-.12),(Rr+.08,.92,F-.12),(L-.08,.92,F-.12)],'#4a2d18',.35,0,depth=E()-.71)
+    S.poly([(L-.08,.88,F-.12),(L-.08,.92,F-.12),(L-.08,1.2,B+.1),(L-.08,1.16,B+.1)],'#5a3820',.4,0,depth=E()-.71)
+    # ferrolho por fora (lado direito, fechado) + cadeado
+    lx=Rr-.02
+    S.box((lx,.42,F-.03),(.14,.05,.014),'#aeb6bb',bias=-1.2); S.box((lx-.04,.42,F-.05),(.2,.022,.022),'#5c666c',bias=-1.25)
+    S.box((lx+.05,.355,F-.06),(.05,.075,.02),'#d6b257',bias=-1.3)
+    S.cyl(-1.35,2.5,.12,0,.05,'#2d6b8a',bias=0); S.cyl(.95,2.8,.06,0,.12,'#a24b3d',bias=0)
+    return S,[(*sp(S,(hx0-.1,1.4,hz0+1.0)),620,'#ffe3a0',.30),(*sp(S,(kx,.5,F-.6)),380,'#ffd9a0',.12)]
 def painel():
     S=Scene(Cam((-0.2,1.36,1.42),(0.035,1.4,2.0),fov=50,roll=3.5))
     R=Room(S,X0=-1.5,X1=1.5,Z0=-1,Z1=2.0,YH=2.5,wall='#5a6a76',floor='#4a4036',stripes=False,planks=False,wall_t=(.58,.45,.48),seed=2)
