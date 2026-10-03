@@ -994,6 +994,9 @@ function ChatThread({messages,memberName,sending,onOpenAsset}:{messages:{time:st
  </div>
 }
 function ClueList({ids}:{ids:string[]}){if(!ids.length)return <Empty icon={<FileSearch/>} title="Nenhuma pista registrada" text="Abra a tarefa atual e comece pela cena."/>;return <div className="clue-list">{ids.map(id=>{const c=clues.find(x=>x.id===id)!;return <article key={id}><FileText/><div><small>{c.category.toUpperCase()}</small><b>{c.title}</b><p>{c.description}</p></div></article>})}</div>}
+/** Pessoas que só podem ser chamadas depois de o jogador ter as provas para confrontá-las. */
+const summonRequires:Record<string,string[]>={teo:['log_alarme','cinta_bancaria']}
+
 function People({game,setGame,origin='app'}:{game:GameSave;setGame:React.Dispatch<React.SetStateAction<GameSave>>;origin?:'app'|'task'}){
  const discovered=game.discoveredPeople??['livia','caio','rafael','cida']
  const summoned=game.summonedPeople??['livia','caio']
@@ -1004,10 +1007,11 @@ function People({game,setGame,origin='app'}:{game:GameSave;setGame:React.Dispatc
    const has=!!interrogations[p.id]
    const called=summoned.includes(p.id)
    const done=game.interviewed.includes(p.id)
-   return <button key={p.id} onClick={()=>called&&has?setGame(openDeposition(p.id,origin)):summon(p.id)} disabled={!has}>
+   const waiting=!called&&(summonRequires[p.id]??[]).some(c=>!game.clues.includes(c))
+   return <button key={p.id} onClick={()=>called&&has?setGame(openDeposition(p.id,origin)):summon(p.id)} disabled={!has||waiting}>
     <i><Face p={p}/></i>
-    <div><b>{p.name}</b><span>{done?'Depoimento registrado':called?p.role:`NOVO CONTATO · ${p.role}`}</span></div>
-    {done?<Check/>:called?<ChevronLeft className="right"/>:<strong>CHAMAR</strong>}
+    <div><b>{p.name}</b><span>{done?'Depoimento registrado':waiting?`${p.role} · só com provas contra ele`:called?p.role:`NOVO CONTATO · ${p.role}`}</span></div>
+    {done?<Check/>:called?<ChevronLeft className="right"/>:waiting?<Lock/>:<strong>CHAMAR</strong>}
    </button>
   })}
   <p className="people-discovery-note">Novas pessoas aparecem aqui quando a equipe, documentos ou depoimentos revelam uma ligação com o caso.</p>
