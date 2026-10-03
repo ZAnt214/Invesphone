@@ -72,6 +72,7 @@ export class PortraitRenderer {
   private atlas:HTMLImageElement|null = null
   private shapeAmount = 0
   private speech:{ keys:MouthKey[]; start:number; duration:number }|null = null
+  private closedLips = true
   private shown:Loaded|null = null
   private trans:{ from:Loaded; to:Loaded; t:number }|null = null
   /** a imagem neutra é a base imutável; só o interior do rosto muda (personagem com `facePolygon`) */
@@ -565,15 +566,20 @@ export class PortraitRenderer {
       else {
         const s = sampleMouth(sp.keys,e)
         // quase fechada vira lábios fechados; a forma da vogal só aparece com a boca aberta
-        shape = s.a<.14 ? 'M' : s.v
+        // histerese: fecha abaixo de .12 e só volta à vogal acima de .2 (sem piscar entre formas quando a abertura oscila perto do limite)
+        this.closedLips = s.a<.12 ? true : s.a>.2 ? false : this.closedLips
+        shape = this.closedLips ? 'M' : s.v
         target = Math.max(target,s.a)
         this.shapeAmount = s.a
       }
     }
-    // abertura: mola criticamente amortecida (sem degraus entre sílabas, sem tremer)
-    const w0 = 26, h = Math.min(dt,.05)
-    this.mouthVel += (w0*w0*(target-this.mouth) - 2*w0*this.mouthVel)*h
-    this.mouth = clamp(this.mouth + this.mouthVel*h,0,1.1)
+    // abertura: mola criticamente amortecida, resolvida de forma exata para qualquer intervalo entre quadros.
+    // (Com integração passo a passo, o iPhone em economia de bateria, que entrega ~30 quadros irregulares,
+    // fazia a boca tremer.)
+    const w0 = 26, h = Math.min(dt,.1)
+    const x0 = this.mouth-target, b0 = this.mouthVel+w0*x0, e0 = Math.exp(-w0*h)
+    this.mouth = clamp(target+(x0+b0*h)*e0,0,1.1)
+    this.mouthVel = (this.mouthVel-b0*w0*h)*e0
     // forma: troca rápida (~70 ms) para não aparecer duas bocas ao mesmo tempo
     const kv = 1-Math.exp(-dt*42)
     for(const v of Object.keys(this.vis) as Viseme[]){
