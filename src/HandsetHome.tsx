@@ -1,5 +1,8 @@
-import { FileSearch, FolderSearch, Lock, MessageCircle, Settings, Smartphone, Users } from 'lucide-react'
+import { ChevronRight, FileSearch, FolderSearch, Lock, MessageCircle, Settings, Smartphone, Users } from 'lucide-react'
 import './desk-home.css'
+
+/** Um passo sugerido ao jogador na Home: o que fazer agora para seguir a história. */
+export type GuideStep = {id:string;tag:string;title:string;text:string;cta?:string;locked?:boolean;run:()=>void}
 
 type HomeTarget = 'team'|'clues'|'interrogate'|'victim'|'chapters'|'settings'
 
@@ -7,16 +10,13 @@ type Props = {
   chapterNumber:number
   chapterTitle:string
   caseStatus:string
-  updateSource:string
-  updateText:string
-  updateActionLabel?:string
+  steps:GuideStep[]
   teamBadge:number
   clueBadge:number
   peopleOpen:boolean
   helenaOpen:boolean
   archiveOpen:boolean
   onOpenApp:(app:HomeTarget)=>void
-  onOpenUpdate?:()=>void
 }
 
 type Node = {key:HomeTarget;label:string;icon:React.ReactNode;badge:number;locked:boolean;hint:string}
@@ -48,14 +48,22 @@ export default function HandsetHome(p:Props){
         <button onClick={()=>p.onOpenApp('settings')} aria-label="Ajustes"><Settings/></button>
       </header>
 
-      <button className="hm-alert" onClick={p.onOpenUpdate} aria-label={`Caso 01 · ${p.caseStatus}. ${p.updateActionLabel ?? ''}`}>
-        <i aria-hidden="true"/>
-        <div>
-          <b>Caso 01 · {p.caseStatus}</b>
-          <span>{p.updateSource}: {p.updateText}</span>
-          {p.updateActionLabel && <em>{p.updateActionLabel} ›</em>}
-        </div>
-      </button>
+      <section className="hm-guide" aria-label="Próximos passos do caso">
+        <header><i aria-hidden="true"/><b>Caso 01 · {p.caseStatus}</b></header>
+        <ol>
+          {p.steps.slice(0,3).map((st,k)=>(
+            <li key={st.id} className={k===0&&!st.locked?'first':''}>
+              <button type="button" disabled={st.locked} onClick={st.run} aria-label={`${st.tag}. ${st.title}. ${st.text}${st.cta?` ${st.cta}`:''}`}>
+                <em>{k===0&&!st.locked?'AGORA · ':''}{st.tag}</em>
+                <b>{st.title}</b>
+                <span>{st.text}</span>
+                {st.locked ? <Lock aria-hidden="true"/> : <ChevronRight aria-hidden="true"/>}
+              </button>
+            </li>
+          ))}
+        </ol>
+        {p.steps.length>3 && <small>+ {p.steps.length-3} {p.steps.length-3>1?'passos':'passo'} depois destes</small>}
+      </section>
 
       <div className="hm-center">
         <section className="hm-wheel" aria-label="Módulos do sistema">
