@@ -20,12 +20,12 @@ class Room:
             if 'back' in walls:
                 x=X0
                 while x<X1:
-                    S.poly([(x,0,Z1-.001),(x+.09,0,Z1-.001),(x+.09,YH,Z1-.001),(x,YH,Z1-.001)],'#ffffff',.5,0,depth=1.8e3,op=stripe_op);x+=.18
+                    S.poly([(x,0,Z1-.001),(x+.09,0,Z1-.001),(x+.09,YH,Z1-.001),(x,YH,Z1-.001)],'#ffffff',.5,0,depth=2e3-2,op=stripe_op);x+=.18
             for side,xx in (('right',X1-.001),('left',X0+.001)):
                 if side in walls:
                     z=Z0
                     while z<Z1:
-                        S.poly([(xx,0,z),(xx,0,z+.09),(xx,YH,z+.09),(xx,YH,z)],'#ffffff',.5,0,depth=1.8e3,op=stripe_op);z+=.18
+                        S.poly([(xx,0,z),(xx,0,z+.09),(xx,YH,z+.09),(xx,YH,z)],'#ffffff',.5,0,depth=2e3-2,op=stripe_op);z+=.18
         if planks:
             for i in range(int((X1-X0)/.16)+1):
                 x=X0+i*.16
@@ -34,9 +34,9 @@ class Room:
                     zz=Z0+random.uniform(0,Z1-Z0)
                     S.poly([(x,0.001,zz),(x+.16,0.001,zz),(x+.16,0.001,zz+.006),(x,0.001,zz+.006)],'#000000',.5,0,depth=1.85e3,op=.15)
         bc='#2c3e4e'
-        if 'back' in walls: S.box(((X0+X1)/2,.06,Z1-.02),(X1-X0,.12,.04),bc,bias=100)
-        if 'right' in walls: S.box((X1-.02,.06,(Z0+Z1)/2),(.04,.12,Z1-Z0),bc,bias=100)
-        if 'left' in walls: S.box((X0+.02,.06,(Z0+Z1)/2),(.04,.12,Z1-Z0),bc,bias=100)
+        if 'back' in walls: S.box(((X0+X1)/2,.06,Z1-.02),(X1-X0,.12,.04),bc,depth=2e3-3)
+        if 'right' in walls: S.box((X1-.02,.06,(Z0+Z1)/2),(.04,.12,Z1-Z0),bc,depth=2e3-3)
+        if 'left' in walls: S.box((X0+.02,.06,(Z0+Z1)/2),(.04,.12,Z1-Z0),bc,depth=2e3-3)
         if rug:
             (rx0,rx1,rz0,rz1,rc)=rug
             S.poly([(rx0,.004,rz0),(rx1,.004,rz0),(rx1,.004,rz1),(rx0,.004,rz1)],rc,.5,.06,depth=1.7e3)

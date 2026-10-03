@@ -52,7 +52,7 @@ class Scene:
         s.items.append((dd,f'<path d="{s.d(sc)}" fill="{fill}" opacity="{op}" {extra}/>'))
     def raw(s,depth,svg): s.items.append((depth,svg))
     def faceT(s,n): return .30+.62*max(0.0,float(np.dot(n,s.L)))
-    def box(s,c,size,color,yaw=0,tops=True,g=.06,bias=0,t_add=0,skip=()):
+    def box(s,c,size,color,yaw=0,tops=True,g=.06,bias=0,t_add=0,skip=(),depth=None):
         cx,cy,cz=c;w,h,d=size;a=math.radians(yaw);ca,sa=math.cos(a),math.sin(a)
         def P(x,y,z): return (cx+x*ca+z*sa,cy+y,cz-x*sa+z*ca)
         hw,hh,hd=w/2,h/2,d/2
@@ -61,14 +61,14 @@ class Scene:
                'left':([(-hw,-hh,hd),(-hw,-hh,-hd),(-hw,hh,-hd),(-hw,hh,hd)],(-ca,0,sa)),
                'right':([(hw,-hh,-hd),(hw,-hh,hd),(hw,hh,hd),(hw,hh,-hd)],(ca,0,-sa)),
                'top':([(-hw,hh,-hd),(hw,hh,-hd),(hw,hh,hd),(-hw,hh,hd)],(0,1,0))}
-        ctr=np.array([cx,cy,cz]);dep=None
+        ctr=np.array([cx,cy,cz]);dep=depth
         for k,(pts,n) in faces.items():
             if k in skip: continue
             n=np.array(n,float);pts3=[P(*q) for q in pts]
             fc=np.mean(pts3,axis=0)
             if np.dot(n,s.cam.p-fc)<=0: continue
             tt=s.faceT(n)+t_add
-            s.poly(pts3,color,tt,g if k!='top' else g*.4,depth=float(s.cam.cs(ctr)[2]),bias=bias)
+            s.poly(pts3,color,tt,g if k!='top' else g*.4,depth=(dep if dep is not None else float(s.cam.cs(ctr)[2])),bias=bias)
     def hull(s,pts):
         pts=sorted(set((round(x,1),round(y,1)) for x,y in pts))
         if len(pts)<3: return pts
