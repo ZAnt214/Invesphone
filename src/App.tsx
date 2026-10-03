@@ -519,7 +519,7 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
     assetPaths:case01MaterialAssets.termo_apreensao_celular_helena,
     description:'Cadeia de custódia do aparelho apreendido na casa.',
     requiresInterviewed:['livia'],requiresTopics:['denise_livia'],requestTime:'05:06',
-    response:{time:'05:10',from:'Cartório',text:'Lacrei o aparelho de Helena. Está no auto com lacre, testemunhas e etiqueta de custódia. O conteúdo você consulta pelo telefone dela.'}
+    response:{time:'05:10',from:'Cartório',text:'Lacrei o aparelho de Helena. Está no auto com lacre, testemunhas e etiqueta de custódia. Com o auto assinado, o acesso ao conteúdo já está liberado no seu telefone, em Tel. Helena.'}
   },
   {
     id:'capa_inquerito',memberId:'denise',label:'Capa do inquérito',kind:'DOCUMENTO',
@@ -808,7 +808,7 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
   if(game.task===8){setGame(g=>({...g,screen:'task'}));return}
   openApp('team')
  }
- return <HandsetHome chapterNumber={chapter.number} chapterTitle={chapter.title} caseStatus={homeState.status} updateSource={homeState.source} updateText={homeState.text} updateActionLabel={homeState.label} peopleOpen={game.task>=2} helenaOpen={game.task>=3} archiveOpen={game.task>=3} teamBadge={game.task<3?1:0} clueBadge={game.clues.length} onOpenApp={openApp} onOpenUpdate={openUpdate}/>
+ return <HandsetHome chapterNumber={chapter.number} chapterTitle={chapter.title} caseStatus={homeState.status} updateSource={homeState.source} updateText={homeState.text} updateActionLabel={homeState.label} peopleOpen={game.task>=2} helenaOpen={game.task>=3||(game.requestedMaterials??[]).includes('termo_apreensao_celular_helena')} archiveOpen={game.task>=3} teamBadge={game.task<3?1:0} clueBadge={game.clues.length} onOpenApp={openApp} onOpenUpdate={openUpdate}/>
 }
 function HandsetStatus(){return <header className="handset-status"><span>VIVO&nbsp;&nbsp;▮▮▮</span><b>DHPP</b><BatteryMedium/></header>}
 function PhonePage({title,back,children}:{title:string;back:()=>void;children:React.ReactNode}){return <main className={`handset page${title==='Equipe'?' team-page':''}`}><HandsetStatus/><header className="page-head"><button onClick={back}><ChevronLeft/></button><b>{title}</b><span/></header><section className="page-body">{children}</section></main>}
