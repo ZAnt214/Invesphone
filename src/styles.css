@@ -123,3 +123,21 @@ img.face{display:block;width:100%;height:100%;object-fit:cover}
 span.face-crop{display:block;width:100%;height:100%;background-repeat:no-repeat}
 
 .skip-call{z-index:3;align-self:center;margin-top:14px;background:none;border:1px solid rgba(255,255,255,.22);color:#c5c9cc;border-radius:99px;padding:8px 16px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}.call-screen.active .skip-call{position:absolute;top:calc(env(safe-area-inset-top,0px) + 54px);right:14px;margin:0;padding:6px 12px;font-size:10px}
+
+/* Provas de apoio e pessoas descartadas pelas provas */
+.support-note{margin:10px 0 0;font-size:12px;line-height:1.4;color:#aeb5b8}
+.support-note b{color:#f0c446}
+.choices small.cleared{font-size:10px;color:#9aa3a7;font-weight:600;white-space:nowrap}
+
+/* Relatório final: cabe inteiro na tela do celular, sem rolar (390×844 e 375×667) */
+.accusation .task-title h2{font-size:22px;margin:4px 0 3px}
+.accusation .task-title p{margin:0;font-size:11.5px;line-height:1.35}
+.accusation h3{margin:10px 0 4px}
+.accusation .choices{gap:6px}
+.accusation .choices button{min-height:36px;padding:4px 8px;font-size:13px;line-height:1.15;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.accusation .choices small.cleared{display:block;font-size:9px;line-height:1.1;margin-top:1px}
+.accusation .proof-grid{grid-template-columns:1fr 1fr 1fr;gap:6px}
+.accusation .proof-grid button{min-height:34px;padding:3px 6px;font-size:10.5px;line-height:1.15}
+.accusation .support-note{margin:8px 0 0;font-size:11px;line-height:1.35}
+.accusation .primary{min-height:44px;margin-top:8px}
+@media (max-height:700px){.accusation .task-title p{display:none}.accusation h3{margin:7px 0 3px}.accusation .choices button{min-height:32px}.accusation .support-note{font-size:10.5px;margin-top:6px}}

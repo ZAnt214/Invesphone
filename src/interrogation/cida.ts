@@ -71,7 +71,8 @@ export const cidaInterrogation:InterrogationConfig = {
       question:'Sua irmã assinou um termo confirmando que a senhora dormiu na casa dela. Está certo?',
       answer:'Está, moço. Ela nunca mentiu pra mim e não ia mentir por mim. Eu só queria ter estado na casa dos patrões pra poder ajudar.',
       expression:'teary',
-      pressure:-6
+      pressure:-6,
+      highlights:[{ phrase:'Está, moço', clue:'cida_alibi_termo' }]
     },
     {
       id:'untold',

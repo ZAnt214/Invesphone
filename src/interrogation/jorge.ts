@@ -68,7 +68,8 @@ export const jorgeInterrogation:InterrogationConfig = {
       requiresMaterial:'croqui_rua',
       question:'Este croqui marca a guarita, o poste e onde o Gol parou. É isso que o senhor via dali?',
       answer:'É isso. O Gol parou depois do poste, uns trinta e tantos metros da guarita. Dali eu via o carro, o portão eu via mal. Por isso só afirmo o carro.',
-      expression:'neutral'
+      expression:'neutral',
+      highlights:[{ phrase:'só afirmo o carro', clue:'jorge_so_o_carro' }]
     },
     {
       id:'untold',

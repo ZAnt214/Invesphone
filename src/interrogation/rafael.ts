@@ -90,14 +90,16 @@ export const rafaelInterrogation:InterrogationConfig = {
       requiresMaterial:'trava_canil',
       question:'O ferrolho do canil fecha por fora. O Thor não entra e se tranca sozinho. Quem prenderia ele?',
       answer:'Eu não sei quem prendeu. O Thor não se tranca sozinho, e de noite ele dorme solto. Só sei que não fui eu.',
-      expression:'nervous'
+      expression:'nervous',
+      highlights:[{ phrase:'Só sei que não fui eu', clue:'rafael_nao_prendeu' }]
     },
     {
       id:'show_front',
       requiresMaterial:'foto_fachada_lan',
       question:'Esta é a fachada da LAN house onde o recibo foi emitido. É lá mesmo que você joga?',
       answer:'É essa. Jogo ali quase toda noite, o dono me conhece. O recibo é do caixa dali.',
-      expression:'tired'
+      expression:'tired',
+      highlights:[{ phrase:'o dono me conhece', clue:'rafael_lan_confirmada' }]
     },
     {
       id:'untold',
