@@ -48,10 +48,14 @@ export default function HandsetHome(p:Props){
         <button onClick={()=>p.onOpenApp('settings')} aria-label="Ajustes"><Settings/></button>
       </header>
 
-      <section className="hm-alert" aria-label="Resumo atual do Caso 01">
+      <button className="hm-alert" onClick={p.onOpenUpdate} aria-label={`Caso 01 · ${p.caseStatus}. ${p.updateActionLabel ?? ''}`}>
         <i aria-hidden="true"/>
-        <div><b>Caso 01 · {p.caseStatus}</b><span>Rua das Acácias, Campo Belo · 04:27</span></div>
-      </section>
+        <div>
+          <b>Caso 01 · {p.caseStatus}</b>
+          <span>{p.updateSource}: {p.updateText}</span>
+          {p.updateActionLabel && <em>{p.updateActionLabel} ›</em>}
+        </div>
+      </button>
 
       <div className="hm-center">
         <section className="hm-wheel" aria-label="Módulos do sistema">
