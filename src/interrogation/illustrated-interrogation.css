@@ -336,3 +336,9 @@
 .ds-mark i{display:block;width:100%;height:4px;background:currentColor}
 .ds-mark span{font:700 17px "Courier New",monospace;letter-spacing:.34em;margin-right:-.34em}
 .ds-sign-box.signed{cursor:default}
+
+/* Depoimento encerrado com perguntas novas (material ou prova que chegou depois) */
+.ii-retake{flex:none;display:grid;gap:2px;width:100%;margin-bottom:8px;padding:9px 12px;border:0;border-radius:6px;background:#f0c446;color:#14110a;text-align:left;cursor:pointer}
+.ii-retake b{font:800 12px var(--mono);letter-spacing:.1em}
+.ii-retake span{font:600 11px var(--mono)}
+.ii-retake-end{margin-top:8px;width:100%}

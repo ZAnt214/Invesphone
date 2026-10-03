@@ -19,7 +19,7 @@ import { liviaInterrogation } from './interrogation/livia'
 import { interrogations } from './interrogation/registry'
 import { characters } from './characters/characters'
 import CharacterFace from './characters/CharacterFace'
-import { newProgress } from './interrogation/logic'
+import { newProgress, pendingQuestions } from './interrogation/logic'
 import type { InterrogationProgress } from './interrogation/types'
 import './handset-pages.css'
 import { acceptedProofs, chapters, clues, disclaimer, people, teamMessages, victimMessages } from './case01'
@@ -157,6 +157,8 @@ type TeamMaterialRequest = {
   requiresInterviewed?:string[]
   requiresTopics?:string[]
   revealsPeople?:string[]
+  /** Para que serve o material (o que ele permite fazer no caso). Quando registra pistas, o app acrescenta isso sozinho. */
+  use?:string
   /** Arquivos visuais oficiais já produzidos para esta diligência. */
   assetPaths?:readonly string[]
   clueIds?:string[]
@@ -174,6 +176,8 @@ type TeamDialogue = {
   requiresInterviewed?:string[]
   requiresTopics?:string[]
   revealsPeople?:string[]
+  /** Pessoas que a resposta põe em jogo: a conversa oferece chamá-las (ou retomar o depoimento). */
+  callPeople?:string[]
   user:{time:string;text:string}
   agent:{time:string;text:string}
 }
@@ -246,6 +250,7 @@ const teamDialogues:TeamDialogue[] = [
   },
   {
     id:'renata_gol',memberId:'renata',label:'O Gol e o horário do alarme se cruzam?',
+    callPeople:['caio'],
     requiresClues:['vigia_gol','log_alarme'],
     user:{time:'05:22',text:'Jorge coloca o Gol na rua e o alarme cai às 23:52. Isso está perto demais pra ignorar.'},
     agent:{time:'05:23',text:'Concordo, mas ainda são duas peças separadas. O próximo passo é descobrir onde Caio diz que estava nesse intervalo e achar um registro independente.'}
@@ -272,12 +277,14 @@ const teamDialogues:TeamDialogue[] = [
   },
   {
     id:'paulo_jorge',memberId:'paulo',label:'Jorge parece confiável sobre o Gol?',
+    callPeople:['jorge'],
     requiresInterviewed:['jorge'],
     user:{time:'05:07',text:'Falei com o Jorge. Ele cravou o Gol, mas não quem estava dentro. Você compra essa lembrança?'},
     agent:{time:'05:08',text:'Do carro, sim. Ele trabalha olhando placa, modelo e movimento da rua. Pessoa dentro ele não viu. Eu usaria o carro, não inventaria ocupante.'}
   },
   {
     id:'paulo_rafael',memberId:'paulo',label:'Confere a história da LAN do Rafael.',
+    callPeople:['rafael'],
     requiresInterviewed:['rafael'],
     user:{time:'05:09',text:'Rafael diz que ficou na LAN. Consegue verificar sem avisar ele antes?'},
     agent:{time:'05:10',text:'Consigo. Vou no caixa, peço registro e horário. Se pagou sessão e ficou logado, dá pra fechar esse pedaço sem depender da palavra dele.'}
@@ -292,18 +299,21 @@ const teamDialogues:TeamDialogue[] = [
   // Denise: versões, gravações e consistência dos depoimentos.
   {
     id:'denise_livia',memberId:'denise',label:'Como a Lívia se comportou no primeiro depoimento?',
+    callPeople:['livia'],
     requiresInterviewed:['livia'],
     user:{time:'05:04',text:'Denise, você ficou no registro da Lívia. Alguma coisa no jeito dela te chamou atenção?'},
     agent:{time:'05:05',text:'Ela controla bem a fala. Fica emocional quando fala da mãe, mas nos horários responde mais rápido e com menos detalhe. Não é prova de nada, só vale comparar depois.'}
   },
   {
     id:'denise_caio_livia',memberId:'denise',label:'As versões de Lívia e Caio estão iguais demais?',
+    callPeople:['caio', 'livia'],
     requiresInterviewed:['livia','caio'],
     user:{time:'05:16',text:'Compara os dois pra mim. Eles lembram das mesmas coisas ou estão repetindo a mesma estrutura?'},
     agent:{time:'05:17',text:'A estrutura está parecida demais: noite juntos, motel, volta depois. Mas quando você olha detalhe de horário, cada um escorrega pra um lado. Eu guardaria os áudios.'}
   },
   {
     id:'denise_contradicoes',memberId:'denise',label:'Quais respostas mudaram depois das provas?',
+    callPeople:['caio', 'livia'],
     requiresClues:['inconsistencia_caio_codigo'],
     user:{time:'05:40',text:'Quero as mudanças de versão separadas das simples diferenças de memória.'},
     agent:{time:'05:41',text:'A mais limpa até agora é o código. Primeiro Caio não sabia; depois aparece a explicação de que ele teria visto Lívia digitando. Isso é mudança, não esquecimento.'}
@@ -312,6 +322,7 @@ const teamDialogues:TeamDialogue[] = [
   // Conversas que abrem as diligências de material novo (cada uma depende de uma base investigativa).
   {
     id:'mauricio_porta',memberId:'mauricio',label:'Dá pra afirmar que ninguém forçou a porta?',
+    callPeople:['livia'],
     requiresClues:['porta_intacta'],
     user:{time:'04:43',text:'Maurício, a porta da frente: dá pra afirmar que ninguém forçou?'},
     agent:{time:'04:44',text:'Fechadura e batente inteiros. Sem marca de alavanca, sem lasca, sem nada torcido. Quem entrou não precisou forçar. Vou te mandar de perto, com escala, pra ficar registrado.'}
@@ -324,12 +335,14 @@ const teamDialogues:TeamDialogue[] = [
   },
   {
     id:'renata_placa',memberId:'renata',label:'Consegue puxar o Gol que o Jorge viu?',
+    callPeople:['caio'],
     requiresClues:['vigia_gol'],
     user:{time:'05:11',text:'O Jorge viu um Gol branco perto da casa. Consegue puxar de quem é?'},
     agent:{time:'05:12',text:'Consigo. Gol branco de 98 não é raro, mas com o modelo e o que o Jorge lembrou eu fecho rápido. Te mando a ficha da consulta.'}
   },
   {
     id:'renata_quadro',memberId:'renata',label:'Monta a noite num quadro só?',
+    callPeople:['caio', 'livia'],
     requiresClues:['log_alarme','nota_motel'],
     user:{time:'05:36',text:'Monta a noite num quadro pra mim: o que eu tenho com hora certa?'},
     agent:{time:'05:37',text:'Só duas pontas por registro: o alarme e a entrada no motel. O resto eu deixo em branco de propósito, porque hora de memória não entra no quadro. Te mando a prancheta.'}
@@ -342,12 +355,14 @@ const teamDialogues:TeamDialogue[] = [
   },
   {
     id:'renata_antecedentes',memberId:'renata',label:'Os irmãos Duarte têm antecedentes?',
+    callPeople:['teo'],
     requiresInterviewed:['teo'],
     user:{time:'06:30',text:'Já ouvi o Téo. Os dois irmãos têm algum antecedente?'},
     agent:{time:'06:31',text:'Vou consultar os dois. Adianto: ficha limpa não inocenta ninguém, só diz que não há registro anterior. Te mando a consulta.'}
   },
   {
     id:'paulo_cida',memberId:'paulo',label:'Alguém de fora confirma o álibi da Cida?',
+    callPeople:['cida'],
     requiresClues:['alibi_cida'],
     user:{time:'05:50',text:'A Cida disse que estava com a família. Alguém de fora confirma isso por escrito?'},
     agent:{time:'05:51',text:'Uma irmã dela, que mora perto, confirmou sem pressão. Tomei por termo pra constar. É versão de família, não é prova de ouro, mas bate com o que a Cida contou.'}
@@ -375,6 +390,7 @@ const teamDialogues:TeamDialogue[] = [
 const teamMaterialRequests:TeamMaterialRequest[] = [
   {
     id:'fotos_cena',memberId:'mauricio',label:'Fotos completas da cena',kind:'FOTO',
+    use:'Registro fotográfico da casa. Serve para rever os pontos da cena sem voltar lá.',
     assetPaths:case01MaterialAssets.fotos_cena,
     description:'Entrada, sala, cozinha, escritório, corredor, os dois quartos e o canil.',
     minTask:1,requiresTopics:['mauricio_cena'],requestTime:'04:39',
@@ -382,6 +398,7 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
   },
   {
     id:'fotos_painel',memberId:'mauricio',label:'Close do painel do alarme',kind:'FOTO',
+    use:'Mostra o painel sem sinal de força: quem desligou o alarme tinha o código.',
     assetPaths:case01MaterialAssets.fotos_painel,
     description:'Fotografias do teclado, visor e estado do painel antes da manipulação.',
     requiresClues:['painel_alarme'],requiresTopics:['mauricio_painel'],requestTime:'04:48',
@@ -389,6 +406,7 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
   },
   {
     id:'gravacoes_depoimentos',memberId:'denise',label:'Separar gravações dos depoimentos',kind:'GRAVAÇÃO',
+    use:'Permite comparar o que cada um disse. Use para checar mudanças de versão.',
     assetPaths:case01MaterialAssets.gravacoes_depoimentos,
     description:'Áudios individuais para comparar versões e mudanças de resposta.',
     minInterviews:2,requiresTopics:['denise_caio_livia'],requestTime:'05:18',
@@ -432,6 +450,7 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
 
   {
     id:'croqui_residencia',memberId:'mauricio',label:'Croqui da residência',kind:'DOCUMENTO',
+    use:'Serve para se localizar na casa quando a equipe falar de um ambiente ou de um ponto fotografado.',
     assetPaths:case01MaterialAssets.croqui_residencia,
     description:'Planta da casa com os pontos fotografados numerados.',
     minTask:1,requiresTopics:['mauricio_cena'],requestTime:'04:40',
@@ -439,6 +458,7 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
   },
   {
     id:'fechadura_porta',memberId:'mauricio',label:'Close da fechadura da porta',kind:'FOTO',
+    use:'Para apresentar a Lívia: a fechadura não foi forçada e ela tem chave.',
     assetPaths:case01MaterialAssets.fechadura_porta,
     description:'Fechadura e batente da porta principal, com escala.',
     requiresClues:['porta_intacta'],requiresTopics:['mauricio_porta'],requestTime:'04:45',
@@ -446,6 +466,7 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
   },
   {
     id:'trava_canil',memberId:'mauricio',label:'Foto da trava do canil',kind:'FOTO',
+    use:'Para apresentar a Rafael: o Thor não se trancou sozinho.',
     assetPaths:case01MaterialAssets.trava_canil,
     description:'Trinco do canil por fora, com Thor ao fundo.',
     requiresClues:['cao_canil'],requiresTopics:['mauricio_canil'],requestTime:'04:52',
@@ -453,6 +474,7 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
   },
   {
     id:'escritorio_comparativo',memberId:'mauricio',label:'Foto comparativa do escritório',kind:'FOTO',
+    use:'Mostra o contraste: gavetas sem importância abertas e o que vale à vista. Sustenta a bagunça encenada.',
     assetPaths:case01MaterialAssets.escritorio_comparativo,
     description:'Gavetas laterais abertas e o que ficou intacto à vista.',
     requiresClues:['escritorio_revirado','valores_intactos'],requiresTopics:['mauricio_busca'],requestTime:'04:58',
@@ -460,6 +482,7 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
   },
   {
     id:'laudo_preliminar_local',memberId:'mauricio',label:'Laudo preliminar do local',kind:'PERÍCIA',
+    use:'Base do relatório: separa o que o local mostra do que é interpretação. Não aponta autoria.',
     assetPaths:case01MaterialAssets.laudo_preliminar_local,
     description:'Descrição técnica do local, sem apontar autoria.',
     minInterviews:2,requiresTopics:['mauricio_laudo'],requestTime:'05:21',
@@ -467,6 +490,7 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
   },
   {
     id:'ficha_veiculo_gol',memberId:'renata',label:'Ficha do Gol que o vigia viu',kind:'DOCUMENTO',
+    use:'Para apresentar a Caio: o Gol que o vigia viu está no nome dele (o carro, não quem dirigia).',
     assetPaths:case01MaterialAssets.ficha_veiculo_gol,
     description:'Consulta de veículo do Gol branco citado pelo vigia.',
     requiresClues:['vigia_gol'],requiresTopics:['renata_placa'],requestTime:'05:12',
@@ -474,6 +498,7 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
   },
   {
     id:'quadro_horarios',memberId:'renata',label:'Quadro de horários da noite',kind:'DOCUMENTO',
+    use:'Para apresentar a Caio: só o alarme (23:52) e o motel (00:56) têm registro; o intervalo é o que ele tem de explicar.',
     assetPaths:case01MaterialAssets.quadro_horarios,
     description:'Linha do tempo feita à mão: só o que tem registro.',
     requiresClues:['log_alarme','nota_motel'],requiresTopics:['renata_quadro'],requestTime:'05:37',
@@ -481,6 +506,7 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
   },
   {
     id:'matricula_imovel',memberId:'renata',label:'Matrícula do imóvel',kind:'DOCUMENTO',
+    use:'Para apresentar a Lívia: a casa é dos pais no papel, e o que ela receberia dependia deles.',
     assetPaths:case01MaterialAssets.matricula_imovel,
     description:'Certidão de registro do imóvel da Rua das Acácias.',
     requiresClues:['pergunta_inventario'],requiresTopics:['renata_imovel'],requestTime:'05:47',
@@ -488,6 +514,7 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
   },
   {
     id:'consulta_antecedentes',memberId:'renata',label:'Consulta de antecedentes dos irmãos Duarte',kind:'DOCUMENTO',
+    use:'Mostra que não há registro anterior dos irmãos. Não é álibi nem acusação, e não entra no relatório.',
     assetPaths:case01MaterialAssets.consulta_antecedentes,
     description:'Resultado da consulta em nome de Caio e Téo.',
     requiresInterviewed:['teo'],requiresTopics:['renata_antecedentes'],requestTime:'06:31',
@@ -495,6 +522,7 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
   },
   {
     id:'croqui_rua',memberId:'paulo',label:'Croqui da Rua das Acácias',kind:'DOCUMENTO',
+    use:'Para apresentar a Jorge: marca o que ele enxergava da guarita (o carro, não o portão).',
     assetPaths:case01MaterialAssets.croqui_rua,
     description:'Guarita, poste, casa e o ponto onde o Gol foi visto.',
     requiresInterviewed:['jorge'],requiresTopics:['paulo_jorge'],requestTime:'05:09',
@@ -502,6 +530,7 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
   },
   {
     id:'termo_declaracao_terceiro_cida',memberId:'paulo',label:'Termo de declaração da irmã de Cida',kind:'DOCUMENTO',
+    use:'Para apresentar a Cida: a irmã confirma a noite em família e sustenta o álibi dela.',
     assetPaths:case01MaterialAssets.termo_declaracao_terceiro_cida,
     description:'Declaração de familiar sobre a noite de 16/10.',
     requiresClues:['alibi_cida'],requiresTopics:['paulo_cida'],requestTime:'05:51',
@@ -509,6 +538,7 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
   },
   {
     id:'foto_fachada_lan',memberId:'paulo',label:'Foto da fachada da LAN house',kind:'FOTO',
+    use:'Para apresentar a Rafael: situa o estabelecimento onde o recibo foi emitido.',
     assetPaths:case01MaterialAssets.foto_fachada_lan,
     description:'Fachada e vitrine do estabelecimento.',
     requiresClues:['lan_paga'],requiresTopics:['paulo_lan_foto'],requestTime:'05:16',
@@ -516,6 +546,7 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
   },
   {
     id:'termo_apreensao_celular_helena',memberId:'denise',label:'Auto de apreensão do celular de Helena',kind:'DOCUMENTO',
+    use:'Libera o conteúdo do celular de Helena, em Tel. Helena.',
     assetPaths:case01MaterialAssets.termo_apreensao_celular_helena,
     description:'Cadeia de custódia do aparelho apreendido na casa.',
     requiresInterviewed:['livia'],requiresTopics:['denise_livia'],requestTime:'05:06',
@@ -523,6 +554,7 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
   },
   {
     id:'capa_inquerito',memberId:'denise',label:'Capa do inquérito',kind:'DOCUMENTO',
+    use:'Formaliza o inquérito (instaurado em 17/10). Não muda o caso: é o registro oficial.',
     assetPaths:case01MaterialAssets.capa_inquerito,
     description:'Capa do inquérito do Caso 01.',
     minTask:1,requiresTopics:['denise_capa'],requestTime:'05:00',
@@ -530,6 +562,7 @@ const teamMaterialRequests:TeamMaterialRequest[] = [
   },
   {
     id:'termo_depoimento_modelo',memberId:'denise',label:'Modelo do termo de depoimento',kind:'DOCUMENTO',
+    use:'Formulário dos depoimentos. Cada depoimento encerrado sai neste formato, assinado no resumo.',
     assetPaths:case01MaterialAssets.termo_depoimento_modelo,
     description:'Formulário em branco usado nos depoimentos.',
     minInterviews:1,requiresTopics:['denise_termo'],requestTime:'05:07',
@@ -781,7 +814,7 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
  if(game.app==='livia'||game.app==='depo'){
   const id=game.app==='livia'?'livia':(game.depoId??'livia')
   const cfg=interrogations[id]??liviaInterrogation
-  return <IllustratedInterrogation key={id} config={cfg} progress={progressOf(game,cfg.id)} onProgress={p=>setGame(g=>withProgress(g,cfg.id,p))} onClue={cid=>setGame(g=>({...g,clues:g.clues.includes(cid)?g.clues:[...g.clues,cid]}))} onPersonDiscovered={pid=>setGame(g=>{const known=g.discoveredPeople??['livia','caio','rafael','cida'];return known.includes(pid)?g:{...g,discoveredPeople:[...known,pid]}})} clueTitle={cid=>clues.find(c=>c.id===cid)?.title} registeredClues={game.clues} onComplete={()=>setGame(g=>({...g,interviewed:g.interviewed.includes(cfg.id)?g.interviewed:[...g.interviewed,cfg.id]}))} onBack={leaveLivia} onReturn={leaveLivia}/>
+  return <IllustratedInterrogation key={id} config={cfg} progress={progressOf(game,cfg.id)} onProgress={p=>setGame(g=>withProgress(g,cfg.id,p))} onClue={cid=>setGame(g=>({...g,clues:g.clues.includes(cid)?g.clues:[...g.clues,cid]}))} onPersonDiscovered={pid=>setGame(g=>{const known=g.discoveredPeople??['livia','caio','rafael','cida'];return known.includes(pid)?g:{...g,discoveredPeople:[...known,pid]}})} clueTitle={cid=>clues.find(c=>c.id===cid)?.title} registeredClues={game.clues} registeredMaterials={game.requestedMaterials??[]} materialTitle={mid=>teamMaterialRequests.find(r=>r.id===mid)?.label} onComplete={()=>setGame(g=>({...g,interviewed:g.interviewed.includes(cfg.id)?g.interviewed:[...g.interviewed,cfg.id]}))} onBack={leaveLivia} onReturn={leaveLivia}/>
  }
  if(game.app==='team')return <PhonePage title="Equipe" back={()=>openApp('home')}><Team game={game} setGame={setGame}/></PhonePage>
  if(game.app==='clues')return <PhonePage title="Pistas" back={()=>openApp('home')}><ClueList ids={game.clues}/></PhonePage>
@@ -894,6 +927,35 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
   timers.current.push(window.setTimeout(()=>setSending(v=>v&&{...v,phase:'typing'}),650))
   timers.current.push(window.setTimeout(()=>{commit();setSending(null)},650+typingMs))
  }
+ const discoveredIds=game.discoveredPeople??['livia','caio','rafael','cida']
+ const summonedIds=game.summonedPeople??['livia','caio']
+ const summonPerson=(pid:string)=>setGame(g=>({...g,summonedPeople:(g.summonedPeople??['livia','caio']).includes(pid)?(g.summonedPeople??[]):[...(g.summonedPeople??['livia','caio']),pid]}))
+ /** Quem tem pergunta de "apresentar" este material. */
+ const exhibitPeople=(materialId:string)=>Object.entries(interrogations).filter(([,c])=>c.questions.some(q=>q.requiresMaterial===materialId)).map(([pid])=>pid)
+ /** Para que serve o material: o texto da diligência ou, se ela registra pistas, o que foi registrado. */
+ const useOf=(item:TeamMaterialRequest)=>{
+  const registered=(item.clueIds??[]).map(id=>clues.find(c=>c.id===id)?.title).filter(Boolean)
+  return item.use??(registered.length?`Registrou no caso: ${registered.join(', ')}.`:undefined)
+ }
+ /** Atalhos da conversa para as pessoas que ela cita: chamar, ouvir, levar o material ou retomar o depoimento. */
+ const actionsFor=(ids:string[],materialId?:string)=>[...new Set(ids)].filter(pid=>discoveredIds.includes(pid)&&interrogations[pid]).flatMap(pid=>{
+  const first=people.find(x=>x.id===pid)?.name.split(' ')[0]??pid
+  const cfg=interrogations[pid]
+  const prog=progressOf(game,pid)
+  const done=game.interviewed.includes(pid)
+  const open=()=>setGame(openDeposition(pid,'app'))
+  if(!summonedIds.includes(pid)){
+   const waiting=(summonRequires[pid]??[]).some(c=>!game.clues.includes(c))
+   return [{key:pid,label:`Chamar ${first} para depoimento`,hint:waiting?'só com provas contra ele':undefined,disabled:waiting,run:()=>summonPerson(pid)}]
+  }
+  const pend=pendingQuestions(cfg,prog,game.clues,requested)
+  const exhibitPending=!!materialId&&cfg.questions.some(q=>q.requiresMaterial===materialId&&!prog.asked.includes(q.id))
+  if(done){
+   if(materialId?!pend.some(q=>q.requiresMaterial===materialId):pend.length===0)return []
+   return [{key:pid,label:`Retomar depoimento de ${first}`,hint:materialId?'apresentar este material':`${pend.length} ${pend.length>1?'perguntas novas':'pergunta nova'}`,run:open}]
+  }
+  return [{key:pid,label:exhibitPending?`Levar ao depoimento de ${first}`:`Ouvir ${first}`,hint:exhibitPending?'apresentar este material':undefined,run:open}]
+ })
  const ordered=game.orders.map(id=>orderResultMessages[id]).filter(Boolean)
  const baseMessages=[...teamMessages,...ordered]
  const materialMessages=requested.flatMap(id=>{
@@ -901,7 +963,7 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
   if(!item)return []
   return [
    {time:item.requestTime,from:'Lemos',text:`Consegue ${item.label.toLowerCase()} pra mim?`,memberId:item.memberId,outgoing:true},
-   {...item.response,memberId:item.memberId,outgoing:false,assets:item.assetPaths,assetsTitle:item.label}
+   {...item.response,memberId:item.memberId,outgoing:false,assets:item.assetPaths,assetsTitle:item.label,use:useOf(item),actions:actionsFor([...(item.revealsPeople??[]),...exhibitPeople(item.id)],item.id)}
   ]
  })
  const topicMessages=discussed.flatMap(id=>{
@@ -910,11 +972,23 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
   const member=caseTeam.find(m=>m.id===item.memberId)
   return [
    {time:item.user.time,from:'Lemos',text:item.user.text,memberId:item.memberId,outgoing:true},
-   {time:item.agent.time,from:member?.name??'Equipe',text:item.agent.text,memberId:item.memberId,outgoing:false}
+   {time:item.agent.time,from:member?.name??'Equipe',text:item.agent.text,memberId:item.memberId,outgoing:false,actions:actionsFor(item.callPeople??item.revealsPeople??[])}
   ]
  })
  const normalized=baseMessages.map(m=>({...m,memberId:teamMemberForSender(m.from),outgoing:false}))
- const allMessages=[...teamIntroMessages,...normalized,...topicMessages,...materialMessages].sort((a,b)=>a.time.localeCompare(b.time))
+ const sortedMessages=[...teamIntroMessages,...normalized,...topicMessages,...materialMessages].sort((a,b)=>a.time.localeCompare(b.time))
+ /** Cada atalho de pessoa aparece só na mensagem mais recente que a cita (o resto da conversa fica limpo). */
+ const allMessages=(()=>{
+  const seen=new Set<string>()
+  const out=[...sortedMessages]
+  for(let i=out.length-1;i>=0;i--){
+   const m=out[i] as {memberId:string;actions?:{key:string}[]}
+   if(!m.actions)continue
+   const keep=m.actions.filter(x=>{const k=m.memberId+x.key;if(seen.has(k))return false;seen.add(k);return true})
+   out[i]={...out[i],actions:keep} as typeof out[number]
+  }
+  return out
+ })()
 
  const unreadFor=(id:string)=>teamDialogues.filter(t=>t.memberId===id&&topicAvailable(t)&&!discussed.includes(t.id)).length+teamMaterialRequests.filter(r=>r.memberId===id&&requestAvailable(r)&&!requested.includes(r.id)).length
 
@@ -978,22 +1052,33 @@ function Watermark(){return <div className="tm-mark" aria-hidden="true"><b>DHPP<
 function TeamFace({id,initials,name,small}:{id:string;initials:string;name:string;small?:boolean}){
  return <span className={`tm-face${small?' sm':''}`}>{id==='sonia'?<img src={`${import.meta.env.BASE_URL}characters/sonia/portrait.jpg`} alt={name}/>:initials}</span>
 }
-function ChatThread({messages,memberName,sending,onOpenAsset}:{messages:{time:string;from:string;text:string;outgoing:boolean;assets?:readonly string[];assetsTitle?:string}[];memberName:string;onOpenAsset?:(title:string,paths:readonly string[],start:number)=>void;sending:{text:string;time:string;phase:'sending'|'typing'}|null}){
+function ChatThread({messages,memberName,sending,onOpenAsset}:{messages:{time:string;from:string;text:string;outgoing:boolean;assets?:readonly string[];assetsTitle?:string;use?:string;actions?:{key:string;label:string;hint?:string;disabled?:boolean;run:()=>void}[]}[];memberName:string;onOpenAsset?:(title:string,paths:readonly string[],start:number)=>void;sending:{text:string;time:string;phase:'sending'|'typing'}|null}){
  const ref=useRef<HTMLDivElement>(null)
- const key=messages.length+(sending?(sending.phase==='sending'?1:2):0)
- useEffect(()=>{ref.current?.scrollTo({top:ref.current.scrollHeight,behavior:'smooth'})},[key])
+ const key=`${messages.length}|${sending?sending.phase:''}|${messages.reduce((n,m)=>n+(m.actions?.length??0)+(m.use?1:0),0)}`
+ useEffect(()=>{
+  const down=()=>ref.current?.scrollTo({top:ref.current.scrollHeight,behavior:'smooth'})
+  down()
+  // anexos e atalhos aumentam a mensagem depois de entrar: rola de novo para a resposta ficar inteira à vista
+  const t=[350,900].map(ms=>window.setTimeout(down,ms))
+  return()=>t.forEach(window.clearTimeout)
+ },[key])
  return <div className="tm-thread" ref={ref}>
   <p className="tm-notice"><Lock/>Canal oficial do DHPP. Mensagens criptografadas, registradas no inquérito e sem cópia. Contatos verificados.</p>
   {messages.map((m,i)=><div key={m.time+m.from+i} className={`tm-msg ${m.outgoing?'out':'in'}${i>=messages.length-2&&messages.length>2?' fresh':''}`}>
    {!m.outgoing&&m.from!==memberName&&m.from!==memberName.split(' ')[0]&&<small>{m.from}</small>}
    <p>{m.text}<span>{m.time}{m.outgoing?' ✓✓':''}</span></p>
    {m.assets&&m.assets.length>0&&<div className="tm-attach">{m.assets.map((a,k)=><button key={a} onClick={()=>onOpenAsset?.(m.assetsTitle??'Material',m.assets!,k)} aria-label={`Abrir ${m.assetsTitle??'material'} ${k+1}`}><img src={assetUrl(a)} alt="" loading="lazy"/>{m.assets!.length>1&&k===0&&<b>{m.assets!.length}</b>}</button>)}</div>}
+   {m.use&&<div className="tm-use"><b>PARA QUE SERVE</b>{m.use}</div>}
+   {m.actions&&m.actions.length>0&&<div className="tm-people">{m.actions.map(a=><button key={a.key} disabled={a.disabled} onClick={a.run}><b>{a.label}</b>{a.hint&&<span>{a.hint}</span>}</button>)}</div>}
   </div>)}
   {sending&&<div className="tm-msg out fresh pending"><p>{sending.text}<span>{sending.phase==='sending'?<><i className="tm-clock"/>enviando…</>:<>{sending.time} ✓✓</>}</span></p></div>}
   {sending?.phase==='typing'&&<div className="tm-msg in fresh"><p className="tm-typing" aria-label={`${memberName} está digitando`}><i/><i/><i/></p><small className="tm-typing-label">{memberName.split(' ')[0]} está digitando…</small></div>}
  </div>
 }
 function ClueList({ids}:{ids:string[]}){if(!ids.length)return <Empty icon={<FileSearch/>} title="Nenhuma pista registrada" text="Abra a tarefa atual e comece pela cena."/>;return <div className="clue-list">{ids.map(id=>{const c=clues.find(x=>x.id===id)!;return <article key={id}><FileText/><div><small>{c.category.toUpperCase()}</small><b>{c.title}</b><p>{c.description}</p></div></article>})}</div>}
+/** Pessoas que só podem ser chamadas depois de o jogador ter as provas para confrontá-las. */
+const summonRequires:Record<string,string[]>={teo:['log_alarme','cinta_bancaria']}
+
 function People({game,setGame,origin='app'}:{game:GameSave;setGame:React.Dispatch<React.SetStateAction<GameSave>>;origin?:'app'|'task'}){
  const discovered=game.discoveredPeople??['livia','caio','rafael','cida']
  const summoned=game.summonedPeople??['livia','caio']
@@ -1004,10 +1089,11 @@ function People({game,setGame,origin='app'}:{game:GameSave;setGame:React.Dispatc
    const has=!!interrogations[p.id]
    const called=summoned.includes(p.id)
    const done=game.interviewed.includes(p.id)
-   return <button key={p.id} onClick={()=>called&&has?setGame(openDeposition(p.id,origin)):summon(p.id)} disabled={!has}>
+   const waiting=!called&&(summonRequires[p.id]??[]).some(c=>!game.clues.includes(c))
+   return <button key={p.id} onClick={()=>called&&has?setGame(openDeposition(p.id,origin)):summon(p.id)} disabled={!has||waiting}>
     <i><Face p={p}/></i>
-    <div><b>{p.name}</b><span>{done?'Depoimento registrado':called?p.role:`NOVO CONTATO · ${p.role}`}</span></div>
-    {done?<Check/>:called?<ChevronLeft className="right"/>:<strong>CHAMAR</strong>}
+    <div><b>{p.name}</b><span>{done?'Depoimento registrado':waiting?`${p.role} · só com provas contra ele`:called?p.role:`NOVO CONTATO · ${p.role}`}</span></div>
+    {done?<Check/>:called?<ChevronLeft className="right"/>:waiting?<Lock/>:<strong>CHAMAR</strong>}
    </button>
   })}
   <p className="people-discovery-note">Novas pessoas aparecem aqui quando a equipe, documentos ou depoimentos revelam uma ligação com o caso.</p>

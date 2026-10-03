@@ -12,8 +12,10 @@ export function getQuestion(cfg:InterrogationConfig, id:string):InterrogationQue
 }
 
 /** Perguntas liberadas que ainda não foram feitas, na ordem em que estão nos dados. */
-export function pendingQuestions(cfg:InterrogationConfig, p:InterrogationProgress, registeredClues:string[] = []){
-  return cfg.questions.filter(q=>p.unlocked.includes(q.id) && !p.asked.includes(q.id) && (!q.requiresClue || registeredClues.includes(q.requiresClue)))
+export function pendingQuestions(cfg:InterrogationConfig, p:InterrogationProgress, registeredClues:string[] = [], registeredMaterials:string[] = []){
+  return cfg.questions.filter(q=>p.unlocked.includes(q.id) && !p.asked.includes(q.id)
+    && (!q.requiresClue || registeredClues.includes(q.requiresClue))
+    && (!q.requiresMaterial || registeredMaterials.includes(q.requiresMaterial)))
 }
 
 /** Perguntas já feitas, na ordem em que o jogador as fez. */
@@ -30,7 +32,7 @@ export function applyAnswer(cfg:InterrogationConfig, p:InterrogationProgress, id
   const pressure = clampPressure((p.pressure ?? 0) + questionPressure(q))
   if(cfg.requiredForFinal.every(r=>asked.includes(r))) unlocked.add(cfg.finalQuestion)
   return {
-    progress:{ ...p, asked, unlocked:[...unlocked], pressure, currentQuestion:null, completed: id===cfg.finalQuestion },
+    progress:{ ...p, asked, unlocked:[...unlocked], pressure, currentQuestion:null, completed: p.completed || id===cfg.finalQuestion },
     clues:q.highlights ? [] : (q.clues ?? []),
     people:q.revealsPeople ?? []
   }
@@ -117,7 +119,7 @@ const clampPressure = (n:number) => Math.max(0,Math.min(100,n))
 export function questionPressure(q:InterrogationQuestion):number{
   if(q.pressure!==undefined) return q.pressure
   const base = Math.max(0,Math.round((emotionLevel(emotionOf(q.expression ?? 'neutral'))-30)/9))
-  return base + (q.requiresClue ? 6 : 0)
+  return base + (q.requiresClue || q.requiresMaterial ? 6 : 0)
 }
 
 export const stagesOf = (cfg:InterrogationConfig) => cfg.pressureStages ?? DEFAULT_STAGES

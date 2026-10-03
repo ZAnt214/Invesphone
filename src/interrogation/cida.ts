@@ -25,6 +25,7 @@ export const cidaInterrogation:InterrogationConfig = {
       question:'Alguém pode confirmar?',
       answer:'Minha irmã e o marido dela. E o vizinho que me trouxe de volta de manhã.',
       expression:'tired',
+      unlocks:['show_term'],
       highlights:[{ phrase:'Minha irmã e o marido dela', clue:'alibi_cida' }]
     },
     {
@@ -63,6 +64,14 @@ export const cidaInterrogation:InterrogationConfig = {
       answer:'Achei estranho. Abriram umas gavetas que ele quase nunca usava e deixaram as mais óbvias fechadas. Quem mexeu ali parecia que queria mostrar bagunça.',
       expression:'shaken',
       highlights:[{ phrase:'parecia que queria mostrar bagunça', clue:'busca_dirigida' }]
+    },
+    {
+      id:'show_term',
+      requiresMaterial:'termo_declaracao_terceiro_cida',
+      question:'Sua irmã assinou um termo confirmando que a senhora dormiu na casa dela. Está certo?',
+      answer:'Está, moço. Ela nunca mentiu pra mim e não ia mentir por mim. Eu só queria ter estado na casa dos patrões pra poder ajudar.',
+      expression:'teary',
+      pressure:-6
     },
     {
       id:'untold',

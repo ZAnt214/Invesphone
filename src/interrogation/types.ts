@@ -11,6 +11,11 @@ export type InterrogationQuestion = {
    * além de ter sido liberada por outra pergunta.
    */
   requiresClue?:string
+  /**
+   * Apresentar material: só aparece depois que a equipe entregou este material (id da diligência em Equipe),
+   * além de ter sido liberada por outra pergunta.
+   */
+  requiresMaterial?:string
   /** Perguntas liberadas depois desta. */
   unlocks?:string[]
   /** Pessoas citadas/identificadas por esta resposta e que passam a integrar a investigação. */

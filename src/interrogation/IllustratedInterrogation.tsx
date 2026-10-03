@@ -28,6 +28,9 @@ type Props = {
   clueTitle?:(id:string)=>string|undefined
   /** Pistas que o jogador já tem (de qualquer depoimento ou cena): liberam as confrontações. */
   registeredClues?:string[]
+  /** Materiais que a equipe já entregou (ids das diligências): liberam as perguntas de apresentar material. */
+  registeredMaterials?:string[]
+  materialTitle?:(id:string)=>string|undefined
   /** Chamado uma vez, quando a pergunta final é respondida. */
   onComplete:()=>void
   /** Sair no meio do depoimento (o progresso fica salvo). */
@@ -59,7 +62,7 @@ const speakingTime = (text:string) => Math.min(subtitleDuration(text)-150, Math.
  * Interrogatório com retrato ilustrado. Serve para qualquer personagem em src/characters:
  * as perguntas, as expressões, as pistas e os desbloqueios vêm do `config`.
  */
-export default function IllustratedInterrogation({config,progress,onProgress,onClue,onPersonDiscovered=()=>undefined,clueTitle=()=>undefined,registeredClues=[],onComplete,onBack,onReturn}:Props){
+export default function IllustratedInterrogation({config,progress,onProgress,onClue,onPersonDiscovered=()=>undefined,clueTitle=()=>undefined,registeredClues=[],registeredMaterials=[],materialTitle=()=>undefined,onComplete,onBack,onReturn}:Props){
   const character = getCharacter(config.personId)
   const [phase,setPhase] = useState<Phase>('idle')
   const [activeId,setActiveId] = useState<string|null>(null)
@@ -77,6 +80,8 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
   /** Aviso de que a pressão passou de um estágio (ela está se abalando). */
   /** Mensagem de encerramento, mostrada logo depois da última resposta. */
   const [farewell,setFarewell] = useState(false)
+  /** Depoimento já encerrado que o jogador reabriu para fazer perguntas novas (material ou prova que chegou depois). */
+  const [retaking,setRetaking] = useState(false)
   const [signing,setSigning] = useState(false)
   const [alert,setAlert] = useState<string|null>(null)
   const [tutorial,setTutorial] = useState(()=>!tutorialSeen())
@@ -152,7 +157,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
           setReview(!!q.highlights)
           setExpression(next.completed ? 'shaken' : waitingExpression(config,after))
           setPhase('idle')
-          if(next.completed){
+          if(next.completed && !progressRef.current.completed){
             onComplete()
             setFarewell(true)
           }
@@ -177,9 +182,9 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
   const last = lastId && !activeId ? getQuestion(config,lastId) : undefined
   const summary = clueSummary(config,progress)
   const noted = progress.noted ?? []
-  const pending = pendingQuestions(config,progress,registeredClues)
+  const pending = pendingQuestions(config,progress,registeredClues,registeredMaterials)
   const asked = askedQuestions(config,progress)
-  const blocked = config.questions.filter(q=>progress.unlocked.includes(q.id) && !progress.asked.includes(q.id) && q.requiresClue && !registeredClues.includes(q.requiresClue)).length
+  const blocked = config.questions.filter(q=>progress.unlocked.includes(q.id) && !progress.asked.includes(q.id) && ((q.requiresClue && !registeredClues.includes(q.requiresClue)) || (q.requiresMaterial && !registeredMaterials.includes(q.requiresMaterial)))).length
   const finished = progress.completed
   const busy = phase!=='idle'
 
@@ -196,7 +201,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
 
   const hud = !character.portrait.hasBakedHud
   // depoimento já encerrado: o resumo vira um arquivo em papel, sem o retrato
-  const fileMode = finished && !farewell
+  const fileMode = finished && !farewell && !retaking
   if(fileMode) return (
     <main className="ii ii-file">
       <header className="ii-filebar">
@@ -205,7 +210,15 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
       </header>
       <section className="ii-panel">
         <div className="ii-main">
-          {tab==='ask' && <DepositionSummary config={config} progress={progress} clueTitle={clueTitle} onSign={()=>setSigning(true)}/>}
+          {tab==='ask' && <>
+            {pending.length>0 && (
+              <button type="button" className="ii-retake" onClick={()=>{setRetaking(true);setTab('ask');setReview(false)}}>
+                <b>RETOMAR DEPOIMENTO</b>
+                <span>{pending.length} {pending.length>1?'perguntas novas':'pergunta nova'} com o que a equipe trouxe</span>
+              </button>
+            )}
+            <DepositionSummary config={config} progress={progress} clueTitle={clueTitle} onSign={()=>setSigning(true)}/>
+          </>}
           {tab==='notes' && (
             <ul className="ii-notes">
               {asked.map(q=>(
@@ -267,7 +280,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
             {!busy && review && last && (
               <>
                 <AnswerNotes question={last} noted={noted} clueTitle={clueTitle} onNote={note} summary={summary}/>
-                <button className="ii-next" onClick={()=>setReview(false)}>{finished ? 'CONTINUAR' : 'PERGUNTAR MAIS'}</button>
+                <button className="ii-next" onClick={()=>setReview(false)}>{finished && !retaking ? 'CONTINUAR' : 'PERGUNTAR MAIS'}</button>
               </>
             )}
 
@@ -279,8 +292,11 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
               </button>
             )}
 
-            {!busy && !review && !finished && (
-              <QuestionPager questions={pending} onPick={ask} clueTitle={clueTitle} blocked={blocked}/>
+            {!busy && !review && (!finished || retaking) && (
+              <QuestionPager questions={pending} onPick={ask} clueTitle={clueTitle} materialTitle={materialTitle} blocked={blocked}/>
+            )}
+            {!busy && !review && retaking && (
+              <button type="button" className="ii-next ii-retake-end" onClick={()=>setRetaking(false)}>VOLTAR AO ARQUIVO</button>
             )}
           </>}
 

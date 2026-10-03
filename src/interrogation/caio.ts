@@ -28,7 +28,7 @@ export const caioInterrogation:InterrogationConfig = {
       question:'A que horas vocês chegaram ao motel?',
       answer:'Sei lá, onze, onze e pouco. Eu não fico olhando relógio, ué.',
       expression:'uncomfortable',
-      unlocks:['car'],
+      unlocks:['car','show_board'],
       highlights:[{ phrase:'onze, onze e pouco', clue:'caio_horario' }]
     },
     {
@@ -36,7 +36,7 @@ export const caioInterrogation:InterrogationConfig = {
       question:'Você foi de carro?',
       answer:'Fui no Gol. Deixei lá no motel e não saí mais com ele. Mais alguma coisa?',
       expression:'defensive',
-      unlocks:['street','confront_gol'],
+      unlocks:['street','confront_gol','show_gol'],
       highlights:[{ phrase:'não saí mais com ele', clue:'caio_horario' }]
     },
     {
@@ -94,6 +94,20 @@ export const caioInterrogation:InterrogationConfig = {
       answer:'Ela digitava na minha frente, ué, eu ia fazer o quê, tapar o olho? Mas eu nunca decorei nada. E não quero mais ouvir você chamando a Lívia de mentirosa.',
       expression:'defensive',
       highlights:[{ phrase:'digitava na minha frente', clue:'caio_viu_digitando' }]
+    },
+    {
+      id:'show_gol',
+      requiresMaterial:'ficha_veiculo_gol',
+      question:'O Gol branco que o vigia viu está no seu nome. Onde ele estava às onze e meia?',
+      answer:'No motel, já falei. Carro no meu nome não quer dizer que era eu dirigindo. Eu deixei lá e não saí mais.',
+      expression:'lying'
+    },
+    {
+      id:'show_board',
+      requiresMaterial:'quadro_horarios',
+      question:'Só duas horas têm registro: o alarme às 23:52 e o motel às 00:56. O que você fez entre uma e outra?',
+      answer:'Eu já disse que cheguei onze e pouco. Esse quadro tá errado, ou o motel anotou errado. Eu não fico olhando relógio.',
+      expression:'lying'
     },
     {
       id:'untold',

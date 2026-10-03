@@ -12,6 +12,7 @@ type Props = {
   questions:InterrogationQuestion[]
   onPick:(id:string)=>void
   clueTitle?:(id:string)=>string|undefined
+  materialTitle?:(id:string)=>string|undefined
   /** Perguntas já liberadas que ainda esperam uma pista que o jogador não tem. */
   blocked?:number
 }
@@ -20,7 +21,7 @@ type Props = {
  * Perguntas disponíveis, ajustadas à altura que sobra na tela: quantas couberem aparecem de uma vez e,
  * se houver mais, o jogador troca de página (nada de rolar a tela). As confrontações vêm depois das normais.
  */
-export default function QuestionPager({questions,onPick,clueTitle,blocked=0}:Props){
+export default function QuestionPager({questions,onPick,clueTitle,materialTitle,blocked=0}:Props){
   const box = useRef<HTMLDivElement>(null)
   const [height,setHeight] = useState(0)
   const [page,setPage] = useState(0)
@@ -35,8 +36,9 @@ export default function QuestionPager({questions,onPick,clueTitle,blocked=0}:Pro
     return ()=>ro.disconnect()
   },[])
 
-  const ordered = [...questions.filter(q=>!q.requiresClue),...questions.filter(q=>q.requiresClue)]
-  const hOf = (q:InterrogationQuestion)=>q.requiresClue ? ITEM_CONFRONT : ITEM
+  const gated = (q:InterrogationQuestion)=>!!(q.requiresClue||q.requiresMaterial)
+  const ordered = [...questions.filter(q=>!gated(q)),...questions.filter(gated)]
+  const hOf = (q:InterrogationQuestion)=>gated(q) ? ITEM_CONFRONT : ITEM
   // páginas montadas por altura: quantas perguntas couberem (e o seletor de página se houver mais de uma)
   const paginate = (avail:number)=>{
     const out:InterrogationQuestion[][] = []
@@ -62,8 +64,8 @@ export default function QuestionPager({questions,onPick,clueTitle,blocked=0}:Pro
     <div className="iq" ref={box}>
       <div className="iq-list">
         {slice.map(q=>(
-          <button key={q.id} className={`iv-ask${q.requiresClue ? ' iv-confront' : ''}`} onClick={()=>onPick(q.id)}>
-            {q.requiresClue && <span className="iv-evidence"><FileSearch/> {clueTitle?.(q.requiresClue) ?? q.requiresClue}</span>}
+          <button key={q.id} className={`iv-ask${gated(q) ? ' iv-confront' : ''}`} onClick={()=>onPick(q.id)}>
+            {gated(q) && <span className="iv-evidence"><FileSearch/> {q.requiresClue ? (clueTitle?.(q.requiresClue) ?? q.requiresClue) : `Apresentar: ${materialTitle?.(q.requiresMaterial!) ?? q.requiresMaterial}`}</span>}
             <span>{q.question}</span>
           </button>
         ))}
