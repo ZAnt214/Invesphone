@@ -83,3 +83,12 @@
 .tm-msg small.tm-typing-label{margin:3px 0 0 8px;font-size:10px;color:#7a8287}
 .tm-chips button:disabled:not(.done){opacity:.5}
 @media (prefers-reduced-motion:reduce){.tm-msg.fresh,.tm-typing i,.tm-clock::after{animation:none}}
+
+/* Utilidade do material e atalhos para as pessoas citadas na conversa */
+.tm-use{margin-top:6px;padding:7px 10px;border-left:3px solid #f0c446;border-radius:2px 8px 8px 2px;background:rgba(240,196,70,.08);font-size:12.5px;line-height:1.35;color:var(--ink)}
+.tm-use b{display:block;margin-bottom:2px;font:800 9.5px ui-monospace,Menlo,monospace;letter-spacing:.12em;color:#f0c446}
+.tm-people{display:flex;flex-direction:column;gap:5px;margin-top:6px}
+.tm-people button{display:grid;gap:1px;text-align:left;padding:8px 11px;border:1px solid rgba(240,196,70,.55);border-radius:10px;background:rgba(240,196,70,.12);color:#f0c446;cursor:pointer}
+.tm-people button b{font:800 12.5px ui-monospace,Menlo,monospace;letter-spacing:.03em}
+.tm-people button span{font-size:11px;color:rgba(255,255,255,.62)}
+.tm-people button:disabled{opacity:.5;border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.05);color:rgba(255,255,255,.7);cursor:default}

@@ -62,7 +62,7 @@ export const liviaInterrogation:InterrogationConfig = {
       question:'Tinha algum sinal de arrombamento?',
       answer:'Eu não reparei nisso. Eu só vi a casa daquele jeito e achei que alguém tinha entrado.',
       expression:'defensive',
-      unlocks:['alarm_code','confront_door'],
+      unlocks:['alarm_code','confront_door','show_lock'],
       highlights:[{ phrase:'Eu não reparei nisso', clue:'porta_intacta' }]
     },
     {
@@ -93,7 +93,7 @@ export const liviaInterrogation:InterrogationConfig = {
       question:'Vocês discutiam por causa disso?',
       answer:'Família discute. Mas não era nada… desse tamanho.',
       expression:'false_relief',
-      unlocks:['confront_family','confront_estate'],
+      unlocks:['confront_family','confront_estate','show_deed'],
       highlights:[{ phrase:'Família discute', clue:'brigas_namoro' }]
     },
     {
@@ -131,6 +131,20 @@ export const liviaInterrogation:InterrogationConfig = {
       requiresClue:'pergunta_inventario',
       question:'Você andou perguntando sobre inventário antes das mortes.',
       answer:'Eu só queria entender o que ia acontecer com a gente. Qualquer filha perguntaria.',
+      expression:'defensive'
+    },
+    {
+      id:'show_lock',
+      requiresMaterial:'fechadura_porta',
+      question:'A perícia fotografou a fechadura de perto: nenhuma marca de força. Quem abriu essa porta?',
+      answer:'Eu já disse que tenho chave. Mas eu não estava lá. Se ninguém forçou, alguém deixou aberta, sei lá. Por que você está olhando pra mim?',
+      expression:'nervous'
+    },
+    {
+      id:'show_deed',
+      requiresMaterial:'matricula_imovel',
+      question:'A casa está no nome dos seus pais. O que você ia receber dependia deles, não é?',
+      answer:'Dependia. Mas qualquer filha sabe disso, não é segredo. Eles eram meus pais, eu não queria que nada disso acontecesse.',
       expression:'defensive'
     },
     {

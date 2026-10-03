@@ -25,6 +25,7 @@ export const rafaelInterrogation:InterrogationConfig = {
       question:'Alguém pode confirmar isso?',
       answer:'O dono. Eu paguei a hora no caixa, tem o recibo.',
       expression:'tired',
+      unlocks:['show_front'],
       highlights:[{ phrase:'paguei a hora no caixa', clue:'lan_paga' }]
     },
     {
@@ -68,6 +69,7 @@ export const rafaelInterrogation:InterrogationConfig = {
       question:'E o Thor? Ele costuma ficar no canil?',
       answer:'De noite, não. O Thor dorme solto. Estranhei quando me falaram que ele tava preso.',
       expression:'nervous',
+      unlocks:['show_latch'],
       highlights:[{ phrase:'O Thor dorme solto', clue:'cao_canil' }]
     },
     {
@@ -82,6 +84,20 @@ export const rafaelInterrogation:InterrogationConfig = {
       question:'A agenda da sua mãe fala em preocupação com a Lívia e o Caio.',
       answer:'Ela vivia preocupada. Queria conversar com a Lívia, mas ia adiando. Agora ela não vai mais conversar com ninguém.',
       expression:'shaken'
+    },
+    {
+      id:'show_latch',
+      requiresMaterial:'trava_canil',
+      question:'O ferrolho do canil fecha por fora. O Thor não entra e se tranca sozinho. Quem prenderia ele?',
+      answer:'Eu não sei quem prendeu. O Thor não se tranca sozinho, e de noite ele dorme solto. Só sei que não fui eu.',
+      expression:'nervous'
+    },
+    {
+      id:'show_front',
+      requiresMaterial:'foto_fachada_lan',
+      question:'Esta é a fachada da LAN house onde o recibo foi emitido. É lá mesmo que você joga?',
+      answer:'É essa. Jogo ali quase toda noite, o dono me conhece. O recibo é do caixa dali.',
+      expression:'tired'
     },
     {
       id:'untold',

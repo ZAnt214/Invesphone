@@ -40,7 +40,7 @@ export const jorgeInterrogation:InterrogationConfig = {
       question:'Viu a placa ou quem estava no carro?',
       answer:'A placa eu guardei só até a metade. Quem tava dentro eu não sei dizer. Eu lembro mais de carro do que de gente.',
       expression:'uncomfortable',
-      unlocks:['why']
+      unlocks:['why','show_map']
     },
     {
       id:'alarm',
@@ -62,6 +62,13 @@ export const jorgeInterrogation:InterrogationConfig = {
       question:'Por que o senhor não avisou a polícia?',
       answer:'Avisar de quê? Carro parado não é crime. Eu anotei no caderno.',
       expression:'uncomfortable'
+    },
+    {
+      id:'show_map',
+      requiresMaterial:'croqui_rua',
+      question:'Este croqui marca a guarita, o poste e onde o Gol parou. É isso que o senhor via dali?',
+      answer:'É isso. O Gol parou depois do poste, uns trinta e tantos metros da guarita. Dali eu via o carro, o portão eu via mal. Por isso só afirmo o carro.',
+      expression:'neutral'
     },
     {
       id:'untold',
