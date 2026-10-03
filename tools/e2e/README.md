@@ -15,3 +15,11 @@ ONLY=D node tools/e2e/team-materials.mjs # só um bloco (A, B, C ou D)
 ```
 
 Precisa do Playwright com Chromium (`BASE` muda a URL).
+
+# Partida completa
+
+`full-playthrough.mjs` joga o caso pela interface, do primeiro toque (pular a ligação) ao final A: segue o cartão da Home, vasculha a cena, chama e ouve cada pessoa que aparece (anotando todas as frases), esgota Equipe e diligências em ciclos e monta o relatório. Falha se o jogo travar, se a Home rolar a página ou se houver erro de script/HTTP. Leva cerca de 9 min.
+
+```
+node tools/e2e/full-playthrough.mjs
+```
