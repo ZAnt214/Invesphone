@@ -976,7 +976,19 @@ function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStat
   ]
  })
  const normalized=baseMessages.map(m=>({...m,memberId:teamMemberForSender(m.from),outgoing:false}))
- const allMessages=[...teamIntroMessages,...normalized,...topicMessages,...materialMessages].sort((a,b)=>a.time.localeCompare(b.time))
+ const sortedMessages=[...teamIntroMessages,...normalized,...topicMessages,...materialMessages].sort((a,b)=>a.time.localeCompare(b.time))
+ /** Cada atalho de pessoa aparece só na mensagem mais recente que a cita (o resto da conversa fica limpo). */
+ const allMessages=(()=>{
+  const seen=new Set<string>()
+  const out=[...sortedMessages]
+  for(let i=out.length-1;i>=0;i--){
+   const m=out[i] as {memberId:string;actions?:{key:string}[]}
+   if(!m.actions)continue
+   const keep=m.actions.filter(x=>{const k=m.memberId+x.key;if(seen.has(k))return false;seen.add(k);return true})
+   out[i]={...out[i],actions:keep} as typeof out[number]
+  }
+  return out
+ })()
 
  const unreadFor=(id:string)=>teamDialogues.filter(t=>t.memberId===id&&topicAvailable(t)&&!discussed.includes(t.id)).length+teamMaterialRequests.filter(r=>r.memberId===id&&requestAvailable(r)&&!requested.includes(r.id)).length
 
@@ -1042,16 +1054,22 @@ function TeamFace({id,initials,name,small}:{id:string;initials:string;name:strin
 }
 function ChatThread({messages,memberName,sending,onOpenAsset}:{messages:{time:string;from:string;text:string;outgoing:boolean;assets?:readonly string[];assetsTitle?:string;use?:string;actions?:{key:string;label:string;hint?:string;disabled?:boolean;run:()=>void}[]}[];memberName:string;onOpenAsset?:(title:string,paths:readonly string[],start:number)=>void;sending:{text:string;time:string;phase:'sending'|'typing'}|null}){
  const ref=useRef<HTMLDivElement>(null)
- const key=messages.length+(sending?(sending.phase==='sending'?1:2):0)
- useEffect(()=>{ref.current?.scrollTo({top:ref.current.scrollHeight,behavior:'smooth'})},[key])
+ const key=`${messages.length}|${sending?sending.phase:''}|${messages.reduce((n,m)=>n+(m.actions?.length??0)+(m.use?1:0),0)}`
+ useEffect(()=>{
+  const down=()=>ref.current?.scrollTo({top:ref.current.scrollHeight,behavior:'smooth'})
+  down()
+  // anexos e atalhos aumentam a mensagem depois de entrar: rola de novo para a resposta ficar inteira à vista
+  const t=[350,900].map(ms=>window.setTimeout(down,ms))
+  return()=>t.forEach(window.clearTimeout)
+ },[key])
  return <div className="tm-thread" ref={ref}>
   <p className="tm-notice"><Lock/>Canal oficial do DHPP. Mensagens criptografadas, registradas no inquérito e sem cópia. Contatos verificados.</p>
   {messages.map((m,i)=><div key={m.time+m.from+i} className={`tm-msg ${m.outgoing?'out':'in'}${i>=messages.length-2&&messages.length>2?' fresh':''}`}>
    {!m.outgoing&&m.from!==memberName&&m.from!==memberName.split(' ')[0]&&<small>{m.from}</small>}
    <p>{m.text}<span>{m.time}{m.outgoing?' ✓✓':''}</span></p>
+   {m.assets&&m.assets.length>0&&<div className="tm-attach">{m.assets.map((a,k)=><button key={a} onClick={()=>onOpenAsset?.(m.assetsTitle??'Material',m.assets!,k)} aria-label={`Abrir ${m.assetsTitle??'material'} ${k+1}`}><img src={assetUrl(a)} alt="" loading="lazy"/>{m.assets!.length>1&&k===0&&<b>{m.assets!.length}</b>}</button>)}</div>}
    {m.use&&<div className="tm-use"><b>PARA QUE SERVE</b>{m.use}</div>}
    {m.actions&&m.actions.length>0&&<div className="tm-people">{m.actions.map(a=><button key={a.key} disabled={a.disabled} onClick={a.run}><b>{a.label}</b>{a.hint&&<span>{a.hint}</span>}</button>)}</div>}
-   {m.assets&&m.assets.length>0&&<div className="tm-attach">{m.assets.map((a,k)=><button key={a} onClick={()=>onOpenAsset?.(m.assetsTitle??'Material',m.assets!,k)} aria-label={`Abrir ${m.assetsTitle??'material'} ${k+1}`}><img src={assetUrl(a)} alt="" loading="lazy"/>{m.assets!.length>1&&k===0&&<b>{m.assets!.length}</b>}</button>)}</div>}
   </div>)}
   {sending&&<div className="tm-msg out fresh pending"><p>{sending.text}<span>{sending.phase==='sending'?<><i className="tm-clock"/>enviando…</>:<>{sending.time} ✓✓</>}</span></p></div>}
   {sending?.phase==='typing'&&<div className="tm-msg in fresh"><p className="tm-typing" aria-label={`${memberName} está digitando`}><i/><i/><i/></p><small className="tm-typing-label">{memberName.split(' ')[0]} está digitando…</small></div>}
