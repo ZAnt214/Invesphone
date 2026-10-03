@@ -46,7 +46,7 @@ export const rafaelInterrogation:InterrogationConfig = {
       question:'Como era o clima em casa?',
       answer:'Ruim. Eu tentava ficar fora. Eles brigavam por causa do Caio, quase toda semana.',
       expression:'uncomfortable',
-      unlocks:['fights','dog'],
+      unlocks:['fights','dog','confront_agenda'],
       highlights:[{ phrase:'brigavam por causa do Caio', clue:'brigas_namoro' }]
     },
     {

@@ -16,7 +16,7 @@ export const cidaInterrogation:InterrogationConfig = {
     {
       id:'where',
       question:'Onde a senhora estava na noite do crime?',
-      answer:'Na casa da minha irmã, em Osasco. Dormi lá e só voltei de manhã, quando me ligaram.',
+      answer:'Na casa da minha irmã, no Jabaquara. Dormi lá e só voltei de manhã, quando me ligaram.',
       expression:'tired',
       unlocks:['confirm']
     },

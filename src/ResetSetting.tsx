@@ -13,7 +13,7 @@ export default function ResetSetting({onReset}:{onReset:()=>void}){
           <RotateCcw/> {sure ? 'Confirmar' : 'Recomeçar'}
         </button>
       </div>
-      <p>{sure ? 'Toque em Confirmar para apagar todo o progresso: pistas, depoimentos e tarefas.' : 'Apaga o progresso salvo e começa o caso desde a primeira ligação.'}</p>
+      <p>{sure ? 'Toque em Confirmar para apagar todo o progresso: pistas, depoimentos e conversas da equipe.' : 'Apaga o progresso salvo e começa o caso desde a primeira ligação.'}</p>
     </div>
   )
 }

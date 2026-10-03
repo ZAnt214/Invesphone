@@ -23,3 +23,9 @@ Precisa do Playwright com Chromium (`BASE` muda a URL).
 ```
 node tools/e2e/full-playthrough.mjs
 ```
+
+# Outros testes
+
+- `team-actions.mjs`: atalhos de pessoas nas conversas, materiais apresentados em depoimento, provas de apoio, relatório e ordem das mensagens.
+- `screens-fit.mjs`: nenhuma tela rola a página nem passa da largura (390×844 e 375×667), sem conteúdo cortado.
+- `../audit/case-audit.mjs` (não precisa de navegador): confere ids, desbloqueios, arquivos e simula a progressão para achar pista, pergunta, conversa ou diligência que nunca fica disponível. Rode depois de mexer em dados do caso.
