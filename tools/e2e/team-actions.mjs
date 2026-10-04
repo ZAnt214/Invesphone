@@ -99,6 +99,17 @@ for (const [w, h] of [[390, 844], [375, 667]]) {
   const times = (await p.locator('.tm-msg p span').allInnerTexts()).map(t => t.replace(/[^0-9:]/g, '').slice(0, 5)).filter(t => /^\d\d:\d\d$/.test(t))
   check(times.every((t, i) => i === 0 || t >= times[i - 1]), 'horários crescentes na conversa (' + times.slice(-4).join(' ') + ')')
 }
+// 6) o que o guia sugeria e foi feito aparece riscado na Home, sem virar obrigação
+{
+  const p = await page(save({ app: 'home', task: 2, clues: ['porta_intacta', 'painel_alarme', 'cao_canil', 'valores_intactos'], interviewed: ['livia'], discoveredPeople: ['livia', 'caio', 'rafael', 'cida'], guideSeen: [{ id: 'depo-livia', done: 'Interrogatório de Lívia concluído' }] }))
+  const done = p.locator('.hm-guide li.done')
+  check(await done.count() === 1 && (await done.innerText()).includes('Lívia concluído'), 'Home risca a anotação já feita (Lívia interrogada)')
+  check(await p.locator('.hm-guide li button').count() >= 1, 'as sugestões em aberto continuam clicáveis, sem ordem obrigatória')
+  const txt = await p.locator('.hm-guide').innerText()
+  check(!/missão|tarefa|%|\d+\/\d+/i.test(txt), 'sem cara de missão: sem contagem, porcentagem nem "tarefa"')
+  const st = JSON.parse(await p.evaluate(k => localStorage.getItem(k), KEY))
+  check(st.guideDone?.some(d => d.id === 'depo-livia'), 'a anotação feita fica guardada no save')
+}
 await browser.close()
 console.log(failures ? `\n${failures} falha(s)` : '\nTodos os testes passaram')
 process.exit(failures ? 1 : 0)
