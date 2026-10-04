@@ -54,6 +54,16 @@
 .hm-guide li svg{grid-area:chev;align-self:center;width:18px;height:18px;color:var(--mut)}
 .hm-guide li.first svg{color:#f0c446}
 .hm-guide small{padding:0 2px;font:600 10.5px var(--mono);color:var(--mut)}
-@media (max-height:720px){.hm-guide li:nth-child(3){display:none}.hm-guide li span{-webkit-line-clamp:1}}
+@media (max-height:720px){.hm-guide li.third{display:none}.hm-guide li span{-webkit-line-clamp:1}}
 /* Celulares baixos: a roda encolhe para o guia caber sem rolar a página */
 @media (max-height:720px){.handset.hm{--R:clamp(60px,min(15vh,calc((100vw - 124px)/2)),150px);--node:clamp(46px,7.2vh,66px)}}
+
+/* Anotações já feitas ficam riscadas, discretas: o jogador não é obrigado a seguir nenhuma */
+.hm-guide li.done{display:flex;align-items:center;gap:8px;padding:2px 4px 2px 6px;min-height:22px;color:var(--mut);opacity:.78}
+.hm-guide li.done span{flex:none;display:grid;place-items:center;width:14px;height:14px;border-radius:3px;border:1px solid rgba(255,255,255,.28)}
+.hm-guide li.done svg{width:10px;height:10px;color:#9fd18b}
+.hm-guide li.done s{position:relative;text-decoration:none;font:600 11.5px var(--mono);line-height:1.2;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hm-guide li.done s::after{content:"";position:absolute;left:0;top:52%;height:1.5px;width:100%;background:currentColor;transform-origin:left;animation:hm-strike .55s ease-out both}
+@keyframes hm-strike{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){.hm-guide li.done s::after{animation:none}}
+@media (max-height:720px){.hm-guide li.done:has(+ li.done){display:none}}

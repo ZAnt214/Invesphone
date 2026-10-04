@@ -1,4 +1,4 @@
-import { ChevronRight, FileSearch, FolderSearch, Lock, MessageCircle, Settings, Smartphone, Users } from 'lucide-react'
+import { Check, ChevronRight, FileSearch, FolderSearch, Lock, MessageCircle, Settings, Smartphone, Users } from 'lucide-react'
 import './desk-home.css'
 
 /** Um passo sugerido ao jogador na Home: o que fazer agora para seguir a história. */
@@ -11,6 +11,8 @@ type Props = {
   chapterTitle:string
   caseStatus:string
   steps:GuideStep[]
+  /** Anotações já feitas, mais recentes por último: aparecem riscadas. */
+  doneNotes?:{id:string;text:string}[]
   teamBadge:number
   clueBadge:number
   peopleOpen:boolean
@@ -51,8 +53,11 @@ export default function HandsetHome(p:Props){
       <section className="hm-guide" aria-label="Próximos passos do caso">
         <header><i aria-hidden="true"/><b>Caso 01 · {p.caseStatus}</b></header>
         <ol>
+          {(p.doneNotes??[]).map(d=>(
+            <li key={'done-'+d.id} className="done"><span aria-hidden="true"><Check/></span><s>{d.text}</s></li>
+          ))}
           {p.steps.slice(0,3).map((st,k)=>(
-            <li key={st.id} className={k===0&&!st.locked?'first':''}>
+            <li key={st.id} className={`${k===0&&!st.locked?'first':''}${k===2?' third':''}`}>
               <button type="button" disabled={st.locked} onClick={st.run} aria-label={`${st.tag}. ${st.title}. ${st.text}${st.cta?` ${st.cta}`:''}`}>
                 <em>{k===0&&!st.locked?'AGORA · ':''}{st.tag}</em>
                 <b>{st.title}</b>
@@ -62,7 +67,7 @@ export default function HandsetHome(p:Props){
             </li>
           ))}
         </ol>
-        {p.steps.length>3 && <small>+ {p.steps.length-3} {p.steps.length-3>1?'passos':'passo'} depois destes</small>}
+        <small>Sugestões do caso: siga na ordem que preferir.</small>
       </section>
 
       <div className="hm-center">
