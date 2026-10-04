@@ -60,9 +60,10 @@ type GameSave = {
   interrogationOrigin?:'app'|'task'
   /** Conversa da equipe que o guia abre ao entrar em Equipe (some depois de usada). */
   teamFocus?:string
-  /** Anotações do guia da Home: o que estava sugerido na última vez, e o que já foi feito (aparece riscado). */
-  guideSeen?:{id:string;done:string}[]
-  guideDone?:{id:string;text:string}[]
+  /** Leva de anotações do guia da Home: até 3 sugestões que ficam fixas, vão sendo riscadas e só então são trocadas por outra leva. */
+  guideBatch?:{id:string;done:string}[]
+  /** Itens da leva atual que já foram feitos (ficam riscados até a leva inteira ser trocada). */
+  guideDoneIds?:string[]
   ending?:'A'|'B'|'C'
 }
 
@@ -668,22 +669,23 @@ export default function App(){
     })
   },[game.clues,game.interviewed,game.discoveredPeople])
 
-  // As anotações da Home: o que deixa de ser sugerido porque foi feito passa a aparecer riscado.
+  // Leva de anotações da Home: o que foi feito fica riscado no lugar; quando tudo foi feito, entra uma leva nova.
   useEffect(()=>{
     if(game.screen!=='phone')return
-    const open=nextSteps(game).filter(x=>x.done)
-    setGame(g=>{
-      const ids=new Set(open.map(x=>x.id))
-      const seen=g.guideSeen??[]
-      const finished=seen.filter(x=>!ids.has(x.id))
-      const same=seen.length===open.length&&seen.every((x,i)=>x.id===open[i].id&&x.done===open[i].done)
-      const prevDone=g.guideDone??[]
-      const keep=prevDone.filter(d=>!ids.has(d.id)&&!finished.some(f=>f.id===d.id))
-      if(same&&!finished.length&&keep.length===prevDone.length)return g
-      return {...g,guideSeen:open.map(x=>({id:x.id,done:x.done!})),guideDone:[...keep,...finished.map(f=>({id:f.id,text:f.done}))].slice(-8)}
-    })
+    setGame(g=>reconcileGuide(g))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[game.screen,game.task,game.clues,game.interviewed,game.teamTopics,game.requestedMaterials,game.summonedPeople,game.discoveredPeople,game.liviaInterrogation,game.depositions])
+  useEffect(()=>{
+    if(game.screen!=='phone'||game.app!=='home'||!guideFinished(game))return
+    // a última anotação fica riscada à vista por um instante antes de a leva ser trocada
+    const t=window.setTimeout(()=>setGame(g=>{
+      if(!guideFinished(g))return g
+      const nb=guideBatchOf(nextSteps(g).filter(x=>x.done))
+      return nb.length?{...g,guideBatch:nb,guideDoneIds:[]}:g
+    }),2600)
+    return()=>window.clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[game.screen,game.app,game.guideBatch,game.guideDoneIds])
 
   const setScreen=(screen:Screen)=>setGame(g=>({...g,screen}))
   const activateSound=async()=>{if(await enableAudio()){setAudioOn(true);if(game.screen==='incoming')startRingtone()}}
@@ -879,9 +881,13 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
   else if(to.kind==='report')setGame(g=>({...g,screen:'task'}))
   else if(to.kind==='clues')setGame(g=>({...g,app:'clues'}))
  }
- const steps=nextSteps(game).map(st=>({id:st.id,tag:st.tag,title:st.title,text:st.text,cta:st.cta,locked:st.locked,run:()=>go(st.go)}))
+ const liveSteps=new Map(nextSteps(game).map(st=>[st.id,st]))
+ const doneIds=game.guideDoneIds??[]
+ const batch=game.guideBatch??[]
+ // enquanto a leva não existe (primeira abertura), mostra as primeiras sugestões
+ const notes=(batch.length?batch:guideBatchOf(nextSteps(game).filter(x=>x.done))).map(b=>{const st=liveSteps.get(b.id);const finished=doneIds.includes(b.id)||!st;return {id:b.id,finished,doneText:b.done,tag:st?.tag??'',title:st?.title??'',text:st?.text??'',cta:st?.cta,locked:st?.locked,run:()=>{if(st)go(st.go)}}})
  const unread=caseTeam.reduce((n,m)=>n+teamNews(game,m.id).count,0)
- return <HandsetHome chapterNumber={chapter.number} chapterTitle={chapter.title} caseStatus={status} steps={steps} doneNotes={(game.guideDone??[]).slice(-2)} peopleOpen={game.task>=2} helenaOpen={game.task>=3||(game.requestedMaterials??[]).includes('termo_apreensao_celular_helena')} archiveOpen={game.task>=3} teamBadge={unread} clueBadge={game.clues.length} onOpenApp={openApp}/>
+ return <HandsetHome chapterNumber={chapter.number} chapterTitle={chapter.title} caseStatus={status} notes={notes} peopleOpen={game.task>=2} helenaOpen={game.task>=3||(game.requestedMaterials??[]).includes('termo_apreensao_celular_helena')} archiveOpen={game.task>=3} teamBadge={unread} clueBadge={game.clues.length} onOpenApp={openApp}/>
 }
 function HandsetStatus(){return <header className="handset-status"><span>VIVO&nbsp;&nbsp;▮▮▮</span><b>DHPP</b><BatteryMedium/></header>}
 function PhonePage({title,back,children}:{title:string;back:()=>void;children:React.ReactNode}){return <main className={`handset page${title==='Equipe'?' team-page':''}`}><HandsetStatus/><header className="page-head"><button onClick={back}><ChevronLeft/></button><b>{title}</b><span/></header><section className="page-body">{children}</section></main>}
@@ -1004,6 +1010,32 @@ const nextSteps=(game:GameSave):GuideStepData[]=>{
     out.push({id:'clues',tag:'PISTAS',title:'Revise o que você já tem',text:'Releia as pistas e as anotações dos depoimentos antes do próximo passo.',cta:'Abrir pistas',go:{kind:'clues'}})
   }
   return out.sort((a,b)=>Number(!!a.locked)-Number(!!b.locked))
+}
+
+/** Monta uma leva de até 3 sugestões: as que dá para fazer agora e, se sobrar espaço, avisos do que ainda falta. */
+const guideBatchOf=(steps:GuideStepData[]):{id:string;done:string}[]=>{
+  const real=steps.filter(x=>x.done&&!x.locked).slice(0,3)
+  const waiting=steps.filter(x=>x.done&&x.locked).slice(0,3-real.length)
+  return [...real,...waiting].map(x=>({id:x.id,done:x.done!}))
+}
+/** Atualiza a leva: o que sumiu das sugestões foi feito. Só o relatório pronto fura a leva. */
+const reconcileGuide=(g:GameSave):GameSave=>{
+  const steps=nextSteps(g).filter(x=>x.done)
+  const live=new Map(steps.map(x=>[x.id,x]))
+  const batch=g.guideBatch??[]
+  if(!batch.length){const nb=guideBatchOf(steps);return nb.length?{...g,guideBatch:nb,guideDoneIds:[]}:g}
+  if(steps[0]?.id==='report'&&!batch.some(b=>b.id==='report'))return {...g,guideBatch:guideBatchOf(steps),guideDoneIds:[]}
+  const prev=g.guideDoneIds??[]
+  const done=[...new Set([...prev,...batch.filter(b=>!live.has(b.id)).map(b=>b.id)])]
+  return done.length===prev.length?g:{...g,guideDoneIds:done}
+}
+/** A leva está pronta para ser trocada quando tudo o que dava para fazer nela foi feito. */
+const guideFinished=(g:GameSave)=>{
+  const batch=g.guideBatch??[]
+  const done=g.guideDoneIds??[]
+  if(!batch.some(b=>done.includes(b.id)))return false
+  const live=new Map(nextSteps(g).map(x=>[x.id,x]))
+  return batch.every(b=>done.includes(b.id)||live.get(b.id)?.locked)
 }
 
 function Team({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.SetStateAction<GameSave>>}){
