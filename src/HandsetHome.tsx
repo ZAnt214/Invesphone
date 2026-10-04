@@ -1,8 +1,8 @@
 import { Check, ChevronRight, FileSearch, FolderSearch, Lock, MessageCircle, Settings, Smartphone, Users } from 'lucide-react'
 import './desk-home.css'
 
-/** Um passo sugerido ao jogador na Home: o que fazer agora para seguir a história. */
-export type GuideStep = {id:string;tag:string;title:string;text:string;cta?:string;locked?:boolean;run:()=>void}
+/** Uma anotação da leva atual na Home: sugestão em aberto ou, se já foi feita, riscada. */
+export type GuideNote = {id:string;finished:boolean;doneText:string;tag:string;title:string;text:string;cta?:string;locked?:boolean;run:()=>void}
 
 type HomeTarget = 'team'|'clues'|'interrogate'|'victim'|'chapters'|'settings'
 
@@ -10,9 +10,7 @@ type Props = {
   chapterNumber:number
   chapterTitle:string
   caseStatus:string
-  steps:GuideStep[]
-  /** Anotações já feitas, mais recentes por último: aparecem riscadas. */
-  doneNotes?:{id:string;text:string}[]
+  notes:GuideNote[]
   teamBadge:number
   clueBadge:number
   peopleOpen:boolean
@@ -52,20 +50,21 @@ export default function HandsetHome(p:Props){
 
       <section className="hm-guide" aria-label="Próximos passos do caso">
         <header><i aria-hidden="true"/><b>Caso 01 · {p.caseStatus}</b></header>
-        <ol>
-          {(p.doneNotes??[]).map(d=>(
-            <li key={'done-'+d.id} className="done"><span aria-hidden="true"><Check/></span><s>{d.text}</s></li>
-          ))}
-          {p.steps.slice(0,3).map((st,k)=>(
-            <li key={st.id} className={`${k===0&&!st.locked?'first':''}${k===2?' third':''}`}>
-              <button type="button" disabled={st.locked} onClick={st.run} aria-label={`${st.tag}. ${st.title}. ${st.text}${st.cta?` ${st.cta}`:''}`}>
-                <em>{k===0&&!st.locked?'AGORA · ':''}{st.tag}</em>
-                <b>{st.title}</b>
-                <span>{st.text}</span>
-                {st.locked ? <Lock aria-hidden="true"/> : <ChevronRight aria-hidden="true"/>}
-              </button>
-            </li>
-          ))}
+        <ol key={p.notes.map(n=>n.id).join('|')}>
+          {p.notes.map((n,i)=>{
+            if(n.finished) return <li key={n.id} className="done"><span aria-hidden="true"><Check/></span><s>{n.doneText}</s></li>
+            const k = p.notes.slice(0,i).filter(x=>!x.finished).length
+            return (
+              <li key={n.id} className={`${k===0&&!n.locked?'first':''}`}>
+                <button type="button" disabled={n.locked} onClick={n.run} aria-label={`${n.tag}. ${n.title}. ${n.text}${n.cta?` ${n.cta}`:''}`}>
+                  <em>{k===0&&!n.locked?'AGORA · ':''}{n.tag}</em>
+                  <b>{n.title}</b>
+                  <span>{n.text}</span>
+                  {n.locked ? <Lock aria-hidden="true"/> : <ChevronRight aria-hidden="true"/>}
+                </button>
+              </li>
+            )
+          })}
         </ol>
         <small>Sugestões do caso: siga na ordem que preferir.</small>
       </section>

@@ -99,16 +99,23 @@ for (const [w, h] of [[390, 844], [375, 667]]) {
   const times = (await p.locator('.tm-msg p span').allInnerTexts()).map(t => t.replace(/[^0-9:]/g, '').slice(0, 5)).filter(t => /^\d\d:\d\d$/.test(t))
   check(times.every((t, i) => i === 0 || t >= times[i - 1]), 'horários crescentes na conversa (' + times.slice(-4).join(' ') + ')')
 }
-// 6) o que o guia sugeria e foi feito aparece riscado na Home, sem virar obrigação
+// 6) a leva de anotações da Home é fixa: o que foi feito fica riscado no lugar e só a leva inteira feita é trocada
 {
-  const p = await page(save({ app: 'home', task: 2, clues: ['porta_intacta', 'painel_alarme', 'cao_canil', 'valores_intactos'], interviewed: ['livia'], discoveredPeople: ['livia', 'caio', 'rafael', 'cida'], guideSeen: [{ id: 'depo-livia', done: 'Interrogatório de Lívia concluído' }] }))
-  const done = p.locator('.hm-guide li.done')
-  check(await done.count() === 1 && (await done.innerText()).includes('Lívia concluído'), 'Home risca a anotação já feita (Lívia interrogada)')
-  check(await p.locator('.hm-guide li button').count() >= 1, 'as sugestões em aberto continuam clicáveis, sem ordem obrigatória')
+  const batch = [{ id: 'depo-livia', done: 'Interrogatório de Lívia concluído' }, { id: 'call-rafael', done: 'Rafael chamado para depoimento' }, { id: 'call-cida', done: 'Cida chamado para depoimento' }]
+  const p = await page(save({ app: 'home', task: 2, clues: ['porta_intacta', 'painel_alarme', 'cao_canil', 'valores_intactos'], interviewed: ['livia'], discoveredPeople: ['livia', 'caio', 'rafael', 'cida'], guideBatch: batch, guideDoneIds: [] }))
+  check(await p.locator('.hm-guide li.done').count() === 1 && (await p.locator('.hm-guide li.done').innerText()).includes('Lívia concluído'), 'Home risca no lugar a anotação feita (Lívia interrogada)')
+  const open = await p.locator('.hm-guide li button').allInnerTexts()
+  check(open.length === 2 && open.some(t => t.includes('Rafael')) && open.some(t => t.includes('Cida')), 'a leva continua com as outras duas, sem repor a anotação riscada por outra')
   const txt = await p.locator('.hm-guide').innerText()
   check(!/missão|tarefa|%|\d+\/\d+/i.test(txt), 'sem cara de missão: sem contagem, porcentagem nem "tarefa"')
-  const st = JSON.parse(await p.evaluate(k => localStorage.getItem(k), KEY))
-  check(st.guideDone?.some(d => d.id === 'depo-livia'), 'a anotação feita fica guardada no save')
+  // fazendo as outras duas, a leva inteira fica riscada e depois é trocada por uma nova
+  await p.evaluate(k => { const s = JSON.parse(localStorage.getItem(k)); s.summonedPeople = ['livia', 'caio', 'rafael', 'cida']; s.interviewed = ['livia', 'rafael', 'cida']; localStorage.setItem(k, JSON.stringify(s)) }, KEY)
+  await p.reload(); await p.waitForTimeout(900)
+  check(await p.locator('.hm-guide li.done').count() === 3 && await p.locator('.hm-guide li button').count() === 0, 'com tudo feito, as três anotações aparecem riscadas')
+  await p.waitForTimeout(3300)
+  const after = JSON.parse(await p.evaluate(k => localStorage.getItem(k), KEY))
+  check(after.guideBatch.every(b => !batch.some(o => o.id === b.id)) && (after.guideDoneIds || []).length === 0, 'a leva é trocada por uma nova (' + after.guideBatch.map(b => b.id).join(', ') + ')')
+  check(await p.locator('.hm-guide li.done').count() === 0 && await p.locator('.hm-guide li button').count() >= 1, 'a leva nova chega sem nada riscado')
 }
 await browser.close()
 console.log(failures ? `\n${failures} falha(s)` : '\nTodos os testes passaram')

@@ -12,7 +12,7 @@ const base = { version: 3, screen: 'phone', app: 'home', task: 8, orders: [], sc
 const SCREENS = [
   ['ligação chegando', { screen: 'incoming' }], ['chamada perdida', { screen: 'missed' }],
   ['home (começo)', { task: 1, clues: [], interviewed: [], discoveredPeople: ['livia','caio','rafael','cida'], summonedPeople: ['livia','caio'] }],
-  ['home (meio)', { task: 5, guideDone: [{ id: 'a', text: 'Interrogatório de Lívia concluído' }, { id: 'b', text: 'Rafael chamado para depoimento' }], interviewed: ['livia','caio','rafael','cida'], discoveredPeople: ALL, summonedPeople: ['livia','caio','rafael','cida'] }],
+  ['home (meio)', { task: 5, guideBatch: [{ id: 'depo-livia', done: 'Interrogatório de Lívia concluído' }, { id: 'call-rafael', done: 'Rafael chamado para depoimento' }, { id: 'team-renata', done: 'Conversas com Renata em dia' }], guideDoneIds: ['depo-livia'], interviewed: ['livia','caio','rafael','cida'], discoveredPeople: ALL, summonedPeople: ['livia','caio','rafael','cida'] }],
   ['home (fim)', {}],
   ['equipe (lista)', { app: 'team' }], ['pessoas', { app: 'interrogate' }], ['pistas', { app: 'clues' }], ['arquivo', { app: 'chapters' }], ['ajustes', { app: 'settings' }],
   ['tel. helena', { app: 'victim' }], ['relatório', { screen: 'task' }],

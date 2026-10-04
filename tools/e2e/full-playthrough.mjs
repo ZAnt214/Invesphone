@@ -109,6 +109,8 @@ while (guard++ < 120) {
   if (s.task >= 8) break
   await goHome(); await noPageScroll('Home')
   const rows = p.locator('.hm-guide li button:not([disabled])')
+  // leva toda riscada: a Home troca por uma nova depois de alguns segundos
+  for (let w = 0; w < 16 && !(await rows.count()); w++) await p.waitForTimeout(500)
   if (!(await rows.count())) { check(false, `guia sem passo disponível (task=${s.task})`); break }
   const row = rows.first()
   const title = (await row.locator('b').innerText()).trim()
