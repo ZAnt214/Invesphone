@@ -815,3 +815,50 @@ body:not(.land) .hud-top .ht{padding:8px 0}
 body:not(.land) .hud-top .ht .brk{margin:0}
 body:not(.land) .hud-top .h-time,body:not(.land) .hud-top .h-marks{padding-left:9px}
 body:not(.land) .hud-top .h-btns,body:not(.land) .hud-top .h-state{padding-right:9px}
+
+/* event balloon: tied to the person on the map by a dashed lead, graphite like the top bar */
+#bub-ln{position:absolute;left:0;top:0;z-index:7;pointer-events:none;overflow:visible}
+#bub-ln path{fill:none;stroke:#f2c230;stroke-width:1.6;stroke-dasharray:4 3;filter:drop-shadow(0 1px 1px rgba(0,0,0,.8))}
+#bub-pin{position:absolute;left:0;top:0;z-index:7;pointer-events:none;border-radius:50%;box-shadow:0 0 0 2px #f2c230,0 0 12px rgba(242,194,48,.7),inset 0 0 8px rgba(242,194,48,.35);animation:breath 1.6s ease-in-out infinite}
+#bub{position:absolute;left:0;top:0;z-index:8;width:min(282px,calc(100% - 20px));box-sizing:border-box;padding:10px 12px 12px;color:#e8ecef;
+  background:linear-gradient(#24282c,#141719);box-shadow:inset 3px 0 0 #f2c230,inset 0 1px 0 rgba(255,255,255,.12),0 0 0 1px rgba(0,0,0,.6),0 12px 22px rgba(0,0,0,.6);border-radius:3px;will-change:transform}
+#bub.in{animation:bubIn .26s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes bubIn{from{opacity:0;scale:.92}to{opacity:1;scale:1}}
+#bub .bh{display:flex;gap:9px;align-items:center}
+#bub .bh .av{width:32px;height:32px;border-radius:4px;flex:none;font-size:10px}
+#bub small{display:block;font:700 10px/1 Rajdhani,"Arial Narrow",sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#f2c230}
+#bub h3{margin:2px 0 0;font:700 16px/1.1 Rajdhani,"Arial Narrow",sans-serif;letter-spacing:.01em}
+#bub p{margin:7px 0 9px;font-size:11.5px;line-height:1.42;color:rgba(232,236,239,.8)}
+#bub-opts,#cn-opts{display:flex;flex-direction:column;gap:5px}
+#bub-opts button,#cn-opts button{display:flex;gap:8px;align-items:flex-start;text-align:left;padding:7px 9px;border:0;color:inherit;font:inherit;cursor:pointer;background:rgba(255,255,255,.07);
+  clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);transition:background .15s}
+#bub-opts button:hover,#bub-opts button:focus-visible,#cn-opts button:hover,#cn-opts button:focus-visible{background:rgba(242,194,48,.16);outline:none}
+#bub-opts .ix,#cn-opts .ix{flex:none;width:18px;height:18px;display:grid;place-items:center;font:700 11px/1 Rajdhani,"Arial Narrow",sans-serif;background:rgba(255,255,255,.16);color:#e8ecef;clip-path:polygon(4px 0,100% 0,100% calc(100% - 4px),calc(100% - 4px) 100%,0 100%,0 4px)}
+#bub-opts button:hover .ix,#bub-opts button:focus-visible .ix,#cn-opts button:hover .ix,#cn-opts button:focus-visible .ix{background:#f2c230;color:#111}
+#bub-opts .ot,#cn-opts .ot{display:flex;flex-direction:column;gap:2px;min-width:0}
+#bub-opts b,#cn-opts b{font:700 13.5px/1.1 Rajdhani,"Arial Narrow",sans-serif}
+#bub-opts .ot span{font-size:10.5px;line-height:1.3;color:rgba(232,236,239,.6)}
+/* cinematic cut: black bars close in, the scene dims, the HUD steps aside */
+#cine{position:absolute;inset:0;z-index:9;pointer-events:auto}
+#cine::before{content:'';position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.25),rgba(0,0,0,.35) 35%,rgba(0,0,0,.82) 80%);opacity:0;transition:opacity .3s}
+#cine .cb{position:absolute;left:0;right:0;height:13%;background:#000;transform:scaleY(0);transition:transform .32s cubic-bezier(.2,.8,.2,1)}
+#cine .cb.t{top:0;transform-origin:50% 0}#cine .cb.b{bottom:0;transform-origin:50% 100%}
+#cine .cw{position:absolute;left:50%;bottom:calc(13% + 12px);width:min(620px,calc(100% - 32px));transform:translate(-50%,12px);opacity:0;text-align:center;color:#f4f2ec;transition:opacity .3s .12s,transform .3s .12s}
+#cine.in::before{opacity:1}#cine.in .cb{transform:none}#cine.in .cw{opacity:1;transform:translate(-50%,0)}
+#cine .cwho{display:flex;justify-content:center;align-items:center;gap:8px;font:700 11px/1 Rajdhani,"Arial Narrow",sans-serif;letter-spacing:.24em;text-transform:uppercase;color:#f2c230}
+#cine .cwho .av{width:30px;height:30px;border-radius:50%;object-fit:cover;flex:none;font-size:10px}
+#cine h3{margin:8px 0 6px;font:700 25px/1.12 Rajdhani,"Arial Narrow",sans-serif;letter-spacing:.01em;text-wrap:balance}
+#cine p{margin:0 auto 12px;max-width:520px;font-size:13px;line-height:1.45;color:rgba(244,242,236,.85)}
+#cn-opts{flex-direction:row;justify-content:center;gap:14px;margin-top:12px}
+#cn-opts button{flex:0 1 250px;flex-direction:column;align-items:center;text-align:center;padding:9px 12px;background:rgba(0,0,0,.45);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28);clip-path:none}
+#cn-opts .ot{align-items:center}
+#cn-opts .ot span{font-size:10.5px;color:rgba(244,242,236,.65)}
+#cn-opts.one button{flex:0 0 auto;flex-direction:row;align-items:center;padding:8px 18px}
+#app.cine-on .hud-top,#app.cine-on .hud-bot,#app.cine-on #notes,#app.cine-on #sup,#app.cine-on #info,#app.cine-on #deliv{opacity:0;pointer-events:none}
+.hud-top,.hud-bot{transition:opacity .3s}
+#app.radio-on #bub,#app.radio-on #bub-ln,#app.radio-on #bub-pin{visibility:hidden}
+@media (prefers-reduced-motion:reduce){#bub.in{animation:none}#bub-pin{animation:none}#cine .cb,#cine .cw,#cine::before{transition:none}}
+#bub p,#bub-opts .ot span,#cine p,#cn-opts .ot span{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;letter-spacing:0}
+#bub p{font-size:12px}
+#cine::before{background:linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.55) 30%,rgba(0,0,0,.9) 72%)}
+#cine .cw{text-shadow:0 2px 10px rgba(0,0,0,.8)}
