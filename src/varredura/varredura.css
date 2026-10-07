@@ -907,3 +907,5 @@ body:not(.land) #notes{bottom:calc(var(--hbm,150px) + 6px)}
 .hud-top .hbtn .badge[hidden]{display:none}
 .hud-top #clk,.hud-top #ach,.hud-top #fita,.hud-top #pres{display:inline-block;font-variant-numeric:tabular-nums}
 .hud-top #lcd-ph{display:block}
+.hud-top .ht{padding-right:24px}
+body:not(.land) .hud-top .h-btns{padding-right:16px}
