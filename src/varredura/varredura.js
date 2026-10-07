@@ -122,8 +122,8 @@ function tapeUsed(){let n=0;for(let i=0;i<N;i++)if(S.tape[i]||S.tapeBp[i])n++;re
 let FITA_MAX=40;
 
 /* ---------- Messages: radio calls typed out as they come in ---------- */
-function pushNote(d){notesEl.appendChild(d);while(notesEl.children.length>2)notesEl.firstChild.remove();}
-function msg(from,text){
+function pushNote(d){notesEl.appendChild(d);while(notesEl.children.length>1)notesEl.firstChild.remove();}
+function msgNow(from,text){
   const m={from,text,time:clockStr()};S.msgs.push(m);
   const p=PEOPLE[from],d=document.createElement('div');d.className='note radio live';d.style.setProperty('--c',p.col||'#e3c290');
   d.innerHTML=avatar(from)+`<div class="nb"><div class="who"><b></b><span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span class="ch">${from==='sonia'?'Celular':'Rádio'} · ${m.time}</span></div><p><span class="sr"></span><span class="tx" aria-hidden="true"></span><i class="cur" aria-hidden="true"></i></p></div>`;
@@ -136,13 +136,13 @@ function msg(from,text){
   if(!sheetEl.hidden)renderSheet();
 }
 function avatar(from){const p=PEOPLE[from];if(p.img)return `<img class="av" src="${p.img}" alt="">`;const h=HEADURL[from];return h?`<img class="av px" src="${h}" alt="" style="background:${p.col}">`:`<span class="av" style="background:${p.col};color:#0b0e10">${p.ini}</span>`;}
-function sys(text){const d=document.createElement('div');d.className='note sys';d.innerHTML=`<p>${text}</p>`;pushNote(d);setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),450);},2600);}
+function sysNow(text){const d=document.createElement('div');d.className='note sys';d.innerHTML=`<p>${text}</p>`;pushNote(d);setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),450);},2600);}
 
 /* ---------- Discoveries ---------- */
 function discover(id,tile){
   if(S.found[id])return;
   S.found[id]={time:clockStr(),n:S.order.length+1};S.order.push(id);S.marker[tile]=S.order.length;S.unread++;
-  {const X=(tile%W)*T+16,Y=((tile/W)|0)*TH+(floor[tile]===F.WALL?2*TH-6:TH-4);MARKT[tile]=frame;burstSparks(X,Y,26);ringFx(X,Y,[242,194,48],34,46);setTimeout(()=>ringFx(X,Y,[255,236,170],22,36),180);floatText(X,Y-6,'Achado '+S.order.length+' · '+CLUES[id].title,'#f2c230',190);FX.shake=7;SND.chime();S.flash.push({x:tile%W,y:(tile/W)|0,t:5});}
+  {const X=(tile%W)*T+16,Y=((tile/W)|0)*TH+(floor[tile]===F.WALL?2*TH-6:TH-4);MARKT[tile]=frame;burstSparks(X,Y,26);ringFx(X,Y,[242,194,48],34,46);setTimeout(()=>ringFx(X,Y,[255,236,170],22,36),180);floatText(X,Y-6,'Achado '+S.order.length,'#f2c230',150);FX.shake=7;SND.chime();S.flash.push({x:tile%W,y:(tile/W)|0,t:5});}
   flyPolaroid(id,tile,S.order.length);
   msg('mauricio',CLUES[id].line);
   const f=S.found;
@@ -2473,7 +2473,7 @@ function coachDone(set){if(set&&!COACHED){COACHED=true;try{localStorage.setItem(
 function hideCoach(){coachEl.hidden=true;appEl.classList.remove('coach-on');if(coachAnim){coachAnim.cancel();coachAnim=null;}clearTimeout(coachTm);}
 function showCoach(){
   if(COACHED||!coachEl.hidden||cmd||!$('#intro').hidden||!$('#end').hidden)return;
-  if(evOpen||!sheetEl.hidden||!viewerEl.hidden){clearTimeout(coachTm);coachTm=setTimeout(showCoach,2500);return;}
+  if(evOpen||!sheetEl.hidden||!viewerEl.hidden||(typeof middleBusy==='function'&&(middleBusy()||bottomBusy()))){clearTimeout(coachTm);coachTm=setTimeout(showCoach,2500);return;}
   const chip=crewEl.querySelector('.mem .pf');if(!chip)return;
   const r=chip.getBoundingClientRect(),p=clientToApp(r.left+r.width/2,r.top+r.height/2);
   coachEl.hidden=false;appEl.classList.add('coach-on');
@@ -2634,7 +2634,7 @@ function deliver(d){
   else showDeliv(d,loc);
   updateRadio();
 }
-function showDeliv(d,loc){
+function showDelivNow(d,loc){
   const el=$('#deliv');clearTimeout(dvT);el.classList.remove('out');el.hidden=false;void el.offsetWidth;el.style.animation='none';void el.offsetWidth;el.style.animation='';
   $('#dv-k').textContent='Chegou · rádio';$('#dv-t').textContent=d.t;$('#dv-s').textContent=CDONE[d.k];dvLoc=loc;$('#dv-go').hidden=!loc;appEl.classList.add('deliv-on');
   dvT=setTimeout(()=>{el.classList.add('out');dvT=setTimeout(()=>{el.hidden=true;el.classList.remove('out');appEl.classList.remove('deliv-on');},360);},4200);
@@ -2747,6 +2747,7 @@ function evOpts(box,ev,withSub){box.innerHTML='';ev.opts.forEach((o,n)=>{const b
 function evStart(k){const ev=EVENTS[k];evOpen=k;evPrev=paused?(lastSpeed||1):speed;setSpeed(0);appEl.classList.add('evt-on');if(cmd)cmdCancel();hideCoach();return ev;}
 function pumpEvents(){
   if(evOpen||!EVQ.length||!$('#intro').hidden||!$('#end').hidden||!radioEl.hidden)return;
+  if(flyOn()||bottomBusy())return;
   const ev=EVENTS[EVQ[0]];
   if(ev.style==='cena'){openCine(EVQ.shift());return;}
   const a=S.crew.find(c=>c.key===ev.who);
@@ -2798,6 +2799,37 @@ function stabilizeTop(){
 }
 stabilizeTop();
 try{document.fonts&&document.fonts.ready.then(()=>{stabilizeTop();applyLayout(true);});document.fonts&&document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',()=>{stabilizeTop();applyLayout(true);});}catch(_){}
+
+
+/* ---------- One thing at a time ----------
+   Two places on screen get attention: the middle (a photo flying to the rail, a decision, a cinematic cut, the tip)
+   and the line above the base (radio and phone lines, system notes, "Chegou" from the radio).
+   Everything for the line waits its turn and stays long enough to read; nothing for the line shows while the
+   middle is busy; decisions wait until the line is quiet. */
+const BQ=[];let BUSY_UNTIL=0,BCUR=null;
+const flyOn=()=>flyEl.children.length>0;
+function middleBusy(){return flyOn()||!!evOpen||!cineEl.hidden||!radioEl.hidden||!$('#intro').hidden||!$('#end').hidden;}
+function bottomBusy(){return BQ.length>0||performance.now()<BUSY_UNTIL;}
+function msg(from,text){BQ.push({k:'msg',from,text});bottomPump();}
+function sys(text){if(BQ.filter(q=>q.k==='sys').length>=2)return;BQ.push({k:'sys',text});bottomPump();}
+function showDeliv(d,loc){BQ.push({k:'deliv',d,loc});bottomPump();}
+function readMs(t){const k=BQ.length>2?0.6:BQ.length>0?0.8:1;return Math.max(1600,Math.min(6500,1200+t.length*42)*k);}
+function bottomPump(){
+  const now=performance.now();if(now<BUSY_UNTIL||!BQ.length||middleBusy())return;
+  // a line from the radio jumps a pending system note
+  let i=BQ.findIndex(q=>q.k!=='sys');if(i<0)i=0;const q=BQ.splice(i,1)[0];BCUR=q;
+  for(const n of [...notesEl.children]){n.classList.add('out');setTimeout(()=>n.remove(),300);}
+  if(q.k==='msg'){msgNow(q.from,q.text);BUSY_UNTIL=now+Math.ceil(q.text.length/2)*28+readMs(q.text);}
+  else if(q.k==='sys'){sysNow(q.text);BUSY_UNTIL=now+2400;}
+  else{showDelivNow(q.d,q.loc);BUSY_UNTIL=now+4700;}
+}
+setInterval(bottomPump,150);
+// while the middle is busy the line steps back, and the time it spent hidden is given back for reading
+let midWas=false,midT=0;
+setInterval(()=>{const m=middleBusy(),now=performance.now();
+  if(m&&!midWas){midWas=true;midT=now;appEl.classList.add('mid-on');}
+  else if(!m&&midWas){midWas=false;appEl.classList.remove('mid-on');if(BUSY_UNTIL>midT)BUSY_UNTIL+=now-midT;}
+},100);
 /* ---------- Boot ---------- */
 let last=performance.now(),acc=0;
 function loop(now){

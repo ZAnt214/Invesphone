@@ -909,3 +909,5 @@ body:not(.land) #notes{bottom:calc(var(--hbm,150px) + 6px)}
 .hud-top #lcd-ph{display:block}
 .hud-top .ht{padding-right:24px}
 body:not(.land) .hud-top .h-btns{padding-right:16px}
+#app.mid-on #notes,#app.mid-on #deliv{opacity:0;transition:opacity .2s}
+#notes,#deliv{transition:opacity .25s}
