@@ -716,3 +716,26 @@ body:not(.land) .dock,body:not(.land) .dock.hcard{margin-bottom:0}
 .mmore.has:not([aria-expanded="true"]) .ring circle{stroke:#f2c230;stroke-dasharray:none}
 .mmore.has:not([aria-expanded="true"]) .stc{stroke:#f2c230;opacity:1}
 .mmore.has:not([aria-expanded="true"]) .nm{color:#f2c230}
+
+/* one metric for both bottom menus: 60px slots, 48px glyphs, 34px showing above the edge,
+   same label type and spacing, same lift when picked. Faces sit high in the ring so the
+   edge only takes the shoulders */
+.hud-bot{--slot:60px;--gl:48px;--cut:14px;--gapk:14px;--lift:-20px}
+.actions,body:not(.land) .actions{gap:var(--gapk);padding:0;margin-bottom:calc(-8px - var(--cut))}
+.tool .kb,.tool[aria-pressed="true"] .kb,#t-cancel[aria-pressed="true"] .kb,.rkey .kb,.rkey[aria-expanded="true"] .kb{width:var(--slot);height:var(--gl);display:grid;place-items:center}
+.tool .kb svg.stc,body:not(.land) .tool .kb svg.stc{width:var(--gl);height:var(--gl);transform:none}
+.tool[aria-pressed="true"],.rkey[aria-expanded="true"],body:not(.land) .tool[aria-pressed="true"],body:not(.land) .rkey[aria-expanded="true"]{transform:translateY(var(--lift))}
+.tool .l,.mem .nm,.mmore .nm{font:400 11px/1 "Special Elite","Courier New",ui-monospace,monospace;letter-spacing:.06em;text-transform:uppercase;bottom:calc(100% + 7px)}
+.tool[aria-pressed="true"] .l,.rkey[aria-expanded="true"] .l{font-size:11px}
+.dock,.dock.hcard,body:not(.land) .dock,body:not(.land) .dock.hcard{gap:var(--gapk);padding-left:0;padding-right:0;margin-bottom:-8px}
+.mem,.mmore{width:var(--slot);margin-bottom:calc(-1 * var(--cut))}
+.mem .pf,.mmore .pf,.mem .ring,.mmore .ring{width:var(--gl);height:var(--gl)}
+.mem .disc{width:40px;height:40px}
+.mem .disc canvas{width:40px;height:40px;transform:translateY(-3px)}
+.mem[aria-pressed="true"],.mmore[aria-expanded="true"]{transform:translateY(var(--lift))}
+#crew2 .mem{margin-bottom:0}
+#crew2 .mem[aria-pressed="true"]{transform:translateY(-4px)}
+#crew2{gap:var(--gapk);padding:26px 12px 8px}
+.mmore .disc{width:40px;height:40px}
+.mmore .stc{width:24px;height:24px;transform:translateY(-3px)}
+.mmore[aria-expanded="true"] .stc{transform:translateY(-3px)}
