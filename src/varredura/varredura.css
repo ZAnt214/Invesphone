@@ -889,3 +889,19 @@ body:not(.land) #notes{bottom:calc(var(--hbm,150px) + 6px)}
 /* no zoom control: pinch on the phone, wheel on the computer */
 #zoom{display:none!important}
 .land #notes{width:min(560px,calc(100% - 64px))}
+
+/* top bar fit: speed in a 2×2 block, marker count without its caption, so the bar scales down less on phones */
+.hud-top .speed{display:grid;grid-template-columns:repeat(2,28px);grid-auto-rows:22px;gap:3px}
+.hud-top .speed button{width:28px;height:22px}
+.hud-top .h-marks .cap small{display:none}
+.hud-top .h-marks .cap b{font-size:22px}
+.hud-top .ht{padding:7px 18px 7px 14px}
+/* right-hand keys: chamfer drawn behind, so the unread badge is never clipped; same size and spacing for all three */
+.hud-top .h-btns{gap:5px;align-items:center}
+.hud-top .hbtn{width:34px;height:32px;clip-path:none;background:none;isolation:isolate;display:grid;place-items:center}
+.hud-top .hbtn::before{content:'';position:absolute;inset:0;z-index:-1;background:var(--tgk);clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);transition:background .15s}
+.hud-top .hbtn:hover::before{background:rgba(255,255,255,.13)}
+.hud-top .hbtn:hover{background:none}
+.hud-top .hbtn svg{width:17px;height:17px;display:block}
+.hud-top .hbtn .badge{top:-6px;right:-6px;min-width:16px;height:16px;padding:0 3px;border-radius:3px;background:#ff4d3d;color:#fff;font:700 11px/16px Rajdhani,"Arial Narrow",sans-serif;box-shadow:0 0 0 2px #16191c;display:block;text-align:center}
+.hud-top .hbtn .badge[hidden]{display:none}
