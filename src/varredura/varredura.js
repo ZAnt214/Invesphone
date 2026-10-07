@@ -147,7 +147,7 @@ function discover(id,tile){
   msg('mauricio',CLUES[id].line);
   const f=S.found;
   if(f.escritorio_revirado&&f.valores_intactos&&!S.flags.busca){S.flags.busca=1;setTimeout(()=>msg('mauricio','Parece alguém tentando produzir bagunça. Gaveta sem importância aberta, ponto óbvio intacto, objeto caro à vista. Se procuraram algo, sabiam exatamente o que queriam.'),2600);}
-  if(S.order.length===3&&!S.flags.three){S.flags.three=1;setTimeout(()=>msg('sonia','Não olha só pro que mexeram. Olha pro que deixaram.'),4200);}
+  if(S.order.length===3&&!S.flags.three){S.flags.three=1;setTimeout(()=>queueEvent('deixaram'),4200);}
   if(S.order.length===CLUE_IDS.length&&!S.flags.end){S.flags.end=1;setTimeout(showEnd,3000);}
   updateBadge();
 }
@@ -1307,7 +1307,7 @@ const EVENTS={
 };
 const EVQ=[];let evOpen=null,evPrev=1;
 function queueEvent(k){EVQ.push(k);}
-function pumpEvents(){
+function pumpEvents0(){
   if(evOpen||!EVQ.length||!$('#intro').hidden||!$('#end').hidden||!radioEl.hidden)return;
   const k=EVQ.shift(),ev=EVENTS[k];evOpen=k;evPrev=paused?(lastSpeed||1):speed;setSpeed(0);
   const p=PEOPLE[ev.who];
@@ -2363,7 +2363,7 @@ let cmd=null,chipPress=null,suppressClickT=0;
 function inRoomSet(i,rm){return room[i]===rm||(rm==='quintal'&&hot[i]==='cao_canil');}
 function roomTodo(rm){let n=0;for(let i=0;i<N;i++)if(inRoomSet(i,rm)&&(S.desig[i]||periciavel(i)))n++;return n;}
 function markRoom(rm){let n=0;for(let i=0;i<N;i++)if(inRoomSet(i,rm)&&periciavel(i)){S.desig[i]=1;n++;}return n;}
-function overHud(cx,cy){const el=document.elementFromPoint(cx,cy);return !!(el&&el!==cv&&el.closest&&el.closest('.hud-top,.hud-bot,#info,#evt,#mode,.sheet,#coach .cb'));}
+function overHud(cx,cy){const el=document.elementFromPoint(cx,cy);return !!(el&&el!==cv&&el.closest&&el.closest('.hud-top,.hud-bot,#info,#evt,#bub,#cine,#mode,.sheet,#coach .cb'));}
 function cmdTarget(a){
   if(overHud(cmd.cx,cmd.cy))return {k:'cancel',label:'Solte aqui para cancelar'};
   const w=s2w(cmd.x,cmd.y),t=tileAt(cmd.x,cmd.y),tx=t%W,ty=(t/W)|0;
@@ -2731,13 +2731,67 @@ function trayUp(){if(!crew2El||crew2El.hidden)return 0;const hb=crew2El.offsetPa
 // a PM picked on the map opens the tray so the selection is visible
 // with the tray shut, the Apoio key lights up while a PM is the one selected
 setInterval(()=>{const m=$('#mem-more');if(!m)return;const a=sel==null?null:S.crew.find(k=>k.id===sel),on=!!(a&&!isMain(a));if(m._on!==on){m._on=on;m.classList.toggle('has',on);}},200);
+
+/* ---------- Event boxes ----------
+   style 'balao' (default): routine calls from someone on the scene open as a balloon tied to that person on the map;
+   style 'cena': the few moments that turn the case open as a cinematic cut. The rule lives in the event data. */
+EVENTS.deixaram={who:'sonia',style:'cena',where:'Celular',title:'“Não olha só pro que mexeram. Olha pro que deixaram.”',text:'',
+  opts:[{t:'Continuar',sub:'',fn:()=>msg('sonia','Não olha só pro que mexeram. Olha pro que deixaram.')}]};
+const bubEl=$('#bub'),bubLn=$('#bub-ln'),bubPin=$('#bub-pin'),cineEl=$('#cine');let BUB=null;
+function evDone(o){SND.click();o.fn();bubEl.hidden=true;bubLn.setAttribute('hidden','');bubPin.hidden=true;BUB=null;
+  if(!cineEl.hidden){cineEl.classList.remove('in');appEl.classList.remove('cine-on');setTimeout(()=>{cineEl.hidden=true;},260);}
+  evOpen=null;appEl.classList.remove('evt-on');setSpeed(evPrev);clearTimeout(coachTm);coachTm=setTimeout(showCoach,1400);}
+function evOpts(box,ev,withSub){box.innerHTML='';ev.opts.forEach((o,n)=>{const b=document.createElement('button');b.type='button';
+  b.innerHTML=`<span class="ix">${ev.opts.length>1?String.fromCharCode(65+n):'›'}</span><span class="ot"><b>${o.t}</b>${withSub&&o.sub?`<span>${o.sub}</span>`:''}</span>`;
+  b.addEventListener('click',()=>evDone(o));box.appendChild(b);});}
+function evStart(k){const ev=EVENTS[k];evOpen=k;evPrev=paused?(lastSpeed||1):speed;setSpeed(0);appEl.classList.add('evt-on');if(cmd)cmdCancel();hideCoach();return ev;}
+function pumpEvents(){
+  if(evOpen||!EVQ.length||!$('#intro').hidden||!$('#end').hidden||!radioEl.hidden)return;
+  const ev=EVENTS[EVQ[0]];
+  if(ev.style==='cena'){openCine(EVQ.shift());return;}
+  const a=S.crew.find(c=>c.key===ev.who);
+  if(!a){pumpEvents0();return;}
+  openBub(EVQ.shift(),a);
+}
+function openBub(k,a){
+  const ev=evStart(k),p=PEOPLE[ev.who];
+  $('#bub-av').innerHTML=avatar(ev.who);$('#bub-who').textContent=p.name;$('#bub-title').textContent=ev.title;$('#bub-text').textContent=ev.text;
+  evOpts($('#bub-opts'),ev,true);
+  BUB={a};bubEl.style.setProperty('--c',a.accent||'#f2c230');
+  bubEl.hidden=false;bubLn.removeAttribute('hidden');bubPin.hidden=false;bubEl.classList.remove('in');void bubEl.offsetWidth;bubEl.classList.add('in');
+  // bring the person into view when they are off screen or under the bars
+  const s=bubAnchor(a);if(s.x<40||s.x>VW()-40||s.y<HUDPAD.t+30||s.y>VH()-HUDPAD.b-10)panTo([a.x,a.y]);
+  placeBub();SND.pop();
+}
+function bubAnchor(a){const e=ez();return {x:(a.x*T+16-cam.x)*e+VW()/2,y:(a.y*TH+TH-30-cam.y)*e+VH()/2,e};}
+function placeBub(){
+  if(!BUB)return;const a=BUB.a,s=bubAnchor(a),vw=VW(),vh=VH(),w=bubEl.offsetWidth,h=bubEl.offsetHeight;
+  const top=HUDPAD.t+8,bot=vh-HUDPAD.b-8,gap=46;
+  let x,y,side;
+  if(s.x+gap+w<=vw-10){x=s.x+gap;side=1;}else if(s.x-gap-w>=10){x=s.x-gap-w;side=-1;}else{x=Math.min(Math.max(10,s.x-w/2),vw-w-10);side=0;}
+  if(side){y=s.y-h*0.35;}else{y=s.y-h-30;if(y<top)y=s.y+30;}
+  y=Math.min(Math.max(top,y),Math.max(top,bot-h));
+  bubEl.style.transform=`translate(${Math.round(x)}px,${Math.round(y)}px)`;
+  const ex=side===1?x:side===-1?x+w:Math.min(Math.max(x+16,s.x),x+w-16),ey=side?Math.min(Math.max(y+16,s.y),y+h-16):(y>s.y?y:y+h);
+  const mx=side?ex-side*16:ex;
+  bubLn.setAttribute('viewBox',`0 0 ${vw} ${vh}`);bubLn.style.width=vw+'px';bubLn.style.height=vh+'px';
+  bubLn.firstElementChild.setAttribute('d',`M${s.x.toFixed(1)} ${s.y.toFixed(1)}L${mx.toFixed(1)} ${ey.toFixed(1)}L${ex.toFixed(1)} ${ey.toFixed(1)}`);
+  const r=Math.max(9,11*s.e);bubPin.style.transform=`translate(${(s.x-r).toFixed(1)}px,${(s.y-r).toFixed(1)}px)`;bubPin.style.width=bubPin.style.height=(2*r).toFixed(1)+'px';
+}
+function openCine(k){
+  const ev=evStart(k),p=PEOPLE[ev.who];
+  $('#cn-av').innerHTML=avatar(ev.who);$('#cn-who').textContent=p.name+(ev.where?' · '+ev.where:'');$('#cn-title').textContent=ev.title;
+  const tx=$('#cn-text');tx.textContent=ev.text||'';tx.hidden=!ev.text;
+  evOpts($('#cn-opts'),ev,true);$('#cn-opts').classList.toggle('one',ev.opts.length===1);
+  closeRadio();cineEl.hidden=false;void cineEl.offsetWidth;cineEl.classList.add('in');appEl.classList.add('cine-on');SND.pop();
+}
 /* ---------- Boot ---------- */
 let last=performance.now(),acc=0;
 function loop(now){
   const dt=Math.min(0.1,(now-last)/1000);last=now;updFly(dt);
   if(!paused){acc+=dt*20*speed;let n=0;while(acc>=1&&n<100){stepWorld();acc-=1;n++;}if(n>=100)acc=0;}
   updWeather();updParticles();{const dt=paused?0:speed;updCars(dt);updLife(dt);}
-  cmdEdgePan();stepPan();stepZoom();frame++;lerpOn();followCam(dt);render();lerpOff();if(frame%6===0){updateUI();pumpEvents();lodNotice();}if(frame%3===0)SND.tick();
+  cmdEdgePan();stepPan();stepZoom();frame++;lerpOn();followCam(dt);render();placeBub();lerpOff();if(frame%6===0){updateUI();pumpEvents();lodNotice();}if(frame%3===0)SND.tick();
   requestAnimationFrame(loop);
 }
 let lastL=null;
