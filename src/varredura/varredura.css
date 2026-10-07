@@ -590,3 +590,13 @@ body:not(.land) .tool .kpx{width:48px;height:48px}
 @keyframes rxp{50%{filter:brightness(1.4) drop-shadow(0 0 12px #7dff9a)}}
 .rkey .led{top:6px;right:10px}
 .tool[aria-pressed="true"] .l,.rkey[aria-expanded="true"] .l{font-size:9px}
+/* a quiet shelf behind the bottom keys: soft shade rising from the edge and one hairline where they are cut */
+.actions{position:relative}
+.actions::before{content:'';position:absolute;left:-26px;right:-26px;bottom:0;height:96px;pointer-events:none;z-index:-1;background:radial-gradient(ellipse 60% 100% at 50% 100%,rgba(4,6,7,.72),rgba(4,6,7,.34) 45%,rgba(4,6,7,0) 75%)}
+.actions::after{content:'';position:absolute;left:-10px;right:-10px;bottom:36px;height:1px;pointer-events:none;z-index:-1;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.2) 20%,rgba(242,194,48,.28) 50%,rgba(255,255,255,.2) 80%,rgba(255,255,255,0))}
+body:not(.land) .actions::after{bottom:33px}
+.tool .kpx{filter:drop-shadow(0 2px 2px rgba(0,0,0,.6)) drop-shadow(0 0 5px rgba(0,0,0,.35))}
+.tool:hover .kpx{filter:brightness(1.12) drop-shadow(0 2px 2px rgba(0,0,0,.6))}
+.tool[aria-pressed="true"] .kpx{filter:drop-shadow(0 2px 2px rgba(0,0,0,.55)) drop-shadow(0 0 9px rgba(242,194,48,.75))}
+#t-cancel[aria-pressed="true"] .kpx{filter:drop-shadow(0 2px 2px rgba(0,0,0,.55)) drop-shadow(0 0 9px rgba(255,90,60,.75))}
+.rkey[aria-expanded="true"] .kpx{filter:drop-shadow(0 2px 2px rgba(0,0,0,.55)) drop-shadow(0 0 9px rgba(125,255,154,.75))}
