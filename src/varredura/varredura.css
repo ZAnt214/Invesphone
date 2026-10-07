@@ -885,3 +885,7 @@ body:not(.land) #notes{bottom:calc(var(--hbm,150px) + 6px)}
 #notes .note.sys{padding:2px 10px;border:0;background:none;justify-self:auto;align-self:center}
 #notes .note.sys p{font-size:12px;font-style:italic;color:rgba(244,242,236,.75)}
 .land #notes{width:min(560px,calc(100% - 272px))}
+
+/* no zoom control: pinch on the phone, wheel on the computer */
+#zoom{display:none!important}
+.land #notes{width:min(560px,calc(100% - 64px))}
