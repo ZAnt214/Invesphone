@@ -69,13 +69,44 @@
       </nav>
     </div>
   </div>
-  <div id="radio" class="radio" hidden>
-    <div class="rb" role="dialog" aria-labelledby="r-title">
-      <div class="rh"><span class="ant" aria-hidden="true"></span><div class="rlcd"><b id="r-title">CH 03 · CENTRAL</b><span class="sig" aria-hidden="true"><i></i><i></i><i></i><i></i></span></div><button class="hbtn" id="radio-x" aria-label="Fechar o rádio"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-      <div class="rg" id="r-list"></div>
-      <div class="rf"><span class="ptt" aria-hidden="true"></span>Segure um canal para chamar · cada chamada tem tempo de chegada</div>
+  <div id="sup" aria-live="polite"></div>
+  <div id="deliv" hidden role="status"><span class="dk"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><div class="dt"><small id="dv-k">Chegou</small><b id="dv-t"></b><span id="dv-s"></span></div><button id="dv-go">Ver</button></div>
+  <div id="radio" hidden>
+    <div class="hto-in" id="hto-in">
+      <div class="hset" role="dialog" aria-label="Rádio HT">
+        <div class="ant" aria-hidden="true"></div>
+        <div class="ht-top">
+          <button class="knob ch" id="r-knob" aria-label="Girar o canal"><span class="kring" id="r-kr"><i></i></span></button>
+          <span class="hled" id="r-led" aria-hidden="true"></span>
+          <button class="knob vol" id="r-vol" aria-label="Desligar e fechar o rádio"><span class="kring"><i></i></span></button>
+        </div>
+        <div class="ht-body">
+          <button class="ptt" id="r-ptt" aria-label="PTT: segure para transmitir"><span>PTT</span></button>
+          <span class="mon" aria-hidden="true"></span>
+          <div class="grill" aria-hidden="true"></div>
+          <div class="brand" aria-hidden="true"><b>DHPP</b><span>HOMICÍDIOS</span></div>
+          <div class="lcd2" id="r-lcd">
+            <div class="l1"><span class="sig"><i></i><i></i><i></i><i></i></span><b id="r-mode">RX</b><span class="bat"><i></i><i></i><i></i></span></div>
+            <div class="l2"><svg class="chs" id="r-chs" viewBox="-2 0 29 18" aria-hidden="true"></svg><b id="r-name"></b></div>
+            <div class="l3" id="r-stat"></div>
+            <div class="l4"><i id="r-bar"></i></div>
+          </div>
+          <div class="keys" id="r-keys">
+            <button data-n="1">1</button><button data-n="2">2</button><button data-n="3">3</button><button data-n="4">4</button>
+            <button data-n="5">5</button><button data-n="6">6</button><button data-n="7">7</button><button data-n="8">8</button>
+            <button data-n="dn" aria-label="Canal anterior">▼</button><button data-n="up" aria-label="Próximo canal">▲</button><button data-n="off" class="wide" aria-label="Fechar o rádio">SAIR</button>
+          </div>
+        </div>
+      </div>
+      <div class="guide">
+        <div class="gh"><b>Canais</b><span>Escolha o canal e segure o PTT</span></div>
+        <div class="gl2" id="r-list"></div>
+        <div class="glog" id="r-log"></div>
+        <button class="bigptt" id="r-ptt2"><i class="fill"></i><span id="r-ptt2t">Segure para chamar</span></button>
+      </div>
     </div>
   </div>
+
 
   <div id="coach" hidden>
     <div class="hand" aria-hidden="true"><span class="hg"><img alt=""></span><i class="hp"></i></div>

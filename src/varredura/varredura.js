@@ -1307,7 +1307,7 @@ const EVENTS={
 const EVQ=[];let evOpen=null,evPrev=1;
 function queueEvent(k){EVQ.push(k);}
 function pumpEvents(){
-  if(evOpen||!EVQ.length||!$('#intro').hidden||!$('#end').hidden)return;
+  if(evOpen||!EVQ.length||!$('#intro').hidden||!$('#end').hidden||!radioEl.hidden)return;
   const k=EVQ.shift(),ev=EVENTS[k];evOpen=k;evPrev=paused?(lastSpeed||1):speed;setSpeed(0);
   const p=PEOPLE[ev.who];
   $('#evt-av').innerHTML=avatar(ev.who);$('#evt-who').textContent=p.name;$('#evt-title').textContent=ev.title;$('#evt-text').textContent=ev.text;
@@ -2202,7 +2202,7 @@ function updateCrew(){
     const ps=String(sel===a.id);if(b.getAttribute('aria-pressed')!==ps)b.setAttribute('aria-pressed',ps);
     const en=Math.round(a.energy);if(b._en!==en){b._en=en;b.querySelector('.rv').style.strokeDashoffset=(125.66*(1-en/100)).toFixed(1);b.classList.toggle('low',en<25);}
     const ic=actIcon(a);if(b._ic!==ic){b._ic=ic;const s=b.querySelector('.act');s.classList.toggle('on',!!ic);if(ic)s.firstChild.src=ICONURL[ic];}
-    const ord=!!a.order,tk=(a.talkUntil||0)>now;if(b._ord!==ord){b._ord=ord;b.classList.toggle('ord',ord);}if(b._tk!==tk){b._tk=tk;b.classList.toggle('talk',tk);}
+    const ord=!!a.order,tk=(a.talkUntil||0)>now;if(b._ord!==ord){b._ord=ord;b.classList.toggle('ord',ord);}if(b._tk!==tk){b._tk=tk;b.classList.toggle('talk',tk);}b.classList.toggle('boost',a.kind==='pericia'&&S.icUntil>S.tick);
   }
 }
 const infoEl=$('#info');
@@ -2308,7 +2308,7 @@ function showEnd(){
   const [l]=presLabel();
   $('#end-sum').textContent=`Sete achados registrados. Preservação da cena: ${l.toLowerCase()}. ${S.contam<25?'O isolamento segurou a frente da casa.':'Gente demais passou pelo terreno antes do isolamento.'}`;
   $('#end-list').innerHTML=S.order.map(id=>`<li><svg viewBox="0 0 24 24"><path d="M12 3l9 17H3z"/></svg><span><b>${CLUES[id].title}.</b> ${CLUES[id].desc}</span></li>`).join('');
-  hideCoach();cmdCancel();$('#end').hidden=false;fitCards();setSpeed(0);if(!sheetEl.hidden)renderSheet();
+  hideCoach();cmdCancel();closeRadio();$('#end').hidden=false;fitCards();setSpeed(0);if(!sheetEl.hidden)renderSheet();
 }
 $('#b-end').addEventListener('click',()=>{$('#end').hidden=true;setSpeed(1);});
 
@@ -2489,7 +2489,6 @@ function showCoach(){
 $('#coach-ok').addEventListener('click',()=>{SND.click();coachDone(true);});
 
 /* ---------- Radio: call help from outside the scene. Each channel arrives after a while, stays for a spell and then needs a wait ---------- */
-const radioEl=$('#radio'),rList=$('#r-list'),rKey=$('#t-radio');
 const HINTS={porta_intacta:'Como essa gente entrou? Olha a porta da frente com calma.',painel_alarme:'Do lado da porta tem o painel do alarme. Alguém já olhou?',valores_intactos:'Vê o que ficou na sala. O que um ladrão levaria primeiro?',escritorio_revirado:'O escritório parece revirado. Quero o detalhe, não a impressão.',vitimas_dormindo:'O quarto do casal precisa da perícia antes de o IML entrar.',quarto_livia:'Ninguém me falou do quarto da filha ainda.',cao_canil:'E o cachorro da família? Onde ele estava a noite toda?'};
 function soniaHint(){
   if(S.contam>=25&&!S.tape.some(v=>v)&&!S.tapeBp.some(v=>v))return 'A frente está cheia de curioso. Isola a calçada antes de qualquer coisa.';
@@ -2537,49 +2536,15 @@ const CALLS=[
   {k:'iml',t:'Antecipar o IML',sub:'O rabecão vem antes e espera a perícia liberar',eta:2,once:1,ack:'IML acionado. O rabecão está a caminho.',
     ok:()=>IML.state!=='off'?'IML já acionado':'',arrive:()=>{S.flags.imlEarly=1;}}
 ];
-const CS=()=>S.calls||(S.calls={});
-let radioDirty=1,radioBuilt=false,rHold=null;
 function stepRadio(){
   const C=CS();
   for(const d of CALLS){const st=C[d.k];if(!st)continue;
-    if(st.ph==='go'&&S.tick>=st.at){SND.inbound();d.arrive();if(d.dur){st.ph='on';st.end=S.tick+d.dur*20;}else if(d.once)st.ph='done';else{st.ph='cool';st.cd=S.tick+d.cd*20;}radioDirty=1;}
-    else if(st.ph==='on'&&S.tick>=st.end){if(d.leave)d.leave();st.ph='cool';st.cd=S.tick+d.cd*20;radioDirty=1;}
-    else if(st.ph==='cool'&&S.tick>=st.cd){st.ph=d.max&&st.n>=d.max?'done':'idle';radioDirty=1;}
+    if(st.ph==='go'&&S.tick>=st.at){d.arrive();deliver(d);if(d.dur){st.ph='on';st.end=S.tick+d.dur*20;}else if(d.once)st.ph='done';else{st.ph='cool';st.cd=S.tick+d.cd*20;}}
+    else if(st.ph==='on'&&S.tick>=st.end){if(d.leave)d.leave();st.ph='cool';st.cd=S.tick+d.cd*20;}
+    else if(st.ph==='cool'&&S.tick>=st.cd){st.ph=d.max&&st.n>=d.max?'done':'idle';}
   }
   const a=S.crew.find(c=>c.temp&&c.leaving);if(a&&(ti(a)===idx(4,0)||S.tick>a.leaveBy))removeTemp(a);
 }
-function callState(d){
-  const st=CS()[d.k]||{ph:'idle',n:0},mins=t=>Math.max(1,Math.ceil((t-S.tick)/20));
-  if(st.ph==='go')return ['go','Chega em '+mins(st.at)+' min'];
-  if(st.ph==='on')return ['on','No local · '+mins(st.end)+' min'];
-  if(st.ph==='cool')return ['cool','De novo em '+mins(st.cd)+' min'];
-  if(st.ph==='done')return ['off',d.max?'Acabou na base':'Já acionado'];
-  const why=d.ok();if(why)return ['off',why];
-  return ['idle',d.max?`Livre · ${d.max-(st.n||0)}×`:'Livre'];
-}
-function renderRadio(){
-  if(!radioBuilt){radioBuilt=true;
-    rList.innerHTML=CALLS.map(d=>`<button class="rc" data-k="${d.k}"><span class="ri"><svg viewBox="0 0 24 24">${RICON[d.k]}</svg></span><span class="rt"><b>${d.t}</b><small>${d.sub}</small></span><span class="rs"></span><i class="hold"></i></button>`).join('');}
-  for(const b of rList.children){const d=CALLS.find(c=>c.k===b.dataset.k),[cls,txt]=callState(d),s=b.querySelector('.rs');
-    for(const c of ['idle','go','on','cool','off'])b.classList.toggle(c,c===cls);if(s.textContent!==txt)s.textContent=txt;b.setAttribute('aria-label',`${d.t}. ${d.sub}. ${txt}`);}
-}
-function updateRadio(){
-  const C=CS();let n=0;for(const k in C)if(C[k].ph==='go'||C[k].ph==='on')n++;
-  rKey.classList.toggle('busy',n>0);const rn=$('#r-n');rn.hidden=!n;if(rn.textContent!==String(n))rn.textContent=n;
-  if(!radioEl.hidden)renderRadio();
-}
-function fireCall(k,b){
-  const d=CALLS.find(c=>c.k===k);if(!d||callState(d)[0]!=='idle')return;
-  const C=CS(),prev=C[k]||{n:0};C[k]={ph:'go',at:S.tick+Math.round(d.eta*20),n:(prev.n||0)+1};
-  SND.roger();setTimeout(()=>msg('central',d.ack),380);buzz(20);if(b)kick(b,'sent',520);renderRadio();updateRadio();
-}
-function openRadio(){if(cmd)cmdCancel();hideCoach();radioEl.hidden=false;rKey.setAttribute('aria-expanded','true');renderRadio();SND.rOn();}
-function closeRadio(){if(!radioEl.hidden)SND.rOff();radioEl.hidden=true;rKey.setAttribute('aria-expanded','false');holdEnd();}
-rKey.setAttribute('aria-expanded','false');
-rKey.addEventListener('click',()=>{if(radioEl.hidden)openRadio();else closeRadio();});
-$('#radio-x').addEventListener('click',closeRadio);
-radioEl.addEventListener('click',e=>{if(e.target===radioEl)closeRadio();});
-// radio sounds: knob, carrier hiss while the key is held, talk-permit and roger beeps, busy tone, incoming chirp
 Object.assign(SND,{
   rOn(){if(!this.ok())return;const t=this.ctx.currentTime;this.nz(t,0.02,'highpass',2500,0.7,0.25);this.nz(t+0.03,0.32,'bandpass',1800,0.9,0.06);this.osc('sine',880,t+0.3,0.004,0.06,0.03);},
   rOff(){if(!this.ok())return;const t=this.ctx.currentTime;this.nz(t,0.02,'highpass',2500,0.7,0.2);this.osc('sine',700,t+0.02,0.004,0.08,0.03,420);},
@@ -2590,18 +2555,6 @@ Object.assign(SND,{
   inbound(){if(!this.ok())return;const t=this.ctx.currentTime;this.nz(t,0.12,'bandpass',1900,3,0.05);for(const [k,f] of [[0.13,1200],[0.21,1500],[0.29,1800]])this.osc('sine',f,t+k,0.003,0.06,0.03);}
 });
 // hold a channel like a push-to-talk key; letting go early cancels
-function holdEnd(){SND.pttStop();if(!rHold)return;const b=rHold.b;b.classList.remove('holding');b.style.setProperty('--h',0);cancelAnimationFrame(rHold.raf);rHold=null;}
-rList.addEventListener('pointerdown',e=>{
-  const b=e.target.closest('.rc');if(!b)return;
-  if(!b.classList.contains('idle')){SND.busy();kick(b.querySelector('.rs'),'sent',400);return;}
-  holdEnd();try{b.setPointerCapture(e.pointerId);}catch(_){}
-  rHold={b,pid:e.pointerId,t0:performance.now(),raf:0};b.classList.add('holding');SND.pttStart();buzz(6);
-  const tick=()=>{if(!rHold||rHold.b!==b)return;const k=Math.min(1,(performance.now()-rHold.t0)/560);b.style.setProperty('--h',k.toFixed(3));if(k>=1){holdEnd();b.dataset.fired=performance.now();fireCall(b.dataset.k,b);}else rHold.raf=requestAnimationFrame(tick);};
-  rHold.raf=requestAnimationFrame(tick);
-});
-const rUp=e=>{if(rHold&&e.pointerId===rHold.pid)holdEnd();};
-rList.addEventListener('pointerup',rUp);rList.addEventListener('pointercancel',rUp);rList.addEventListener('contextmenu',e=>e.preventDefault());
-rList.addEventListener('click',e=>{const b=e.target.closest('.rc');if(!b)return;if(e.detail===0)fireCall(b.dataset.k,b);else if(b.classList.contains('idle')&&!(performance.now()-(+b.dataset.fired||0)<600)){const s=b.querySelector('.rs');s.textContent='Segure para chamar';}});
 function drawCones(){
   if(!(S.blockUntil>S.tick))return;
   for(const ty of [1,H-2]){const Y=ty*TH+TH-4;for(let x=10;x<4*T;x+=30){
@@ -2610,6 +2563,106 @@ function drawCones(){
     ctx.fillStyle='#f06a1e';ctx.beginPath();ctx.moveTo(x,Y-14);ctx.lineTo(x+5,Y);ctx.lineTo(x-5,Y);ctx.closePath();ctx.fill();
     ctx.fillStyle='#f3f1ea';ctx.fillRect(x-3,Y-8,6,2);ctx.fillStyle='#1e1611';ctx.fillRect(x-7,Y,15,2);}}
 }
+SND.key=function(){if(!this.ok())return;const t=this.ctx.currentTime;this.osc('sine',1750,t,0.002,0.045,0.022);};
+SND.detent=function(){if(!this.ok())return;const t=this.ctx.currentTime;this.nz(t,0.012,'highpass',3800,0.7,0.22);this.osc('triangle',240,t,0.001,0.03,0.04);};
+/* the handheld set */
+const CNAME={reforco:'Reforço PM',delegada:'Delegada',fita:'Mais fita',transito:'Fechar rua',ic:'Apoio perícia',aguia:'Heli Águia',imprensa:'Imprensa',iml:'IML'};
+const CDONE={reforco:'O Soldado Reis assumiu o portão',delegada:'A delegada respondeu no rádio',fita:'+20 m de fita no rolo da PM',transito:'Rua fechada, cones na pista',ic:'Perícia 50% mais rápida agora',aguia:'Luz do alto sobre a casa',imprensa:'Os repórteres estão saindo do portão',iml:'O rabecão está a caminho da casa'};
+const CLOC={reforco:()=>{const a=S.crew.find(c=>c.temp);return a?[a.x,a.y]:null;},transito:()=>[2,1.5],ic:()=>{const a=S.crew[0];return [a.x,a.y];},imprensa:()=>[6,6],iml:()=>[2,3],aguia:()=>[17,9]};
+const rKey=$('#t-radio'),radioEl=$('#radio'),rList=$('#r-list'),rLcd=$('#r-lcd'),rLed=$('#r-led'),rBig=$('#r-ptt2');
+let rCh=0,rHold=null,rOver=null,rLog=[],PAN=null,supSig='',supNew='',dvT=0,dvLoc=null,rxT=0,chSeg=null;
+const CS=()=>S.calls||(S.calls={});
+function callState(d){
+  const st=CS()[d.k]||{ph:'idle',n:0},mins=t=>Math.max(1,Math.ceil((t-S.tick)/20));
+  if(st.ph==='go')return ['go','Chega em '+mins(st.at)+' min'];
+  if(st.ph==='on')return ['on','No local · '+mins(st.end)+' min'];
+  if(st.ph==='cool')return ['cool','De novo em '+mins(st.cd)+' min'];
+  if(st.ph==='done')return ['off',d.max?'Acabou na base':'Já acionado'];
+  const why=d.ok();if(why)return ['off',why];
+  return ['idle',d.max?`Livre · ${d.max-(st.n||0)}×`:'Livre'];
+}
+function lit(){rLcd.classList.add('lit');clearTimeout(rLcd._t);rLcd._t=setTimeout(()=>rLcd.classList.remove('lit'),6000);}
+function chDigits(n){if(!chSeg){const sv=$('#r-chs');let h='<g transform="skewX(-7)">';for(const x of [1.5,14])h+=`<g transform="translate(${x} 0)">`+Object.keys(SEG).map(s=>`<polygon data-s="${s}" points="${SEG[s]}"/>`).join('')+'</g>';sv.innerHTML=h+'</g>';chSeg=[...sv.querySelectorAll('g>g')].map(g=>[...g.children]);}
+  const ds=String(n).padStart(2,'0');for(let k=0;k<2;k++){const on=DIG[+ds[k]];for(const p of chSeg[k])p.classList.toggle('on',on.includes(p.dataset.s));}}
+function tune(i,snd){rCh=(i+CALLS.length)%CALLS.length;$('#r-kr').style.transform=`rotate(${rCh*45}deg)`;if(snd==='knob')SND.detent();else if(snd)SND.key();lit();rOver=null;renderRadio();}
+function say2(txt,ms,blink){rOver={txt,until:performance.now()+(ms||1500)};rLcd.classList.toggle('blinkst',!!blink);renderRadio();}
+function renderRadio(){
+  if(!rList.children.length){rList.innerHTML=CALLS.map((d,i)=>`<button class="gr" data-i="${i}"><span class="gn">${String(i+1).padStart(2,'0')}</span><svg viewBox="0 0 24 24">${RICON[d.k]}</svg><span class="gt"><b>${d.t}</b><small>${d.sub}</small></span><span class="gs"></span></button>`).join('');}
+  const now=performance.now();
+  CALLS.forEach((d,i)=>{const b=rList.children[i],[cls,txt]=callState(d),s=b.querySelector('.gs');for(const c of ['idle','go','on','cool','off'])b.classList.toggle(c,c===cls);b.classList.toggle('sel',i===rCh);if(s.textContent!==txt)s.textContent=txt;b.setAttribute('aria-label',`Canal ${i+1}: ${d.t}. ${d.sub}. ${txt}`);});
+  const d=CALLS[rCh],[cls,txt]=callState(d);chDigits(rCh+1);
+  const nm=$('#r-name');if(nm.textContent!==CNAME[d.k])nm.textContent=CNAME[d.k];
+  const st=rOver&&rOver.until>now?rOver.txt:txt;const se=$('#r-stat');if(se.textContent!==st)se.textContent=st;
+  $('#r-mode').textContent=rHold?'TX':now<rxT?'RX ◂':'CH';
+  let busy=0;for(const k in CS())if(CS()[k].ph==='go')busy=1;
+  rLed.className='hled'+(rHold?' tx':now<rxT?' rx':busy?' wait':'');
+  for(const k of $('#r-keys').children)k.classList.toggle('cur',k.dataset.n===String(rCh+1));
+  rBig.classList.toggle('no',cls!=='idle');$('#r-ptt2t').textContent=cls==='idle'?`Segure para chamar · CH ${String(rCh+1).padStart(2,'0')}`:txt;
+  $('#r-log').innerHTML=rLog.slice(-3).map(l=>`<p class="${l.ok?'ok':''}"><b>${l.tag}</b>${l.txt}</p>`).join('')||'<p><b>CH</b>Escolha um canal na lista ou no teclado.</p>';
+}
+function logLine(tag,txt,ok){rLog.push({tag,txt,ok});if(rLog.length>12)rLog.shift();if(!radioEl.hidden)renderRadio();}
+function renderSup(){
+  const C=CS(),act=CALLS.filter(d=>C[d.k]&&(C[d.k].ph==='go'||C[d.k].ph==='on')),sp=$('#sup');
+  const sig=act.map(d=>d.k+C[d.k].ph).join(',');
+  if(sig!==supSig){supSig=sig;sp.innerHTML=act.map(d=>`<button class="sp ${C[d.k].ph}${supNew===d.k&&C[d.k].ph==='on'?' new':''}" data-k="${d.k}"><i><svg viewBox="0 0 24 24">${RICON[d.k]}</svg></i><span>${CNAME[d.k]}</span><b></b></button>`).join('');supNew='';placeNotes();}
+  for(const b of sp.children){const d=CALLS.find(c=>c.k===b.dataset.k),st=C[d.k],m=Math.max(1,Math.ceil(((st.ph==='go'?st.at:st.end)-S.tick)/20)),t=(st.ph==='go'?'chega ':'')+m+' min',e=b.querySelector('b');if(e.textContent!==t)e.textContent=t;}
+}
+function updateRadio(){
+  const C=CS();let n=0;for(const k in C)if(C[k].ph==='go'||C[k].ph==='on')n++;
+  rKey.classList.toggle('busy',n>0);const rn=$('#r-n');rn.hidden=!n;if(rn.textContent!==String(n))rn.textContent=n;
+  renderSup();if(!radioEl.hidden)renderRadio();
+}
+function fireCall(k){
+  const d=CALLS.find(c=>c.k===k);if(!d||callState(d)[0]!=='idle')return false;
+  const C=CS(),prev=C[k]||{n:0};C[k]={ph:'go',at:S.tick+Math.round(d.eta*20),n:(prev.n||0)+1};
+  SND.roger();buzz(20);logLine('TX',d.ack);setTimeout(()=>msg('central',d.ack),380);
+  const row=rList.children[CALLS.indexOf(d)];if(row)kick(row,'del',1200);updateRadio();return true;
+}
+function deliver(d){
+  SND.inbound();setTimeout(()=>SND.stamp(),380);buzz(30);rxT=performance.now()+1800;
+  const loc=CLOC[d.k]&&CLOC[d.k]();
+  if(loc){const X=loc[0]*T+16,Y=loc[1]*TH+TH-4;ringFx(X,Y,[125,255,154],34,60);setTimeout(()=>ringFx(X,Y,[210,255,220],20,44),170);burstSparks(X,Y,18,[125,255,154]);floatText(X,Y-12,'✓ '+CNAME[d.k],'#7dff9a',190);}
+  if(d.k==='fita'){kick($('#g-fita'),'refill',950);hudPop($('#g-fita'),'+20 m');}
+  if(d.k==='transito')for(const ty of [1,H-2])for(let x=10;x<4*T;x+=30)puff(x,ty*TH+TH-6,[240,140,70]);
+  kick(rKey,'rx',1600);supNew=d.k;logLine('✓',CNAME[d.k]+': '+CDONE[d.k],true);
+  if(!radioEl.hidden){const row=rList.children[CALLS.indexOf(d)];if(row)kick(row,'del',1200);if(CALLS.indexOf(d)===rCh)say2('CHEGOU ✓',2200,true);lit();}
+  else showDeliv(d,loc);
+  updateRadio();
+}
+function showDeliv(d,loc){
+  const el=$('#deliv');clearTimeout(dvT);el.classList.remove('out');el.hidden=false;void el.offsetWidth;el.style.animation='none';void el.offsetWidth;el.style.animation='';
+  $('#dv-k').textContent='Chegou · rádio';$('#dv-t').textContent=d.t;$('#dv-s').textContent=CDONE[d.k];dvLoc=loc;$('#dv-go').hidden=!loc;appEl.classList.add('deliv-on');
+  dvT=setTimeout(()=>{el.classList.add('out');dvT=setTimeout(()=>{el.hidden=true;el.classList.remove('out');appEl.classList.remove('deliv-on');},360);},4200);
+}
+$('#dv-go').addEventListener('click',()=>{SND.click();if(dvLoc)panTo(dvLoc);});
+function hudPop(el,txt){const r=el.getBoundingClientRect(),p=clientToApp(r.left+r.width/2,r.top+r.height);const s=document.createElement('span');s.className='hudpop';s.textContent=txt;s.style.left=p.x+'px';s.style.top=(p.y+4)+'px';appEl.appendChild(s);setTimeout(()=>s.remove(),1700);}
+function panTo(loc){PAN=[loc[0]*T+16,loc[1]*TH+TH/2];follow=false;}
+function stepPan(){if(!PAN)return;cam.x+=(PAN[0]-cam.x)*0.14;cam.y+=(PAN[1]-cam.y)*0.14;clampCam();if(Math.hypot(PAN[0]-cam.x,PAN[1]-cam.y)<1.5)PAN=null;}
+$('#sup').addEventListener('click',e=>{const b=e.target.closest('.sp');if(!b)return;SND.click();const f=CLOC[b.dataset.k],loc=f&&f();if(loc)panTo(loc);else{openRadio();tune(CALLS.findIndex(c=>c.k===b.dataset.k));}});
+function fitRadio(){const inn=$('#hto-in');if(radioEl.hidden)return;const cs=getComputedStyle(radioEl),pl=parseFloat(cs.paddingLeft),pr=parseFloat(cs.paddingRight),pt=parseFloat(cs.paddingTop),pb=parseFloat(cs.paddingBottom),aw=radioEl.clientWidth-pl-pr,ah=radioEl.clientHeight-pt-pb;const k=Math.min(1,aw/inn.offsetWidth,ah/inn.offsetHeight);inn.style.setProperty('--rk',k.toFixed(3));inn.style.setProperty('--rcx',(pl+aw/2).toFixed(1)+'px');inn.style.setProperty('--rcy',(pt+ah/2).toFixed(1)+'px');}
+function openRadio(){if(cmd)cmdCancel();hideCoach();radioEl.hidden=false;appEl.classList.add('radio-on');rKey.setAttribute('aria-expanded','true');tune(rCh);fitRadio();SND.rOn();}
+function closeRadio(){if(radioEl.hidden)return;holdEnd(true);SND.rOff();radioEl.hidden=true;appEl.classList.remove('radio-on');rKey.setAttribute('aria-expanded','false');}
+rKey.setAttribute('aria-expanded','false');
+rKey.addEventListener('click',()=>{if(radioEl.hidden)openRadio();else closeRadio();});
+radioEl.addEventListener('click',e=>{if(e.target===radioEl||e.target.id==='hto-in')closeRadio();});
+$('#r-knob').addEventListener('click',()=>tune(rCh+1,'knob'));
+$('#r-vol').addEventListener('click',closeRadio);
+$('#r-keys').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;kick(b,'hit',120);const n=b.dataset.n;if(n==='off')closeRadio();else if(n==='up')tune(rCh+1,1);else if(n==='dn')tune(rCh-1,1);else tune(+n-1,1);});
+rList.addEventListener('click',e=>{const b=e.target.closest('.gr');if(b)tune(+b.dataset.i,1);});
+// push to talk: hold, the bar fills, letting go early drops the call
+function holdEnd(cancel){SND.pttStop();if(!rHold)return;const h=rHold;rHold=null;cancelAnimationFrame(h.raf);h.el.classList.remove('down');rBig.style.setProperty('--h',0);$('#r-bar').style.width='0';if(cancel&&!radioEl.hidden){say2('TX cancelado',1100);SND.key();}renderRadio();}
+function pttDown(e){
+  const el=e.currentTarget,d=CALLS[rCh],[cls,txt]=callState(d);lit();
+  if(cls!=='idle'){SND.busy();say2(txt,1600,true);buzz(40);return;}
+  try{el.setPointerCapture(e.pointerId);}catch(_){}
+  rHold={el,pid:e.pointerId,t0:performance.now(),raf:0};el.classList.add('down');SND.pttStart();buzz(8);renderRadio();
+  const step=()=>{if(!rHold||rHold.el!==el)return;const k=Math.min(1,(performance.now()-rHold.t0)/700);rBig.style.setProperty('--h',k.toFixed(3));$('#r-bar').style.width=(k*100).toFixed(1)+'%';
+    if(k>=1){rHold=null;el.classList.remove('down');SND.pttStop();rBig.style.setProperty('--h',0);$('#r-bar').style.width='0';if(fireCall(d.k))say2('Enviado ✓ aguarde',1800);}else rHold.raf=requestAnimationFrame(step);};
+  rHold.raf=requestAnimationFrame(step);
+}
+const pttUp=e=>{if(rHold&&e.pointerId===rHold.pid)holdEnd(true);};
+for(const el of [$('#r-ptt'),rBig]){el.addEventListener('pointerdown',pttDown);el.addEventListener('pointerup',pttUp);el.addEventListener('pointercancel',pttUp);el.addEventListener('contextmenu',e=>e.preventDefault());
+  el.addEventListener('click',e=>{if(e.detail===0){const d=CALLS[rCh];if(callState(d)[0]==='idle'){if(fireCall(d.k))say2('Enviado ✓ aguarde',1800);}else{SND.busy();say2(callState(d)[1],1600,true);}}});}
 /* ---------- Boot ---------- */
 let last=performance.now(),acc=0;
 function loop(now){
@@ -2617,7 +2670,7 @@ function loop(now){
   if(!paused){acc+=dt*20*speed;let n=0;while(acc>=1&&n<100){stepWorld();acc-=1;n++;}if(n>=100)acc=0;}
   if(follow&&sel!=null){const a=S.crew.find(k=>k.id===sel);if(a){cam.x+=(a.x*T+8-cam.x)*0.12;cam.y+=(a.y*TH+8-cam.y)*0.12;clampCam();}}
   updWeather();updParticles();{const dt=paused?0:speed;updCars(dt);updLife(dt);}
-  cmdEdgePan();stepZoom();frame++;render();if(frame%6===0){updateUI();pumpEvents();lodNotice();}if(frame%3===0)SND.tick();
+  cmdEdgePan();stepPan();stepZoom();frame++;render();if(frame%6===0){updateUI();pumpEvents();lodNotice();}if(frame%3===0)SND.tick();
   requestAnimationFrame(loop);
 }
 let lastL=null;
@@ -2633,7 +2686,7 @@ function fitTop(){const ht=$('.ht');ht.style.transform='';ht.style.width='';TOPK
   // upright: the watch shares a row with the buttons, the marks with the gauges
   if(!document.body.classList.contains('land')){const w=s=>{const e=ht.querySelector(s);return e&&e.offsetWidth?e.offsetWidth:0;};need=Math.max(w('.h-time')+w('.h-btns'),w('.h-marks')+w('.h-state'))+6;}
   if(need>avail+1){TOPK=avail/need;ht.style.width=(avail/TOPK).toFixed(1)+'px';ht.style.transform=`scale(${TOPK.toFixed(4)})`;}}
-function placeNotes(){const ht=$('.ht'),y=ht.offsetTop+ht.offsetHeight*TOPK;notesEl.style.top=(y+6)+'px';$('#evt').style.top=(y+8)+'px';}
+function placeNotes(){const ht=$('.ht'),y=ht.offsetTop+ht.offsetHeight*TOPK,sp=$('#sup');sp.style.top=(y+6)+'px';const sh=!document.body.classList.contains('land')&&sp.children.length?sp.offsetHeight+6:0;notesEl.style.top=(y+6+sh)+'px';$('#evt').style.top=(y+8)+'px';}
 function measureHud(){
   const yOf=el=>{let y=0;for(let e=el;e&&e!==appEl;e=e.offsetParent)y+=e.offsetTop;return y;};
   const vh=VH(),bd=vh-yOf(crewEl),br=vh-yOf($('.hud-right'));
@@ -2661,7 +2714,7 @@ function applyLayout(force){
   const L=VW()>VH();document.body.classList.toggle('land',L);
   const A=VW()-INS.l-INS.r-16;document.body.classList.toggle('mid',L&&A>=600&&A<770);document.body.classList.toggle('narrow',L&&A<600);
   $('#rot').hidden=SW()>SH();
-  fitTop();measureHud();resize();placeNotes();fitCards();
+  fitTop();measureHud();resize();placeNotes();fitCards();fitRadio();
   if(force||L!==lastL){lastL=L;fitView();}
   if(cmd)cmdCancel();if(!coachEl.hidden){hideCoach();setTimeout(showCoach,300);}
 }
