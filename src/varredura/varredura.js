@@ -2681,8 +2681,10 @@ for(const el of [$('#r-ptt'),rBig]){el.addEventListener('pointerdown',pttDown);e
     cancel:'<path d="M11 9h10a7 7 0 010 14h-8"/><path d="M15 4l-5 5 5 5"/>',
     radio:'<path d="M12 3v7"/><rect x="9" y="10" width="14" height="19" rx="2.5"/><path d="M12 14h8v4h-8z"/><path d="M12.5 22.5h.01M16 22.5h.01M19.5 22.5h.01M12.5 26h.01M16 26h.01M19.5 26h.01"/>'
   };
+  // each mark gets a square box centred on its own drawing, so every key is cut at the same height
+  const VB={isolar:'2 1 28 28',cancel:'5.5 0 27 27',radio:'1 1 30 30'};
   for(const [id,k] of [['t-isolar','isolar'],['t-cancel','cancel'],['t-radio','radio']]){const kb=document.querySelector('#'+id+' .kb');if(!kb)continue;kb.querySelectorAll('svg,img').forEach(e=>e.remove());
-    const s=document.createElementNS(NS,'svg');s.setAttribute('viewBox','0 0 32 32');s.setAttribute('class','stc');s.setAttribute('aria-hidden','true');s.innerHTML=P[k];kb.prepend(s);}
+    const s=document.createElementNS(NS,'svg');s.setAttribute('viewBox',VB[k]);s.setAttribute('class','stc');s.setAttribute('aria-hidden','true');s.innerHTML=P[k];kb.prepend(s);}
   const tp=document.getElementById('t-pericia');if(tp)tp.hidden=true;
 })();
 /* ---------- Boot ---------- */

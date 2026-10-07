@@ -630,3 +630,17 @@ body:not(.land) .tool .kb svg.stc{width:44px;height:44px}
 .rkey.rx .stc{animation:rxs .5s ease-out 3}
 @keyframes rxs{50%{stroke:#8fe0a6;opacity:1}}
 .rkey .led{top:2px;right:4px}
+
+/* every mark centred exactly on the bottom edge, so all are cut in half the same way */
+.actions,body:not(.land) .actions{margin-bottom:-38px}
+.tool .kb svg.stc,body:not(.land) .tool .kb svg.stc{width:46px;height:46px;transform:none}
+.tool[aria-pressed="true"] .kb svg.stc,.rkey[aria-expanded="true"] .kb svg.stc{transform:scale(1.08)}
+.tool[aria-pressed="true"],.rkey[aria-expanded="true"],body:not(.land) .tool[aria-pressed="true"],body:not(.land) .rkey[aria-expanded="true"]{transform:translateY(-30px)}
+/* soft ground behind them: a darker patch of asphalt with a faint worn painted line where the marks are cut */
+.actions::before{content:'';display:block;position:absolute;left:-44px;right:-44px;bottom:0;height:78px;pointer-events:none;z-index:-1;
+  background:radial-gradient(rgba(216,211,196,.06) .8px,transparent 1.2px) 0 0/7px 7px,radial-gradient(rgba(0,0,0,.25) 1px,transparent 1.4px) 3px 4px/9px 9px,radial-gradient(ellipse 58% 100% at 50% 100%,rgba(6,8,9,.55),rgba(6,8,9,.22) 55%,transparent 78%);
+  -webkit-mask-image:radial-gradient(ellipse 60% 100% at 50% 100%,#000 55%,transparent 80%);mask-image:radial-gradient(ellipse 60% 100% at 50% 100%,#000 55%,transparent 80%)}
+.actions::after{content:'';display:block;position:absolute;left:-20px;right:-20px;bottom:38px;height:2px;pointer-events:none;z-index:-1;
+  background:repeating-linear-gradient(90deg,rgba(216,211,196,.22) 0 16px,transparent 16px 26px);filter:blur(.3px);
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent);mask-image:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent)}
+.actions{isolation:isolate}
