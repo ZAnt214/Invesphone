@@ -2619,7 +2619,7 @@ function renderSup(){
   const C=CS(),act=CALLS.filter(d=>C[d.k]&&(C[d.k].ph==='go'||C[d.k].ph==='on')),sp=$('#sup');
   const sig=act.map(d=>d.k+C[d.k].ph).join(',');
   if(sig!==supSig){supSig=sig;sp.innerHTML=act.map(d=>`<button class="sp ${C[d.k].ph}${supNew===d.k&&C[d.k].ph==='on'?' new':''}" data-k="${d.k}"><i><svg viewBox="0 0 24 24">${RICON[d.k]}</svg></i><span>${CNAME[d.k]}</span><b></b></button>`).join('');supNew='';placeNotes();}
-  for(const b of sp.children){const d=CALLS.find(c=>c.k===b.dataset.k),st=C[d.k],m=Math.max(1,Math.ceil(((st.ph==='go'?st.at:st.end)-S.tick)/20)),t=(st.ph==='go'?'chega ':'')+m+' min',e=b.querySelector('b');if(e.textContent!==t)e.textContent=t;}
+  for(const b of sp.children){const d=CALLS.find(c=>c.k===b.dataset.k),st=C[d.k],m=Math.max(1,Math.ceil(((st.ph==='go'?st.at:st.end)-S.tick)/20)),t=(st.ph==='go'?'chega ':'')+m+' min',e=b.querySelector('b');if(e.textContent!==t)e.textContent=t;b.classList.toggle('low',st.ph==='on'&&m<=10);}
 }
 function updateRadio(){
   const C=CS();let n=0;for(const k in C)if(C[k].ph==='go'||C[k].ph==='on')n++;
