@@ -644,3 +644,27 @@ body:not(.land) .tool .kb svg.stc{width:44px;height:44px}
   background:repeating-linear-gradient(90deg,rgba(216,211,196,.22) 0 16px,transparent 16px 26px);filter:blur(.3px);
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent);mask-image:linear-gradient(90deg,transparent,#000 18%,#000 82%,transparent)}
 .actions{isolation:isolate}
+/* crew dock · stencil on the asphalt: faces sprayed in worn chalk white inside a dashed ring; the selected one gets its colour and fresh yellow paint */
+.dock,.dock.hcard{background:none;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:0 4px 2px;gap:10px;isolation:isolate}
+.dock::before{content:'';position:absolute;left:-30px;right:-30px;bottom:-10px;height:96px;pointer-events:none;z-index:-1;
+  background:radial-gradient(rgba(216,211,196,.06) .8px,transparent 1.2px) 0 0/7px 7px,radial-gradient(ellipse 60% 100% at 50% 100%,rgba(6,8,9,.55),rgba(6,8,9,.2) 55%,transparent 78%);
+  -webkit-mask-image:radial-gradient(ellipse 62% 100% at 50% 100%,#000 55%,transparent 80%);mask-image:radial-gradient(ellipse 62% 100% at 50% 100%,#000 55%,transparent 80%)}
+.mem .disc{background:rgba(216,211,196,.07);box-shadow:none}
+.mem .disc canvas{filter:grayscale(1) contrast(1.7) brightness(1.15) url(#spray);opacity:.62;mix-blend-mode:screen;transition:filter .3s,opacity .3s}
+.mem .ring{filter:url(#spray)}
+.mem .ring .rt{stroke:rgba(216,211,196,.22);stroke-width:2.5;stroke-dasharray:5 3}
+.mem .ring .rv{stroke:#d8d3c4;stroke-width:2.6;stroke-linecap:butt}
+.mem .nm{margin-top:3px;padding:0;border:0;background:none;font:400 10.5px/1 "Special Elite","Courier New",ui-monospace,monospace;letter-spacing:.03em;text-transform:none;color:#d8d3c4;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.8);max-width:60px}
+.mem.low .ring .rv{stroke:#ff8a6a}
+.mem[aria-pressed="true"]{transform:translateY(-8px)}
+.mem[aria-pressed="true"] .pf::after{inset:-6px;box-shadow:none;background:radial-gradient(circle,rgba(242,194,48,.3),rgba(242,194,48,.08) 50%,transparent 72%);z-index:-1}
+.mem[aria-pressed="true"] .disc{background:var(--c)}
+.mem[aria-pressed="true"] .disc canvas{filter:none;opacity:1;mix-blend-mode:normal}
+.mem[aria-pressed="true"] .ring .rv{stroke:#f2c230}
+.mem[aria-pressed="true"] .ring .rt{stroke:rgba(242,194,48,.3)}
+.mem[aria-pressed="true"] .nm{color:#f2c230}
+.mem.talk .disc canvas{opacity:.9}
+.mem .tk{border-style:dashed}
+body.cmd-cancel .hud-bot .dock{box-shadow:none}
+.dock,.dock.hcard{gap:16px}
+body:not(.land) .dock,body:not(.land) .dock.hcard{gap:12px}
