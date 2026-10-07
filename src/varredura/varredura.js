@@ -2185,7 +2185,7 @@ const HEADURL={};
 function drawHead(cnv,a){const g=cnv.getContext('2d');g.imageSmoothingEnabled=false;g.clearRect(0,0,cnv.width,cnv.height);g.drawImage(framesHDFor(a)[0],-4,3);}
 function headURL(a){if(!HEADURL[a.key]){const c=document.createElement('canvas');c.width=c.height=48;drawHead(c,a);HEADURL[a.key]=c.toDataURL();}return HEADURL[a.key];}
 function actIcon(a){const j=a.job;if(!j)return a.energy<20?'cup':'';switch(j.k){case 'pericia':return 'mag';case 'coffee':return 'cup';case 'tape':return 'tape';case 'escort':case 'talk':return 'dots';case 'hold':case 'goto':return a.order&&a.order.k==='guard'?'shield':'pin';}return '';}
-function buildCrew(){
+function buildCrew0(){
   crewEl.innerHTML='';
   for(const a of S.crew){
     headURL(a);
@@ -2449,21 +2449,21 @@ function drawCmdPreview(){
   ctx.strokeStyle='rgba(5,6,7,.7)';ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(ex,ey,r,r*0.5,0,0,7);ctx.stroke();
   ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();
 }
-crewEl.addEventListener('dragstart',e=>e.preventDefault());crewEl.addEventListener('contextmenu',e=>e.preventDefault());
-crewEl.addEventListener('pointerdown',e=>{
+const crewHost=$('.hud-bot');crewHost.addEventListener('dragstart',e=>{if(e.target.closest('.mem'))e.preventDefault();});crewHost.addEventListener('contextmenu',e=>{if(e.target.closest('.mem'))e.preventDefault();});
+crewHost.addEventListener('pointerdown',e=>{
   const b=e.target.closest('.mem');if(!b||(e.pointerType==='mouse'&&e.button!==0))return;
   chipPress={id:+b.dataset.id,b,pid:e.pointerId,x:e.clientX,y:e.clientY};
   try{b.setPointerCapture(e.pointerId);}catch(_){}
 });
-crewEl.addEventListener('pointermove',e=>{
+crewHost.addEventListener('pointermove',e=>{
   if(!chipPress||e.pointerId!==chipPress.pid)return;
   if(!cmd){if(Math.hypot(e.clientX-chipPress.x,e.clientY-chipPress.y)<9)return;cmdStart();if(!cmd)return;}
   cmd.cx=e.clientX;cmd.cy=e.clientY;cmd.x=PX(e);cmd.y=PY(e);cmdRefresh();
 });
 function chipUp(e){if(!chipPress||e.pointerId!==chipPress.pid)return;chipPress=null;if(!cmd)return;suppressClickT=performance.now();
   if(e.type==='pointercancel'){cmdCancel();return;}cmd.cx=e.clientX;cmd.cy=e.clientY;cmd.x=PX(e);cmd.y=PY(e);cmdRefresh();cmdDrop();}
-crewEl.addEventListener('pointerup',chipUp);crewEl.addEventListener('pointercancel',chipUp);
-crewEl.addEventListener('lostpointercapture',e=>{if(chipPress&&e.pointerId===chipPress.pid){chipPress=null;cmdCancel();}});
+crewHost.addEventListener('pointerup',chipUp);crewHost.addEventListener('pointercancel',chipUp);
+crewHost.addEventListener('lostpointercapture',e=>{if(chipPress&&e.pointerId===chipPress.pid){chipPress=null;cmdCancel();}});
 addEventListener('blur',()=>{chipPress=null;cmdCancel();});
 
 /* ---------- First-time tip for the drag orders ---------- */
@@ -2698,6 +2698,39 @@ function lerpOff(){for(const p of LERPED){p.x=p._x;p.y=p._y;}LERPED=[];}
 
 /* camera follow reads the smoothed position, with a frame-rate independent ease */
 function followCam(dt){if(!(follow&&sel!=null))return;const a=S.crew.find(k=>k.id===sel);if(!a)return;const k=1-Math.pow(0.88,Math.max(0,dt)*60);cam.x+=(a.x*T+8-cam.x)*k;cam.y+=(a.y*TH+8-cam.y)*k;clampCam();}
+
+/* crew dock split: perícia and campo stay on the dock; the PMs live in a tray the "Apoio" key opens */
+const crew2El=$('#crew2');let TRAY=false;
+const isMain=a=>a.kind!=='pm';
+function buildCrew(){
+  buildCrew0();
+  crew2El.innerHTML='';
+  const side=S.crew.filter(a=>!isMain(a));
+  for(const a of side){const b=document.getElementById('mem-'+a.id);if(b){crew2El.appendChild(b);b.addEventListener('click',()=>setTimeout(()=>setTray(false),120));}}
+  if(!side.length){TRAY=false;crew2El.hidden=true;return;}
+  const m=document.createElement('button');m.className='mmore';m.id='mem-more';m.type='button';
+  m.innerHTML=`<span class="pf"><svg class="ring" viewBox="0 0 46 46" aria-hidden="true"><circle class="rt" cx="23" cy="23" r="20"/></svg><span class="disc"><svg class="stc" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5.5c0 4.3-3 7.6-7 9.5-4-1.9-7-5.2-7-9.5V6z"/><path class="ch" d="M9 11l3 3 3-3"/></svg></span><b class="cnt">+${side.length}</b></span><span class="nm">Apoio</span>`;
+  m.addEventListener('click',()=>{SND.click();setTray(!TRAY);});
+  crewEl.appendChild(m);
+  setTray(TRAY,true);
+}
+function setTray(on,quiet){
+  TRAY=!!on&&crew2El.children.length>0;
+  if(TRAY&&!quiet&&sel!=null){sel=null;selTile=null;follow=false;pendingOrder=null;updateInfo();updateCrew();}
+  const m=$('#mem-more');if(m){m.setAttribute('aria-expanded',String(TRAY));m.title=TRAY?'Recolher o apoio da PM':'Mostrar o apoio da PM';m.setAttribute('aria-label',m.title);}
+  if(TRAY){crew2El.hidden=false;placeTray();crew2El.classList.remove('in');void crew2El.offsetWidth;if(!quiet)crew2El.classList.add('in');}
+  else crew2El.hidden=true;
+  placeTray();measureHud();
+}
+const LANDB=()=>document.body.classList.contains('land');
+function placeTray(){
+  if(crew2El.hidden)return;
+  crew2El.style.left=crewEl.offsetLeft+'px';
+}
+function trayUp(){if(!crew2El||crew2El.hidden)return 0;const hb=crew2El.offsetParent;return VH()-((hb?hb.offsetTop:0)+crew2El.offsetTop);}
+// a PM picked on the map opens the tray so the selection is visible
+// with the tray shut, the Apoio key lights up while a PM is the one selected
+setInterval(()=>{const m=$('#mem-more');if(!m)return;const a=sel==null?null:S.crew.find(k=>k.id===sel),on=!!(a&&!isMain(a));if(m._on!==on){m._on=on;m.classList.toggle('has',on);}},200);
 /* ---------- Boot ---------- */
 let last=performance.now(),acc=0;
 function loop(now){
@@ -2724,7 +2757,7 @@ function placeNotes(){const ht=$('.ht'),y=ht.offsetTop+ht.offsetHeight*TOPK,sp=$
 function measureHud(){
   const yOf=el=>{let y=0;for(let e=el;e&&e!==appEl;e=e.offsetParent)y+=e.offsetTop;return y;};
   const vh=VH(),bd=vh-yOf(crewEl),br=vh-yOf($('.hud-right'));
-  appEl.style.setProperty('--hbd',(bd+8)+'px');appEl.style.setProperty('--hbm',(Math.max(bd,br)+8)+'px');
+  appEl.style.setProperty('--hbd',(Math.max(bd,trayUp())+8)+'px');appEl.style.setProperty('--hbm',(Math.max(bd,br)+8)+'px');
   const ht=$('.ht');HUDPAD.t=ht.offsetTop+ht.offsetHeight*TOPK;HUDPAD.b=Math.max(bd,br);
 }
 function screenInsets(){
@@ -2748,7 +2781,7 @@ function applyLayout(force){
   const L=VW()>VH();document.body.classList.toggle('land',L);
   const A=VW()-INS.l-INS.r-16;document.body.classList.toggle('mid',L&&A>=600&&A<770);document.body.classList.toggle('narrow',L&&A<600);
   $('#rot').hidden=SW()>SH();
-  fitTop();measureHud();resize();placeNotes();fitCards();fitRadio();
+  fitTop();measureHud();resize();placeNotes();fitCards();fitRadio();placeTray();
   if(force||L!==lastL){lastL=L;fitView();}
   if(cmd)cmdCancel();if(!coachEl.hidden){hideCoach();setTimeout(showCoach,300);}
 }

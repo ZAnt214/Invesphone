@@ -683,3 +683,36 @@ body:not(.land) .dock,body:not(.land) .dock.hcard{margin-bottom:0}
 .mem .disc canvas{filter:grayscale(1) contrast(1.7) brightness(1.15)}
 .mem .ring{filter:none}
 .mem .ring .rv{transition:stroke-dashoffset 1.2s linear,stroke .3s}
+
+/* "Apoio" key on the dock: same sprayed stencil, a shield with the PM count */
+.mmore{position:relative;width:48px;display:flex;flex-direction:column;align-items:center;padding:0;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;margin-bottom:-23px;transition:transform .28s cubic-bezier(.2,.9,.3,1.2);-webkit-tap-highlight-color:transparent}
+.mmore .pf{position:relative;width:46px;height:46px;display:grid;place-items:center}
+.mmore .ring{position:absolute;inset:0;width:46px;height:46px;overflow:visible}
+.mmore .ring circle{fill:none;stroke:rgba(216,211,196,.3);stroke-width:2.5;stroke-dasharray:5 3}
+.mmore .disc{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:rgba(216,211,196,.07)}
+.mmore .stc{width:22px;height:22px;fill:none;stroke:#d8d3c4;stroke-width:2;stroke-linejoin:round;stroke-linecap:round;opacity:.8;transition:transform .3s}
+.mmore .stc .ch{stroke-width:1.8}
+.mmore .cnt{position:absolute;right:-6px;top:-4px;font:400 10px/1 "Special Elite","Courier New",monospace;color:#0b0e10;background:#d8d3c4;padding:2px 3px 1px;border-radius:3px;transform:rotate(-6deg)}
+.mmore .nm{position:absolute;left:50%;bottom:calc(100% + 4px);transform:translateX(-50%);white-space:nowrap;font:400 10.5px/1 "Special Elite","Courier New",monospace;letter-spacing:.03em;color:#d8d3c4;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.8)}
+.mmore[aria-expanded="true"]{transform:translateY(-27px)}
+.mmore[aria-expanded="true"] .ring circle{stroke:#f2c230}
+.mmore[aria-expanded="true"] .stc{stroke:#f2c230;opacity:1}
+.mmore[aria-expanded="true"] .stc .ch{transform:rotate(180deg);transform-origin:12px 12.5px}
+.mmore[aria-expanded="true"] .nm{color:#f2c230}
+.mmore[aria-expanded="true"] .cnt{background:#f2c230}
+/* the tray: a second painted row above the dock, faces whole */
+#crew2{pointer-events:auto;position:absolute;bottom:calc(var(--sb,env(safe-area-inset-bottom,0px)) + 74px);display:flex;align-items:flex-end;gap:16px;padding:22px 14px 8px;z-index:1;isolation:isolate}
+#crew2[hidden]{display:none}
+#crew2::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:14px;
+  background:radial-gradient(rgba(216,211,196,.06) .8px,transparent 1.2px) 0 0/7px 7px,rgba(6,8,9,.62);
+  -webkit-mask-image:radial-gradient(ellipse 75% 90% at 50% 55%,#000 60%,transparent 100%);mask-image:radial-gradient(ellipse 75% 90% at 50% 55%,#000 60%,transparent 100%)}
+#crew2::after{content:'';position:absolute;left:10px;right:10px;bottom:2px;height:2px;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(216,211,196,.28) 0 12px,transparent 12px 20px)}
+#crew2 .mem{margin-bottom:0}
+#crew2 .mem[aria-pressed="true"]{transform:translateY(-4px)}
+#crew2 .mem.lift{transform:scale(.9)}
+#crew2.in{animation:trayIn .32s cubic-bezier(.2,.9,.3,1.15)}
+@keyframes trayIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#crew2.in{animation:none}}
+.mmore.has:not([aria-expanded="true"]) .ring circle{stroke:#f2c230;stroke-dasharray:none}
+.mmore.has:not([aria-expanded="true"]) .stc{stroke:#f2c230;opacity:1}
+.mmore.has:not([aria-expanded="true"]) .nm{color:#f2c230}
