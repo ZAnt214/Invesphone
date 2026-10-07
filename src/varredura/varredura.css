@@ -949,3 +949,5 @@ body:not(.land) .hud-top .h-btns{padding-right:16px}
 #sup .sp.go{color:#f2c230;border:0;background:none}#sup .sp.go b{color:rgba(244,242,236,.75)}
 #sup .sp.new{animation:supIn .5s ease-out}
 @keyframes supIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+a.hbtn{text-decoration:none;box-sizing:border-box}
+.hud-top .hbtn.base{color:#f2c230}
