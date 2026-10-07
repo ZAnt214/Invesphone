@@ -2816,7 +2816,7 @@ function fitCards(){
 // if the kit still does not fit the width, shrink it as a whole instead of letting it overflow
 let TOPK=1;
 function fitTop(){const ht=$('.ht');ht.style.transform='';ht.style.width='';TOPK=1;
-  const avail=ht.clientWidth;let need=ht.scrollWidth;
+  const avail=ht.clientWidth;let need=(()=>{const c=getComputedStyle(ht);let w=(parseFloat(c.paddingLeft)||0)+(parseFloat(c.paddingRight)||0);for(const e of ht.children){if(!e.offsetWidth)continue;w+=e.offsetWidth;}return Math.max(ht.scrollWidth,Math.ceil(w));})();
   // upright: the watch shares a row with the buttons, the marks with the gauges
   if(!document.body.classList.contains('land')){const w=s=>{const e=ht.querySelector(s);return e&&e.offsetWidth?e.offsetWidth:0;};need=Math.max(w('.h-time')+w('.h-btns'),w('.h-marks')+w('.h-state'))+6;}
   if(need>avail+1){TOPK=avail/need;ht.style.width=(avail/TOPK).toFixed(1)+'px';ht.style.transform=`scale(${TOPK.toFixed(4)})`;}}
