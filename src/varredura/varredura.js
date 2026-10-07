@@ -2526,8 +2526,8 @@ const CALLS=[
     ok:()=>'',arrive:()=>msg('sonia',soniaHint())},
   {k:'fita',t:'Mais fita',sub:'Viatura de apoio traz +20 m',eta:3,cd:4,max:2,ack:'Fita a caminho com a viatura de apoio.',
     ok:()=>'',arrive:()=>{FITA_MAX+=20;msg('central','A viatura de apoio deixou mais 20 m de fita com a PM.');}},
-  {k:'transito',t:'Fechar a rua',sub:'Trânsito desviado, sem carros por 10 min',eta:1.5,dur:10,cd:8,ack:'Pedido de bloqueio repassado ao trânsito.',
-    ok:()=>'',arrive:()=>{S.blockUntil=S.tick+10*20;msg('central','Rua das Acácias fechada nos dois sentidos. Cones na pista.');}},
+  {k:'transito',t:'Fechar a rua',sub:'Trânsito desviado, sem carros por 40 min',eta:1.5,dur:40,cd:8,ack:'Pedido de bloqueio repassado ao trânsito.',
+    ok:()=>'',arrive:()=>{S.blockUntil=S.tick+40*20;msg('central','Rua das Acácias fechada nos dois sentidos. Cones na pista.');},leave:()=>sys('Rua das Acácias reaberta. Os cones saíram da pista.')},
   {k:'ic',t:'Apoio da perícia',sub:'Fotógrafo e papiloscopista: perícia 50% mais rápida',eta:3,dur:8,cd:10,ack:'Equipe de apoio da perícia acionada.',
     ok:()=>'',arrive:()=>{S.icUntil=S.tick+8*20;msg('mauricio','Chegou o apoio da perícia. Com fotógrafo e papiloscopista a gente rende mais.');}},
   {k:'aguia',t:'Helicóptero Águia',sub:'Luz do alto ajuda lá fora, mas atrai curiosos',eta:1,dur:3,cd:12,ack:'Águia decolando, chega em instantes.',
@@ -2642,7 +2642,8 @@ function showDelivNow(d,loc){
 $('#dv-go').addEventListener('click',()=>{SND.click();if(dvLoc)panTo(dvLoc);});
 function hudPop(el,txt){const r=el.getBoundingClientRect(),p=clientToApp(r.left+r.width/2,r.top+r.height);const s=document.createElement('span');s.className='hudpop';s.textContent=txt;s.style.left=p.x+'px';s.style.top=(p.y+4)+'px';appEl.appendChild(s);setTimeout(()=>s.remove(),1700);}
 function panTo(loc){PAN=[loc[0]*T+16,loc[1]*TH+TH/2];follow=false;}
-function stepPan(){if(!PAN)return;cam.x+=(PAN[0]-cam.x)*0.14;cam.y+=(PAN[1]-cam.y)*0.14;clampCam();if(Math.hypot(PAN[0]-cam.x,PAN[1]-cam.y)<1.5)PAN=null;}
+function stepPan(){if(!PAN)return;const ox=cam.x,oy=cam.y;cam.x+=(PAN[0]-cam.x)*0.14;cam.y+=(PAN[1]-cam.y)*0.14;clampCam();if(Math.hypot(PAN[0]-cam.x,PAN[1]-cam.y)<1.5||Math.hypot(cam.x-ox,cam.y-oy)<0.05)PAN=null;}
+for(const ev of ['pointerdown','wheel'])cv.addEventListener(ev,()=>{PAN=null;},{passive:true});
 $('#sup').addEventListener('click',e=>{const b=e.target.closest('.sp');if(!b)return;SND.click();const f=CLOC[b.dataset.k],loc=f&&f();if(loc)panTo(loc);else{openRadio();tune(CALLS.findIndex(c=>c.k===b.dataset.k));}});
 function fitRadio(){const inn=$('#hto-in');if(radioEl.hidden)return;const cs=getComputedStyle(radioEl),pl=parseFloat(cs.paddingLeft),pr=parseFloat(cs.paddingRight),pt=parseFloat(cs.paddingTop),pb=parseFloat(cs.paddingBottom),aw=radioEl.clientWidth-pl-pr,ah=radioEl.clientHeight-pt-pb;const k=Math.min(1,aw/inn.offsetWidth,ah/inn.offsetHeight);inn.style.setProperty('--rk',k.toFixed(3));inn.style.setProperty('--rcx',(pl+aw/2).toFixed(1)+'px');inn.style.setProperty('--rcy',(pt+ah/2).toFixed(1)+'px');}
 function openRadio(){if(cmd)cmdCancel();hideCoach();radioEl.hidden=false;appEl.classList.add('radio-on');rKey.setAttribute('aria-expanded','true');tune(rCh);fitRadio();SND.rOn();}
@@ -2747,7 +2748,8 @@ function evOpts(box,ev,withSub){box.innerHTML='';ev.opts.forEach((o,n)=>{const b
 function evStart(k){const ev=EVENTS[k];evOpen=k;evPrev=paused?(lastSpeed||1):speed;setSpeed(0);appEl.classList.add('evt-on');if(cmd)cmdCancel();hideCoach();return ev;}
 function pumpEvents(){
   if(evOpen||!EVQ.length||!$('#intro').hidden||!$('#end').hidden||!radioEl.hidden)return;
-  if(flyOn()||bottomBusy())return;
+  // a decision waits for the photo and for the line on screen to be read, not for the whole queue
+  if(flyOn()||performance.now()<BUSY_UNTIL||BQ.some(q=>q.k==='deliv'))return;
   const ev=EVENTS[EVQ[0]];
   if(ev.style==='cena'){openCine(EVQ.shift());return;}
   const a=S.crew.find(c=>c.key===ev.who);
@@ -2812,7 +2814,7 @@ function middleBusy(){return flyOn()||!!evOpen||!cineEl.hidden||!radioEl.hidden|
 function bottomBusy(){return BQ.length>0||performance.now()<BUSY_UNTIL;}
 function msg(from,text){BQ.push({k:'msg',from,text});bottomPump();}
 function sys(text){if(BQ.filter(q=>q.k==='sys').length>=2)return;BQ.push({k:'sys',text});bottomPump();}
-function showDeliv(d,loc){BQ.push({k:'deliv',d,loc});bottomPump();}
+function showDeliv(d,loc){BQ.unshift({k:'deliv',d,loc});bottomPump();}
 function readMs(t){const k=BQ.length>2?0.6:BQ.length>0?0.8:1;return Math.max(1600,Math.min(6500,1200+t.length*42)*k);}
 function bottomPump(){
   const now=performance.now();if(now<BUSY_UNTIL||!BQ.length||middleBusy())return;
