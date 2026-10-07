@@ -777,12 +777,12 @@ function fitView(){
   else cam.z=snapZ(VW()/(11*T));
   FITZ=cam.z;clampCam();
 }
-function followCam(){
+function followCam(dt){
   if(!follow)return;
   const L=VW()>VH(),f=talkFocus()||[P1.x,P1.y];
   let tx=f[0]*T+16,ty=f[1]*TH+TH/2-14;
   if(talkOpen){if(L)tx+=VW()*0.24/cam.z;else ty+=VH()*0.2/cam.z;}
-  cam.x+=(tx-cam.x)*0.12;cam.y+=(ty-cam.y)*0.12;clampCam();
+  const k=1-Math.exp(-dt*7.5);cam.x+=(tx-cam.x)*k;cam.y+=(ty-cam.y)*k;clampCam();
 }
 
 /* ---------- Luz (mesmo método da casa: ambiente × luzes por cômodo) ---------- */
@@ -941,12 +941,12 @@ function drawFlagCloth(o){
   ctx.fillStyle='#1e1611';ctx.fillRect(X+16,Y+3,1,12);
 }
 function drawCar2(c){
-  const s=c.spr,X=Math.round(c.x-s.width/2),Y=Math.round(c.y-s.height);
+  const s=c.spr,X=DP(c.x-s.width/2),Y=DP(c.y-s.height);
   ctx.globalAlpha=0.3;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(c.x+4,c.y-4,s.width*0.5,8,0,0,7);ctx.fill();ctx.globalAlpha=1;
   if(c.dir<0){ctx.save();ctx.translate(c.x,0);ctx.scale(-1,1);ctx.drawImage(s,-s.width/2,Y);ctx.restore();}else ctx.drawImage(s,X,Y);
 }
 function drawPigeon(b){
-  const X=Math.round(b.x),Y=Math.round(b.y),z=Math.round(b.z),d=b.dir;
+  const X=DP(b.x),Y=DP(b.y),z=DP(b.z),d=b.dir;
   ctx.globalAlpha=0.28*Math.max(0.2,1-b.z/90);ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(X,Y,5,1.6,0,0,7);ctx.fill();ctx.globalAlpha=1;
   const y=Y-z-6,peck=b.st==='g'&&(b.t%50)<8,fly=b.st!=='g',up=(frame>>2)%2;
   if(fly){ctx.fillStyle='#1e1611';ctx.fillRect(X-7,up?y-5:y+1,14,4);ctx.fillStyle='#a3a9b0';ctx.fillRect(X-6,up?y-4:y+2,12,2);}
@@ -971,22 +971,11 @@ function smokePass(){
   ctx.globalAlpha=1;ctx.fillStyle='#e8e4da';ctx.fillRect(4*T+72,12*TH+26,5,1);ctx.fillStyle='#c98a4a';ctx.fillRect(4*T+71,12*TH+26,2,1);
   ctx.fillStyle=(frame>>4)%3?'#ff7a3a':'#ffb060';ctx.fillRect(4*T+77,12*TH+26,1,1);
 }
-// vinheta e grão de filme pré-desenhados em meia resolução: um único drawImage por quadro
-let POST=[],POSTK='';
-function buildPost(){
-  const w=Math.ceil(cv.width/2),h=Math.ceil(cv.height/2),k=w+'x'+h;if(k===POSTK)return;POSTK=k;POST=[];
-  for(let n=0;n<3;n++){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d'),im=g.createImageData(w,h),d=im.data,cx=w/2,cy=h/2,r0=Math.min(w,h)*0.4,r1=Math.max(w,h)*0.75;
-    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4,dd=Math.hypot(x-cx,y-cy),v=clamp((dd-r0)/(r1-r0),0,1)*0.42,r=Math.random();
-      if(r<0.5){d[i]=4;d[i+1]=6;d[i+2]=12;d[i+3]=Math.round((v+r*0.07)*255);}else{d[i]=255;d[i+1]=250;d[i+2]=240;d[i+3]=Math.round((r-0.5)*0.07*255*(1-v));}}
-    g.putImageData(im,0,0);POST.push(c);}
-}
-function atmosPost(){
-  ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=true;ctx.drawImage(POST[(frame>>1)%3],0,0,cv.width,cv.height);
-}
 
 
 /* ---------- Detalhe de perto ---------- */
-let LODE=1,LODV=1;
+let LODE=1,LODV=1,SC=1;
+const DP=v=>Math.round(v*SC)/SC; // posição no pixel da tela: anda sem tremer com a câmera
 const lodOf=e=>e<0.9?0:e<1.6?1:e<2.4?2:3;
 const MICROFONT='ui-monospace,Menlo,Consolas,monospace';
 function mtext(x,y,t,size,col,align,w){ctx.font=`${w||600} ${size}px ${MICROFONT}`;ctx.fillStyle=col;ctx.textAlign=align||'left';ctx.fillText(t,x,y);ctx.textAlign='left';}
@@ -1013,7 +1002,7 @@ function micro(){
 function drawPerson(p,sit,id){
   const fr=framesFor(p);let f=0,dy=0;
   if(p.moving)f=Math.floor(p.walk*3.2)%4;else if(sit){f=4;if(p.act==='type'&&((frame>>2)+id)%6<2)dy=-1;if(p.act==='write'&&((frame>>4)+id)%5===0)dy=-1;}
-  const X=Math.round(p.x*T)+16,Y=Math.round(p.y*TH)+TH-2;
+  const X=DP(p.x*T+16),Y=DP(p.y*TH+TH-2);
   const bob=p.moving?((Math.floor(p.walk*3.2)%2)?-1:0):sit?dy:(Math.sin(frame/26+(id||0)*1.7)>0.55?-1:0);
   const hdA=clamp((LODE-2.2)/0.35,0,1),img=hdA>=1?framesHDFor(p)[f]:fr[f],dw=fr[f].width,dh=fr[f].height;
   if(!sit){if(GLOSSY.has(room[ti(p)]))drawReflect(fr[f],X,Y,p.dir<0,dw,dh);drawCast(fr[f],X,Y,p.dir<0,castFrom(p),dw,dh);ctx.drawImage(SHADOW,X-11,Y-5);}
@@ -1053,7 +1042,7 @@ function drawNames(){
 function render(){
   ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;ctx.fillStyle='#0b0d10';ctx.fillRect(0,0,cv.width,cv.height);
   const s=cam.z*dpr,ox=Math.round(cv.width/2-cam.x*s),oy=Math.round(cv.height/2-cam.y*s);
-  LODE=s/dpr;LODV=lodOf(LODE);UIK=Math.min(1,2.2/LODE);
+  LODE=s/dpr;LODV=lodOf(LODE);SC=s;UIK=Math.min(1,2.2/LODE);
   const SPR=()=>{ctx.setTransform(s,0,0,s,ox,oy);ctx.imageSmoothingEnabled=false;};
   ctx.setTransform(s,0,0,s*K,ox,oy);ctx.imageSmoothingEnabled=false;ctx.drawImage(BG,0,0);SPR();drawFloorFX();
   const rows={};const R=k=>rows[k]||(rows[k]={o:[],p:[]});
@@ -1087,8 +1076,6 @@ function render(){
   for(const o of objs)if(o.hot&&o.spr&&!o.nomark&&!talkOpen&&!SEEN[o.hot]){const sp=o.spr;drawMarker(o.x*T+o.w*T/2,sp.y-6);}
   for(const n of NPCS)if(n.say&&!talkOpen){const al=Math.min(1,(n.say.life-n.say.t)/20,n.say.t/6);drawSay(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?70:74),n.say.txt,al);}
   drawNames();drawRoomLabels();
-  // vinheta e grão
-  atmosPost();
 }
 function isSeat(n){const i=ti(n);return objs.some(o=>o.nocc&&idx(o.x,o.y)===i);}
 
@@ -1101,7 +1088,7 @@ function updateUI(){
 let last=performance.now();
 function loop(now){
   const dt=Math.min(0.1,(now-last)/1000);last=now;
-  update(dt);updFX();updAtmo();stepZoom();followCam();frame++;render();if(frame%6===0)updateUI();
+  update(dt);updFX();updAtmo();stepZoom();followCam(dt);frame++;render();if(frame%6===0)updateUI();
   requestAnimationFrame(loop);
 }
 
@@ -1125,7 +1112,7 @@ function applyLayout(force){
   document.body.classList.toggle('rot',!!ROT);setInsets();
   const L=VW()>VH();document.body.classList.toggle('land',L);document.body.classList.toggle('narrow',VW()<560);document.body.classList.toggle('tiny',VW()<400);document.body.classList.toggle('short',VH()<720);document.body.classList.toggle('low',VH()<420);
   $('#rot').hidden=SW()>SH();
-  dpr=Math.min(window.devicePixelRatio||1,3);cv.width=Math.round(VW()*dpr);cv.height=Math.round(VH()*dpr);lc.width=Math.ceil(cv.width/LS);lc.height=Math.ceil(cv.height/LS);buildPost();
+  dpr=Math.min(window.devicePixelRatio||1,3);cv.width=Math.round(VW()*dpr);cv.height=Math.round(VH()*dpr);lc.width=Math.ceil(cv.width/LS);lc.height=Math.ceil(cv.height/LS);
   const ht=$('.hud');HUDT=ht?ht.offsetTop+ht.offsetHeight+4:58;
   fitCard();
   if(force||L!==lastL){lastL=L;fitView();}else clampCam();
