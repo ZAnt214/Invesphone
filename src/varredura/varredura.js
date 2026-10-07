@@ -132,7 +132,7 @@ function msgNow(from,text){
   (function type(){if(!d.isConnected)return;k=Math.min(text.length,k+2);tx.textContent=text.slice(0,k);if(k<text.length)setTimeout(type,28);else{d.classList.remove('live');d.classList.add('done');SND.squelch();}})();
   setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),450);},Math.min(13000,3600+text.length*52));
   const a=S.crew.find(c=>c.key===from);if(a)a.talkUntil=performance.now()+text.length*14+900;
-  if(from==='sonia')SND.blip();else if(SND.ok())SND.radio();
+  if(from==='sonia')SND.blip();else if(SND.ok()){SND.rOn();setTimeout(()=>SND.radio(),180);}
   if(!sheetEl.hidden)renderSheet();
 }
 function avatar(from){const p=PEOPLE[from];if(p.img)return `<img class="av" src="${p.img}" alt="">`;const h=HEADURL[from];return h?`<img class="av px" src="${h}" alt="" style="background:${p.col}">`:`<span class="av" style="background:${p.col};color:#0b0e10">${p.ini}</span>`;}
@@ -1486,13 +1486,13 @@ function updCars(dt){
     if(S.blockUntil>S.tick&&!c.iml&&front<=CONE_TOP-12){gap=Math.min(gap,Math.max(0,CONE_TOP-14-front));if(c.v<0.05&&gap<20&&(c.wait||0)>45){c.rev=1;floatText(c.x+32,c.y+40,'Rua fechada','#f3f5f6',70);}}
     if(front<=CROSS_Y*TH+2&&S.civs.some(p=>p.wantCross))gap=Math.min(gap,Math.max(0,CROSS_Y*TH-6-front));
     let tgt=c.vmax;if(c.y+84>3*TH&&c.y<17*TH)tgt*=0.6;
-    if(c.iml&&!c.left&&c.y>=c.park-30)tgt=Math.max(0.15,(c.park-c.y)*0.03);
+    if((c.iml||c.svc)&&!c.left&&c.y>=c.park-30)tgt=c.y>=c.park?0:Math.max(0.12,(c.park-c.y)*0.03);
     const SD=12;tgt=Math.min(tgt,Math.max(0,(gap-SD)*0.05));
     c.brake=tgt<c.v-0.05?1:0;c.v+=(tgt-c.v)*(tgt<c.v?0.3:0.06)*dt;if(c.v<0)c.v=0;
     let mv=c.v*dt;if(gap-SD<mv)mv=Math.max(0,gap-SD);if(mv<0.01)c.v=Math.min(c.v,0.05);
     if(mv<0.05&&gap<60){c.wait+=dt;if(c.wait>110&&!c.honked){c.honked=1;SND.honk();floatText(c.x+32,c.y+30,'BI-BI!','#f3f5f6',60);}}else c.wait=0;
     c.y+=mv;
-    if(c.iml&&!c.left&&!c.shift&&c.y>=c.park-0.5){c.y=c.park;c.shift={to:0,park:true};}
+    if((c.iml||c.svc)&&!c.left&&c.y>=c.park-90){const tx=c.lx||0;c.x+=Math.sign(tx-c.x)*Math.min(Math.abs(tx-c.x),0.75*dt);if(c.y>=c.park-0.5){c.y=c.park;if(Math.abs(c.x-tx)<0.5){c.x=tx;c.parked=true;c.v=0;if(c.onPark){const f=c.onPark;c.onPark=null;f(c);}}}}
     if(WET>0.4&&c.v>0.6&&Math.random()<0.25*dt)fxAdd({k:'drip',x:c.x+8+Math.random()*48,y:c.y+4,z:0,vx:(Math.random()-0.5)*0.8,vy:-0.4,vz:0.8+Math.random(),g:0.15,t:0,life:16});
     const cy=cam.y;if(!c.wh&&c.y+40>cy-20&&c.y+40<cy+20){c.wh=1;SND.whoosh(clamp(1-Math.abs(c.x+32-cam.x)/500,0,1));}
   }
@@ -1532,7 +1532,7 @@ function drawStretcher(){
 FX.cars=[];FX.heli=null;FX.pig=[];FX.bfly=[];FX.cat=null;FX.clouds=[];
 function updLife(dt){
   const m=minutes(),df=dayF(),v=viewRect();
-  if(!FX.heli&&m>=5*60+42)FX.heli={a:Math.random()*6.28,blade:0};
+  
   if(FX.heli){const h=FX.heli;h.a+=0.0024*dt;h.blade+=0.9;h.x=18*T+Math.cos(h.a)*460;h.y=13*TH+Math.sin(h.a)*300;h.hd=h.a+Math.PI/2;
     const d=Math.hypot(h.x-cam.x,h.y-cam.y);SND.heli(clamp(1-d/900,0,1));FX.hwO=d<420?0.6*(1-d/420):0;}
   if(df>0.2&&!FX.pig.length){for(let k=0;k<8;k++)FX.pig.push({x:(4+Math.random()*1.8)*T,y:(1+Math.random()*23)*TH,st:'peck',z:0,vx:0,vy:0,vz:0,ph:Math.random()*6,t:0});}
@@ -2501,13 +2501,16 @@ function soniaHint(){
   const idle=left.filter(id=>{for(let i=0;i<N;i++)if(hot[i]===id&&S.desig[i])return false;return true;});
   return HINTS[pick(idle.length?idle:left)]||'Segue a perícia, sem pressa.';
 }
-function joinReforco(){
-  const a={id:S.crew.length,key:'pm3',look:CREW_LOOK.pm3,ini:'PM',name:'Soldado Reis',role:'Polícia Militar · reforço',kind:'pm',skill:1,vest:'#56687a',accent:'#b9d4a0',hair:'#1f1a18',skin:'#c98e64',
-    x:4,y:0,home:idx(5,7),path:[],job:null,energy:90,status:'Chegando de reforço',dir:1,walk:0,moving:false,think:0,done:0,temp:1,order:{k:'guard',tile:idx(5,7)}};
+function newCrewId(){return S.crew.reduce((m,c)=>Math.max(m,c.id),-1)+1;}
+function joinReforco(car){
+  const p=car?carDoor(car):[4,0];
+  const a={id:newCrewId(),key:'pm3',look:CREW_LOOK.pm3,ini:'PM',name:'Soldado Reis',role:'Polícia Militar · reforço',kind:'pm',skill:1,vest:'#56687a',accent:'#b9d4a0',hair:'#1f1a18',skin:'#c98e64',
+    x:p[0],y:p[1],home:idx(5,7),path:[],job:null,energy:90,status:'Chegando de reforço',dir:1,walk:0,moving:false,think:0,done:0,temp:1,tempKind:'pm',car,order:{k:'guard',tile:idx(5,7)}};
   S.crew.push(a);framesHDFor(a);buildCrew();measureHud();updateCrew();
-  const X=4*T+16,Y=TH-4;ringFx(X,Y,hex(a.accent),22,44);
+  const X=a.x*T+16,Y=a.y*TH+TH-4;ringFx(X,Y,hex(a.accent),22,44);
 }
-function leaveReforco(){const a=S.crew.find(c=>c.temp);if(!a)return;a.leaving=1;a.leaveBy=S.tick+600;endJob(a);a.order={k:'move',tile:idx(4,0)};a.think=0;say(a,'Liberado. Boa sorte aí.',110);}
+function leaveTemp(a,line){a.leaving=1;a.leaveBy=S.tick+600;endJob(a);const p=a.car&&FX.cars.includes(a.car)?carDoor(a.car):[4,0];a.exitT=idx(p[0],p[1]);a.order={k:'move',tile:a.exitT};a.think=0;if(line)say(a,line,110);}
+function leaveReforco(){const a=S.crew.find(c=>c.tempKind==='pm');if(a)leaveTemp(a,'Liberado. Boa sorte aí.');}
 function removeTemp(a){
   endJob(a);if(cmd&&cmd.a===a)cmdCancel();if(pendingOrder&&pendingOrder.id===a.id)pendingOrder=null;if(sel===a.id){sel=null;follow=false;updateInfo();}
   S.crew=S.crew.filter(c=>c!==a);buildCrew();measureHud();updateCrew();
@@ -2522,32 +2525,34 @@ const RICON={
   imprensa:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3M8 21h8"/>',
   iml:'<path d="M2 7h12v9H2zM14 10h4l3 3v3h-7z"/><circle cx="6" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M7 9.5v4M5 11.5h4"/>'
 };
+function pressCalm(){S.flags.pressCalm=1;S.flags.evP=1;for(const c of S.civs)if(c.press&&c.state==='gawk')c.wait=Math.min(c.wait,120);msg('central','A assessoria está com a imprensa. Eles devem liberar o portão logo.');}
 const CALLS=[
-  {k:'reforco',t:'Reforço da PM',sub:'Mais um soldado segura o portão',eta:2,dur:12,cd:6,ack:'Copiado. Uma viatura com reforço está a caminho.',
-    ok:()=>S.crew.some(c=>c.temp)?'Reforço no local':'',arrive:()=>{joinReforco();msg('central','Reforço no local. O Soldado Reis assume o portão.');},leave:leaveReforco},
+  {k:'reforco',t:'Reforço da PM',sub:'Uma viatura traz mais um soldado para o portão',eta:2,dur:40,cd:6,ack:'Copiado. Uma viatura com reforço está a caminho.',
+    ok:()=>S.crew.some(c=>c.tempKind==='pm')?'Reforço no local':'',arrive:d=>{svcCar('pol','a',car=>{joinReforco(car);msg('central','Reforço no local. O Soldado Reis assume o portão.');deliver(d);});return 'later';},leave:leaveReforco},
   {k:'delegada',t:'Falar com a delegada',sub:'Sônia orienta o próximo passo',eta:0.5,cd:5,ack:'Chamando a delegada Sônia.',
     ok:()=>'',arrive:()=>msg('sonia',soniaHint())},
   {k:'fita',t:'Mais fita',sub:'Viatura de apoio traz +20 m',eta:3,cd:4,max:2,ack:'Fita a caminho com a viatura de apoio.',
-    ok:()=>'',arrive:()=>{FITA_MAX+=20;msg('central','A viatura de apoio deixou mais 20 m de fita com a PM.');}},
+    ok:()=>'',arrive:d=>{svcCar('pol','c',car=>{FITA_MAX+=20;car.departAt=S.tick+90;msg('central','A viatura de apoio deixou mais 20 m de fita com a PM.');deliver(d);});return 'later';}},
   {k:'transito',t:'Fechar a rua',sub:'Trânsito desviado até o fim da varredura',eta:1.5,once:1,ack:'Pedido de bloqueio repassado ao trânsito.',
     ok:()=>S.blockUntil>S.tick?'Rua já fechada':'',arrive:()=>{S.blockUntil=1e9;msg('central','Rua das Acácias fechada nos dois sentidos. Cones na pista.');}},
-  {k:'ic',t:'Apoio da perícia',sub:'Fotógrafo e papiloscopista: perícia 50% mais rápida',eta:3,dur:8,cd:10,ack:'Equipe de apoio da perícia acionada.',
-    ok:()=>'',arrive:()=>{S.icUntil=S.tick+8*20;msg('mauricio','Chegou o apoio da perícia. Com fotógrafo e papiloscopista a gente rende mais.');}},
+  {k:'ic',t:'Apoio da perícia',sub:'Fotógrafo e papiloscopista entram na perícia',eta:3,dur:40,cd:10,ack:'Equipe de apoio da perícia acionada.',
+    ok:()=>S.crew.some(c=>c.tempKind==='ic')?'Apoio no local':'',arrive:d=>{svcCar('ic','b',car=>{joinIC(car);msg('mauricio','Chegou o apoio da perícia. Com fotógrafo e papiloscopista a gente rende mais.');deliver(d);});return 'later';},leave:()=>{for(const a of S.crew.filter(c=>c.tempKind==='ic'))leaveTemp(a,a.key==='ic1'?'Fotos feitas. Até mais.':'Coleta encerrada.');}},
   {k:'aguia',t:'Helicóptero Águia',sub:'Luz do alto ajuda lá fora, mas atrai curiosos',eta:1,dur:3,cd:12,ack:'Águia decolando, chega em instantes.',
     ok:()=>FLY.on?'Já tem helicóptero no ar':'',arrive:()=>{startFlyby();S.aguiaUntil=S.tick+3*20;msg('central','Águia sobre a Rua das Acácias. A luz ajuda no quintal e na frente.');for(let i=0;i<2;i++)setTimeout(()=>{if(S.civs.length<11)spawnCiv();},900+i*1700);}},
   {k:'imprensa',t:'Assessoria de imprensa',sub:'Alguém atende os repórteres no portão',eta:1,once:1,ack:'Assessoria avisada. Vão falar com os repórteres.',
-    ok:()=>!S.flags.press?'Ainda sem imprensa':S.flags.pressCalm===1?'Imprensa já atendida':'',arrive:()=>{S.flags.pressCalm=1;S.flags.evP=1;for(const c of S.civs)if(c.press&&c.state==='gawk')c.wait=Math.min(c.wait,120);msg('central','A assessoria está com a imprensa. Eles devem liberar o portão logo.');}},
+    ok:()=>!S.flags.press?'Ainda sem imprensa':S.flags.pressCalm===1?'Imprensa já atendida':'',arrive:d=>{svcCar('ass','c',car=>{car.departAt=S.tick+160;pressCalm();deliver(d);});return 'later';}},
   {k:'iml',t:'Antecipar o IML',sub:'O rabecão vem antes e espera a perícia liberar',eta:2,once:1,ack:'IML acionado. O rabecão está a caminho.',
     ok:()=>IML.state!=='off'?'IML já acionado':'',arrive:()=>{S.flags.imlEarly=1;}}
 ];
 function stepRadio(){
   const C=CS();
   for(const d of CALLS){const st=C[d.k];if(!st)continue;
-    if(st.ph==='go'&&S.tick>=st.at){d.arrive();deliver(d);if(d.dur){st.ph='on';st.end=S.tick+d.dur*20;}else if(d.once)st.ph='done';else{st.ph='cool';st.cd=S.tick+d.cd*20;}}
+    if(st.ph==='go'&&S.tick>=st.at){if(d.arrive(d)!=='later')deliver(d);if(d.dur){st.ph='on';st.end=S.tick+d.dur*20;}else if(d.once)st.ph='done';else{st.ph='cool';st.cd=S.tick+d.cd*20;}}
     else if(st.ph==='on'&&S.tick>=st.end){if(d.leave)d.leave();st.ph='cool';st.cd=S.tick+d.cd*20;}
     else if(st.ph==='cool'&&S.tick>=st.cd){st.ph=d.max&&st.n>=d.max?'done':'idle';}
   }
-  const a=S.crew.find(c=>c.temp&&c.leaving);if(a&&(ti(a)===idx(4,0)||S.tick>a.leaveBy))removeTemp(a);
+  for(const a of S.crew.filter(c=>c.temp&&c.leaving))if(ti(a)===(a.exitT??idx(4,0))||S.tick>a.leaveBy){const car=a.car;removeTemp(a);if(car&&!S.crew.some(c=>c.car===car))departCar(car);}
+  for(const c of FX.cars)if(c.svc&&c.parked&&c.departAt&&S.tick>=c.departAt){c.departAt=0;departCar(c);}
 }
 Object.assign(SND,{
   rOn(){if(!this.ok())return;const t=this.ctx.currentTime;this.nz(t,0.02,'highpass',2500,0.7,0.25);this.nz(t+0.03,0.32,'bandpass',1800,0.9,0.06);this.osc('sine',880,t+0.3,0.004,0.06,0.03);},
@@ -2561,8 +2566,8 @@ Object.assign(SND,{
 // hold a channel like a push-to-talk key; letting go early cancels
 function drawCones(){
   if(!(S.blockUntil>S.tick)||carsInBlock())return;
-  const vanIn=IML.van&&!IML.van.left&&IML.state!=='off';
-  for(const ty of [1,H-2]){const Y=ty*TH+TH-4;for(let x=10;x<4*T;x+=30){if(vanIn&&ty===1&&x>56&&x<4*T)continue;
+  const pass=FX.cars.filter(c=>(c.iml||c.svc)&&!c.parked);
+  for(const ty of [1,H-2]){const Y=ty*TH+TH-4;for(let x=10;x<4*T;x+=30){if(pass.some(c=>c.x<x+10&&c.x+64>x-10&&c.y<Y+40&&c.y+84>Y-60))continue;
     ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(x-6,Y,13,3);
     ctx.fillStyle='#1e1611';ctx.beginPath();ctx.moveTo(x,Y-15);ctx.lineTo(x+6,Y+1);ctx.lineTo(x-6,Y+1);ctx.closePath();ctx.fill();
     ctx.fillStyle='#f06a1e';ctx.beginPath();ctx.moveTo(x,Y-14);ctx.lineTo(x+5,Y);ctx.lineTo(x-5,Y);ctx.closePath();ctx.fill();
@@ -2625,7 +2630,9 @@ function fireCall(k){
   const d=CALLS.find(c=>c.k===k);if(!d||callState(d)[0]!=='idle')return false;
   const C=CS(),prev=C[k]||{n:0};C[k]={ph:'go',at:S.tick+Math.round(d.eta*20),n:(prev.n||0)+1};
   SND.roger();buzz(20);logLine('TX',d.ack);setTimeout(()=>{if(!radioEl.hidden)say2('Central: '+d.ack,2600);},900);setTimeout(()=>msg('central',d.ack),380);
-  const row=rList.children[CALLS.indexOf(d)];if(row)kick(row,'del',1200);updateRadio();return true;
+  const row=rList.children[CALLS.indexOf(d)];if(row)kick(row,'del',1200);updateRadio();
+  // the order is given: the set goes back to the belt
+  setTimeout(()=>{if(!radioEl.hidden)closeRadio();},1500);return true;
 }
 function deliver(d){
   SND.inbound();setTimeout(()=>SND.stamp(),380);buzz(30);rxT=performance.now()+1800;
@@ -2706,7 +2713,7 @@ function followCam(dt){if(!(follow&&sel!=null))return;const a=S.crew.find(k=>k.i
 
 /* crew dock split: perícia and campo stay on the dock; the PMs live in a tray the "Apoio" key opens */
 const crew2El=$('#crew2');let TRAY=false;
-const isMain=a=>a.kind!=='pm';
+const isMain=a=>a.kind!=='pm'&&!a.temp;
 function buildCrew(){
   buildCrew0();
   crew2El.innerHTML='';
@@ -2768,7 +2775,7 @@ function openBub(k,a){
   bubEl.hidden=false;bubLn.removeAttribute('hidden');bubPin.hidden=false;bubEl.classList.remove('in');void bubEl.offsetWidth;bubEl.classList.add('in');
   // bring the person into view when they are off screen or under the bars
   const s=bubAnchor(a);if(s.x<40||s.x>VW()-40||s.y<HUDPAD.t+30||s.y>VH()-HUDPAD.b-10)panTo([a.x,a.y]);
-  placeBub();SND.pop();
+  placeBub();if(PEOPLE[ev.who]&&ev.who!=='sonia'){SND.rOn();setTimeout(()=>SND.radio(),180);}else SND.pop();
 }
 function bubAnchor(a){const e=ez();return {x:(a.x*T+16-cam.x)*e+VW()/2,y:(a.y*TH+TH-30-cam.y)*e+VH()/2,e};}
 function placeBub(){
@@ -2840,7 +2847,7 @@ setTimeout(()=>{if(window.__acacias)Object.assign(window.__acacias,{dbg:{floor,F
 
 /* the closed stretch: cones go down once the cars already inside have driven out; cars arriving stop at the cones and back away */
 const CONE_TOP=1*TH+TH-4,CONE_BOT=(H-2)*TH+TH-4;
-function carsInBlock(){return FX.cars.some(c=>!c.parked&&!c.iml&&!c.rev&&c.y+84>CONE_TOP-14&&c.y<CONE_BOT);}
+function carsInBlock(){return FX.cars.some(c=>!c.parked&&!c.iml&&!c.svc&&!c.rev&&c.y+84>CONE_TOP-14&&c.y<CONE_BOT);}
 
 
 /* ---------- The end of the sweep ----------
@@ -2858,6 +2865,42 @@ function showFin(){
   closeRadio();hideCoach();setSpeed(0);appEl.classList.add('fin-on');$('#fin').hidden=false;fitCards();SND.chime&&SND.chime();
 }
 $('#b-again').addEventListener('click',()=>{SND.click();location.reload();});
+
+
+/* ---------- Support arrives by car ----------
+   Every call that sends people or material comes as a vehicle: it drives in with the siren on (police),
+   pulls over smoothly in the left lane, and only then does the help step out and the radio confirm. */
+let POLSPR=null,ICSPR=null,ASSSPR=null;
+function svcSprites(){if(POLSPR)return;
+  POLSPR=outlined(S2(64,84,(P,E)=>drawCarPx(P,E,{b:'#e4e7e3',hi:'#f6f8f5',sh:'#b9beba',dk:'#8d938f',fr:'#cfd3cf'},true,false)));
+  ICSPR=outlined(S2(64,84,(P,E)=>drawCarPx(P,E,carPal('#2c3e57'),false,true)));
+  ASSSPR=outlined(S2(64,84,(P,E)=>drawCarPx(P,E,carPal('#26282c'),false,false)));}
+const SLOT_Y={a:5*TH,b:14.6*TH,c:19.2*TH};
+function freeSlot(pref){const used=k=>FX.cars.some(c=>c.svc&&c.slot===k&&!c.left);if(!used(pref))return pref;for(const k of ['a','b','c'])if(!used(k))return k;return null;}
+function svcCar(kind,pref,onPark){
+  svcSprites();const slot=freeSlot(pref);
+  if(!slot){const c=FX.cars.find(c=>c.svc&&c.parked&&!c.left);if(c){setTimeout(()=>onPark(c),300);return c;}}
+  const c={spr:kind==='pol'?POLSPR:kind==='ic'?ICSPR:ASSSPR,x:2*T,y:-6*TH,v:1.4,vmax:1.35,svc:kind,slot,park:SLOT_Y[slot]||SLOT_Y.a,lx:0,wait:0,honked:1,brake:0,wh:0,onPark};
+  FX.cars.push(c);if(kind==='pol')SND.siren();return c;
+}
+function carDoor(c){return [Math.min(W-1,Math.floor((c.x+66)/T)),Math.min(H-1,Math.max(0,Math.round((c.y+50)/TH)))];}
+function departCar(c){if(!c||!FX.cars.includes(c))return;c.parked=false;c.left=true;c.onPark=null;c.shift={to:2*T};c.vmax=1.3;c.v=0.2;if(c.svc==='pol')SND.siren();}
+CREW_LOOK.ic1={skin:'#e0b48c',hair:'#5a3a22',style:'side',kind:'pericia',top:'#283a52',pants:'#2b2f36',shoes:'#1a1a1a',gloves:1};
+CREW_LOOK.ic2={skin:'#8a5a3a',hair:'#1f1a18',style:'short',kind:'pericia',top:'#283a52',pants:'#2b2f36',shoes:'#1a1a1a',gloves:1};
+SHORT.ic1='Fotógrafo';SHORT.ic2='Digitais';
+function joinIC(car){
+  const p=carDoor(car);
+  for(const [k,name,role,acc] of [['ic1','Fotógrafo pericial','Perícia · apoio','#d9c39a'],['ic2','Papiloscopista','Perícia · apoio','#b9c8e0']]){
+    const a={id:newCrewId(),key:k,look:CREW_LOOK[k],ini:k==='ic1'?'FT':'PP',name,role,kind:'pericia',skill:0.9,vest:'#2c3e57',accent:acc,hair:CREW_LOOK[k].hair,skin:CREW_LOOK[k].skin,
+      x:p[0]+(k==='ic2'?1:0),y:p[1],home:idx(8,6),path:[],job:null,energy:95,status:'Chegando com o apoio',dir:1,walk:0,moving:false,think:k==='ic2'?20:0,done:0,temp:1,tempKind:'ic',car};
+    S.crew.push(a);framesHDFor(a);
+  }
+  buildCrew();measureHud();updateCrew();
+}
+CLOC.ic=()=>{const a=S.crew.find(c=>c.tempKind==='ic');return a?[a.x,a.y]:null;};
+CLOC.reforco=()=>{const a=S.crew.find(c=>c.tempKind==='pm');return a?[a.x,a.y]:null;};
+CLOC.fita=()=>{const c=FX.cars.find(c=>c.svc==='pol'&&c.parked&&c.departAt);return c?[c.x/T+1,c.y/TH+2]:null;};
+CLOC.imprensa=()=>[6,6];
 /* ---------- Boot ---------- */
 let last=performance.now(),acc=0;
 function loop(now){
