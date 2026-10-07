@@ -299,6 +299,7 @@ function stepCiv(c){
 
 /* ---------- World step ---------- */
 function stepWorld(){
+  for(const p of S.crew){p.px=p.x;p.py=p.y;}for(const c of S.civs){c.px=c.x;c.py=c.y;}for(const a of IML.agents){a.px=a.x;a.py=a.y;}
   S.tick++;
   WET=clamp(WET+(rainI()>0.08?0.002:-0.0011),0,1);
   WIND=0.5+0.35*Math.sin(S.tick/400)+0.15*Math.sin(S.tick/97)+Math.max(FX.hwO||0,FLY.gust||0);
@@ -2688,14 +2689,22 @@ for(const el of [$('#r-ptt'),rBig]){el.addEventListener('pointerdown',pttDown);e
     const s=document.createElementNS(NS,'svg');s.setAttribute('viewBox',VB[k]);s.setAttribute('class','stc');s.setAttribute('aria-hidden','true');s.innerHTML=P[k];kb.prepend(s);}
   const tp=document.getElementById('t-pericia');if(tp)tp.hidden=true;
 })();
+
+/* smooth motion: the world steps 20 times a second; people are drawn between their last two positions so walking glides at any frame rate */
+let LERPED=[];
+function lerpOn(){const al=paused?1:Math.min(1,Math.max(0,acc));LERPED=[];
+  for(const L of [S.crew,S.civs,IML.agents])for(const p of L){if(p.px==null)continue;const dx=p.x-p.px,dy=p.y-p.py;if(Math.abs(dx)>1.5||Math.abs(dy)>1.5)continue;p._x=p.x;p._y=p.y;p.x=p.px+dx*al;p.y=p.py+dy*al;LERPED.push(p);}}
+function lerpOff(){for(const p of LERPED){p.x=p._x;p.y=p._y;}LERPED=[];}
+
+/* camera follow reads the smoothed position, with a frame-rate independent ease */
+function followCam(dt){if(!(follow&&sel!=null))return;const a=S.crew.find(k=>k.id===sel);if(!a)return;const k=1-Math.pow(0.88,Math.max(0,dt)*60);cam.x+=(a.x*T+8-cam.x)*k;cam.y+=(a.y*TH+8-cam.y)*k;clampCam();}
 /* ---------- Boot ---------- */
 let last=performance.now(),acc=0;
 function loop(now){
   const dt=Math.min(0.1,(now-last)/1000);last=now;updFly(dt);
   if(!paused){acc+=dt*20*speed;let n=0;while(acc>=1&&n<100){stepWorld();acc-=1;n++;}if(n>=100)acc=0;}
-  if(follow&&sel!=null){const a=S.crew.find(k=>k.id===sel);if(a){cam.x+=(a.x*T+8-cam.x)*0.12;cam.y+=(a.y*TH+8-cam.y)*0.12;clampCam();}}
   updWeather();updParticles();{const dt=paused?0:speed;updCars(dt);updLife(dt);}
-  cmdEdgePan();stepPan();stepZoom();frame++;render();if(frame%6===0){updateUI();pumpEvents();lodNotice();}if(frame%3===0)SND.tick();
+  cmdEdgePan();stepPan();stepZoom();frame++;lerpOn();followCam(dt);render();lerpOff();if(frame%6===0){updateUI();pumpEvents();lodNotice();}if(frame%3===0)SND.tick();
   requestAnimationFrame(loop);
 }
 let lastL=null;
