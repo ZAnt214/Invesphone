@@ -1,6 +1,8 @@
 /* Base do DHPP: cena 2D navegável do Caso 01, na mesma técnica da Varredura das Acácias
    (pixel art procedural, câmera oblíqua, luz multiplicada por sala, detalhe por zoom, tela deitada).
    Lemos anda, a equipe fala, o aparelho leva ao resto do caso. */
+import { applyRequest, applyTopic, caseTeam, requestOk, teamDialogues, teamMaterialRequests, teamNews, topicOk } from '../team/teamData';
+import { readCase, writeCase } from '../case/caseSave';
 (() => {
 'use strict';
 const T=32,TH=22,K=TH/T,RISE=16,CAPH=8,W=34,H=26,N=W*H;
@@ -571,25 +573,63 @@ function roomOf(a){return room[ti(a)];}
 /* ---------- Conversas ---------- */
 const OPEN_PHONE={t:'Abrir o aparelho',s:'Invesphone',href:'/invesphone',main:true};
 const nF=()=>FOUND.length;
+/* ---------- Equipe nas mesas: a mesma conversa do app Equipe, no mesmo save ---------- */
+let CASE=readCase();
+const refreshCase=()=>{CASE=readCase();};
+addEventListener('focus',refreshCase);addEventListener('storage',refreshCase);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCase();});
+const TEAM_IDS=new Set(['sonia','mauricio','renata','paulo','denise']);
+const GREET={
+  sonia:['Impressão, sim. Prova, ainda não. O que você tem?','Nada mudou desde a última conversa. Quando uma peça mudar a direção do caso, me procura.'],
+  mauricio:['Eu falo do que vi, não do que imagino. Do que você precisa?','Por enquanto, nada novo da perícia. Se surgir vestígio, você fica sabendo.'],
+  renata:['Ainda são peças separadas. Me diz o que cruzar.','Nenhum cruzamento novo pra fazer agora. Preciso de um nome, um horário ou um documento.'],
+  paulo:['Rua é boato até virar documento. Diz aí.','Nada novo na rua por enquanto. Quando aparecer um endereço ou um nome, eu vou atrás.'],
+  denise:['Cada versão no seu lugar. Do que você precisa?','Nada pra comparar ainda. Quando alguém mudar a versão, eu te mostro onde.']
+};
+const memberOf=id=>caseTeam.find(m=>m.id===id);
+function teamMenu(id){
+  const n=teamNews(CASE,id),opts=[];
+  for(const t of n.topics)opts.push({t:t.label,s:'Conversar',fn:()=>exchange(id,{kind:'topic',item:t}),keep:true});
+  for(const r of n.requests)opts.push({t:r.label,s:'Pedir · '+r.kind.toLowerCase(),fn:()=>exchange(id,{kind:'request',item:r}),keep:true,main:true});
+  const done=[...(CASE.teamTopics||[]).map(x=>teamDialogues.find(t=>t.id===x)).filter(t=>t&&t.memberId===id),...(CASE.requestedMaterials||[]).map(x=>teamMaterialRequests.find(r=>r.id===x)).filter(r=>r&&r.memberId===id)];
+  const mats=(CASE.requestedMaterials||[]).map(x=>teamMaterialRequests.find(r=>r.id===x)).filter(r=>r&&r.memberId===id&&r.assetPaths&&r.assetPaths.length);
+  for(const r of mats)opts.push({t:'Ver '+r.label.toLowerCase(),s:r.assetPaths.length+(r.assetPaths.length>1?' arquivos':' arquivo'),fn:()=>openGallery(r.assetPaths.map(pth=>({title:r.label,img:pth,cap:r.kind+' · '+(memberOf(id)||{}).name})),0),keep:true});
+  if(done.length)opts.push({t:'Rever o que já conversamos',s:done.length+'',fn:()=>replay(id,done),keep:true});
+  return {opts,count:n.count};
+}
+function teamTalk(id){
+  const m=memberOf(id),menu=teamMenu(id),g=GREET[id];
+  const pages=[];
+  if(id==='sonia'&&!SEEN.sonia)pages.push(...soniaIntro());
+  pages.push(menu.count?g[0]:g[1]);
+  return {who:m.name,role:m.role+' · '+m.specialty,av:id,pages,opts:menu.opts};
+}
+function soniaIntro(){
+  return [nF()>=7?'Li o seu resumo da casa. Porta intacta, painel mexido, cão preso, valores no lugar. Sete achados, e nenhum deles é de ladrão.'
+    :nF()>0?`Você me trouxe ${nF()} de 7 achados da casa. Dá pra conversar com isso, mas o resto da cena continua lá, esperando.`
+    :'Você veio sem fechar a leitura da casa. A cena não esquenta nem esfria por você, Lemos. Vale voltar.'];
+}
+// Lemos pergunta, o integrante responde; o save é gravado quando a resposta começa
+function exchange(id,ex){
+  const it=ex.item,m=memberOf(id);
+  const ask=ex.kind==='topic'?it.user.text:`Consegue ${it.label.toLowerCase()} pra mim?`;
+  const reply=ex.kind==='topic'?it.agent.text:it.response.text;
+  const ok=ex.kind==='topic'?topicOk(CASE,it):requestOk(CASE,it);if(!ok)return;
+  const after=()=>{
+    const menu=teamMenu(id),extra=[];
+    if(ex.kind==='request'&&it.assetPaths&&it.assetPaths.length)extra.push({t:'Ver '+it.label.toLowerCase(),s:it.assetPaths.length+(it.assetPaths.length>1?' arquivos':' arquivo'),main:true,keep:true,fn:()=>openGallery(it.assetPaths.map(pth=>({title:it.label,img:pth,cap:it.kind+' · '+m.name})),0)});
+    const ppl=[...(it.callPeople||it.revealsPeople||[])];if(ppl.length)extra.push({t:'Chamar para depoimento',s:'Aparelho',href:'/invesphone'});
+    return [...extra,...menu.opts.filter(o=>!extra.some(e=>e.t===o.t))];
+  };
+  talkSet({who:m.name,role:m.role+' · '+m.specialty,av:id,pages:[{me:true,t:ask},{t:reply,commit:()=>{CASE=writeCase(g=>ex.kind==='topic'?applyTopic(g,it):applyRequest(g,it));}}],opts:null,optsFn:after});
+}
+function replay(id,items){
+  const m=memberOf(id),pages=[];
+  for(const it of items){if(it.user){pages.push({me:true,t:it.user.text});pages.push({t:it.agent.text});}else{pages.push({me:true,t:`Consegue ${it.label.toLowerCase()} pra mim?`});pages.push({t:it.response.text});}}
+  talkSet({who:m.name,role:m.role+' · '+m.specialty,av:id,pages,opts:null,optsFn:()=>teamMenu(id).opts});
+}
 const DLG={
-  sonia:()=>({who:'Sônia Prado',role:'Delegada · DHPP',av:'sonia',
-    pages:[
-      nF()>=7?'Li o seu resumo da casa. Porta intacta, painel mexido, cão preso, valores no lugar. Sete achados, e nenhum deles é de ladrão.'
-        :nF()>0?`Você me trouxe ${nF()} de 7 achados da casa. Dá pra conversar com isso, mas o resto da cena continua lá, esperando.`
-        :'Você veio sem fechar a leitura da casa. A cena não esquenta nem esfria por você, Lemos. Vale voltar.',
-      'Roubo comum não explica isso. Mas isso é impressão. Prova, ainda não.',
-      'A equipe já está com o material. Ouça o pessoal antes de ouvir qualquer versão. O resto do caso está no aparelho.'],
-    opts:[OPEN_PHONE]}),
+  sonia:()=>teamTalk('sonia'),mauricio:()=>teamTalk('mauricio'),renata:()=>teamTalk('renata'),paulo:()=>teamTalk('paulo'),denise:()=>teamTalk('denise'),
   sonia_mesa:()=>({who:'Mesa da delegada',role:'Sala de Sônia Prado',av:'icon',pages:['Pasta aberta, telefone fora do gancho pela metade, xícara vazia. Nada aqui é para você mexer sem ela dizer.'],opts:[]}),
-  renata:()=>({who:'Renata Leal',role:'Investigadora',av:'renata',
-    pages:['Já mandei pedir o histórico do painel do alarme. Até chegar, tudo que eu tenho é a leitura do Maurício.','Registro é uma coisa, interpretação é outra. Quando o histórico voltar, eu aviso você na conversa da Equipe.'],opts:[OPEN_PHONE]}),
-  denise:()=>({who:'Denise Rocha',role:'Escrivã',av:'denise',
-    pages:['Quando começarem os depoimentos, eu separo as gravações. Cada pessoa na sua sala, uma não ouve a outra.','O que muda de uma versão para outra me interessa mais do que nervosismo.'],opts:[]}),
-  paulo:()=>({who:'Paulo Vieira',role:'Investigador de campo',av:'paulo',
-    pages:['A rua está fechada e a vizinhança acordou inteira. Prefiro documento a lembrança, mas lembrança é o que a rua tem.','Se aparecer nome novo, eu confirmo onde a pessoa estava antes de você ouvi-la.'],opts:[]}),
-  mauricio:()=>({who:'Maurício Farias',role:'Perito criminal',av:'mauricio',
-    pages:['Painel preservado. Ninguém mexeu nele depois da gente.','O quarto da Lívia ainda está em processamento. Quando eu tiver algo concreto, eu falo.','Eu não chamaria isso de busca às cegas.'],
-    opts:FOUND.length?[{t:'Ver as fotos da cena',s:`${FOUND.length} de 7`,fn:()=>openGallery(0)}]:[]}),
   plantao:()=>({who:'Plantão',role:'Recepção · DHPP',av:'plantao',pages:['A imprensa ligou duas vezes. Respondi o que a delegada mandou: sem comentários.','Se alguém procurar a equipe, passa por mim primeiro.'],opts:[]}),
   mesa_lemos:()=>({who:'Sua mesa',role:'Lemos · DHPP',av:'icon',pages:['Café frio e a pasta do Caso 01 ainda fechada. O que importa está no aparelho.'],opts:[OPEN_PHONE]}),
   quadro:()=>{
@@ -620,29 +660,37 @@ function talkFocus(){
 }
 function openTalk(id){
   const def=DLG[id];if(!def)return;
-  const d=def();talk={id,d,page:0,done:false,typed:0};
+  refreshCase();
   setSeen(id);talkOpen=true;document.body.classList.add('talking');
   const n=NPCS.find(x=>x.id===id);if(n){n.hold=true;n.path=[];n.moving=false;n.say=null;n.dir=P1.x<n.x?-1:1;}
   if(n&&Math.abs(P1.x-n.x)>0.3)P1.dir=n.x>P1.x?1:-1;
-  const col=n?n.col:'#96a7ae',av=$('#tk-av');av.style.background=col;av.innerHTML=avatarHTML(d.av);
-  $('#tk-who').textContent=d.who;$('#tk-role').textContent=d.role;
-  $('#talk').hidden=false;showPage();
-  // aproxima a câmera: rostos e detalhes aparecem
+  talk={id};talkSet(def());
+  $('#talk').hidden=false;
   talkPrevZ=cam.z;follow=true;zoomTo(Math.max(cam.z,TALKZ()));
 }
+function talkSet(d){if(!talk)return;talk.d=d;talk.page=0;showPage();}
+function speaker(pg){
+  const d=talk.d,me=pg&&pg.me,n=NPCS.find(x=>x.id===talk.id),av=$('#tk-av');
+  if(me){av.style.background='#d9a273';av.innerHTML='LM';$('#tk-who').textContent='Lemos';$('#tk-role').textContent='Você';}
+  else{av.style.background=n?n.col:'#96a7ae';av.innerHTML=avatarHTML(d.av);$('#tk-who').textContent=d.who;$('#tk-role').textContent=d.role;}
+  $('#talk').classList.toggle('me',!!me);
+}
 function showPage(){
-  const t=talk,s=t.d.pages[t.page];t.typed=0;t.done=false;$('#tk-opts').innerHTML='';$('#tk-more').hidden=true;
+  const t=talk,pg=t.d.pages[t.page],s=typeof pg==='string'?pg:pg.t;t.typed=0;t.done=false;$('#tk-opts').innerHTML='';$('#tk-more').hidden=true;
+  speaker(typeof pg==='string'?null:pg);
+  if(pg&&pg.commit){pg.commit();pg.commit=null;}
   clearInterval(tkTimer);const el=$('#tk-text');el.textContent='';
   tkTimer=setInterval(()=>{t.typed+=2;el.textContent=s.slice(0,t.typed);if(t.typed>=s.length)finishPage();},18);
 }
 function finishPage(){
-  const t=talk;if(!t||t.done)return;clearInterval(tkTimer);t.done=true;$('#tk-text').textContent=t.d.pages[t.page];
+  const t=talk;if(!t||t.done)return;clearInterval(tkTimer);t.done=true;const pg=t.d.pages[t.page];$('#tk-text').textContent=typeof pg==='string'?pg:pg.t;
   const last=t.page>=t.d.pages.length-1,box=$('#tk-opts');
   if(!last){$('#tk-more').hidden=false;return;}
-  box.innerHTML='';
-  for(const o of t.d.opts||[]){const b=document.createElement('button');if(o.main)b.className='main';b.innerHTML=`<b>${o.t}</b>${o.s?`<span>${o.s}</span>`:''}`;
-    b.addEventListener('click',e=>{e.stopPropagation();if(o.href){location.href=o.href;return;}closeTalk();if(o.fn)o.fn();});box.appendChild(b);}
+  box.innerHTML='';const opts=t.d.optsFn?t.d.optsFn():(t.d.opts||[]);
+  for(const o of opts){const b=document.createElement('button');if(o.main)b.className='main';b.innerHTML=`<b>${o.t}</b>${o.s?`<span>${o.s}</span>`:''}`;
+    b.addEventListener('click',e=>{e.stopPropagation();if(o.href){location.href=o.href;return;}if(o.keep){o.fn();return;}closeTalk();if(o.fn)o.fn();});box.appendChild(b);}
   const c=document.createElement('button');c.innerHTML='<b>Voltar à base</b>';c.addEventListener('click',e=>{e.stopPropagation();closeTalk();});box.appendChild(c);
+  box.scrollTop=0;
 }
 function advance(){
   if(!talk)return;if(!talk.done){finishPage();return;}
@@ -650,22 +698,25 @@ function advance(){
 }
 function closeTalk(){
   clearInterval(tkTimer);if(talk){const n=NPCS.find(x=>x.id===talk.id);if(n)n.hold=false;}
-  talk=null;talkOpen=false;document.body.classList.remove('talking');$('#talk').hidden=true;follow=true;
+  talk=null;talkOpen=false;document.body.classList.remove('talking');$('#talk').hidden=true;$('#talk').classList.remove('me');follow=true;
   if(talkPrevZ!=null){zoomTo(talkPrevZ);talkPrevZ=null;}
 }
 $('#tk-x').addEventListener('click',e=>{e.stopPropagation();closeTalk();});
 $('#talk').addEventListener('click',advance);
 
 /* ---------- Fotos ---------- */
-let galI=0;
-function openGallery(i){
-  if(!FOUND.length)return;galI=clamp(i,0,FOUND.length-1);const c=CLUES[FOUND[galI]];
-  $('#g-img').src=c.img;$('#g-title').textContent=c.title;$('#g-cap').textContent='Fotografia pericial · '+c.room;$('#g-n').textContent=`${galI+1} / ${FOUND.length}`;
-  $('#g-pic').classList.remove('z');$('#gal').hidden=false;talkOpen=true;
+let galI=0,GAL=[];
+function openGallery(list,i){
+  if(typeof list==='number'){i=list;list=FOUND.map(id=>({title:CLUES[id].title,img:CLUES[id].img,cap:'Fotografia pericial · '+CLUES[id].room}));}
+  if(!list.length)return;GAL=list;galI=clamp(i||0,0,list.length-1);const c=GAL[galI];
+  $('#g-img').src=c.img;$('#g-title').textContent=c.title;$('#g-cap').textContent=c.cap||'';$('#g-n').textContent=`${galI+1} / ${GAL.length}`;
+  $('#g-prev').hidden=$('#g-next').hidden=GAL.length<2;
+  $('#g-pic').classList.remove('z');$('#gal').hidden=false;galOpen=true;
 }
-$('#g-x').addEventListener('click',()=>{$('#gal').hidden=true;talkOpen=false;});
-$('#g-prev').addEventListener('click',()=>openGallery((galI+FOUND.length-1)%FOUND.length));
-$('#g-next').addEventListener('click',()=>openGallery((galI+1)%FOUND.length));
+let galOpen=false;
+$('#g-x').addEventListener('click',()=>{$('#gal').hidden=true;galOpen=false;});
+$('#g-prev').addEventListener('click',()=>openGallery(GAL,(galI+GAL.length-1)%GAL.length));
+$('#g-next').addEventListener('click',()=>openGallery(GAL,(galI+1)%GAL.length));
 $('#g-img').addEventListener('click',()=>$('#g-pic').classList.toggle('z'));
 
 /* ---------- Toques e movimento ---------- */
@@ -1072,11 +1123,12 @@ function render(){
   lightPass(s,ox,oy);
   SPR();smokePass();glowPass();
   // camada legível: sinais, falas, nomes
-  for(const n of NPCS)if(!SEEN[n.id]&&DLG[n.id])atUI(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?64:60),()=>drawMarker(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?64:60)));
+  for(const n of NPCS)if(hasNews(n.id))atUI(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?64:60),()=>drawMarker(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?64:60)));
   for(const o of objs)if(o.hot&&o.spr&&!o.nomark&&!talkOpen&&!SEEN[o.hot]){const sp=o.spr;drawMarker(o.x*T+o.w*T/2,sp.y-6);}
   for(const n of NPCS)if(n.say&&!talkOpen){const al=Math.min(1,(n.say.life-n.say.t)/20,n.say.t/6);drawSay(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?70:74),n.say.txt,al);}
   drawNames();drawRoomLabels();
 }
+function hasNews(id){if(!DLG[id])return false;if(TEAM_IDS.has(id))return teamNews(CASE,id).count>0||(id==='sonia'&&!SEEN.sonia);return !SEEN[id];}
 function isSeat(n){const i=ti(n);return objs.some(o=>o.nocc&&idx(o.x,o.y)===i);}
 
 /* ---------- Interface ---------- */
