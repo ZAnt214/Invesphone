@@ -590,13 +590,22 @@ body:not(.land) .tool .kpx{width:48px;height:48px}
 @keyframes rxp{50%{filter:brightness(1.4) drop-shadow(0 0 12px #7dff9a)}}
 .rkey .led{top:6px;right:10px}
 .tool[aria-pressed="true"] .l,.rkey[aria-expanded="true"] .l{font-size:9px}
-/* a quiet shelf behind the bottom keys: soft shade rising from the edge and one hairline where they are cut */
+/* behind the bottom keys: a strip of crime-scene tape running along the edge, sagging a little and fluttering */
 .actions{position:relative}
-.actions::before{content:'';position:absolute;left:-26px;right:-26px;bottom:0;height:96px;pointer-events:none;z-index:-1;background:radial-gradient(ellipse 60% 100% at 50% 100%,rgba(4,6,7,.72),rgba(4,6,7,.34) 45%,rgba(4,6,7,0) 75%)}
-.actions::after{content:'';position:absolute;left:-10px;right:-10px;bottom:36px;height:1px;pointer-events:none;z-index:-1;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.2) 20%,rgba(242,194,48,.28) 50%,rgba(255,255,255,.2) 80%,rgba(255,255,255,0))}
-body:not(.land) .actions::after{bottom:33px}
-.tool .kpx{filter:drop-shadow(0 2px 2px rgba(0,0,0,.6)) drop-shadow(0 0 5px rgba(0,0,0,.35))}
-.tool:hover .kpx{filter:brightness(1.12) drop-shadow(0 2px 2px rgba(0,0,0,.6))}
-.tool[aria-pressed="true"] .kpx{filter:drop-shadow(0 2px 2px rgba(0,0,0,.55)) drop-shadow(0 0 9px rgba(242,194,48,.75))}
-#t-cancel[aria-pressed="true"] .kpx{filter:drop-shadow(0 2px 2px rgba(0,0,0,.55)) drop-shadow(0 0 9px rgba(255,90,60,.75))}
-.rkey[aria-expanded="true"] .kpx{filter:drop-shadow(0 2px 2px rgba(0,0,0,.55)) drop-shadow(0 0 9px rgba(125,255,154,.75))}
+.actions::before{content:'';position:absolute;left:-60px;right:-30px;bottom:22px;height:20px;pointer-events:none;z-index:-1;background:var(--tape) repeat-x 0 0/236px 20px;opacity:.92;transform:rotate(-3deg);transform-origin:50% 50%;box-shadow:0 3px 8px rgba(0,0,0,.45);-webkit-mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent);mask-image:linear-gradient(90deg,transparent,#000 14%,#000 86%,transparent);animation:tapefl 4.5s ease-in-out infinite}
+.actions::after{content:'';position:absolute;left:-40px;right:-50px;bottom:4px;height:16px;pointer-events:none;z-index:-1;background:var(--tape) repeat-x -90px 0/189px 16px;opacity:.55;transform:rotate(4deg);filter:brightness(.7);-webkit-mask-image:linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent);mask-image:linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent);animation:tapefl 5.5s ease-in-out -2s infinite reverse}
+@keyframes tapefl{50%{transform:rotate(-2deg) translateY(-1.5px) skewX(-2deg)}}
+.tool .kb{width:58px;height:58px}
+.tool .kpx{width:62px;height:62px;transform:translateY(-8px);filter:drop-shadow(0 3px 2px rgba(0,0,0,.6))}
+body:not(.land) .tool .kpx{width:56px;height:56px}
+.tool:hover .kpx{filter:brightness(1.08) drop-shadow(0 3px 2px rgba(0,0,0,.6))}
+.tool[aria-pressed="true"] .kpx,.rkey[aria-expanded="true"] .kpx{transform:translateY(-6px) rotate(-4deg) scale(1.1);filter:drop-shadow(0 4px 3px rgba(0,0,0,.55)) drop-shadow(0 0 10px rgba(255,236,150,.7))}
+#t-cancel[aria-pressed="true"] .kpx{filter:drop-shadow(0 4px 3px rgba(0,0,0,.55)) drop-shadow(0 0 10px rgba(255,120,90,.8))}
+.rkey[aria-expanded="true"] .kpx{filter:drop-shadow(0 4px 3px rgba(0,0,0,.55)) drop-shadow(0 0 10px rgba(125,255,154,.8))}
+@media (prefers-reduced-motion:reduce){.actions::before,.actions::after{animation:none}}
+.actions{isolation:isolate}
+.actions .tool{z-index:1}
+.actions::before{bottom:12px}
+.actions::after{bottom:-2px}
+.tool .kpx{transform:translateY(-14px)}
+.tool[aria-pressed="true"] .kpx,.rkey[aria-expanded="true"] .kpx{transform:translateY(-10px) rotate(-4deg) scale(1.1)}
