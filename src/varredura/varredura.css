@@ -922,6 +922,7 @@ body:not(.land) .hud-top .h-btns{padding-right:16px}
 #fin .fk{margin-top:6px;font:600 10px/1 Rajdhani,"Arial Narrow",sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#7fd7ff}
 #fin h1{margin:0;font:700 28px/1.05 Rajdhani,"Arial Narrow",sans-serif;letter-spacing:.02em;color:#f4f2ec}
 #fin .fs{margin:0;font-size:12.5px;line-height:1.45;color:rgba(232,236,239,.75);max-width:34ch}
+#fin a.fnext{text-decoration:none;color:inherit;cursor:pointer}#fin a.fnext:active{background:rgba(242,194,48,.16)}
 #fin .fnext{display:flex;flex-direction:column;gap:2px;margin:6px 0 4px;padding:9px 14px;width:100%;box-sizing:border-box;background:rgba(242,194,48,.08);box-shadow:inset 0 0 0 1px rgba(242,194,48,.4)}
 #fin .fnext small{font:600 9px/1 Rajdhani,"Arial Narrow",sans-serif;letter-spacing:.2em;text-transform:uppercase;color:rgba(232,236,239,.55)}
 #fin .fnext b{font:700 17px/1.1 Rajdhani,"Arial Narrow",sans-serif;color:#f2c230}

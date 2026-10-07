@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#050607" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="description" content="Arquivo Morto: a base do DHPP." />
+    <title>Arquivo Morto · Base do DHPP</title>
+    <link rel="stylesheet" href="/src/base/base.css" />
+  </head>
+  <body>
+<div id="app">
+  <canvas id="cv" aria-label="Planta da base do DHPP"></canvas>
+
+  <div class="hud">
+    <div class="hcard h-id">
+      <div class="mark" aria-label="DHPP Homicídios"><b>DHPP</b><i></i><span>HOMICÍDIOS</span></div>
+      <div class="clk"><small id="clk-d">QUI 17·10</small><b id="clk" role="timer">08:10</b></div>
+    </div>
+    <div class="hcard h-btns">
+      <a class="hbtn" id="b-home" href="/" aria-label="Voltar à casa da Rua das Acácias" title="Casa"><svg viewBox="0 0 24 24"><path d="M3.5 11L12 4l8.5 7"/><path d="M6 10v10h12V10"/></svg><span>Casa</span></a>
+      <a class="hbtn phone" id="b-phone" href="/invesphone" aria-label="Abrir o aparelho de Lemos" title="Aparelho"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/></svg><span>Aparelho</span></a>
+    </div>
+  </div>
+
+  <div id="where" class="hcard"><small>Você está em</small><b id="where-n">Recepção</b></div>
+  <div id="toast" hidden role="status"></div>
+
+  <div id="talk" hidden role="dialog" aria-labelledby="tk-who">
+    <div class="tk-h"><span id="tk-av" class="av"></span><div><small id="tk-role"></small><b id="tk-who"></b></div><button id="tk-x" aria-label="Fechar">×</button></div>
+    <p id="tk-text"></p>
+    <div id="tk-opts"></div>
+    <i id="tk-more" aria-hidden="true">Toque para continuar</i>
+  </div>
+
+  <div id="gal" class="viewer" hidden>
+    <header><div><b id="g-title">Foto</b><span id="g-cap">Fotografia pericial</span></div><button class="x" id="g-x">Fechar</button></header>
+    <div class="pic" id="g-pic"><img id="g-img" alt=""></div>
+    <footer><button class="x" id="g-prev" aria-label="Foto anterior">‹</button><span id="g-n"></span><button class="x" id="g-next" aria-label="Próxima foto">›</button></footer>
+  </div>
+
+  <div id="intro" class="modal">
+    <div class="card">
+      <div class="eb">Caso 01 · Base do DHPP</div>
+      <h1>De volta à base</h1>
+      <div class="call"><img src="/sonia.jpg" alt="Sônia Prado"><div><b>Sônia Prado · Delegada</b><p>Lemos, passe na minha sala. A equipe já está com o material da casa.</p></div></div>
+      <ul>
+        <li><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/></svg><span><b>Andar:</b> toque no chão para ir até lá. Arraste para olhar o resto da base.</span></li>
+        <li><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1.2-4 4-6 7.5-6s6.3 2 7.5 6"/></svg><span><b>Conversar:</b> toque numa pessoa. Quem tem novidade aparece com um sinal amarelo.</span></li>
+        <li><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l6 6"/></svg><span><b>Examinar:</b> mesas, quadro, arquivo e bancada também falam.</span></li>
+        <li><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/></svg><span><b>Aparelho:</b> o celular de Lemos fica no canto de cima e leva ao resto do caso.</span></li>
+      </ul>
+      <button class="go" id="b-start">Entrar na base</button>
+      <div class="disc">Arquivo Morto · base do DHPP. Caso ficcional livremente inspirado em um crime real; nomes e detalhes foram alterados.</div>
+    </div>
+  </div>
+</div>
+    <script type="module" src="/src/base/base.js"></script>
+  </body>
+</html>
