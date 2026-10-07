@@ -197,7 +197,7 @@ function runJob(a){
       const c=S.civs.find(k=>k.id===j.civ);
       if(!c||c.state==='leave'){endJob(a);return;}
       if(Math.hypot(c.x-a.x,c.y-a.y)<=1.3){
-        c.state='leave';c.path=[];c.wait=0;S.escorts++;
+        c.state='leave';c.escorted=1;c.path=[];c.wait=0;S.escorts++;
         say(a,pick(a.kind==='campo'?PAULO_LINES:PM_LINES),120);if(Math.random()<0.4)setTimeout(()=>say(c,pick(['Tá bom, tá bom.','Só queria ajudar…','Calma, já vou.'])),900);
         if(a.kind==='campo')a.done++;
         if(a.kind==='campo'&&a.done===2&&!S.flags.jorge){S.flags.jorge=1;setTimeout(()=>msg('paulo','Achei um nome útil: Jorge. É vigia da rua e presta atenção em carro e movimento. Vou separar ele dos curiosos.'),1500);}
@@ -287,8 +287,9 @@ function stepCiv(c){
     if(c.press&&Math.random()<0.0015)say(c,pick(PRESS_LINES));
     if(--c.wait<=0){c.state='leave';c.path=[];}
   }
+  if(c.state==='stuck'){c.moving=false;if(++c.wait%60===0){if(bfs(i,k=>k===c.ex,civPass)>=0){c.state='leave';c.path=[];}else if(Math.random()<0.35)say(c,pick(['Posso sair?','Como eu saio daqui?','Moço, me deixa passar?']),90);}}
   if(c.state==='leave'){
-    if(!c.path.length){if(i===c.ex){c.gone=true;return;}let e=bfs(i,k=>k===c.ex,civPass);c.lp=civPass;if(e<0){e=bfs(i,k=>k===c.ex,movePass);c.lp=movePass;}if(e<0){c.gone=true;return;}c.path=pathTo(e);}
+    if(!c.path.length){if(i===c.ex){c.gone=true;return;}let e=bfs(i,k=>k===c.ex,civPass);c.lp=civPass;if(e<0&&c.escorted){e=bfs(i,k=>k===c.ex,movePass);c.lp=movePass;}if(e<0&&!c.escorted){c.state='stuck';c.wait=0;c.path=[];return;}if(e<0){c.gone=true;return;}c.path=pathTo(e);}
   }
   const pass=c.state==='leave'?(c.lp||civPass):civPass;
   // look both ways at the crosswalk
@@ -1477,10 +1478,12 @@ function updCars(dt){
   const ppl=[...S.crew,...S.civs,...IML.agents];
   for(const c of FX.cars){
     if(c.parked)continue;
+    if(c.rev){c.y-=1.1*dt;continue;}
     if(c.shift){c.x+=(c.shift.to-c.x)*0.04*dt;if(Math.abs(c.x-c.shift.to)<0.6){c.x=c.shift.to;const s=c.shift;c.shift=null;if(s.park){c.parked=true;c.v=0;continue;}}}
     const front=c.y+84;let gap=1e9;
     for(const o of FX.cars){if(o===c)continue;if(Math.abs(o.x-c.x)<40&&o.y>c.y)gap=Math.min(gap,o.y-front);}
     for(const p of ppl){const px=p.x*T+16;if(px<c.x-3||px>c.x+67)continue;const d=p.y*TH+TH-2-front;if(d>-34)gap=Math.min(gap,Math.max(0,d));}
+    if(S.blockUntil>S.tick&&!c.iml&&front<=CONE_TOP-12){gap=Math.min(gap,Math.max(0,CONE_TOP-14-front));if(c.v<0.05&&gap<20&&(c.wait||0)>45){c.rev=1;floatText(c.x+32,c.y+40,'Rua fechada','#f3f5f6',70);}}
     if(front<=CROSS_Y*TH+2&&S.civs.some(p=>p.wantCross))gap=Math.min(gap,Math.max(0,CROSS_Y*TH-6-front));
     let tgt=c.vmax;if(c.y+84>3*TH&&c.y<17*TH)tgt*=0.6;
     if(c.iml&&!c.left&&c.y>=c.park-30)tgt=Math.max(0.15,(c.park-c.y)*0.03);
@@ -1493,7 +1496,7 @@ function updCars(dt){
     if(WET>0.4&&c.v>0.6&&Math.random()<0.25*dt)fxAdd({k:'drip',x:c.x+8+Math.random()*48,y:c.y+4,z:0,vx:(Math.random()-0.5)*0.8,vy:-0.4,vz:0.8+Math.random(),g:0.15,t:0,life:16});
     const cy=cam.y;if(!c.wh&&c.y+40>cy-20&&c.y+40<cy+20){c.wh=1;SND.whoosh(clamp(1-Math.abs(c.x+32-cam.x)/500,0,1));}
   }
-  FX.cars=FX.cars.filter(c=>c.parked||c.y<(H+6)*TH);
+  FX.cars=FX.cars.filter(c=>c.parked||(c.y<(H+6)*TH&&!(c.rev&&c.y<-8*TH)));
   markCars();
 }
 function drawCar(c){ctx.drawImage(c.spr,Math.round(c.x)-1,Math.round(c.y)-1);if(LODV>=3){ctx.save();ctx.translate(Math.round(c.x)-c.x,Math.round(c.y)-c.y);carMicro(c);ctx.restore();}if(c.brake){ctx.fillStyle='#ff4a3a';ctx.fillRect(Math.round(c.x)+11,Math.round(c.y)+6,6,3);ctx.fillRect(Math.round(c.x)+47,Math.round(c.y)+6,6,3);}}
@@ -2526,8 +2529,8 @@ const CALLS=[
     ok:()=>'',arrive:()=>msg('sonia',soniaHint())},
   {k:'fita',t:'Mais fita',sub:'Viatura de apoio traz +20 m',eta:3,cd:4,max:2,ack:'Fita a caminho com a viatura de apoio.',
     ok:()=>'',arrive:()=>{FITA_MAX+=20;msg('central','A viatura de apoio deixou mais 20 m de fita com a PM.');}},
-  {k:'transito',t:'Fechar a rua',sub:'Trânsito desviado, sem carros por 40 min',eta:1.5,dur:40,cd:8,ack:'Pedido de bloqueio repassado ao trânsito.',
-    ok:()=>'',arrive:()=>{S.blockUntil=S.tick+40*20;msg('central','Rua das Acácias fechada nos dois sentidos. Cones na pista.');},leave:()=>sys('Rua das Acácias reaberta. Os cones saíram da pista.')},
+  {k:'transito',t:'Fechar a rua',sub:'Trânsito desviado até o fim da varredura',eta:1.5,once:1,ack:'Pedido de bloqueio repassado ao trânsito.',
+    ok:()=>S.blockUntil>S.tick?'Rua já fechada':'',arrive:()=>{S.blockUntil=1e9;msg('central','Rua das Acácias fechada nos dois sentidos. Cones na pista.');}},
   {k:'ic',t:'Apoio da perícia',sub:'Fotógrafo e papiloscopista: perícia 50% mais rápida',eta:3,dur:8,cd:10,ack:'Equipe de apoio da perícia acionada.',
     ok:()=>'',arrive:()=>{S.icUntil=S.tick+8*20;msg('mauricio','Chegou o apoio da perícia. Com fotógrafo e papiloscopista a gente rende mais.');}},
   {k:'aguia',t:'Helicóptero Águia',sub:'Luz do alto ajuda lá fora, mas atrai curiosos',eta:1,dur:3,cd:12,ack:'Águia decolando, chega em instantes.',
@@ -2557,8 +2560,9 @@ Object.assign(SND,{
 });
 // hold a channel like a push-to-talk key; letting go early cancels
 function drawCones(){
-  if(!(S.blockUntil>S.tick))return;
-  for(const ty of [1,H-2]){const Y=ty*TH+TH-4;for(let x=10;x<4*T;x+=30){
+  if(!(S.blockUntil>S.tick)||carsInBlock())return;
+  const vanIn=IML.van&&!IML.van.left&&IML.state!=='off';
+  for(const ty of [1,H-2]){const Y=ty*TH+TH-4;for(let x=10;x<4*T;x+=30){if(vanIn&&ty===1&&x>56&&x<4*T)continue;
     ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(x-6,Y,13,3);
     ctx.fillStyle='#1e1611';ctx.beginPath();ctx.moveTo(x,Y-15);ctx.lineTo(x+6,Y+1);ctx.lineTo(x-6,Y+1);ctx.closePath();ctx.fill();
     ctx.fillStyle='#f06a1e';ctx.beginPath();ctx.moveTo(x,Y-14);ctx.lineTo(x+5,Y);ctx.lineTo(x-5,Y);ctx.closePath();ctx.fill();
@@ -2832,6 +2836,11 @@ setInterval(()=>{const m=middleBusy(),now=performance.now();
   if(m&&!midWas){midWas=true;midT=now;appEl.classList.add('mid-on');}
   else if(!m&&midWas){midWas=false;appEl.classList.remove('mid-on');if(BUSY_UNTIL>midT)BUSY_UNTIL+=now-midT;}
 },100);
+setTimeout(()=>{if(window.__acacias)Object.assign(window.__acacias,{dbg:{floor,F,passable,civPass,W,H,CROSS_Y,inLot,room,idx}});},0);
+
+/* the closed stretch: cones go down once the cars already inside have driven out; cars arriving stop at the cones and back away */
+const CONE_TOP=1*TH+TH-4,CONE_BOT=(H-2)*TH+TH-4;
+function carsInBlock(){return FX.cars.some(c=>!c.parked&&!c.iml&&!c.rev&&c.y+84>CONE_TOP-14&&c.y<CONE_BOT);}
 /* ---------- Boot ---------- */
 let last=performance.now(),acc=0;
 function loop(now){
