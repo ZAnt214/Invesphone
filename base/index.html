@@ -14,18 +14,19 @@
 <div id="app">
   <canvas id="cv" aria-label="Planta da base do DHPP"></canvas>
 
-  <div class="hud">
-    <div class="hcard h-id">
+  <div class="hud"><div class="ht">
+    <div class="seg h-id">
       <div class="mark" aria-label="DHPP Homicídios"><b>DHPP</b><i></i><span>HOMICÍDIOS</span></div>
-      <div class="clk"><small id="clk-d">QUI 17·10</small><b id="clk" role="timer">08:10</b></div>
+      <div class="clk"><b id="clk" role="timer">08:10</b><span><small>QUI 17·10</small><small class="ph">MANHÃ</small></span></div>
     </div>
-    <div class="hcard h-btns">
+    <div class="seg h-where"><small>Local</small><b id="where-n">Pátio do DHPP</b></div>
+    <div class="seg h-btns">
       <a class="hbtn" id="b-home" href="/" aria-label="Voltar à casa da Rua das Acácias" title="Casa"><svg viewBox="0 0 24 24"><path d="M3.5 11L12 4l8.5 7"/><path d="M6 10v10h12V10"/></svg><span>Casa</span></a>
+      <button class="hbtn" id="rot" aria-label="Girar tela" title="Girar tela" hidden><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7M21 4v5h-5"/></svg></button>
       <a class="hbtn phone" id="b-phone" href="/invesphone" aria-label="Abrir o aparelho de Lemos" title="Aparelho"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/></svg><span>Aparelho</span></a>
     </div>
-  </div>
+  </div></div>
 
-  <div id="where" class="hcard"><small>Você está em</small><b id="where-n">Recepção</b></div>
   <div id="toast" hidden role="status"></div>
 
   <div id="talk" hidden role="dialog" aria-labelledby="tk-who">
