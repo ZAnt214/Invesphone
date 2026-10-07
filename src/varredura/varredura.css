@@ -937,3 +937,14 @@ body:not(.land) .hud-top .h-btns{padding-right:16px}
 #end .disc{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;letter-spacing:0}
 #end .go,#fin .go{border:0;border-radius:0;background:#f2c230;color:#111;font:700 15px/1 Rajdhani,"Arial Narrow",sans-serif;letter-spacing:.12em;text-transform:uppercase;clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);box-shadow:none}
 #end .go:hover,#fin .go:hover{background:#ffd451}
+
+/* active support as bare text under the top bar: name in colour, time in white, no box */
+#sup{gap:2px}
+#sup .sp{padding:1px 0;border:0;border-radius:0;background:none;box-shadow:none;gap:5px;color:#7ee59c;font:700 10.5px/1.5 Rajdhani,"Arial Narrow",sans-serif;letter-spacing:.12em;text-transform:uppercase;text-shadow:0 0 2px #000,0 1px 3px #000,0 0 8px rgba(0,0,0,.8);animation:none}
+#sup .sp i{display:none}
+#sup .sp span{color:inherit}
+#sup .sp b{font:700 10.5px/1.5 Rajdhani,"Arial Narrow",sans-serif;letter-spacing:.12em;color:#f4f2ec}
+#sup .sp.low{color:#f2a33a}
+#sup .sp.go{color:#f2c230;border:0;background:none}#sup .sp.go b{color:rgba(244,242,236,.75)}
+#sup .sp.new{animation:supIn .5s ease-out}
+@keyframes supIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
