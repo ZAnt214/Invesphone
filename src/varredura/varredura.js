@@ -2673,7 +2673,7 @@ for(const el of [$('#r-ptt'),rBig]){el.addEventListener('pointerdown',pttDown);e
   el.addEventListener('click',e=>{if(e.detail===0){const d=CALLS[rCh];if(callState(d)[0]==='idle'){if(fireCall(d.k))say2('Enviado ✓ aguarde',1800);}else{SND.busy();say2(callState(d)[1],1600,true);}}});}
 /* bottom keys: stencils sprayed on the asphalt, like the marks the perícia leaves on the ground */
 (function buildKeyIcons(){
-  try{if(!document.querySelector('link[data-stencil]')){const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Special+Elite&display=swap';l.dataset.stencil='1';document.head.appendChild(l);}}catch(_){}
+  try{if(!document.querySelector('link[data-stencil]')){const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Special+Elite&display=swap';l.dataset.stencil='1';document.head.appendChild(l);}}catch(_){}
   const NS='http://www.w3.org/2000/svg';
   const defs=document.createElementNS(NS,'svg');defs.setAttribute('width','0');defs.setAttribute('height','0');defs.setAttribute('aria-hidden','true');defs.style.position='absolute';
   defs.innerHTML='<filter id="spray" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.8" result="d"/><feTurbulence type="fractalNoise" baseFrequency="2.2" numOctaves="1" seed="3" result="g"/><feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.1 1.45" result="m"/><feComposite in="d" in2="m" operator="in"/></filter>';

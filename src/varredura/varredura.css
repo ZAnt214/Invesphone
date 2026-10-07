@@ -739,3 +739,79 @@ body:not(.land) .dock,body:not(.land) .dock.hcard{margin-bottom:0}
 .mmore .disc{width:40px;height:40px}
 .mmore .stc{width:24px;height:24px;transform:translateY(-3px)}
 .mmore[aria-expanded="true"] .stc{transform:translateY(-3px)}
+
+/* top bar · tactical graphite: one chamfered plate across the top, hairline edge, thin dividers,
+   condensed figures, chamfered keys with the active one in yellow, markers as slanted segments */
+.hud-top{--tg1:#2a2e33;--tg2:#16191c;--tgl:rgba(255,255,255,.34);--tgd:rgba(255,255,255,.13);--tgk:rgba(255,255,255,.075);--tcy:#7fd7ff;--tgr:#7ee59c;--tfont:Rajdhani,"Barlow Condensed","Arial Narrow",sans-serif;--tch:12px}
+.hud-top .ht{position:relative;gap:0;align-items:center;padding:7px 14px;box-sizing:border-box;color:#e8ecef;
+  background:linear-gradient(var(--tg1),var(--tg2));clip-path:polygon(var(--tch) 0,calc(100% - var(--tch)) 0,100% var(--tch),100% 100%,0 100%,0 var(--tch));
+  filter:drop-shadow(0 8px 14px rgba(0,0,0,.55))}
+.hud-top .ht::before{content:'';position:absolute;inset:0;pointer-events:none;background:var(--tgl);
+  clip-path:polygon(var(--tch) 0,calc(100% - var(--tch)) 0,100% var(--tch),100% 100%,0 100%,0 var(--tch),1px calc(var(--tch) + .4px),1px calc(100% - 1px),calc(100% - 1px) calc(100% - 1px),calc(100% - 1px) calc(var(--tch) + .4px),calc(100% - var(--tch) - .4px) 1px,calc(var(--tch) + .4px) 1px,1px calc(var(--tch) + .4px),0 var(--tch))}
+.hud-top .ht::after{content:'';position:absolute;left:var(--tch);right:var(--tch);top:1px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);pointer-events:none}
+.hud-top .hcard{background:none;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;border-radius:0;padding:0 12px;position:relative;align-self:center}
+.hud-top .hcard+.hcard::before{content:'';position:absolute;left:0;top:50%;width:1px;height:28px;margin-top:-14px;background:var(--tgd)}
+.hud-top .h-time{padding-left:2px;gap:12px}
+.hud-top .h-btns{padding-right:2px}
+/* brand */
+.hud-top .mark{font-family:var(--tfont);padding:0}
+.hud-top .mark b{font:700 15px/1 var(--tfont);letter-spacing:.24em;margin-right:-.24em}
+.hud-top .mark i{opacity:.55;margin:3px 0}
+.hud-top .mark span{font:600 6.5px/1 var(--tfont);letter-spacing:.24em;color:rgba(232,236,239,.6)}
+/* clock: plain condensed figures, the phase in cyan, dawn as a segmented strip */
+.hud-top .lcd{width:auto;padding:0;border-radius:0;background:none;box-shadow:none;color:#e8ecef;display:grid;grid-template-columns:auto auto;grid-template-rows:auto auto;column-gap:7px;row-gap:3px;align-items:end}
+.hud-top .lcd::after{display:none}
+.hud-top .lcd .seg7{display:none}
+.hud-top .lcd #clk{position:static!important;width:auto;height:auto;margin:0;overflow:visible;clip:auto;grid-column:1;grid-row:1;font:600 30px/.82 var(--tfont);letter-spacing:.03em;font-variant-numeric:tabular-nums}
+.hud-top .lcd-r1{grid-column:2;grid-row:1;display:flex;flex-direction:column;justify-content:flex-end;gap:3px;font:600 8.5px/1 var(--tfont);letter-spacing:.14em;opacity:1;color:rgba(232,236,239,.55)}
+.hud-top .lcd-r1 #lcd-ph{color:var(--tcy);order:2}
+.hud-top .dawn{grid-column:1/3;grid-row:2;height:4px;color:var(--tcy);gap:4px}
+.hud-top .dawn svg{display:none}
+.hud-top .dawn .segs{gap:2px;height:3px}
+.hud-top .dawn .segs i{border-radius:0;transform:skewX(-20deg);opacity:.16}
+.hud-top .dawn .segs i.on,.hud-top .dawn .segs i.now{opacity:.85}
+/* speed keys */
+.hud-top .speed{display:flex;gap:3px;grid-template-columns:none}
+.hud-top .speed button{width:28px;height:26px;border-radius:0;background:var(--tgk);color:rgba(232,236,239,.75);box-shadow:none;clip-path:polygon(5px 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%,0 5px)}
+.hud-top .speed button svg{width:13px;height:13px}
+.hud-top .speed button:hover{background:rgba(255,255,255,.13)}
+.hud-top .speed button[aria-pressed="true"]{background:var(--mark);color:#111;box-shadow:none}
+/* markers */
+.hud-top .h-marks{gap:10px}
+.hud-top .h-marks .cap{gap:3px}
+.hud-top .h-marks .cap small,.hud-top .gauge .gl small{font:600 8px/1 var(--tfont);letter-spacing:.18em;color:rgba(232,236,239,.55)}
+.hud-top .h-marks .cap b{font:600 21px/.85 var(--tfont)}
+.hud-top .h-marks .cap b i{font-size:14px;color:rgba(232,236,239,.5)}
+.hud-top .rail{gap:3px;align-items:center}
+.hud-top .tent{width:17px;height:12px;transform:skewX(-20deg);background:rgba(255,255,255,.12);transition:background .25s,box-shadow .25s}
+.hud-top .tent svg{display:none}
+.hud-top .tent span{bottom:auto;top:50%;transform:translateY(-50%) skewX(20deg);font:700 8px/1 var(--tfont);color:rgba(232,236,239,.38)}
+.hud-top .tent.next{background:rgba(242,194,48,.12);box-shadow:inset 0 0 0 1px rgba(242,194,48,.75);animation:breath 1.8s ease-in-out infinite}
+.hud-top .tent.on{background:var(--mark);filter:none;box-shadow:0 0 8px rgba(242,194,48,.55)}
+.hud-top .tent.on span{color:#111}
+/* gauges */
+.hud-top .h-state{gap:14px}
+.hud-top .gauge{gap:7px}
+.hud-top .gauge .ring{width:32px;height:32px}
+.hud-top .gauge .gl{gap:3px;min-width:0}
+.hud-top .gauge .gl b{font:600 21px/.85 var(--tfont)}
+.hud-top #g-pres .tr{stroke-dasharray:4 2.4}
+/* round buttons become chamfered keys */
+.hud-top .h-btns{gap:4px}
+.hud-top .hbtn{width:32px;height:30px;border:0;border-radius:0;background:var(--tgk);color:rgba(232,236,239,.85);box-shadow:none;clip-path:polygon(6px 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%,0 6px);overflow:visible}
+.hud-top .hbtn:hover{background:rgba(255,255,255,.13)}
+.hud-top .hbtn svg{width:16px;height:16px}
+.hud-top .hbtn .badge{border-radius:0;background:#ff4d3d;box-shadow:none}
+/* upright: two rows on the same plate */
+body:not(.land) .hud-top .ht{row-gap:6px;padding:8px 12px}
+body:not(.land) .hud-top .ht .brk{height:1px;background:var(--tgd);margin:0 -12px}
+body:not(.land) .hud-top .h-marks::before{display:none}
+body.narrow .hud-top .lcd{width:auto}
+body:not(.land) .hud-top .ht{padding:8px 3px}
+body:not(.land) .hud-top .ht .brk{margin:0 -3px}
+body:not(.land) .hud-top .speed{display:grid;grid-template-columns:repeat(2,26px);grid-auto-rows:22px;gap:3px}
+body:not(.land) .hud-top .speed button{width:26px;height:22px}
+body:not(.land) .hud-top .ht{padding:8px 0}
+body:not(.land) .hud-top .ht .brk{margin:0}
+body:not(.land) .hud-top .h-time,body:not(.land) .hud-top .h-marks{padding-left:9px}
+body:not(.land) .hud-top .h-btns,body:not(.land) .hud-top .h-state{padding-right:9px}
