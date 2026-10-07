@@ -668,3 +668,13 @@ body:not(.land) .tool .kb svg.stc{width:44px;height:44px}
 body.cmd-cancel .hud-bot .dock{box-shadow:none}
 .dock,.dock.hcard{gap:16px}
 body:not(.land) .dock,body:not(.land) .dock.hcard{gap:12px}
+/* crew cut at the edge like the keys: names above, faces half hidden, the selected one rises whole */
+.dock,.dock.hcard{overflow:hidden;padding:56px 8px 0;margin-bottom:-8px;align-items:flex-end}
+body:not(.land) .dock,body:not(.land) .dock.hcard{margin-bottom:0}
+.mem{margin-bottom:-23px}
+.mem .nm{position:absolute;left:50%;bottom:calc(100% + 4px);transform:translateX(-50%);margin:0;max-width:none;white-space:nowrap}
+.mem[aria-pressed="true"]{transform:translateY(-27px)}
+.mem.lift{transform:scale(.9)}
+.dock::after{content:'';position:absolute;left:4px;right:4px;bottom:0;height:2px;pointer-events:none;z-index:-1;background:repeating-linear-gradient(90deg,rgba(216,211,196,.22) 0 16px,transparent 16px 26px);-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.dock::before{bottom:-40px}
+.dock,.dock.hcard{overflow:hidden;overflow:clip;padding-top:74px}
