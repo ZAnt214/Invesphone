@@ -2649,6 +2649,7 @@ function closeRadio(){if(radioEl.hidden)return;holdEnd(true);SND.rOff();radioEl.
 rKey.setAttribute('aria-expanded','false');
 // keys peek past the bottom edge; never let focus scroll the app to reveal them
 appEl.addEventListener('scroll',()=>{if(appEl.scrollTop||appEl.scrollLeft){appEl.scrollTop=0;appEl.scrollLeft=0;}});
+$('#crew').addEventListener('scroll',e=>{const d=e.currentTarget;if(d.scrollTop||d.scrollLeft){d.scrollTop=0;d.scrollLeft=0;}});
 rKey.addEventListener('click',()=>{if(radioEl.hidden)openRadio();else closeRadio();});
 radioEl.addEventListener('click',e=>{if(e.target===radioEl||e.target.id==='hto-in')closeRadio();});rList.addEventListener('wheel',e=>{e.preventDefault();tune(rCh+(e.deltaY>0?1:-1),'knob');},{passive:false});
 $('#r-knob').addEventListener('click',()=>tune(rCh+1,'knob'));
