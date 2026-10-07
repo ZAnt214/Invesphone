@@ -148,7 +148,7 @@ function discover(id,tile){
   const f=S.found;
   if(f.escritorio_revirado&&f.valores_intactos&&!S.flags.busca){S.flags.busca=1;setTimeout(()=>msg('mauricio','Parece alguém tentando produzir bagunça. Gaveta sem importância aberta, ponto óbvio intacto, objeto caro à vista. Se procuraram algo, sabiam exatamente o que queriam.'),2600);}
   if(S.order.length===3&&!S.flags.three){S.flags.three=1;setTimeout(()=>queueEvent('deixaram'),4200);}
-  if(S.order.length===CLUE_IDS.length&&!S.flags.end){S.flags.end=1;setTimeout(showEnd,3000);}
+  if(S.order.length===CLUE_IDS.length&&!S.flags.end){S.flags.end=1;setTimeout(()=>queueEvent('fim'),2600);}
   updateBadge();
 }
 
@@ -2314,7 +2314,7 @@ function showEnd(){
   $('#end-list').innerHTML=S.order.map(id=>`<li><svg viewBox="0 0 24 24"><path d="M12 3l9 17H3z"/></svg><span><b>${CLUES[id].title}.</b> ${CLUES[id].desc}</span></li>`).join('');
   hideCoach();cmdCancel();closeRadio();$('#end').hidden=false;fitCards();setSpeed(0);if(!sheetEl.hidden)renderSheet();
 }
-$('#b-end').addEventListener('click',()=>{$('#end').hidden=true;setSpeed(1);});
+$('#b-end').addEventListener('click',()=>{SND.click();$('#end').hidden=true;showFin();});
 
 /* ---------- Marker rail: a numbered tent fills each time a polaroid of a new mark lands on it ---------- */
 const railEl=$('#rail'),flyEl=$('#fly'),LANDED=new Set();let railSig='';
@@ -2786,8 +2786,8 @@ function placeBub(){
   const r=Math.max(9,11*s.e);bubPin.style.transform=`translate(${(s.x-r).toFixed(1)}px,${(s.y-r).toFixed(1)}px)`;bubPin.style.width=bubPin.style.height=(2*r).toFixed(1)+'px';
 }
 function openCine(k){
-  const ev=evStart(k),p=PEOPLE[ev.who];
-  $('#cn-av').innerHTML=avatar(ev.who);$('#cn-who').textContent=p.name+(ev.where?' · '+ev.where:'');$('#cn-title').textContent=ev.title;
+  const ev=evStart(k),p=ev.who?PEOPLE[ev.who]:null;
+  $('#cn-av').innerHTML=p?avatar(ev.who):NB_ICON;$('#cn-who').textContent=ev.label||(p.name+(ev.where?' · '+ev.where:''));$('#cn-title').textContent=ev.title;
   const tx=$('#cn-text');tx.textContent=ev.text||'';tx.hidden=!ev.text;
   evOpts($('#cn-opts'),ev,true);$('#cn-opts').classList.toggle('one',ev.opts.length===1);
   closeRadio();cineEl.hidden=false;void cineEl.offsetWidth;cineEl.classList.add('in');appEl.classList.add('cine-on');SND.pop();
@@ -2814,7 +2814,7 @@ try{document.fonts&&document.fonts.ready.then(()=>{stabilizeTop();applyLayout(tr
    middle is busy; decisions wait until the line is quiet. */
 const BQ=[];let BUSY_UNTIL=0,BCUR=null;
 const flyOn=()=>flyEl.children.length>0;
-function middleBusy(){return flyOn()||!!evOpen||!cineEl.hidden||!radioEl.hidden||!$('#intro').hidden||!$('#end').hidden;}
+function middleBusy(){return flyOn()||!!evOpen||!cineEl.hidden||!radioEl.hidden||!$('#intro').hidden||!$('#end').hidden||!$('#fin').hidden;}
 function bottomBusy(){return BQ.length>0||performance.now()<BUSY_UNTIL;}
 function msg(from,text){BQ.push({k:'msg',from,text});bottomPump();}
 function sys(text){if(BQ.filter(q=>q.k==='sys').length>=2)return;BQ.push({k:'sys',text});bottomPump();}
@@ -2841,6 +2841,23 @@ setTimeout(()=>{if(window.__acacias)Object.assign(window.__acacias,{dbg:{floor,F
 /* the closed stretch: cones go down once the cars already inside have driven out; cars arriving stop at the cones and back away */
 const CONE_TOP=1*TH+TH-4,CONE_BOT=(H-2)*TH+TH-4;
 function carsInBlock(){return FX.cars.some(c=>!c.parked&&!c.iml&&!c.rev&&c.y+84>CONE_TOP-14&&c.y<CONE_BOT);}
+
+
+/* ---------- The end of the sweep ----------
+   7th mark → the notebook's conclusion as a cinematic cut → the report → a closing screen that freezes the scene
+   and leaves the result saved for the next stage of the case. */
+EVENTS.fim={who:null,style:'cena',where:'',label:'Caderno de Lemos · conclusão',title:'Roubo comum não explica a cena.',text:'',
+  opts:[{t:'Encerrar a varredura',sub:'',fn:()=>{setTimeout(showEnd,350);}}]};
+const NB_ICON='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#f2c230" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h11a1 1 0 011 1v16a1 1 0 01-1 1H6z"/><path d="M6 3v18M9 8h6M9 12h6M9 16h4"/></svg>';
+function finData(){const [l]=presLabel();return {time:S.flags.endTime||clockStr(),achados:S.order.length,cena:l,contaminacao:Math.round(S.contam),fita:tapeUsed(),escoltas:S.escorts||0,ordem:[...S.order]};}
+function showFin(){
+  const d=finData();S.flags.fin=1;
+  $('#fin-sum').innerHTML=`${d.achados} achados registrados até ${d.time}. Preservação da cena: ${d.cena.toLowerCase()}.<br>${d.fita?d.fita+' m de fita esticados':'Nenhuma fita esticada'} · ${d.escoltas} ${d.escoltas===1?'curioso afastado':'curiosos afastados'}.`;
+  try{localStorage.setItem('varredura.fim',JSON.stringify(d));}catch(_){}
+  try{window.dispatchEvent(new CustomEvent('varredura:fim',{detail:d}));}catch(_){}
+  closeRadio();hideCoach();setSpeed(0);appEl.classList.add('fin-on');$('#fin').hidden=false;fitCards();SND.chime&&SND.chime();
+}
+$('#b-again').addEventListener('click',()=>{SND.click();location.reload();});
 /* ---------- Boot ---------- */
 let last=performance.now(),acc=0;
 function loop(now){
