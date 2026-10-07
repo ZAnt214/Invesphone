@@ -14,44 +14,67 @@
 <div id="app">
   <canvas id="cv" aria-label="Planta da residência da Rua das Acácias"></canvas>
 
-  <div class="top">
-    <div class="bar glass">
+  <div class="hud-top"><div class="ht">
+    <div class="hcard h-time">
       <div class="mark" aria-label="DHPP Homicídios"><b>DHPP</b><i></i><span>HOMICÍDIOS</span></div>
-      <div class="clock"><i class="recd" title="Cena aberta"></i><div><b id="clk">04:35</b><small>17/10/2002</small></div></div>
+      <div class="lcd" id="lcd" title="Hora da cena">
+        <div class="lcd-r1"><span>QUI 17·10</span><span id="lcd-ph">NOITE</span></div>
+        <svg class="seg7" id="seg7" viewBox="-2 0 57 18" aria-hidden="true"></svg>
+        <span class="sr" id="clk" role="timer">04:35</span>
+        <div class="dawn" aria-hidden="true"><svg viewBox="0 0 8 8"><path d="M5.6.6A3.6 3.6 0 1 0 7.4 6.4 3 3 0 0 1 5.6.6z"/></svg><span class="segs" id="dawn"></span><svg viewBox="0 0 8 8"><circle cx="4" cy="4" r="1.8"/><path d="M4 .2v1.2M4 6.6v1.2M.2 4h1.2M6.6 4h1.2M1.3 1.3l.8.8M5.9 5.9l.8.8M1.3 6.7l.8-.8M5.9 2.1l.8-.8" stroke="currentColor" stroke-width=".9"/></svg></div>
+      </div>
       <div class="speed" role="group" aria-label="Velocidade do tempo">
-        <button id="sp0" data-sp="0" aria-label="Pausar">II</button>
-        <button id="sp1" data-sp="1" aria-label="Normal">1×</button>
-        <button id="sp2" data-sp="2" aria-label="Dupla">2×</button>
-        <button id="sp4" data-sp="4" aria-label="Quádrupla">4×</button>
+        <button id="sp0" data-sp="0" aria-label="Pausar" title="Pausar"><svg viewBox="0 0 24 24"><path d="M9 6.5v11M15 6.5v11"/></svg></button>
+        <button id="sp1" data-sp="1" aria-label="Velocidade normal" title="1×"><svg viewBox="0 0 24 24"><path class="f" d="M8.5 6l9.5 6-9.5 6z"/></svg></button>
+        <button id="sp2" data-sp="2" aria-label="Velocidade dupla" title="2×"><svg viewBox="0 0 24 24"><path class="f" d="M3.5 6.5l8 5.5-8 5.5zM12 6.5l8 5.5-8 5.5z"/></svg></button>
+        <button id="sp4" data-sp="4" aria-label="Velocidade quádrupla" title="4×"><svg viewBox="0 0 24 24"><path class="f" d="M1.5 7.5l6.5 4.5-6.5 4.5zM8.75 7.5l6.5 4.5-6.5 4.5zM16 7.5l6.5 4.5-6.5 4.5z"/></svg></button>
       </div>
-      <span class="sep"></span><span class="brk"></span>
-      <div class="stats" role="group" aria-label="Situação da cena">
-        <div class="stat" title="Preservação da cena"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg><div><small>Preservação</small><b id="pres">Boa</b><span class="meter"><i id="m-pres"></i></span></div></div>
-        <div class="stat" title="Fita de isolamento restante"><svg viewBox="0 0 24 24"><path d="M3 9h18v6H3z"/><path d="M8 9l-3 6M14 9l-3 6M20 9l-3 6"/></svg><div><small>Fita</small><b id="fita">40 m</b><span class="meter"><i id="m-fita"></i></span></div></div>
-        <div class="stat" title="Achados registrados"><svg viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/></svg><div><small>Achados</small><b id="ach">0/7</b><span class="pips" id="pips"></span></div></div>
+    </div>
+    <div class="hcard h-marks">
+      <div class="cap"><small>Marcadores</small><b><span id="ach">0</span><i>/7</i></b></div>
+      <div class="rail" id="rail" role="group" aria-label="Marcadores da perícia"></div>
+    </div>
+    <div class="hcard h-state" role="group" aria-label="Situação da cena">
+      <div class="gauge" id="g-pres" title="Preservação da cena">
+        <span class="ring"><svg viewBox="0 0 40 40" aria-hidden="true"><circle class="tr" cx="20" cy="20" r="16"/><circle class="v" id="g-pres-v" cx="20" cy="20" r="16"/><path class="ic" d="M20 12.6l5.8 2.5v4.3c0 3.8-2.5 6.7-5.8 8.3-3.3-1.6-5.8-4.5-5.8-8.3v-4.3z"/></svg></span>
+        <span class="gl"><small>Cena</small><b id="pres">Boa</b></span>
       </div>
-      <span class="sep"></span>
+      <div class="gauge spool" id="g-fita" title="Fita de isolamento restante">
+        <span class="ring"><svg viewBox="0 0 40 40" aria-hidden="true"><defs><pattern id="tape-pat" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><rect width="6" height="6" fill="#f2c230"/><rect width="3" height="6" fill="#1b1d20"/></pattern></defs><circle class="fl" cx="20" cy="20" r="18"/><g id="g-roll"><circle id="g-roll-c" cx="20" cy="20" r="15.5" fill="url(#tape-pat)"/><circle class="ed" id="g-roll-e" cx="20" cy="20" r="15.5"/><circle class="hub" cx="20" cy="20" r="5"/><circle class="hh" cx="20" cy="17.4" r="1"/><circle class="hh" cx="17.7" cy="21.3" r="1"/><circle class="hh" cx="22.3" cy="21.3" r="1"/></g></svg></span>
+        <span class="gl"><small>Fita</small><b id="fita">40 m</b></span>
+      </div>
+    </div>
+    <div class="hcard h-btns">
       <button class="hbtn" id="t-cad" aria-label="Caderno de Lemos" title="Caderno"><svg viewBox="0 0 24 24"><path d="M6 3h11a1 1 0 011 1v16a1 1 0 01-1 1H6z"/><path d="M6 3v18M9 8h6M9 12h6M9 16h4"/></svg><span class="badge" id="badge" hidden>0</span></button>
       <button class="hbtn" id="snd" aria-label="Som" title="Som" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="w" d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/><path class="x" d="M16 9l6 6M22 9l-6 6"/></svg></button>
       <button class="hbtn" id="rot" aria-label="Girar tela" title="Girar tela"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7M21 4v5h-5"/></svg></button>
     </div>
-  </div>
+    <span class="brk"></span>
+  </div></div>
 
   <div id="notes" aria-live="polite"></div>
-  <div id="info" class="glass" hidden></div>
+  <div id="info" class="hcard" hidden></div>
   <div id="evt" class="glass" hidden role="dialog" aria-labelledby="evt-title"><div class="evt-h"><span id="evt-av"></span><div><small id="evt-who"></small><h3 id="evt-title"></h3></div></div><p id="evt-text"></p><div id="evt-opts"></div></div>
   <div id="mode" class="off" aria-live="polite"><b id="mode-t"></b><span id="mode-h"></span><button id="mode-x">Concluir</button></div>
 
-  <div id="zoom" class="tray glass" role="group" aria-label="Zoom"><button id="z-out" aria-label="Afastar">−</button><span id="z-lv">Normal</span><button id="z-in" aria-label="Aproximar">+</button></div>
-
-  <div class="bottom">
-    <div id="crew" class="tray glass" role="group" aria-label="Equipe"></div>
-    <nav id="tools" class="tray glass" aria-label="Ordens">
-      <button class="tool" id="t-pericia" data-t="pericia" aria-pressed="false"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l6 6"/></svg><span class="l">Periciar</span></button>
-      <button class="tool" id="t-isolar" data-t="isolar" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M3 9h18v6H3z"/><path d="M7 9l-4 6M13 9l-4 6M19 9l-4 6M21 12l-2 3"/></svg><span class="l">Isolar</span></button>
-      <button class="tool" id="t-cancel" data-t="cancel" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg><span class="l">Desfazer</span></button>
-    </nav>
+  <div class="hud-bot">
+    <div id="crew" class="hcard dock" role="group" aria-label="Equipe: toque para ver, arraste até o mapa para dar uma ordem"></div>
+    <div class="hud-right">
+      <div id="zoom" class="hcard zoom" role="group" aria-label="Zoom"><button id="z-out" aria-label="Afastar">−</button><span class="zlv" id="z-lv" title="Detalhe"><i></i><i></i><i></i><i></i></span><button id="z-in" aria-label="Aproximar">+</button></div>
+      <nav id="tools" class="hcard actions" aria-label="Ordens de área">
+        <button class="tool" id="t-pericia" data-t="pericia" aria-pressed="false"><span class="kb"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l6 6"/></svg></span><span class="l">Periciar</span></button>
+        <button class="tool" id="t-isolar" data-t="isolar" aria-pressed="false"><span class="kb"><svg viewBox="0 0 24 24"><path d="M3 9h18v6H3z"/><path d="M7 9l-4 6M13 9l-4 6M19 9l-4 6M21 12l-2 3"/></svg></span><span class="l">Isolar</span></button>
+        <button class="tool" id="t-cancel" data-t="cancel" aria-pressed="false"><span class="kb"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/></svg></span><span class="l">Desfazer</span></button>
+      </nav>
+    </div>
   </div>
+
+  <div id="coach" hidden>
+    <div class="hand" aria-hidden="true"><span class="hg"><img alt=""></span><i class="hp"></i></div>
+    <div class="cb" role="dialog" aria-label="Novidade: ordens de arrastar"><div class="ch"><b>Novo · arraste a equipe</b><button id="coach-ok">Entendi</button></div><p>Puxe um retrato até o mapa e solte. O lugar decide a ordem: curioso, cômodo, calçada ou viatura.</p></div>
+  </div>
+  <div id="ghost" hidden aria-hidden="true"><i class="pt"></i><i class="stem"></i><span class="gp"><canvas width="48" height="48"></canvas></span><span class="gl"><img id="gl-i" alt=""><span id="gl-t"></span></span></div>
+  <div id="fly" aria-hidden="true"></div>
 
   <div id="sheet" class="sheet" hidden>
     <div class="grab"></div>
@@ -75,7 +98,7 @@
         <li><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/></svg><span><b>Andar:</b> arraste com um dedo para mover a planta. Pinça ou toque duplo aproximam: quanto mais perto, mais detalhe. Toque num integrante para ver o que ele faz.</span></li>
         <li><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l6 6"/></svg><span><b>Periciar:</b> escolha a ordem e toque num cômodo. Para marcar uma área, segure o dedo um instante e depois arraste.</span></li>
         <li><svg viewBox="0 0 24 24"><path d="M3 9h18v6H3z"/><path d="M7 9l-4 6M13 9l-4 6M19 9l-4 6"/></svg><span><b>Isolar:</b> segure e arraste pela calçada e pelo portão. Curiosos que entram no terreno comprometem a cena.</span></li>
-        <li><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg><span><b>Ordens:</b> toque num policial (ou na foto dele) e escolha Ir até, Guardar posto, Afastar curiosos ou Esticar fita.</span></li>
+        <li><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c1.2-4 4-6 7.5-6s6.3 2 7.5 6"/></svg><span><b>Equipe:</b> puxe um retrato até o mapa e solte. O lugar decide a ordem: curioso, cômodo, calçada ou viatura. Tocar no retrato mostra o que ele está fazendo.</span></li>
       </ul>
       <label class="opt"><input type="checkbox" id="opt-gore" checked><span><b>Mostrar corpos e sangue</b><small>A cena como foi encontrada, em pixel art. Desligue para ver os corpos cobertos por lençol e sem sangue.</small></span></label>
       <button class="go" id="b-start">Entrar na cena</button>
