@@ -2563,8 +2563,10 @@ function drawCones(){
     ctx.fillStyle='#f06a1e';ctx.beginPath();ctx.moveTo(x,Y-14);ctx.lineTo(x+5,Y);ctx.lineTo(x-5,Y);ctx.closePath();ctx.fill();
     ctx.fillStyle='#f3f1ea';ctx.fillRect(x-3,Y-8,6,2);ctx.fillStyle='#1e1611';ctx.fillRect(x-7,Y,15,2);}}
 }
-SND.key=function(){if(!this.ok())return;const t=this.ctx.currentTime;this.osc('sine',1750,t,0.002,0.045,0.022);};
-SND.detent=function(){if(!this.ok())return;const t=this.ctx.currentTime;this.nz(t,0.012,'highpass',3800,0.7,0.22);this.osc('triangle',240,t,0.001,0.03,0.04);};
+SND.bus=function(fn){if(!this.ok())return;if(!this.rg){const c=this.ctx,comp=c.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=4;this.rg=c.createGain();this.rg.gain.value=3.6;this.rg.connect(comp);comp.connect(this.g);}const g0=this.g;this.g=this.rg;try{fn.call(this);}finally{this.g=g0;}};
+for(const k of ['rOn','rOff','pttStart','roger','busy','inbound','radio','squelch','stamp','blip']){const f=SND[k];SND[k]=function(){return this.bus(f);};}
+SND.key=function(){this.bus(function(){const t=this.ctx.currentTime;this.osc('square',1750,t,0.002,0.05,0.02);this.osc('sine',1750,t,0.002,0.06,0.05);});};
+SND.detent=function(){this.bus(function(){const t=this.ctx.currentTime;this.nz(t,0.014,'highpass',3200,0.7,0.35);this.osc('triangle',260,t,0.001,0.035,0.08);});};
 /* the handheld set */
 const CNAME={reforco:'Reforço PM',delegada:'Delegada',fita:'Mais fita',transito:'Fechar rua',ic:'Apoio perícia',aguia:'Heli Águia',imprensa:'Imprensa',iml:'IML'};
 const CDONE={reforco:'O Soldado Reis assumiu o portão',delegada:'A delegada respondeu no rádio',fita:'+20 m de fita no rolo da PM',transito:'Rua fechada, cones na pista',ic:'Perícia 50% mais rápida agora',aguia:'Luz do alto sobre a casa',imprensa:'Os repórteres estão saindo do portão',iml:'O rabecão está a caminho da casa'};
@@ -2586,21 +2588,23 @@ function chDigits(n){if(!chSeg){const sv=$('#r-chs');let h='<g transform="skewX(
   const ds=String(n).padStart(2,'0');for(let k=0;k<2;k++){const on=DIG[+ds[k]];for(const p of chSeg[k])p.classList.toggle('on',on.includes(p.dataset.s));}}
 function tune(i,snd){rCh=(i+CALLS.length)%CALLS.length;$('#r-kr').style.transform=`rotate(${rCh*45}deg)`;if(snd==='knob')SND.detent();else if(snd)SND.key();lit();rOver=null;renderRadio();}
 function say2(txt,ms,blink){rOver={txt,until:performance.now()+(ms||1500)};rLcd.classList.toggle('blinkst',!!blink);renderRadio();}
+const LST={idle:'LIVRE',go:'CHEGA',on:'ATIVO',cool:'ESPERA',off:'BLOQ'};
+function shortSt(d){const st=CS()[d.k]||{ph:'idle',n:0},m=t=>Math.max(1,Math.ceil((t-S.tick)/20))+'m',[cls]=callState(d);
+  if(cls==='go')return 'CHEGA '+m(st.at);if(cls==='on')return 'ATIVO '+m(st.end);if(cls==='cool')return 'ESPERA '+m(st.cd);if(cls==='off')return st.ph==='done'?'USADO':'BLOQ';return d.max?'LIVRE '+(d.max-(st.n||0))+'×':'LIVRE';}
 function renderRadio(){
-  if(!rList.children.length){rList.innerHTML=CALLS.map((d,i)=>`<button class="gr" data-i="${i}"><span class="gn">${String(i+1).padStart(2,'0')}</span><svg viewBox="0 0 24 24">${RICON[d.k]}</svg><span class="gt"><b>${d.t}</b><small>${d.sub}</small></span><span class="gs"></span></button>`).join('');}
+  if(!rList.children.length){rList.innerHTML=CALLS.map((d,i)=>`<div class="lr" role="option" data-i="${i}"><span class="ln">${i+1}</span><svg viewBox="0 0 24 24">${RICON[d.k]}</svg><b>${CNAME[d.k]}</b><span class="ls"><span></span></span></div>`).join('');}
   const now=performance.now();
-  CALLS.forEach((d,i)=>{const b=rList.children[i],[cls,txt]=callState(d),s=b.querySelector('.gs');for(const c of ['idle','go','on','cool','off'])b.classList.toggle(c,c===cls);b.classList.toggle('sel',i===rCh);if(s.textContent!==txt)s.textContent=txt;b.setAttribute('aria-label',`Canal ${i+1}: ${d.t}. ${d.sub}. ${txt}`);});
+  CALLS.forEach((d,i)=>{const b=rList.children[i],[cls,txt]=callState(d),s=b.querySelector('.ls span'),t=shortSt(d);for(const c of ['idle','go','on','cool','off'])b.classList.toggle(c,c===cls);b.classList.toggle('sel',i===rCh);b.setAttribute('aria-selected',String(i===rCh));if(s.textContent!==t)s.textContent=t;b.setAttribute('aria-label',`Canal ${i+1}: ${d.t}. ${txt}`);});
+  const row=rList.children[rCh],top=row.offsetTop-rList.clientHeight/2+row.offsetHeight/2;rList.scrollTop=Math.max(0,top);
   const d=CALLS[rCh],[cls,txt]=callState(d);chDigits(rCh+1);
-  const nm=$('#r-name');if(nm.textContent!==CNAME[d.k])nm.textContent=CNAME[d.k];
-  const st=rOver&&rOver.until>now?rOver.txt:txt;const se=$('#r-stat');if(se.textContent!==st)se.textContent=st;
-  $('#r-mode').textContent=rHold?'TX':now<rxT?'RX ◂':'CH';
+  const st=rOver&&rOver.until>now?rOver.txt:(cls==='idle'?d.sub:txt+' · '+d.sub);const se=$('#r-stat');if(se.textContent!==st)se.textContent=st;
+  $('#r-mode').textContent=rHold?'TX ▸':now<rxT?'RX ◂':'CH';
   let busy=0;for(const k in CS())if(CS()[k].ph==='go')busy=1;
   rLed.className='hled'+(rHold?' tx':now<rxT?' rx':busy?' wait':'');
   for(const k of $('#r-keys').children)k.classList.toggle('cur',k.dataset.n===String(rCh+1));
-  rBig.classList.toggle('no',cls!=='idle');$('#r-ptt2t').textContent=cls==='idle'?`Segure para chamar · CH ${String(rCh+1).padStart(2,'0')}`:txt;
-  $('#r-log').innerHTML=rLog.slice(-3).map(l=>`<p class="${l.ok?'ok':''}"><b>${l.tag}</b>${l.txt}</p>`).join('')||'<p><b>CH</b>Escolha um canal na lista ou no teclado.</p>';
+  rBig.classList.toggle('no',cls!=='idle');
 }
-function logLine(tag,txt,ok){rLog.push({tag,txt,ok});if(rLog.length>12)rLog.shift();if(!radioEl.hidden)renderRadio();}
+function logLine(tag,txt,ok){rLog.push({tag,txt,ok});if(rLog.length>12)rLog.shift();}
 function renderSup(){
   const C=CS(),act=CALLS.filter(d=>C[d.k]&&(C[d.k].ph==='go'||C[d.k].ph==='on')),sp=$('#sup');
   const sig=act.map(d=>d.k+C[d.k].ph).join(',');
@@ -2615,7 +2619,7 @@ function updateRadio(){
 function fireCall(k){
   const d=CALLS.find(c=>c.k===k);if(!d||callState(d)[0]!=='idle')return false;
   const C=CS(),prev=C[k]||{n:0};C[k]={ph:'go',at:S.tick+Math.round(d.eta*20),n:(prev.n||0)+1};
-  SND.roger();buzz(20);logLine('TX',d.ack);setTimeout(()=>msg('central',d.ack),380);
+  SND.roger();buzz(20);logLine('TX',d.ack);setTimeout(()=>{if(!radioEl.hidden)say2('Central: '+d.ack,2600);},900);setTimeout(()=>msg('central',d.ack),380);
   const row=rList.children[CALLS.indexOf(d)];if(row)kick(row,'del',1200);updateRadio();return true;
 }
 function deliver(d){
@@ -2625,7 +2629,7 @@ function deliver(d){
   if(d.k==='fita'){kick($('#g-fita'),'refill',950);hudPop($('#g-fita'),'+20 m');}
   if(d.k==='transito')for(const ty of [1,H-2])for(let x=10;x<4*T;x+=30)puff(x,ty*TH+TH-6,[240,140,70]);
   kick(rKey,'rx',1600);supNew=d.k;logLine('✓',CNAME[d.k]+': '+CDONE[d.k],true);
-  if(!radioEl.hidden){const row=rList.children[CALLS.indexOf(d)];if(row)kick(row,'del',1200);if(CALLS.indexOf(d)===rCh)say2('CHEGOU ✓',2200,true);lit();}
+  if(!radioEl.hidden){const row=rList.children[CALLS.indexOf(d)];if(row)kick(row,'del',1200);say2('✓ Chegou: '+CDONE[d.k],3000,true);lit();}
   else showDeliv(d,loc);
   updateRadio();
 }
@@ -2643,12 +2647,14 @@ function fitRadio(){const inn=$('#hto-in');if(radioEl.hidden)return;const cs=get
 function openRadio(){if(cmd)cmdCancel();hideCoach();radioEl.hidden=false;appEl.classList.add('radio-on');rKey.setAttribute('aria-expanded','true');tune(rCh);fitRadio();SND.rOn();}
 function closeRadio(){if(radioEl.hidden)return;holdEnd(true);SND.rOff();radioEl.hidden=true;appEl.classList.remove('radio-on');rKey.setAttribute('aria-expanded','false');}
 rKey.setAttribute('aria-expanded','false');
+// keys peek past the bottom edge; never let focus scroll the app to reveal them
+appEl.addEventListener('scroll',()=>{if(appEl.scrollTop||appEl.scrollLeft){appEl.scrollTop=0;appEl.scrollLeft=0;}});
 rKey.addEventListener('click',()=>{if(radioEl.hidden)openRadio();else closeRadio();});
-radioEl.addEventListener('click',e=>{if(e.target===radioEl||e.target.id==='hto-in')closeRadio();});
+radioEl.addEventListener('click',e=>{if(e.target===radioEl||e.target.id==='hto-in')closeRadio();});rList.addEventListener('wheel',e=>{e.preventDefault();tune(rCh+(e.deltaY>0?1:-1),'knob');},{passive:false});
 $('#r-knob').addEventListener('click',()=>tune(rCh+1,'knob'));
 $('#r-vol').addEventListener('click',closeRadio);
-$('#r-keys').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;kick(b,'hit',120);const n=b.dataset.n;if(n==='off')closeRadio();else if(n==='up')tune(rCh+1,1);else if(n==='dn')tune(rCh-1,1);else tune(+n-1,1);});
-rList.addEventListener('click',e=>{const b=e.target.closest('.gr');if(b)tune(+b.dataset.i,1);});
+$('#r-keys').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!b.dataset.n)return;kick(b,'hit',120);const n=b.dataset.n;if(n==='off')closeRadio();else if(n==='up')tune(rCh+1,1);else if(n==='dn')tune(rCh-1,1);else tune(+n-1,1);});
+rList.addEventListener('click',e=>{const b=e.target.closest('.lr');if(b)tune(+b.dataset.i,1);});
 // push to talk: hold, the bar fills, letting go early drops the call
 function holdEnd(cancel){SND.pttStop();if(!rHold)return;const h=rHold;rHold=null;cancelAnimationFrame(h.raf);h.el.classList.remove('down');rBig.style.setProperty('--h',0);$('#r-bar').style.width='0';if(cancel&&!radioEl.hidden){say2('TX cancelado',1100);SND.key();}renderRadio();}
 function pttDown(e){

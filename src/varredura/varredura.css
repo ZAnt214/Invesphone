@@ -528,3 +528,52 @@ body:not(.land) #sup{flex-direction:row;flex-wrap:wrap;right:calc(var(--sr,env(s
 @keyframes refill{30%{transform:scale(1.25);filter:drop-shadow(0 0 8px #7dff9a)}}
 .hudpop{position:absolute;z-index:8;pointer-events:none;font:800 13px/1 var(--mono);color:#7dff9a;text-shadow:0 2px 6px rgba(0,0,0,.8);animation:hudpop 1.6s ease-out forwards}
 @keyframes hudpop{0%{opacity:0;transform:translate(-50%,6px) scale(.8)}15%{opacity:1;transform:translate(-50%,0) scale(1.15)}100%{opacity:0;transform:translate(-50%,-30px)}}
+/* the channel menu lives on the radio's own screen */
+.hset{width:262px}
+.ht-top{padding-left:62px}
+.grill{height:22px;margin-bottom:6px}
+.brand{margin-bottom:6px}
+.lcd2{padding:5px 7px 6px}
+.lcd2 .l1{gap:6px;height:16px}
+.lcd2 .l1 .chs{width:24px;height:15px;margin-left:auto}
+.lcd2 .l1 b{font-size:8px}
+.lmenu{position:relative;height:150px;overflow:hidden;margin:4px 0 3px;border-top:1px solid rgba(14,29,16,.3);border-bottom:1px solid rgba(14,29,16,.3)}
+.lmenu .lr{display:grid;grid-template-columns:16px 15px 1fr auto;align-items:center;gap:5px;height:25px;padding:0 4px;border-radius:3px;cursor:pointer;transition:background .12s,color .12s}
+.lmenu .lr .ln{font:800 9px/1 var(--mono)}
+.lmenu .lr svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.lmenu .lr b{font:800 10.5px/1 var(--mono);letter-spacing:.02em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lmenu .lr .ls{font:800 8px/1 var(--mono);letter-spacing:.04em;padding:2px 4px;border:1px solid currentColor;border-radius:2px;white-space:nowrap}
+.lmenu .lr.go .ls{animation:blink 1s steps(2) infinite}
+.lmenu .lr.on .ls{background:currentColor}.lmenu .lr.on .ls span{color:#a8f0b4}
+.lmenu .lr.off,.lmenu .lr.cool{opacity:.55}
+.lmenu .lr.sel{background:#0e1d10;color:#a8f0b4;opacity:1}
+.lmenu .lr.sel.on .ls span{color:#0e1d10}
+.lmenu .lr.del{animation:ldel .25s steps(2) 5}
+@keyframes ldel{50%{background:#0e1d10;color:#a8f0b4}}
+.lcd2 .l3{height:auto;min-height:22px;font-size:8.5px;line-height:1.3;white-space:normal;letter-spacing:.04em}
+.keys button.kptt{grid-column:span 2;position:relative;overflow:hidden;font-size:9px;letter-spacing:.14em;color:#ffd9d4;background:linear-gradient(#a3281f,#6e1610);box-shadow:0 2px 0 #2a0805,inset 0 1px 0 rgba(255,255,255,.2);touch-action:none;-webkit-touch-callout:none}
+.keys button.kptt .fill{position:absolute;left:0;top:0;bottom:0;width:calc(var(--h,0)*100%);background:rgba(255,220,120,.45)}
+.keys button.kptt span{position:relative}
+.keys button.kptt.down{transform:translateY(2px);box-shadow:none}
+.keys button.kptt.no{filter:grayscale(.8) brightness(.8)}
+
+/* bottom keys peek from the bottom edge, half hidden; the active one rises */
+.actions{background:none;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;padding:0 2px;gap:12px;margin-bottom:-36px;align-items:flex-end}
+.hud-right{gap:46px}
+.tool{position:relative;display:block;min-width:0;transition:transform .32s cubic-bezier(.2,.9,.3,1.45)}
+.tool .kb{width:56px;height:56px;background:radial-gradient(circle at 50% 28%,rgba(52,62,68,.96),rgba(16,20,23,.96) 70%);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 0 0 1.5px rgba(255,255,255,.14),0 -4px 14px rgba(0,0,0,.45)}
+.tool .kb svg{width:22px;height:22px;transform:translateY(-6px)}
+.tool .l{position:absolute;left:50%;bottom:calc(100% + 3px);transform:translateX(-50%);white-space:nowrap;font-size:7.5px;color:#d5dbde;text-shadow:0 1px 3px #000,0 0 6px #000;opacity:.85;transition:color .2s,opacity .2s}
+.tool:hover{transform:translateY(-6px)}
+.tool:active{transform:translateY(-10px)}
+.tool[aria-pressed="true"],.rkey[aria-expanded="true"]{transform:translateY(-34px)}
+.tool[aria-pressed="true"] .kb svg,.rkey[aria-expanded="true"] .kb svg{transform:none}
+.tool[aria-pressed="true"] .l,.rkey[aria-expanded="true"] .l{opacity:1;font-size:8.5px}
+.tool[aria-pressed="true"] .kb::after{inset:-6px}
+.rkey .led{top:9px;right:12px}
+.rkey .rn{top:2px;left:2px}
+#app{overflow:hidden;overflow:clip}
+body:not(.land) .tool .kb{width:50px;height:50px}
+body:not(.land) .actions{gap:6px;margin-bottom:-33px}
+body:not(.land) .hud-bot{gap:44px}
+body:not(.land) .tool[aria-pressed="true"],body:not(.land) .rkey[aria-expanded="true"]{transform:translateY(-30px)}
