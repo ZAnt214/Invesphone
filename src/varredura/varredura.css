@@ -577,3 +577,16 @@ body:not(.land) .tool .kb{width:50px;height:50px}
 body:not(.land) .actions{gap:6px;margin-bottom:-33px}
 body:not(.land) .hud-bot{gap:44px}
 body:not(.land) .tool[aria-pressed="true"],body:not(.land) .rkey[aria-expanded="true"]{transform:translateY(-30px)}
+/* bottom keys: just the pixel icon, no disc behind it */
+.tool .kb,.tool[aria-pressed="true"] .kb,#t-cancel[aria-pressed="true"] .kb,.rkey .kb,.rkey[aria-expanded="true"] .kb{background:none;box-shadow:none;border-radius:0;animation:none}
+.tool .kb::after,.tool[aria-pressed="true"] .kb::after{display:none}
+.tool .kpx{width:54px;height:54px;transform:translateY(-4px);filter:brightness(1.12) drop-shadow(0 3px 0 rgba(0,0,0,.55)) drop-shadow(0 0 6px rgba(0,0,0,.45));transition:filter .25s,transform .32s cubic-bezier(.2,.9,.3,1.45);pointer-events:none}
+body:not(.land) .tool .kpx{width:48px;height:48px}
+.tool:hover .kpx{filter:brightness(1.3) drop-shadow(0 3px 0 rgba(0,0,0,.55))}
+.tool[aria-pressed="true"] .kpx{transform:translateY(-2px) scale(1.12);filter:brightness(1.2) drop-shadow(0 3px 0 rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(242,194,48,.95))}
+#t-cancel[aria-pressed="true"] .kpx{filter:brightness(1.2) drop-shadow(0 3px 0 rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(255,90,60,.95))}
+.rkey[aria-expanded="true"] .kpx{transform:translateY(-2px) scale(1.12);filter:brightness(1.2) drop-shadow(0 3px 0 rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(125,255,154,.95))}
+.rkey.rx .kpx{animation:rxp .5s ease-out 3}
+@keyframes rxp{50%{filter:brightness(1.4) drop-shadow(0 0 12px #7dff9a)}}
+.rkey .led{top:6px;right:10px}
+.tool[aria-pressed="true"] .l,.rkey[aria-expanded="true"] .l{font-size:9px}
