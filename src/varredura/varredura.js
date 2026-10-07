@@ -2669,26 +2669,21 @@ function pttDown(e){
 const pttUp=e=>{if(rHold&&e.pointerId===rHold.pid)holdEnd(true);};
 for(const el of [$('#r-ptt'),rBig]){el.addEventListener('pointerdown',pttDown);el.addEventListener('pointerup',pttUp);el.addEventListener('pointercancel',pttUp);el.addEventListener('contextmenu',e=>e.preventDefault());
   el.addEventListener('click',e=>{if(e.detail===0){const d=CALLS[rCh];if(callState(d)[0]==='idle'){if(fireCall(d.k))say2('Enviado ✓ aguarde',1800);}else{SND.busy();say2(callState(d)[1],1600,true);}}});}
-/* bottom keys: evidence tents, the same yellow markers the perícia sets down in the house, each printed with what it does; behind them runs a strip of scene tape */
+/* bottom keys: stencils sprayed on the asphalt, like the marks the perícia leaves on the ground */
 (function buildKeyIcons(){
-  const S=180,O='rgba(14,11,6,.9)';
-  const mk=(fn,face)=>{const c=document.createElement('canvas');c.width=c.height=S;const g=c.getContext('2d');g.scale(S/100,S/100);g.lineJoin='round';g.lineCap='round';
-    // tent body: front face, right flank, worn print and a number plate
-    const F=face||['#f7d046','#d9a915','#b38a0c'];
-    g.beginPath();g.moveTo(44,6);g.lineTo(58,6);g.lineTo(92,96);g.lineTo(80,96);g.closePath();g.fillStyle=F[2];g.fill();g.lineWidth=2.2;g.strokeStyle=O;g.stroke();
-    g.beginPath();g.moveTo(42,6);g.lineTo(58,6);g.lineTo(80,96);g.lineTo(10,96);g.closePath();const lg=g.createLinearGradient(10,0,80,0);lg.addColorStop(0,F[1]);lg.addColorStop(.35,F[0]);lg.addColorStop(1,F[1]);g.fillStyle=lg;g.fill();g.lineWidth=2.4;g.strokeStyle=O;g.stroke();
-    g.save();g.clip();g.globalAlpha=.08;g.fillStyle='#000';for(let k=0;k<26;k++){g.fillRect(12+((k*37)%66),10+((k*53)%84),1.4,1.4);}g.globalAlpha=1;g.fillStyle='rgba(255,255,255,.35)';g.fillRect(42,6,16,2.5);g.restore();
-    g.fillStyle='#16130d';g.strokeStyle='#16130d';g.save();g.translate(45,52);fn(g);g.restore();
-    return c.toDataURL();};
-  const ICN={
-    isolar:mk(g=>{g.lineWidth=3.4;g.beginPath();g.arc(-6,0,13,0,7);g.stroke();g.beginPath();g.arc(-6,0,4,0,7);g.fill();g.beginPath();g.moveTo(-6,13);g.lineTo(22,13);g.lineTo(22,4);g.stroke();for(const x of [2,10,18]){g.beginPath();g.moveTo(x,13);g.lineTo(x+4,4.5);g.lineWidth=2.4;g.stroke();}}),
-    cancel:mk(g=>{g.lineWidth=4.6;g.beginPath();g.moveTo(-10,-6);g.lineTo(6,-6);g.arc(6,4,10,-Math.PI/2,Math.PI/2);g.lineTo(-6,14);g.stroke();g.beginPath();g.moveTo(-20,-6);g.lineTo(-8,-15);g.lineTo(-8,3);g.closePath();g.fill();},['#f4f1e8','#cfc9bc','#a59f92']),
-    radio:mk(g=>{g.beginPath();g.moveTo(-9,-4);g.lineTo(-9,-22);g.lineWidth=3.6;g.stroke();g.lineWidth=3;g.beginPath();g.rect(-12,-6,22,30);g.stroke();g.fillRect(-8,-2,14,8);g.fillStyle='#f7d046';g.fillRect(-6,0,10,3);g.fillStyle='#16130d';for(const y of [11,16,21])for(const x of [-7,-1,5])g.fillRect(x-1,y-1,2.2,2.2);g.lineWidth=2.4;for(const r of [7,12]){g.beginPath();g.arc(12,-14,r,-Math.PI*0.45,Math.PI*0.05);g.stroke();}},['#9fe3b1','#6ec088','#4f9a68'])
+  try{if(!document.querySelector('link[data-stencil]')){const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family=Special+Elite&display=swap';l.dataset.stencil='1';document.head.appendChild(l);}}catch(_){}
+  const NS='http://www.w3.org/2000/svg';
+  const defs=document.createElementNS(NS,'svg');defs.setAttribute('width','0');defs.setAttribute('height','0');defs.setAttribute('aria-hidden','true');defs.style.position='absolute';
+  defs.innerHTML='<filter id="spray" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.8" result="d"/><feTurbulence type="fractalNoise" baseFrequency="2.2" numOctaves="1" seed="3" result="g"/><feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.1 1.45" result="m"/><feComposite in="d" in2="m" operator="in"/></filter>';
+  appEl.appendChild(defs);
+  const P={
+    isolar:'<circle cx="12" cy="15" r="8"/><circle cx="12" cy="15" r="2.6"/><path d="M12 23h16v-6"/><path d="M17 23l3-6M22 23l3-6"/>',
+    cancel:'<path d="M11 9h10a7 7 0 010 14h-8"/><path d="M15 4l-5 5 5 5"/>',
+    radio:'<path d="M12 3v7"/><rect x="9" y="10" width="14" height="19" rx="2.5"/><path d="M12 14h8v4h-8z"/><path d="M12.5 22.5h.01M16 22.5h.01M19.5 22.5h.01M12.5 26h.01M16 26h.01M19.5 26h.01"/>'
   };
-  for(const [id,k] of [['t-isolar','isolar'],['t-cancel','cancel'],['t-radio','radio']]){const kb=document.querySelector('#'+id+' .kb');if(!kb)continue;const sv=kb.querySelector('svg');if(sv)sv.remove();const im=document.createElement('img');im.className='kpx';im.alt='';im.draggable=false;im.src=ICN[k];kb.prepend(im);}
+  for(const [id,k] of [['t-isolar','isolar'],['t-cancel','cancel'],['t-radio','radio']]){const kb=document.querySelector('#'+id+' .kb');if(!kb)continue;kb.querySelectorAll('svg,img').forEach(e=>e.remove());
+    const s=document.createElementNS(NS,'svg');s.setAttribute('viewBox','0 0 32 32');s.setAttribute('class','stc');s.setAttribute('aria-hidden','true');s.innerHTML=P[k];kb.prepend(s);}
   const tp=document.getElementById('t-pericia');if(tp)tp.hidden=true;
-  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="236" height="20"><rect width="236" height="20" fill="#f2c230"/><rect y="0" width="236" height="1.5" fill="#c99a12"/><rect y="18.5" width="236" height="1.5" fill="#c99a12"/><text x="4" y="14" font-family="Arial,Helvetica,sans-serif" font-weight="900" font-size="11" letter-spacing="1.2" fill="#14110b">CENA DE CRIME · NÃO ULTRAPASSE ·</text></svg>`;
-  appEl.style.setProperty('--tape',`url("data:image/svg+xml,${encodeURIComponent(svg)}")`);
 })();
 /* ---------- Boot ---------- */
 let last=performance.now(),acc=0;

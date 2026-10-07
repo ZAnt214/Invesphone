@@ -609,3 +609,24 @@ body:not(.land) .tool .kpx{width:56px;height:56px}
 .actions::after{bottom:-2px}
 .tool .kpx{transform:translateY(-14px)}
 .tool[aria-pressed="true"] .kpx,.rkey[aria-expanded="true"] .kpx{transform:translateY(-10px) rotate(-4deg) scale(1.1)}
+
+/* style 4 · stencil on asphalt: no key body, just the sprayed mark; idle in worn chalk white, active in fresh yellow with overspray */
+.actions::before,.actions::after{content:none;display:none}
+.actions{gap:26px}
+body:not(.land) .actions{gap:16px}
+.tool .kb,.tool[aria-pressed="true"] .kb,#t-cancel[aria-pressed="true"] .kb,.rkey .kb,.rkey[aria-expanded="true"] .kb{width:60px;height:60px;background:none;box-shadow:none}
+.tool .kb::before{content:'';position:absolute;inset:2px;border-radius:50%;background:radial-gradient(circle,rgba(216,211,196,.12),rgba(216,211,196,.04) 45%,transparent 70%);pointer-events:none}
+.tool .kb svg.stc{width:50px;height:50px;fill:none;stroke:#d8d3c4;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:9 2.2;filter:url(#spray) drop-shadow(0 1px 1px rgba(0,0,0,.55));transform:translateY(-9px);opacity:.88;transition:stroke .25s,opacity .25s,transform .32s cubic-bezier(.2,.9,.3,1.45)}
+body:not(.land) .tool .kb svg.stc{width:44px;height:44px}
+.tool .l{font:400 12px/1 "Special Elite","Courier New",ui-monospace,monospace;letter-spacing:.06em;text-transform:uppercase;color:#d8d3c4;opacity:.9;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.8)}
+.tool:hover .kb svg.stc{opacity:1}
+.tool[aria-pressed="true"] .kb svg.stc,.rkey[aria-expanded="true"] .kb svg.stc{stroke:#f2c230;opacity:1;transform:translateY(-6px) scale(1.08)}
+.tool[aria-pressed="true"] .kb::before,.rkey[aria-expanded="true"] .kb::before{inset:-14px;background:radial-gradient(circle,rgba(242,194,48,.32),rgba(242,194,48,.1) 45%,transparent 70%)}
+.tool[aria-pressed="true"] .l,.rkey[aria-expanded="true"] .l{color:#f2c230;font-size:13px}
+#t-cancel[aria-pressed="true"] .kb svg.stc{stroke:#ff8a6a}#t-cancel[aria-pressed="true"] .l{color:#ff8a6a}
+#t-cancel[aria-pressed="true"] .kb::before{background:radial-gradient(circle,rgba(255,120,90,.3),rgba(255,120,90,.08) 45%,transparent 70%)}
+.rkey[aria-expanded="true"] .kb svg.stc{stroke:#8fe0a6}.rkey[aria-expanded="true"] .l{color:#8fe0a6}
+.rkey[aria-expanded="true"] .kb::before{background:radial-gradient(circle,rgba(125,255,154,.28),rgba(125,255,154,.08) 45%,transparent 70%)}
+.rkey.rx .stc{animation:rxs .5s ease-out 3}
+@keyframes rxs{50%{stroke:#8fe0a6;opacity:1}}
+.rkey .led{top:2px;right:4px}
