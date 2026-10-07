@@ -905,3 +905,5 @@ body:not(.land) #notes{bottom:calc(var(--hbm,150px) + 6px)}
 .hud-top .hbtn svg{width:17px;height:17px;display:block}
 .hud-top .hbtn .badge{top:-6px;right:-6px;min-width:16px;height:16px;padding:0 3px;border-radius:3px;background:#ff4d3d;color:#fff;font:700 11px/16px Rajdhani,"Arial Narrow",sans-serif;box-shadow:0 0 0 2px #16191c;display:block;text-align:center}
 .hud-top .hbtn .badge[hidden]{display:none}
+.hud-top #clk,.hud-top #ach,.hud-top #fita,.hud-top #pres{display:inline-block;font-variant-numeric:tabular-nums}
+.hud-top #lcd-ph{display:block}

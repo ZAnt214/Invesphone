@@ -2785,6 +2785,19 @@ function openCine(k){
   evOpts($('#cn-opts'),ev,true);$('#cn-opts').classList.toggle('one',ev.opts.length===1);
   closeRadio();cineEl.hidden=false;void cineEl.offsetWidth;cineEl.classList.add('in');appEl.classList.add('cine-on');SND.pop();
 }
+
+/* keep the top bar still while numbers change: each changing label reserves the width of its widest value */
+const STAB=[['#clk',()=>{const d=wideDigit('#clk');return [d+d+':'+d+d];}],['#lcd-ph',()=>['NOITE','AURORA','DIA']],['#ach',()=>{const d=wideDigit('#ach');return [d];}],['#fita',()=>{const d=wideDigit('#fita');return [d+d+' m'];}],['#pres',()=>['Boa','Atenção']]];
+const stabCv=document.createElement('canvas').getContext('2d');
+function fontOf(el){const c=getComputedStyle(el);return `${c.fontStyle} ${c.fontWeight} ${c.fontSize} ${c.fontFamily}`;}
+function textW(el,t){const c=getComputedStyle(el);stabCv.font=fontOf(el);const ls=parseFloat(c.letterSpacing)||0;return stabCv.measureText(t).width+ls*t.length;}
+function wideDigit(sel){const el=$(sel);if(!el)return '0';let best='0',bw=0;for(const d of '0123456789'){const w=textW(el,d);if(w>bw){bw=w;best=d;}}return best;}
+function stabilizeTop(){
+  for(const [sel,f] of STAB){const el=$(sel);if(!el)continue;el.style.minWidth='';el.style.display=el.style.display||'inline-block';
+    const w=Math.ceil(Math.max(...f().map(t=>textW(el,t))));if(w>0)el.style.minWidth=w+'px';}
+}
+stabilizeTop();
+try{document.fonts&&document.fonts.ready.then(()=>{stabilizeTop();applyLayout(true);});document.fonts&&document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',()=>{stabilizeTop();applyLayout(true);});}catch(_){}
 /* ---------- Boot ---------- */
 let last=performance.now(),acc=0;
 function loop(now){
@@ -2835,7 +2848,7 @@ function applyLayout(force){
   const L=VW()>VH();document.body.classList.toggle('land',L);
   const A=VW()-INS.l-INS.r-16;document.body.classList.toggle('mid',L&&A>=600&&A<770);document.body.classList.toggle('narrow',L&&A<600);
   $('#rot').hidden=SW()>SH();
-  fitTop();measureHud();resize();placeNotes();fitCards();fitRadio();placeTray();
+  if(typeof stabilizeTop==='function')stabilizeTop();fitTop();measureHud();resize();placeNotes();fitCards();fitRadio();placeTray();
   if(force||L!==lastL){lastL=L;fitView();}
   if(cmd)cmdCancel();if(!coachEl.hidden){hideCoach();setTimeout(showCoach,300);}
 }
