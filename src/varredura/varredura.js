@@ -2479,7 +2479,7 @@ function showCoach(){
   coachEl.hidden=false;appEl.classList.add('coach-on');
   // the tip sits under the top kit, clear of the radio, and the demo finger ends just below it
   const cb=coachEl.querySelector('.cb'),bw=cb.offsetWidth,bh=cb.offsetHeight,L=VW()>VH();
-  let cx=VW()/2;if(L&&notesEl.children.length)cx=Math.min(cx,notesEl.offsetLeft-10-bw/2);cx=clamp(cx,INS.l+8+bw/2,VW()-INS.r-8-bw/2);
+  let cx=VW()/2;cx=clamp(cx,INS.l+8+bw/2,VW()-INS.r-8-bw/2);
   const top=L?HUDPAD.t+10:Math.max(HUDPAD.t+10,VH()*0.3);cb.style.left=cx.toFixed(0)+'px';cb.style.top=top.toFixed(0)+'px';
   const ex=cx,ey=Math.min(top+bh+78,VH()-HUDPAD.b-14);
   const g=coachEl.querySelector('.hg');g.style.setProperty('--c',S.crew[0].accent);g.firstChild.src=headURL(S.crew[0]);

@@ -862,3 +862,26 @@ body:not(.land) .hud-top .h-btns,body:not(.land) .hud-top .h-state{padding-right
 #bub p{font-size:12px}
 #cine::before{background:linear-gradient(rgba(0,0,0,.4),rgba(0,0,0,.55) 30%,rgba(0,0,0,.9) 72%)}
 #cine .cw{text-shadow:0 2px 10px rgba(0,0,0,.8)}
+
+/* messages as cinema subtitles: one centred line above the base, name in yellow, no box; the previous line stays dimmer above */
+#notes,.land #notes{top:auto!important;left:50%;right:auto;bottom:calc(var(--sb,env(safe-area-inset-bottom,0px)) + 70px);transform:translateX(-50%);width:min(560px,calc(100% - 32px));max-width:none;margin:0;gap:4px;align-items:center}
+body:not(.land) #notes{bottom:calc(var(--hbm,150px) + 6px)}
+#notes .note{display:block;max-width:100%;padding:3px 10px;background:none;border:0;border-radius:0;box-shadow:none;text-align:center;animation:subIn .3s ease-out;transition:opacity .45s,transform .45s}
+#notes .note::before{content:'';position:absolute;inset:-6px -24px;z-index:-1;pointer-events:none;background:radial-gradient(ellipse 50% 50% at 50% 50%,rgba(0,0,0,.55),rgba(0,0,0,.25) 60%,transparent 75%)}
+#notes .note.out{opacity:0;transform:translateY(-4px)}
+@keyframes subIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+#notes .note .av{display:none}
+#notes .note .nb{display:block}
+#notes .note .who{display:inline-flex;vertical-align:baseline;gap:4px;margin-right:6px;font:700 12px/1 Rajdhani,"Arial Narrow",sans-serif;letter-spacing:.12em;text-transform:uppercase}
+#notes .note .who b{color:#f2c230;font-weight:700;overflow:visible}
+#notes .note .who .ch{display:none}
+#notes .note .wave{height:9px;align-self:center}
+#notes .note .wave i{background:#f2c230}
+#notes .note.done .wave{display:none}
+#notes .note p{display:inline;margin:0;font-size:13.5px;line-height:1.38;color:#f4f2ec;text-shadow:0 0 3px #000,0 1px 2px #000,0 0 10px rgba(0,0,0,.9);min-height:0}
+#notes .note .cur{background:#f2c230;width:5px;height:11px}
+#notes .note:not(:last-child){opacity:.5;transform:scale(.92)}
+#notes .note:not(:last-child).out{opacity:0}
+#notes .note.sys{padding:2px 10px;border:0;background:none;justify-self:auto;align-self:center}
+#notes .note.sys p{font-size:12px;font-style:italic;color:rgba(244,242,236,.75)}
+.land #notes{width:min(560px,calc(100% - 272px))}
