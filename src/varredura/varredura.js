@@ -32,7 +32,8 @@ const CLUE_IDS=Object.keys(CLUES);
 const PEOPLE={
   sonia:{name:'Sônia Prado',role:'Delegada',img:'/sonia.jpg'},
   mauricio:{name:'Maurício Farias',role:'Perito criminal',ini:'MF',col:'#9fb7c9'},
-  paulo:{name:'Paulo Vieira',role:'Investigador de campo',ini:'PV',col:'#d6b27a'}
+  paulo:{name:'Paulo Vieira',role:'Investigador de campo',ini:'PV',col:'#d6b27a'},
+  central:{name:'Central',role:'Rádio da operação',ini:'CT',col:'#8fd0a8'}
 };
 
 /* ---------- Map ---------- */
@@ -118,7 +119,7 @@ function minutes(){return START_MIN+S.tick/20;}
 function clockStr(m){m=m==null?minutes():m;const h=Math.floor(m/60)%24,mm=Math.floor(m%60);return String(h).padStart(2,'0')+':'+String(mm).padStart(2,'0');}
 function darkness(){const m=minutes();if(m<5*60+20)return 0.72;if(m>=6*60)return 0;return 0.72*(1-(m-(5*60+20))/40);}
 function tapeUsed(){let n=0;for(let i=0;i<N;i++)if(S.tape[i]||S.tapeBp[i])n++;return n;}
-const FITA_MAX=40;
+let FITA_MAX=40;
 
 /* ---------- Messages: radio calls typed out as they come in ---------- */
 function pushNote(d){notesEl.appendChild(d);while(notesEl.children.length>2)notesEl.firstChild.remove();}
@@ -219,7 +220,7 @@ function runJob(a){
       const wetOut=room[j.tile]==='quintal'&&rainI()>0.15&&!S.flags.prioQ;if(wetOut)a.status='Periciando o quintal sob a garoa';
       if(Math.random()<0.012){flareAt(a.x*T+16+(a.dir||1)*6,a.y*TH+TH-30,0.7);SND.shutter(0.5);}
       if(room[j.tile]==='casal'&&nightF()>0.1&&Math.random()<0.18){const tx=(j.tile%W)*T+16,ty=((j.tile/W)|0)*TH+TH/2;fxAdd({k:'lum',x:tx+(Math.random()-0.5)*26,y:ty+(Math.random()-0.5)*14,z:0,t:0,life:70+Math.random()*50});}
-      j.p+=a.skill*(a.energy<15?0.6:1)*(S.contam>60?0.75:1)*(wetOut?0.55:1);
+      j.p+=a.skill*(a.energy<15?0.6:1)*(S.contam>60?0.75:1)*(wetOut?0.55:1)*(S.icUntil>S.tick?1.5:1)*(S.aguiaUntil>S.tick&&!inHouse(j.tile)&&nightF()>0.15?1.6:1);
       if(j.p>=need){S.desig[j.tile]=0;S.exam[j.tile]=1;if(h&&!S.found[h])discover(h,j.tile);endJob(a);}
       break;}
     case 'wander':
@@ -315,6 +316,7 @@ function stepWorld(){
   if(S.contam>=60&&!S.flags.w2){S.flags.w2=1;msg('mauricio','Estão entrando no terreno. Cada pé a mais é vestígio a menos. Vou trabalhar mais devagar.');}
   if(minutes()>=5*60+15&&!S.flags.press){S.flags.press=1;msg('paulo','Chegou imprensa. Câmera na mão e gente querendo foto do portão.');}
   if(minutes()>=5*60+50&&!S.flags.dawn){S.flags.dawn=1;sys('O dia está clareando sobre o Campo Belo.');}
+  stepRadio();
 }
 
 /* ---------- Art: palette helpers ---------- */
@@ -644,7 +646,8 @@ const CREW_LOOK={
   aux:{skin:'#c98e64',hair:'#2a1d18',style:'short',kind:'pericia',top:'#283a52',pants:'#2b2f36',shoes:'#1a1a1a',gloves:1},
   paulo:{skin:'#b67c52',hair:'#1f1a18',style:'side',kind:'campo',top:'#3a2b22',pants:'#3b5a8a',shoes:'#3a2416'},
   pm1:{skin:'#f0c9a0',hair:'#3a2416',style:'cap',kind:'pm',top:'#7d8187',pants:'#2b2f36',shoes:'#111'},
-  pm2:{skin:'#8a5a3a',hair:'#1f1a18',style:'cap',kind:'pm',top:'#7d8187',pants:'#2b2f36',shoes:'#111'}
+  pm2:{skin:'#8a5a3a',hair:'#1f1a18',style:'cap',kind:'pm',top:'#7d8187',pants:'#2b2f36',shoes:'#111'},
+  pm3:{skin:'#c98e64',hair:'#1f1a18',style:'cap',kind:'pm',top:'#7d8187',pants:'#2b2f36',shoes:'#111'}
 };
 function personFrames(L){
   const sh=c=>rgbs(mul(hex(c),0.78)),hi=c=>rgbs(mix(hex(c),[255,255,255],0.18));
@@ -1469,7 +1472,7 @@ function buildCars(){
 function spawnCar(){FX.cars.push({spr:pick(TRAFFIC),x:2*T,y:-6*TH,v:1.5,vmax:1.3+Math.random()*0.6,wait:0,honked:0,brake:0,wh:0});}
 function updCars(dt){
   if(!dt)return;const m=minutes(),rate=(m<5*60+30?0.0012:0.0045)*dt;
-  if(Math.random()<rate&&FX.cars.filter(c=>!c.parked&&c.y<2*TH).length===0&&FX.cars.length<5)spawnCar();
+  if(!(S.blockUntil>S.tick)&&Math.random()<rate&&FX.cars.filter(c=>!c.parked&&c.y<2*TH).length===0&&FX.cars.length<5)spawnCar();
   const ppl=[...S.crew,...S.civs,...IML.agents];
   for(const c of FX.cars){
     if(c.parked)continue;
@@ -1501,7 +1504,7 @@ function imlGo(t){const a=IML.agents[0];const r=findPath(a,i=>i===t);a.path=r?r.
 function imlStep(){
   const m=minutes();
   switch(IML.state){
-    case 'off':if(m>=5*60+50){IML.state='arrive';const v={spr:VANSPR,x:2*T,y:-6*TH,v:0,vmax:1.2,iml:1,park:2*TH-18,wait:0,honked:1,brake:0,wh:0};FX.cars.push(v);IML.van=v;msg('sonia','O rabecão do IML chegou para a remoção.');}break;
+    case 'off':if(m>=5*60+50||S.flags.imlEarly){IML.state='arrive';const v={spr:VANSPR,x:2*T,y:-6*TH,v:0,vmax:1.2,iml:1,park:2*TH-18,wait:0,honked:1,brake:0,wh:0};FX.cars.push(v);IML.van=v;msg('sonia','O rabecão do IML chegou para a remoção.');}break;
     case 'arrive':if(IML.van.parked){IML.agents=[mkIml(2,4,0),mkIml(2,5,1)];IML.state='wait';IML.say='aguardando a perícia';}break;
     case 'wait':if(S.found.vitimas_dormindo){IML.state='go';IML.say='indo ao quarto';imlGo(idx(13,13));msg('mauricio','Quarto do casal liberado para o IML.');}
       else if(!S.flags.imlNag&&m>=5*60+56){S.flags.imlNag=1;msg('sonia','O IML só entra depois que a perícia liberar o quarto do casal.');}break;
@@ -1980,7 +1983,7 @@ function render(){
   const nf=nightF(),amb=ambient(),vr=viewRect();LODE=s/dpr;LODV=lodOf(LODE);UIK=Math.min(1,2.2/LODE);
   // wet ground: darker street, puddles, footprints
   if(WET>0.02){ctx.globalAlpha=0.16*WET;ctx.fillStyle='#0c1220';ctx.fillRect(-M*T,-M*TH,6*T+M*T,(H+2*M)*TH);ctx.globalAlpha=1;}
-  drawPuddles();drawCrosswalk();drawDecals();drawDetail(vr);drawSunShadows(vr);drawLifeGround();
+  drawPuddles();drawCrosswalk();drawCones();drawDecals();drawDetail(vr);drawSunShadows(vr);drawLifeGround();
   // examined chalk dots (on the floor plane)
   GND();ctx.fillStyle='rgba(242,194,48,.6)';
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=idx(x,y);if(S.exam[i]&&passable(i))ctx.fillRect(x*T+14,y*T+14,3,3);}
@@ -2137,6 +2140,7 @@ function tap(sx,sy){
 }
 addEventListener('keydown',e=>{
   if(e.key==='Escape'&&cmd){cmdCancel();return;}
+  if(e.key==='Escape'&&!radioEl.hidden){closeRadio();return;}
   if(e.target.tagName==='BUTTON'&&(e.key===' '||e.key==='Enter'))return;
   if(e.key===' '){e.preventDefault();setSpeed(paused?(lastSpeed||1):0);}
   else if(e.key==='1')setSpeed(1);else if(e.key==='2')setSpeed(2);else if(e.key==='3'||e.key==='4')setSpeed(4);
@@ -2173,7 +2177,7 @@ $('#t-cad').addEventListener('click',()=>{openSheet('f');});
 
 /* ---------- Crew dock: pixel portraits with an energy ring and what each one is doing ---------- */
 const crewEl=$('#crew');
-const SHORT={mauricio:'Maurício',aux:'Auxiliar',paulo:'Paulo',pm1:'PM Silva',pm2:'PM Rocha'};
+const SHORT={mauricio:'Maurício',aux:'Auxiliar',paulo:'Paulo',pm1:'PM Silva',pm2:'PM Rocha',pm3:'PM Reis'};
 function buzz(ms){try{if(navigator.vibrate)navigator.vibrate(ms);}catch(_){}}
 function kick(el,cls,ms){if(!el)return;el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls);clearTimeout(el['_k_'+cls]);el['_k_'+cls]=setTimeout(()=>el.classList.remove(cls),ms);}
 const HEADURL={};
@@ -2296,7 +2300,7 @@ function updateUI(){
   if(l!==lastPresL){if(lastPresL)kick(gp,'hit',540);lastPresL=l;$('#pres').textContent=l;}
   const left=FITA_MAX-tapeUsed();
   if(left!==lastLeft){if(lastLeft>=0)kick($('#g-fita'),'spin',740);lastLeft=left;$('#fita').textContent=left+' m';const r=(6+9.5*left/FITA_MAX).toFixed(2);$('#g-roll-c').setAttribute('r',r);$('#g-roll-e').setAttribute('r',r);}
-  updateRail();updateMode();updateCrew();if(sel!=null)updateInfo();
+  updateRail();updateMode();updateCrew();if(sel!=null)updateInfo();updateRadio();
 }
 function showEnd(){
   S.flags.endTime=clockStr();
@@ -2484,6 +2488,128 @@ function showCoach(){
 }
 $('#coach-ok').addEventListener('click',()=>{SND.click();coachDone(true);});
 
+/* ---------- Radio: call help from outside the scene. Each channel arrives after a while, stays for a spell and then needs a wait ---------- */
+const radioEl=$('#radio'),rList=$('#r-list'),rKey=$('#t-radio');
+const HINTS={porta_intacta:'Como essa gente entrou? Olha a porta da frente com calma.',painel_alarme:'Do lado da porta tem o painel do alarme. Alguém já olhou?',valores_intactos:'Vê o que ficou na sala. O que um ladrão levaria primeiro?',escritorio_revirado:'O escritório parece revirado. Quero o detalhe, não a impressão.',vitimas_dormindo:'O quarto do casal precisa da perícia antes de o IML entrar.',quarto_livia:'Ninguém me falou do quarto da filha ainda.',cao_canil:'E o cachorro da família? Onde ele estava a noite toda?'};
+function soniaHint(){
+  if(S.contam>=25&&!S.tape.some(v=>v)&&!S.tapeBp.some(v=>v))return 'A frente está cheia de curioso. Isola a calçada antes de qualquer coisa.';
+  const left=CLUE_IDS.filter(id=>!S.found[id]);
+  if(!left.length)return 'Vocês registraram tudo. Agora olha o conjunto: o que mexeram e o que deixaram.';
+  const idle=left.filter(id=>{for(let i=0;i<N;i++)if(hot[i]===id&&S.desig[i])return false;return true;});
+  return HINTS[pick(idle.length?idle:left)]||'Segue a perícia, sem pressa.';
+}
+function joinReforco(){
+  const a={id:S.crew.length,key:'pm3',look:CREW_LOOK.pm3,ini:'PM',name:'Soldado Reis',role:'Polícia Militar · reforço',kind:'pm',skill:1,vest:'#56687a',accent:'#b9d4a0',hair:'#1f1a18',skin:'#c98e64',
+    x:4,y:0,home:idx(5,7),path:[],job:null,energy:90,status:'Chegando de reforço',dir:1,walk:0,moving:false,think:0,done:0,temp:1,order:{k:'guard',tile:idx(5,7)}};
+  S.crew.push(a);framesHDFor(a);buildCrew();measureHud();updateCrew();
+  const X=4*T+16,Y=TH-4;ringFx(X,Y,hex(a.accent),22,44);
+}
+function leaveReforco(){const a=S.crew.find(c=>c.temp);if(!a)return;a.leaving=1;a.leaveBy=S.tick+600;endJob(a);a.order={k:'move',tile:idx(4,0)};a.think=0;say(a,'Liberado. Boa sorte aí.',110);}
+function removeTemp(a){
+  endJob(a);if(cmd&&cmd.a===a)cmdCancel();if(pendingOrder&&pendingOrder.id===a.id)pendingOrder=null;if(sel===a.id){sel=null;follow=false;updateInfo();}
+  S.crew=S.crew.filter(c=>c!==a);buildCrew();measureHud();updateCrew();
+}
+const RICON={
+  reforco:'<path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M12 9v6M9 12h6"/>',
+  delegada:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a1 1 0 01-1 1A16 16 0 014 5a1 1 0 011-1z"/>',
+  fita:'<circle cx="10" cy="12" r="6"/><circle cx="10" cy="12" r="2"/><path d="M16 12h5v3"/>',
+  transito:'<path d="M9 4h6l4 15H5z"/><path d="M8 9h8M6.8 14h10.4M3 20h18"/>',
+  ic:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+  aguia:'<path d="M3 5h14M10 5v3"/><path d="M6 8h9a4 4 0 014 4v1a2 2 0 01-2 2H9a3 3 0 01-3-3z"/><path d="M15 15l1 4M9 15l-1 4M6 19h12M19 11h2"/>',
+  imprensa:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3M8 21h8"/>',
+  iml:'<path d="M2 7h12v9H2zM14 10h4l3 3v3h-7z"/><circle cx="6" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M7 9.5v4M5 11.5h4"/>'
+};
+const CALLS=[
+  {k:'reforco',t:'Reforço da PM',sub:'Mais um soldado segura o portão',eta:2,dur:12,cd:6,ack:'Copiado. Uma viatura com reforço está a caminho.',
+    ok:()=>S.crew.some(c=>c.temp)?'Reforço no local':'',arrive:()=>{joinReforco();msg('central','Reforço no local. O Soldado Reis assume o portão.');},leave:leaveReforco},
+  {k:'delegada',t:'Falar com a delegada',sub:'Sônia orienta o próximo passo',eta:0.5,cd:5,ack:'Chamando a delegada Sônia.',
+    ok:()=>'',arrive:()=>msg('sonia',soniaHint())},
+  {k:'fita',t:'Mais fita',sub:'Viatura de apoio traz +20 m',eta:3,cd:4,max:2,ack:'Fita a caminho com a viatura de apoio.',
+    ok:()=>'',arrive:()=>{FITA_MAX+=20;msg('central','A viatura de apoio deixou mais 20 m de fita com a PM.');}},
+  {k:'transito',t:'Fechar a rua',sub:'Trânsito desviado, sem carros por 10 min',eta:1.5,dur:10,cd:8,ack:'Pedido de bloqueio repassado ao trânsito.',
+    ok:()=>'',arrive:()=>{S.blockUntil=S.tick+10*20;msg('central','Rua das Acácias fechada nos dois sentidos. Cones na pista.');}},
+  {k:'ic',t:'Apoio da perícia',sub:'Fotógrafo e papiloscopista: perícia 50% mais rápida',eta:3,dur:8,cd:10,ack:'Equipe de apoio da perícia acionada.',
+    ok:()=>'',arrive:()=>{S.icUntil=S.tick+8*20;msg('mauricio','Chegou o apoio da perícia. Com fotógrafo e papiloscopista a gente rende mais.');}},
+  {k:'aguia',t:'Helicóptero Águia',sub:'Luz do alto ajuda lá fora, mas atrai curiosos',eta:1,dur:3,cd:12,ack:'Águia decolando, chega em instantes.',
+    ok:()=>FLY.on?'Já tem helicóptero no ar':'',arrive:()=>{startFlyby();S.aguiaUntil=S.tick+3*20;msg('central','Águia sobre a Rua das Acácias. A luz ajuda no quintal e na frente.');for(let i=0;i<2;i++)setTimeout(()=>{if(S.civs.length<11)spawnCiv();},900+i*1700);}},
+  {k:'imprensa',t:'Assessoria de imprensa',sub:'Alguém atende os repórteres no portão',eta:1,once:1,ack:'Assessoria avisada. Vão falar com os repórteres.',
+    ok:()=>!S.flags.press?'Ainda sem imprensa':S.flags.pressCalm===1?'Imprensa já atendida':'',arrive:()=>{S.flags.pressCalm=1;S.flags.evP=1;for(const c of S.civs)if(c.press&&c.state==='gawk')c.wait=Math.min(c.wait,120);msg('central','A assessoria está com a imprensa. Eles devem liberar o portão logo.');}},
+  {k:'iml',t:'Antecipar o IML',sub:'O rabecão vem antes e espera a perícia liberar',eta:2,once:1,ack:'IML acionado. O rabecão está a caminho.',
+    ok:()=>IML.state!=='off'?'IML já acionado':'',arrive:()=>{S.flags.imlEarly=1;}}
+];
+const CS=()=>S.calls||(S.calls={});
+let radioDirty=1,radioBuilt=false,rHold=null;
+function stepRadio(){
+  const C=CS();
+  for(const d of CALLS){const st=C[d.k];if(!st)continue;
+    if(st.ph==='go'&&S.tick>=st.at){SND.inbound();d.arrive();if(d.dur){st.ph='on';st.end=S.tick+d.dur*20;}else if(d.once)st.ph='done';else{st.ph='cool';st.cd=S.tick+d.cd*20;}radioDirty=1;}
+    else if(st.ph==='on'&&S.tick>=st.end){if(d.leave)d.leave();st.ph='cool';st.cd=S.tick+d.cd*20;radioDirty=1;}
+    else if(st.ph==='cool'&&S.tick>=st.cd){st.ph=d.max&&st.n>=d.max?'done':'idle';radioDirty=1;}
+  }
+  const a=S.crew.find(c=>c.temp&&c.leaving);if(a&&(ti(a)===idx(4,0)||S.tick>a.leaveBy))removeTemp(a);
+}
+function callState(d){
+  const st=CS()[d.k]||{ph:'idle',n:0},mins=t=>Math.max(1,Math.ceil((t-S.tick)/20));
+  if(st.ph==='go')return ['go','Chega em '+mins(st.at)+' min'];
+  if(st.ph==='on')return ['on','No local · '+mins(st.end)+' min'];
+  if(st.ph==='cool')return ['cool','De novo em '+mins(st.cd)+' min'];
+  if(st.ph==='done')return ['off',d.max?'Acabou na base':'Já acionado'];
+  const why=d.ok();if(why)return ['off',why];
+  return ['idle',d.max?`Livre · ${d.max-(st.n||0)}×`:'Livre'];
+}
+function renderRadio(){
+  if(!radioBuilt){radioBuilt=true;
+    rList.innerHTML=CALLS.map(d=>`<button class="rc" data-k="${d.k}"><span class="ri"><svg viewBox="0 0 24 24">${RICON[d.k]}</svg></span><span class="rt"><b>${d.t}</b><small>${d.sub}</small></span><span class="rs"></span><i class="hold"></i></button>`).join('');}
+  for(const b of rList.children){const d=CALLS.find(c=>c.k===b.dataset.k),[cls,txt]=callState(d),s=b.querySelector('.rs');
+    for(const c of ['idle','go','on','cool','off'])b.classList.toggle(c,c===cls);if(s.textContent!==txt)s.textContent=txt;b.setAttribute('aria-label',`${d.t}. ${d.sub}. ${txt}`);}
+}
+function updateRadio(){
+  const C=CS();let n=0;for(const k in C)if(C[k].ph==='go'||C[k].ph==='on')n++;
+  rKey.classList.toggle('busy',n>0);const rn=$('#r-n');rn.hidden=!n;if(rn.textContent!==String(n))rn.textContent=n;
+  if(!radioEl.hidden)renderRadio();
+}
+function fireCall(k,b){
+  const d=CALLS.find(c=>c.k===k);if(!d||callState(d)[0]!=='idle')return;
+  const C=CS(),prev=C[k]||{n:0};C[k]={ph:'go',at:S.tick+Math.round(d.eta*20),n:(prev.n||0)+1};
+  SND.roger();setTimeout(()=>msg('central',d.ack),380);buzz(20);if(b)kick(b,'sent',520);renderRadio();updateRadio();
+}
+function openRadio(){if(cmd)cmdCancel();hideCoach();radioEl.hidden=false;rKey.setAttribute('aria-expanded','true');renderRadio();SND.rOn();}
+function closeRadio(){if(!radioEl.hidden)SND.rOff();radioEl.hidden=true;rKey.setAttribute('aria-expanded','false');holdEnd();}
+rKey.setAttribute('aria-expanded','false');
+rKey.addEventListener('click',()=>{if(radioEl.hidden)openRadio();else closeRadio();});
+$('#radio-x').addEventListener('click',closeRadio);
+radioEl.addEventListener('click',e=>{if(e.target===radioEl)closeRadio();});
+// radio sounds: knob, carrier hiss while the key is held, talk-permit and roger beeps, busy tone, incoming chirp
+Object.assign(SND,{
+  rOn(){if(!this.ok())return;const t=this.ctx.currentTime;this.nz(t,0.02,'highpass',2500,0.7,0.25);this.nz(t+0.03,0.32,'bandpass',1800,0.9,0.06);this.osc('sine',880,t+0.3,0.004,0.06,0.03);},
+  rOff(){if(!this.ok())return;const t=this.ctx.currentTime;this.nz(t,0.02,'highpass',2500,0.7,0.2);this.osc('sine',700,t+0.02,0.004,0.08,0.03,420);},
+  pttStart(){if(!this.ok())return;this.pttStop();const c=this.ctx,t=c.currentTime,s=c.createBufferSource();s.buffer=this.noise;s.loop=true;const f=c.createBiquadFilter();f.type='bandpass';f.frequency.value=1600;f.Q.value=1.2;const g=c.createGain();g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(0.05,t+0.06);s.connect(f);f.connect(g);g.connect(this.g);s.start(t,Math.random());this._ptt={s,g};this.osc('sine',1250,t,0.003,0.05,0.035);},
+  pttStop(){const p=this._ptt;if(!p||!this.ctx)return;const t=this.ctx.currentTime;p.g.gain.cancelScheduledValues(t);p.g.gain.setValueAtTime(p.g.gain.value,t);p.g.gain.linearRampToValueAtTime(0.0001,t+0.05);p.s.stop(t+0.07);this._ptt=null;},
+  roger(){if(!this.ok())return;const t=this.ctx.currentTime;this.osc('sine',1050,t,0.003,0.07,0.04);this.osc('sine',1400,t+0.09,0.003,0.09,0.04);this.nz(t+0.2,0.16,'bandpass',2000,3,0.05);},
+  busy(){if(!this.ok())return;const t=this.ctx.currentTime;for(const k of [0,0.13])this.osc('square',330,t+k,0.004,0.08,0.012);},
+  inbound(){if(!this.ok())return;const t=this.ctx.currentTime;this.nz(t,0.12,'bandpass',1900,3,0.05);for(const [k,f] of [[0.13,1200],[0.21,1500],[0.29,1800]])this.osc('sine',f,t+k,0.003,0.06,0.03);}
+});
+// hold a channel like a push-to-talk key; letting go early cancels
+function holdEnd(){SND.pttStop();if(!rHold)return;const b=rHold.b;b.classList.remove('holding');b.style.setProperty('--h',0);cancelAnimationFrame(rHold.raf);rHold=null;}
+rList.addEventListener('pointerdown',e=>{
+  const b=e.target.closest('.rc');if(!b)return;
+  if(!b.classList.contains('idle')){SND.busy();kick(b.querySelector('.rs'),'sent',400);return;}
+  holdEnd();try{b.setPointerCapture(e.pointerId);}catch(_){}
+  rHold={b,pid:e.pointerId,t0:performance.now(),raf:0};b.classList.add('holding');SND.pttStart();buzz(6);
+  const tick=()=>{if(!rHold||rHold.b!==b)return;const k=Math.min(1,(performance.now()-rHold.t0)/560);b.style.setProperty('--h',k.toFixed(3));if(k>=1){holdEnd();b.dataset.fired=performance.now();fireCall(b.dataset.k,b);}else rHold.raf=requestAnimationFrame(tick);};
+  rHold.raf=requestAnimationFrame(tick);
+});
+const rUp=e=>{if(rHold&&e.pointerId===rHold.pid)holdEnd();};
+rList.addEventListener('pointerup',rUp);rList.addEventListener('pointercancel',rUp);rList.addEventListener('contextmenu',e=>e.preventDefault());
+rList.addEventListener('click',e=>{const b=e.target.closest('.rc');if(!b)return;if(e.detail===0)fireCall(b.dataset.k,b);else if(b.classList.contains('idle')&&!(performance.now()-(+b.dataset.fired||0)<600)){const s=b.querySelector('.rs');s.textContent='Segure para chamar';}});
+function drawCones(){
+  if(!(S.blockUntil>S.tick))return;
+  for(const ty of [1,H-2]){const Y=ty*TH+TH-4;for(let x=10;x<4*T;x+=30){
+    ctx.fillStyle='rgba(0,0,0,.3)';ctx.fillRect(x-6,Y,13,3);
+    ctx.fillStyle='#1e1611';ctx.beginPath();ctx.moveTo(x,Y-15);ctx.lineTo(x+6,Y+1);ctx.lineTo(x-6,Y+1);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#f06a1e';ctx.beginPath();ctx.moveTo(x,Y-14);ctx.lineTo(x+5,Y);ctx.lineTo(x-5,Y);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#f3f1ea';ctx.fillRect(x-3,Y-8,6,2);ctx.fillStyle='#1e1611';ctx.fillRect(x-7,Y,15,2);}}
+}
 /* ---------- Boot ---------- */
 let last=performance.now(),acc=0;
 function loop(now){
