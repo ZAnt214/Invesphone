@@ -441,6 +441,11 @@ A progressão de pessoas segue:
 **descoberta → decisão do jogador → convocação → depoimento → possíveis novas descobertas**.
 
 
+## Onde fica no código
+
+Integrantes, assuntos (`teamDialogues`), diligências (`teamMaterialRequests`) e as regras de disponibilidade ficam em `src/team/teamData.ts`. O app Equipe do Invesphone e as mesas da base do DHPP (`src/base/base.js`) usam o mesmo arquivo e gravam no mesmo save (`src/case/caseSave.ts`, chave `invesphone-case01-v2`). Novo assunto ou pedido entra só ali e aparece nos dois lugares.
+
+
 # 12. ARQUIVOS DE EVIDÊNCIA JÁ PRODUZIDOS
 
 Os materiais visuais das diligências já estão em:
