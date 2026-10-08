@@ -145,8 +145,3 @@ body.land #depo .ii:not(.ii-file) .ii-tut-card{left:calc(44% + 12px);right:12px}
 body.gl #cv{opacity:0}
 body.gl #vig{display:none}
 body:not(.gl) #glv{display:none}
-/* profundidade de campo do pós 2D: desfoque nativo do sistema, faixa de cima e de baixo */
-.dof{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;will-change:transform,opacity;-webkit-backdrop-filter:blur(2.6px);backdrop-filter:blur(2.6px);opacity:0}
-#dof-t{-webkit-mask-image:linear-gradient(to bottom,#000 0,#000 62%,transparent 100%);mask-image:linear-gradient(to bottom,#000 0,#000 62%,transparent 100%)}
-#dof-b{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 38%,#000 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 38%,#000 100%)}
-body.gl .dof,body.fxoff .dof{display:none}

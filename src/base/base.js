@@ -1230,9 +1230,9 @@ function drawPerson(p,sit,id){
   const hdA=clamp((LODE-2.2)/0.35,0,1),img=hdA>=1?framesHDFor(p)[f]:fr[f],dw=fr[f].width,dh=fr[f].height;
   if(!sit){if(GLOSSY.has(room[ti(p)]))drawReflect(fr[f],X,Y,p.dir<0,dw,dh);drawCast(fr[f],X,Y,p.dir<0,castFrom(p),dw,dh);ctx.drawImage(SHADOW,X-11,Y-5);}
   if(p.mop){const mx=X+p.dir*10,sw=p.moving?Math.sin(frame/5)*3:0;ctx.strokeStyle='#8a6a4a';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(X+p.dir*4,Y-26);ctx.lineTo(mx+sw,Y-2);ctx.stroke();ctx.fillStyle='#d8d0c0';ctx.fillRect(Math.round(mx+sw-5),Y-3,10,3);ctx.fillStyle='#b8b0a0';ctx.fillRect(Math.round(mx+sw-5),Y-1,10,1);}
-  const put=im=>{if(p.dir<0){ctx.save();ctx.translate(X,0);ctx.scale(-1,1);ctx.drawImage(im,-14,Y-45+bob,dw,dh);ctx.restore();}else ctx.drawImage(im,X-14,Y-45+bob,dw,dh);};
+  const dw0=dofW(Y-22),put=(im,nb)=>{const w=nb?0:dw0;if(p.dir<0){ctx.save();ctx.translate(X,0);ctx.scale(-1,1);drawB(im,-14,Y-45+bob,w,dw,dh);ctx.restore();}else drawB(im,X-14,Y-45+bob,w,dw,dh);};
   put(img);if(hdA>0&&hdA<1){ctx.save();ctx.globalAlpha=hdA;put(framesHDFor(p)[f]);ctx.restore();}
-  if(LODV>=1){const rl=rimLight(p);if(rl&&rl.a>0.05){const st=Math.max(1,Math.round(img.width/dw));ctx.save();ctx.globalAlpha=rl.a;put(rimImg(img,p.dir<0?-rl.lx:rl.lx,rl.ly,rl.col,st));ctx.restore();}}
+  if(LODV>=1){const rl=rimLight(p);if(rl&&rl.a>0.05){const st=Math.max(1,Math.round(img.width/dw));ctx.save();ctx.globalAlpha=rl.a;if(dw0<0.5)put(rimImg(img,p.dir<0?-rl.lx:rl.lx,rl.ly,rl.col,st),true);ctx.restore();}}
   // piscar
   if(LODV>=2&&!p.moving&&((frame+(id||0)*53)%190)<6){const sk=p.look.skin,cy=f===4?4:0;ctx.fillStyle=sk;
     if(LODV>=3){const xs=p.dir<0?[X+2,X-3]:[X-3.5,X+1.5];for(const x of xs){ctx.fillStyle=sk;ctx.fillRect(x,Y-35.5+bob+cy,1.5,1.5);ctx.fillStyle=rgbs(mul(hex(sk),0.55));ctx.fillRect(x,Y-34.3+bob+cy,1.5,.35);}}
@@ -1271,7 +1271,8 @@ function render(){
   FX.sx=oxf-ox;FX.sy=oyf-oy;
   LODE=s/RS;LODV=lodOf(LODE);SC=s;UIK=Math.min(1,2.2/LODE);
   const SPR=()=>{ctx.setTransform(s,0,0,s,ox,oy);ctx.imageSmoothingEnabled=false;};
-  ctx.setTransform(s,0,0,s*K,ox,oy);ctx.imageSmoothingEnabled=false;ctx.drawImage(BG,0,0);SPR();drawFloorFX();
+  DOF_S=s;DOF_OY=oy;DOF_ON=FXMODE==='2d'&&!POST&&FX.dof>0.02;
+  ctx.setTransform(s,0,0,s*K,ox,oy);ctx.imageSmoothingEnabled=false;ctx.drawImage(BG,0,0);dofGround(s,ox,oy);SPR();drawFloorFX();
   if(!ROWS){ROWS=Array.from({length:H},()=>({o:[],p:[],x:[]}));for(const o of objs)if(o.spr)ROWS[clamp(o.y+o.h-1,0,H-1)].o.push(o);}
   for(const r of ROWS){r.p.length=0;r.x.length=0;}
   const R=k=>ROWS[clamp(k,0,H-1)];
@@ -1282,12 +1283,12 @@ function render(){
   for(const b of PIGEONS)R(Math.floor(b.y/TH)).x.push(b);
   const y0=Math.max(0,Math.floor(-oy/s/TH)-4),y1=Math.min(H-1,Math.ceil((cv.height-oy)/s/TH)+4);
   for(let y=y0;y<=y1;y++){
-    if(WALLROWS[y])ctx.drawImage(WALLROWS[y],0,y*TH-RISE);
+    if(WALLROWS[y])drawB(WALLROWS[y],0,y*TH-RISE,dofW(y*TH));
     if(y===1)drawClockHands();
     if(y===18){drawDoor();ctx.drawImage(SIGN,13*T,18*TH-8);}
     const r=ROWS[y];
-    for(const o of r.o){if(o.nocc)ctx.drawImage(o.spr.c,o.spr.x,o.spr.y);}
-    for(const o of r.o){if(!o.nocc){ctx.drawImage(o.spr.c,o.spr.x,o.spr.y);if(o.t==='flag')drawFlagCloth(o);}}
+    for(const o of r.o){if(o.nocc)drawB(o.spr.c,o.spr.x,o.spr.y,dofW(o.spr.y+o.spr.c.height*0.6));}
+    for(const o of r.o){if(!o.nocc){drawB(o.spr.c,o.spr.x,o.spr.y,dofW(o.spr.y+o.spr.c.height*0.6));if(o.t==='flag')drawFlagCloth(o);}}
     if(r.p.length>1)r.p.sort(byY);
     // quem está sentado atrás de uma mesa é desenhado antes dela (a mesa fica na fileira de baixo)
     for(const p of r.p)drawPerson(p,p._sit,p._k);
@@ -1320,7 +1321,7 @@ const PROF={r2d:0};
 function loop(now){
   if(depoOpen){last=now;requestAnimationFrame(loop);return;}
   const raw=now-last,dt=Math.min(0.1,raw/1000);last=now;adaptRS(raw);
-  update(dt);updFX();updAtmo();stepZoom();followCam(dt);frame++;const r0=performance.now();render();PROF.r2d+=(performance.now()-r0-PROF.r2d)*0.05;postFX(dt);if(frame%6===0)updateUI();
+  update(dt);updFX();updAtmo();stepZoom();followCam(dt);if(started)primeBlur();frame++;const r0=performance.now();render();PROF.r2d+=(performance.now()-r0-PROF.r2d)*0.05;postFX(dt);if(frame%6===0)updateUI();
   requestAnimationFrame(loop);
 }
 
@@ -1338,23 +1339,51 @@ function postFX(dt){
   // aparelho sem fôlego para o efeito (a GPU não acompanha): volta ao 2D puro
   const ms=performance.now()-t0;FX.n++;FX.ms=FX.n<=10?FX.ms+(ms-FX.ms)/FX.n:FX.ms+(ms-FX.ms)*0.1;if(FX.n>40&&FX.ms>20&&!FX_FORCE){POST=null;document.body.classList.remove('gl');sizeCanvas();zoomTo(cam.z,null,null,240);}
 }
-// Pós-processamento sem ler o quadro de volta (no Safari, ler o canvas a cada quadro trava a GPU):
-// - profundidade de campo: duas faixas com desfoque nativo do sistema (backdrop-filter) em cima e embaixo de Lemos,
-//   movidas só por transform/opacity, que o compositor faz sozinho;
+// Pós-processamento sem ler o quadro de volta (no Safari, ler o canvas a cada quadro trava a GPU, e o desfoque
+// nativo do sistema por cima do canvas fica atrasado e deixa um fantasma quando a câmera anda):
+// - profundidade de campo: as camadas paradas e os sprites têm versões desfocadas feitas uma vez (blurOf),
+//   usadas em cima e embaixo da faixa de Lemos (dofW);
 // - brilho: halos somados nas próprias fontes de luz (glowPass);
 // - clima da sala: um preenchimento em luz suave.
-const VIG=$('#vig'),DOFT=$('#dof-t'),DOFB=$('#dof-b');
-const DOFS={t:'',b:'',o:''};
+const VIG=$('#vig');
 function post2d(){
   if(FXMODE!=='2d'||POST)return;
-  const W0=cv.width,H0=cv.height,sf=FX.soft;
-  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='soft-light';ctx.globalAlpha=sf[3];ctx.fillStyle=`rgb(${sf[0]|0},${sf[1]|0},${sf[2]|0})`;ctx.fillRect(0,0,W0,H0);ctx.restore();
-  if(!DOFT)return;
-  // a faixa de cima termina (já transparente) em fy-band; a de baixo começa em fy+band
-  const vh=VH(),t=Math.round((FX.fy-FX.band)*vh-vh),b=Math.round((FX.fy+FX.band)*vh),o=(Math.round(FX.dof*50)/50).toFixed(2);
-  const ts=`translate3d(0,${t}px,0)`,bs=`translate3d(0,${b}px,0)`;
-  if(ts!==DOFS.t){DOFS.t=ts;DOFT.style.transform=ts;}if(bs!==DOFS.b){DOFS.b=bs;DOFB.style.transform=bs;}
-  if(o!==DOFS.o){DOFS.o=o;DOFT.style.opacity=o;DOFB.style.opacity=o;}
+  const sf=FX.soft;
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='soft-light';ctx.globalAlpha=sf[3];ctx.fillStyle=`rgb(${sf[0]|0},${sf[1]|0},${sf[2]|0})`;ctx.fillRect(0,0,cv.width,cv.height);ctx.restore();
+}
+const BLURC=new WeakMap();
+// versão desfocada de um canvas parado: reduz e amplia de volta com suavização (feito uma vez e guardado)
+function blurOf(c,f){let b=BLURC.get(c);if(b)return b;f=f||(c.width>200?3:2.5);
+  const t=document.createElement('canvas');t.width=Math.max(1,Math.round(c.width/f));t.height=Math.max(1,Math.round(c.height/f));const tg=t.getContext('2d');tg.imageSmoothingEnabled=true;tg.imageSmoothingQuality='high';tg.drawImage(c,0,0,t.width,t.height);
+  b=document.createElement('canvas');b.width=c.width;b.height=c.height;const g=b.getContext('2d');g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(t,0,0,b.width,b.height);BLURC.set(c,b);return b;}
+// quanto desfocar na altura de tela de um ponto do mundo
+let DOF_S=1,DOF_OY=0,DOF_ON=false;
+function dofW(wy){if(!DOF_ON)return 0;const d=Math.abs((wy*DOF_S+DOF_OY)/cv.height-FX.fy)-FX.band;if(d<=0)return 0;const u=Math.min(1,d/0.32);return u*u*(3-2*u)*FX.dof;}
+// desenha nítido e, por cima, a versão desfocada na medida do peso (o nítido some só no fim, sem ficar transparente)
+function drawB(img,x,y,w,dw,dh){
+  if(dw===undefined){dw=img.width;dh=img.height;}
+  if(w<0.02){ctx.drawImage(img,x,y,dw,dh);return;}
+  const a=ctx.globalAlpha,sa=w<=0.5?1:1-(w-0.5)*1.8;
+  if(sa>0.02){ctx.globalAlpha=a*sa;ctx.drawImage(img,x,y,dw,dh);}
+  const sm=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=true;ctx.globalAlpha=a*w;ctx.drawImage(blurOf(img),x,y,dw,dh);ctx.imageSmoothingEnabled=sm;ctx.globalAlpha=a;
+}
+// chão desfocado nas faixas: a versão desfocada do chão (parada) é desenhada direto na tela, em tiras recortadas
+// com opacidade crescente — nada é lido de volta nem passa por uma tela intermediária
+function dofGround(s,ox,oy){
+  if(!DOF_ON)return;const H0=cv.height,W0=cv.width,f=FX.fy,b=FX.band,r=0.32,a=FX.dof,BB=blurOf(BG,3),N=10;
+  const strip=(y0,y1,al)=>{y0=Math.max(0,Math.floor(y0*H0));y1=Math.min(H0,Math.ceil(y1*H0));if(y1<=y0||al<0.02)return;
+    ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.beginPath();ctx.rect(0,y0,W0,y1-y0);ctx.clip();ctx.setTransform(s,0,0,s*K,ox,oy);ctx.globalAlpha=al;ctx.drawImage(BB,0,0);ctx.restore();};
+  const sm=u=>u*u*(3-2*u);ctx.imageSmoothingEnabled=true;
+  // em cima: parte toda desfocada e a transição em N tiras
+  strip(0,f-b-r,a);for(let k=0;k<N;k++){const u0=k/N,u1=(k+1)/N;strip(f-b-r*u1,f-b-r*u0,a*sm((u0+u1)/2));}
+  strip(f+b+r,1,a);for(let k=0;k<N;k++){const u0=k/N,u1=(k+1)/N;strip(f+b+r*u0,f+b+r*u1,a*sm((u0+u1)/2));}
+  ctx.imageSmoothingEnabled=false;
+}
+// prepara as versões desfocadas aos poucos, sem travar quadros
+const BLURQ=[];let blurPrimed=false;
+function primeBlur(){
+  if(!blurPrimed){blurPrimed=true;if(FXMODE!=='2d'||POST)return;BLURQ.push(BG);for(const w of WALLROWS)if(w)BLURQ.push(w);for(const o of objs)if(o.spr)BLURQ.push(o.spr.c);for(const n of [P1,...NPCS])for(const f of framesFor(n))BLURQ.push(f);}
+  const t0=performance.now();while(BLURQ.length&&performance.now()-t0<3)blurOf(BLURQ.shift());
 }
 /* ---------- Tela deitada ---------- */
 function screenInsets(){
