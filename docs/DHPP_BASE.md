@@ -1,10 +1,9 @@
 # Base do DHPP (`/base/`)
 
-Cena 2D navegável em arte vetorial desenhada em código (`src/base/vecart.js`): móveis, chão, paredes e gente com curvas e degradês, na paleta dos retratos, sem pixel e sem arte externa. Câmera oblíqua como a da Varredura. Código em `src/base/base.js` e `src/base/base.css`; página em `base/index.html`.
+Cena 2D navegável, feita na mesma técnica da Varredura das Acácias: pixel art procedural em canvas, câmera oblíqua, sem arte externa. Código em `src/base/base.js` e `src/base/base.css`; página em `base/index.html`.
 
 ## Como funciona
 - Tela deitada como na Varredura: com o celular em pé o app gira 90° (botão de girar na barra para voltar ao modo em pé).
-- Imagens fixas (chão, paredes, móveis) desenhadas uma vez em alta resolução; o chão também é guardado na escala exata da tela, para cada quadro ser uma cópia 1:1. As pessoas são vetoriais e animadas a cada quadro (andar, sentar, piscar, de frente ou de costas).
 - Móveis desenhados em pé na câmera oblíqua, luz por cômodo multiplicada sobre a cena (ambiente × lâmpadas), brilho nas lâmpadas, sol das janelas com poeira e vapor do café.
 - Atmosfera: sombras das pessoas a partir da lâmpada mais próxima (e do sol lá fora), reflexo no piso encerado da recepção e da perícia, luz dos monitores, ventilador de teto da delegada, nuvens passando, poeira no ar, cigarro com fumaça na sala de depoimentos, bandeiras tremulando, carros na rua, pombos que voam quando Lemos chega perto, folhas caindo, faxineira com rodo e piso molhado, porta de vidro automática e gradação de cor.
 - Zoom por pinça, roda ou toque duplo, com níveis de detalhe: de longe aparecem os nomes das salas; de perto, nomes da equipe, rostos finos, piscar e textos miúdos. A conversa aproxima a câmera sozinha.
