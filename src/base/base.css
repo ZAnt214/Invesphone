@@ -20,7 +20,7 @@ a{text-decoration:none}
 #app{position:fixed;inset:0;overflow:hidden;background:var(--bg)}
 body.rot #app{inset:auto;top:0;left:0;right:auto;bottom:auto;transform-origin:0 0}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
-#vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,rgba(4,6,12,0) 52%,rgba(4,6,12,.42) 100%)}
+#vig{position:absolute;inset:0;pointer-events:none;opacity:.68;background:radial-gradient(ellipse at center,rgba(4,6,12,0) 48%,rgba(4,6,12,.62) 100%)}
 button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* barra de cima: a mesma placa tática grafite da Varredura */
@@ -145,3 +145,8 @@ body.land #depo .ii:not(.ii-file) .ii-tut-card{left:calc(44% + 12px);right:12px}
 body.gl #cv{opacity:0}
 body.gl #vig{display:none}
 body:not(.gl) #glv{display:none}
+/* profundidade de campo do pós 2D: desfoque nativo do sistema, faixa de cima e de baixo */
+.dof{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;will-change:transform,opacity;-webkit-backdrop-filter:blur(2.6px);backdrop-filter:blur(2.6px);opacity:0}
+#dof-t{-webkit-mask-image:linear-gradient(to bottom,#000 0,#000 62%,transparent 100%);mask-image:linear-gradient(to bottom,#000 0,#000 62%,transparent 100%)}
+#dof-b{-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 38%,#000 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 38%,#000 100%)}
+body.gl .dof,body.fxoff .dof{display:none}
