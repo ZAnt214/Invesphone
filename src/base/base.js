@@ -13,13 +13,17 @@ const $=s=>document.querySelector(s);
 const appEl=$('#app'),cv=$('#cv'),ctx=cv.getContext('2d');
 const lc=document.createElement('canvas'),lctx=lc.getContext('2d');
 const LS=3;
-// pós-processamento em WebGL (brilho, profundidade de campo, cor); sem WebGL, o canvas 2D aparece direto
-let POST=null;try{POST=createPost(cv);}catch(e){POST=null;}
+// pós-processamento: por padrão feito no próprio canvas 2D (brilho, profundidade de campo, cor por sala),
+// sem copiar o quadro para outra superfície — no Safari essa cópia para o WebGL trava a GPU.
+// ?fx=gl liga a versão em WebGL (shader), ?fx=0 desliga tudo.
+const FXQ=(location.search.match(/[?&]fx=(\w+)/)||[])[1],FXMODE=FXQ==='0'?'off':FXQ==='gl'?'gl':'2d';
+if(FXMODE==='off')document.body.classList.add('fxoff');
+let POST=null;if(FXMODE==='gl'){try{POST=createPost(cv);}catch(e){POST=null;}}
 if(POST){cv.after(POST.canvas);document.body.classList.add('gl');POST.onlost=()=>{document.body.classList.remove('gl');POST=null;sizeCanvas();};}
 // clima de cor de cada lugar: o interrogatório frio e fechado, a delegada quente, o arquivo amarelado
-const GRADE={interro:{tint:[0.93,0.99,1.08],bloom:0.7,vig:0.62},sonia:{tint:[1.06,1.0,0.92],bloom:0.55,vig:0.45},arquivo:{tint:[1.06,1.0,0.88],bloom:0.6,vig:0.5},pericia:{tint:[0.97,1.0,1.04],bloom:0.4,vig:0.38},equipe:{tint:[0.99,1.0,1.02],bloom:0.5,vig:0.42},hall:{tint:[1.02,1.0,0.97],bloom:0.48,vig:0.4},fora:{tint:[1.03,1.0,0.96],bloom:0.45,vig:0.36}};
-const FX={dof:0.6,fy:0.6,ms:0,n:0,tint:[1,1,1],bloom:0.5,vig:0.42,sx:0,sy:0},POST_SUB=[0,0],FX_FORCE=/[?&]fx=1/.test(location.search);
-if(/[?&]fx=0/.test(location.search)&&POST){POST=null;document.body.classList.remove('gl');}
+// soft: cor aplicada em luz suave por cima da cena (versão 2D); tint: o mesmo clima na versão WebGL
+const GRADE={interro:{tint:[0.93,0.99,1.08],soft:[60,92,140,0.3],bloom:0.7,vig:0.62},sonia:{tint:[1.06,1.0,0.92],soft:[255,176,112,0.2],bloom:0.55,vig:0.45},arquivo:{tint:[1.06,1.0,0.88],soft:[224,176,96,0.22],bloom:0.6,vig:0.5},pericia:{tint:[0.97,1.0,1.04],soft:[168,200,232,0.14],bloom:0.4,vig:0.38},equipe:{tint:[0.99,1.0,1.02],soft:[160,184,216,0.1],bloom:0.5,vig:0.42},hall:{tint:[1.02,1.0,0.97],soft:[255,216,168,0.12],bloom:0.48,vig:0.4},fora:{tint:[1.03,1.0,0.96],soft:[255,224,176,0.14],bloom:0.45,vig:0.36}};
+const FX={dof:0.6,fy:0.6,ms:0,n:0,tint:[1,1,1],soft:[255,216,168,0.12],bloom:0.5,vig:0.42,sx:0,sy:0,band:0.19,vigS:-1},POST_SUB=[0,0],FX_FORCE=FXMODE==='gl';
 const RS_FORCE=(location.search.match(/[?&]rs=([\d.]+)/)||[])[1];
 let dpr=1,RS=1;
 // resolução de desenho: com o WebGL ligado, o 2D é desenhado em até 2x e o shader amplia nítido até a tela.
@@ -949,7 +953,7 @@ function followCam(dt){
 
 /* ---------- Luz (mesmo método da casa: ambiente × luzes por cômodo) ---------- */
 const LCACHE={};
-const LC_MON=[110,230,180],LC_CLOUD=[176,180,196],LC_EMBER=[255,130,60],LC_WHITE=[255,255,255];
+const LC_SUN=[255,234,196],LC_MON=[110,230,180],LC_CLOUD=[176,180,196],LC_EMBER=[255,130,60],LC_WHITE=[255,255,255];
 function lightSprite(col){if(col._ls)return col._ls;const k=col.join(',');let c=LCACHE[k];if(c)return col._ls=c;c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,rgbs(col,1));gr.addColorStop(0.4,rgbs(col,0.55));gr.addColorStop(1,rgbs(col,0));g.fillStyle=gr;g.fillRect(0,0,64,64);return col._ls=LCACHE[k]=c;}
 const COOL=[225,236,255],WARM=[255,206,140],SUNC=[255,236,200];
 // [x, y, raio em tiles, cor, intensidade, cômodo, oscila]
@@ -989,6 +993,8 @@ const DUST=Array.from({length:120},(_,k)=>({w:WINDOWS[k%WINDOWS.length][0],u:Mat
 function glowPass(){
   ctx.globalCompositeOperation='lighter';
   for(const h of HALOS){ctx.globalAlpha=h.a*(0.9+0.1*Math.sin(frame/6+h.x));ctx.drawImage(lightSprite(h.c),h.x-h.r,h.y-h.r*0.8,h.r*2,h.r*1.6);}
+  // brilho das janelas do fundo (some quando a nuvem passa)
+  if(FXMODE!=='off')for(const [x] of WINDOWS){const sh=1-0.75*sunShade(x*T);ctx.globalAlpha=0.3*sh;ctx.drawImage(lightSprite(LC_SUN),x*T-14,2*TH-34,60,40);}
   // sol da manhã entrando pelas janelas do fundo, com poeira no feixe
   for(const [x,rm] of WINDOWS){const r=roomClip(rm);ctx.save();ctx.beginPath();ctx.rect(r[0],r[1],r[2]-r[0],r[3]-r[1]);ctx.clip();
     const sh=1-0.75*sunShade(x*T),y0=2*TH-2;if(!GR.beam){GR.beam=ctx.createLinearGradient(0,y0,0,y0+76);GR.beam.addColorStop(0,'rgba(255,228,180,.22)');GR.beam.addColorStop(1,'rgba(255,228,180,0)');}ctx.globalAlpha=sh;ctx.fillStyle=GR.beam;
@@ -1293,7 +1299,7 @@ function render(){
   // destino do toque
   if(P1.path.length&&started){const e=P1.path[P1.path.length-1],X=(e%W)*T+16,Y=((e/W)|0)*TH+TH/2;ctx.strokeStyle='rgba(242,194,48,.9)';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.lineDashOffset=-(frame>>2);ctx.beginPath();ctx.ellipse(X,Y,10,4.5,0,0,7);ctx.stroke();ctx.setLineDash([]);}
   lightPass(s,ox,oy);
-  SPR();smokePass();glowPass();
+  SPR();smokePass();glowPass();post2d();
   // camada legível: sinais, falas, nomes
   for(const n of NPCS)if(hasNews(n.id))atUI(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?64:60),()=>drawMarker(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?64:60)));
   for(const o of objs)if(o.hot&&o.spr&&!o.nomark&&!talkOpen&&(o.hot==='interro'?hasNews('interro'):!SEEN[o.hot])){const sp=o.spr;drawMarker(o.x*T+o.w*T/2,sp.y-6);}
@@ -1320,16 +1326,35 @@ function loop(now){
 
 // foco na faixa de Lemos; na conversa, o fundo desfoca mais, como num corte de cinema
 function postFX(dt){
-  if(!POST||!POST.ok)return;
+  if(FXMODE==='off')return;
   const s=cam.z*RS,oy=cv.height/2-cam.y*s,py=(P1.y*TH+TH-22)*s+oy;
   const k=1-Math.exp(-dt*5);FX.fy+=(clamp(py/cv.height,0.15,0.85)-FX.fy)*k;
-  const tgt=!started?0.9:talkOpen?1:LODE>=1.4?0.8:LODE>=1?0.5:0.2;FX.dof+=(tgt-FX.dof)*k;
-  const gr=GRADE[roomOf(P1)]||GRADE.hall,kg=1-Math.exp(-dt*2.5);for(let i=0;i<3;i++)FX.tint[i]+=(gr.tint[i]-FX.tint[i])*kg;FX.bloom+=(gr.bloom-FX.bloom)*kg;FX.vig+=(gr.vig-FX.vig)*kg;
+  const tgt=!started?0.9:talkOpen?1:LODE>=1.4?0.8:LODE>=1?0.5:0.2;FX.dof+=(tgt-FX.dof)*k;FX.band+=((talkOpen?0.13:0.19)-FX.band)*k;
+  const gr=GRADE[roomOf(P1)]||GRADE.hall,kg=1-Math.exp(-dt*2.5);for(let i=0;i<3;i++)FX.tint[i]+=(gr.tint[i]-FX.tint[i])*kg;for(let i=0;i<4;i++)FX.soft[i]+=(gr.soft[i]-FX.soft[i])*kg;FX.bloom+=(gr.bloom-FX.bloom)*kg;FX.vig+=(gr.vig-FX.vig)*kg;
+  if(!POST||!POST.ok){const v=Math.round(Math.min(1,(FX.vig+(talkOpen?0.12:0))/0.62)*100)/100;if(v!==FX.vigS){FX.vigS=v;VIG.style.opacity=v;}return;}
   POST_SUB[0]=FX.sx;POST_SUB[1]=FX.sy;
   const t0=performance.now();
-  POST.render({fy:FX.fy,band:talkOpen?0.13:0.19,dof:FX.dof,bloom:FX.bloom,th:0.8,warm:1,ca:0.07,vig:FX.vig+(talkOpen?0.12:0),tint:FX.tint,t:frame,sub:POST_SUB,outW:Math.round(VW()*dpr),outH:Math.round(VH()*dpr)});
+  POST.render({fy:FX.fy,band:FX.band,dof:FX.dof,bloom:FX.bloom,th:0.8,warm:1,ca:0.07,vig:FX.vig+(talkOpen?0.12:0),tint:FX.tint,t:frame,sub:POST_SUB,outW:Math.round(VW()*dpr),outH:Math.round(VH()*dpr)});
   // aparelho sem fôlego para o efeito (a GPU não acompanha): volta ao 2D puro
   const ms=performance.now()-t0;FX.n++;FX.ms=FX.n<=10?FX.ms+(ms-FX.ms)/FX.n:FX.ms+(ms-FX.ms)*0.1;if(FX.n>40&&FX.ms>20&&!FX_FORCE){POST=null;document.body.classList.remove('gl');sizeCanvas();zoomTo(cam.z,null,null,240);}
+}
+// Pós-processamento sem ler o quadro de volta (no Safari, ler o canvas a cada quadro trava a GPU):
+// - profundidade de campo: duas faixas com desfoque nativo do sistema (backdrop-filter) em cima e embaixo de Lemos,
+//   movidas só por transform/opacity, que o compositor faz sozinho;
+// - brilho: halos somados nas próprias fontes de luz (glowPass);
+// - clima da sala: um preenchimento em luz suave.
+const VIG=$('#vig'),DOFT=$('#dof-t'),DOFB=$('#dof-b');
+const DOFS={t:'',b:'',o:''};
+function post2d(){
+  if(FXMODE!=='2d'||POST)return;
+  const W0=cv.width,H0=cv.height,sf=FX.soft;
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='soft-light';ctx.globalAlpha=sf[3];ctx.fillStyle=`rgb(${sf[0]|0},${sf[1]|0},${sf[2]|0})`;ctx.fillRect(0,0,W0,H0);ctx.restore();
+  if(!DOFT)return;
+  // a faixa de cima termina (já transparente) em fy-band; a de baixo começa em fy+band
+  const vh=VH(),t=Math.round((FX.fy-FX.band)*vh-vh),b=Math.round((FX.fy+FX.band)*vh),o=(Math.round(FX.dof*50)/50).toFixed(2);
+  const ts=`translate3d(0,${t}px,0)`,bs=`translate3d(0,${b}px,0)`;
+  if(ts!==DOFS.t){DOFS.t=ts;DOFT.style.transform=ts;}if(bs!==DOFS.b){DOFS.b=bs;DOFB.style.transform=bs;}
+  if(o!==DOFS.o){DOFS.o=o;DOFT.style.opacity=o;DOFB.style.opacity=o;}
 }
 /* ---------- Tela deitada ---------- */
 function screenInsets(){
