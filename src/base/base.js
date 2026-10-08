@@ -5,6 +5,7 @@ import { applyRequest, applyTopic, caseTeam, requestOk, teamDialogues, teamMater
 import { readCase, writeCase } from '../case/caseSave';
 import { depoPeople, summon } from '../case/depositions';
 import { openDeposition } from './deposition';
+import { createPost } from './post';
 (() => {
 'use strict';
 const T=32,TH=22,K=TH/T,RISE=16,CAPH=8,W=34,H=26,N=W*H;
@@ -12,6 +13,13 @@ const $=s=>document.querySelector(s);
 const appEl=$('#app'),cv=$('#cv'),ctx=cv.getContext('2d');
 const lc=document.createElement('canvas'),lctx=lc.getContext('2d');
 const LS=3;
+// pós-processamento em WebGL (brilho, profundidade de campo, cor); sem WebGL, o canvas 2D aparece direto
+let POST=null;try{POST=createPost(cv);}catch(e){POST=null;}
+if(POST){cv.after(POST.canvas);document.body.classList.add('gl');POST.onlost=()=>document.body.classList.remove('gl');}
+// clima de cor de cada lugar: o interrogatório frio e fechado, a delegada quente, o arquivo amarelado
+const GRADE={interro:{tint:[0.93,0.99,1.08],bloom:0.7,vig:0.62},sonia:{tint:[1.06,1.0,0.92],bloom:0.55,vig:0.45},arquivo:{tint:[1.06,1.0,0.88],bloom:0.6,vig:0.5},pericia:{tint:[0.97,1.0,1.04],bloom:0.4,vig:0.38},equipe:{tint:[0.99,1.0,1.02],bloom:0.5,vig:0.42},hall:{tint:[1.02,1.0,0.97],bloom:0.48,vig:0.4},fora:{tint:[1.03,1.0,0.96],bloom:0.45,vig:0.36}};
+const FX={dof:0.6,fy:0.6,ms:0,n:0,tint:[1,1,1],bloom:0.5,vig:0.42},FX_FORCE=/[?&]fx=1/.test(location.search);
+if(/[?&]fx=0/.test(location.search)&&POST){POST=null;document.body.classList.remove('gl');}
 let dpr=1;
 // a tela fica deitada como na Varredura: em pé, o app gira 90°
 let ROT=0,userVert=false;
@@ -1126,6 +1134,7 @@ function drawDoor(){
   ctx.fillStyle='#23272b';ctx.fillRect(X,Y,2*T,36);ctx.fillStyle='#3a332a';ctx.fillRect(X+4,Y+3,2*T-8,28);ctx.fillStyle='#4a4236';ctx.fillRect(X+4,Y+3,2*T-8,2);
   ctx.save();ctx.beginPath();ctx.rect(X+2,Y+1,2*T-4,33);ctx.clip();
   for(const [x0,s] of [[X+4-o,-1],[X+34+o,1]]){ctx.fillStyle='#14171a';ctx.fillRect(x0-1,Y+2,28,30);ctx.fillStyle='rgba(111,147,179,.88)';ctx.fillRect(x0,Y+3,26,28);ctx.fillStyle='#a7c6dc';ctx.fillRect(x0+2,Y+5,8,10);ctx.fillStyle='#5f86a8';ctx.fillRect(x0+14,Y+17,10,12);ctx.fillStyle='#dbe6ee';ctx.fillRect(x0,Y+3,26,2);ctx.fillStyle='#1c2024';ctx.fillRect(x0,Y+29,26,2);ctx.fillStyle='#c9ccce';ctx.fillRect(x0+(s<0?24:0),Y+13,2,9);}
+  {const g=(frame%420)/70;if(g<1){const gx=X-14+g*(2*T+28);ctx.globalAlpha=0.32;ctx.fillStyle='#ffffff';ctx.beginPath();ctx.moveTo(gx,Y+3);ctx.lineTo(gx+7,Y+3);ctx.lineTo(gx-3,Y+31);ctx.lineTo(gx-10,Y+31);ctx.closePath();ctx.fill();ctx.globalAlpha=0.18;ctx.fillRect(gx+10,Y+3,2,28);ctx.globalAlpha=1;}}
   ctx.restore();ctx.fillStyle='#c9a24a';ctx.fillRect(X+2,Y+32,2*T-4,4);
 }
 function smokePass(){
@@ -1177,6 +1186,18 @@ function micro(){
 }
 
 /* ---------- Desenho ---------- */
+// luz de contorno: a borda do sprite virada para a luz mais forte acende com a cor dela
+const RIMC=new WeakMap();
+function rimImg(img,lx,ly,col,st){let m=RIMC.get(img);if(!m)RIMC.set(img,m=new Map());const key=lx+','+ly+','+col;let c=m.get(key);if(c)return c;
+  c=document.createElement('canvas');c.width=img.width;c.height=img.height;const g=c.getContext('2d');g.drawImage(img,0,0);g.globalCompositeOperation='destination-out';g.drawImage(img,-lx*st,-ly*st);
+  g.globalCompositeOperation='source-in';g.fillStyle=col;g.fillRect(0,0,c.width,c.height);m.set(key,c);return c;}
+function rimLight(p){
+  const i=ti(p),rm=room[i];
+  if(!INSIDE(rm)&&floor[i]!==F.DOOR)return {lx:-1,ly:-1,col:'#fff0d2',a:0.62*(1-0.65*sunShade(p.x*T))};
+  let best=null,bv=0;for(const l of LIGHTS){if(l[5]!==rm)continue;const gx=l[0]-(p.x+0.5),gy=l[1]-(p.y+1),d=Math.hypot(gx,gy),v=l[4]/(0.5+d);if(v>bv){bv=v;best={gx,gy,d,l};}}
+  if(!best)return null;const n=Math.max(0.001,best.d),vx=best.gx/n,vy=best.gy/n;let lx=vx>0.38?1:vx<-0.38?-1:0,ly=vy<-0.38?-1:0;if(!lx&&!ly)ly=-1;
+  const c=best.l[3],m=x=>Math.round(x+(255-x)*0.35);return {lx,ly,col:`rgb(${m(c[0])},${m(c[1])},${m(c[2])})`,a:clamp(best.l[4]*(1.05-best.d*0.18),0.18,0.7)};
+}
 function drawPerson(p,sit,id){
   const fr=framesFor(p);let f=0,dy=0;
   if(p.moving)f=Math.floor(p.walk*3.2)%4;else if(sit){f=4;if(p.act==='type'&&((frame>>2)+id)%6<2)dy=-1;if(p.act==='write'&&((frame>>4)+id)%5===0)dy=-1;}
@@ -1187,6 +1208,7 @@ function drawPerson(p,sit,id){
   if(p.mop){const mx=X+p.dir*10,sw=p.moving?Math.sin(frame/5)*3:0;ctx.strokeStyle='#8a6a4a';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(X+p.dir*4,Y-26);ctx.lineTo(mx+sw,Y-2);ctx.stroke();ctx.fillStyle='#d8d0c0';ctx.fillRect(Math.round(mx+sw-5),Y-3,10,3);ctx.fillStyle='#b8b0a0';ctx.fillRect(Math.round(mx+sw-5),Y-1,10,1);}
   const put=im=>{if(p.dir<0){ctx.save();ctx.translate(X,0);ctx.scale(-1,1);ctx.drawImage(im,-14,Y-45+bob,dw,dh);ctx.restore();}else ctx.drawImage(im,X-14,Y-45+bob,dw,dh);};
   put(img);if(hdA>0&&hdA<1){ctx.save();ctx.globalAlpha=hdA;put(framesHDFor(p)[f]);ctx.restore();}
+  if(LODV>=1){const rl=rimLight(p);if(rl&&rl.a>0.05){const st=Math.max(1,Math.round(img.width/dw));ctx.save();ctx.globalAlpha=rl.a;put(rimImg(img,p.dir<0?-rl.lx:rl.lx,rl.ly,rl.col,st));ctx.restore();}}
   // piscar
   if(LODV>=2&&!p.moving&&((frame+(id||0)*53)%190)<6){const sk=p.look.skin,cy=f===4?4:0;ctx.fillStyle=sk;
     if(LODV>=3){const xs=p.dir<0?[X+2,X-3]:[X-3.5,X+1.5];for(const x of xs){ctx.fillStyle=sk;ctx.fillRect(x,Y-35.5+bob+cy,1.5,1.5);ctx.fillStyle=rgbs(mul(hex(sk),0.55));ctx.fillRect(x,Y-34.3+bob+cy,1.5,.35);}}
@@ -1269,10 +1291,22 @@ let last=performance.now();
 function loop(now){
   if(depoOpen){last=now;requestAnimationFrame(loop);return;}
   const dt=Math.min(0.1,(now-last)/1000);last=now;
-  update(dt);updFX();updAtmo();stepZoom();followCam(dt);frame++;render();if(frame%6===0)updateUI();
+  update(dt);updFX();updAtmo();stepZoom();followCam(dt);frame++;render();postFX(dt);if(frame%6===0)updateUI();
   requestAnimationFrame(loop);
 }
 
+// foco na faixa de Lemos; na conversa, o fundo desfoca mais, como num corte de cinema
+function postFX(dt){
+  if(!POST||!POST.ok)return;
+  const s=cam.z*dpr,oy=cv.height/2-cam.y*s,py=(P1.y*TH+TH-22)*s+oy;
+  const k=1-Math.exp(-dt*5);FX.fy+=(clamp(py/cv.height,0.15,0.85)-FX.fy)*k;
+  const tgt=!started?0.9:talkOpen?1:LODE>=1.4?0.8:LODE>=1?0.5:0.2;FX.dof+=(tgt-FX.dof)*k;
+  const gr=GRADE[roomOf(P1)]||GRADE.hall,kg=1-Math.exp(-dt*2.5);for(let i=0;i<3;i++)FX.tint[i]+=(gr.tint[i]-FX.tint[i])*kg;FX.bloom+=(gr.bloom-FX.bloom)*kg;FX.vig+=(gr.vig-FX.vig)*kg;
+  const t0=performance.now();
+  POST.render({fy:FX.fy,band:talkOpen?0.13:0.19,dof:FX.dof,bloom:FX.bloom,th:0.8,warm:1,ca:0.07,vig:FX.vig+(talkOpen?0.12:0),tint:FX.tint,t:frame});
+  // aparelho sem fôlego para o efeito (a GPU não acompanha): volta ao 2D puro
+  const ms=performance.now()-t0;FX.n++;FX.ms=FX.n<=10?FX.ms+(ms-FX.ms)/FX.n:FX.ms+(ms-FX.ms)*0.1;if(FX.n>40&&FX.ms>20&&!FX_FORCE){POST=null;document.body.classList.remove('gl');}
+}
 /* ---------- Tela deitada ---------- */
 function screenInsets(){
   const d=document.createElement('div');d.style.cssText='position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)';
@@ -1313,6 +1347,6 @@ $('#b-start').addEventListener('click',()=>{
   const e=bfs(ti(P1),i=>i===idx(16,15),walkPass);if(e>=0)P1.path=pathTo(e);
   setTimeout(()=>toast('Sônia Prado','Lemos, na minha sala. A equipe já está com o material da casa.',{img:'/sonia.jpg',col:'#c9a24a'}),1200);
 });
-window.__base={startDepo,get CASE(){return CASE;},VIS:()=>VIS,get P1(){return P1;},NPCS:()=>NPCS,cam,goTalk,goTile,openTalk,openGallery,FOUND,get started(){return started;},objs:()=>objs,tap,idx,W,H,T,TH,ti,passable,zoomTo,get ROT(){return ROT;},get LODV(){return LODV;},get FITZ(){return FITZ;}};
+window.__base={startDepo,get CASE(){return CASE;},VIS:()=>VIS,get P1(){return P1;},NPCS:()=>NPCS,cam,goTalk,goTile,openTalk,openGallery,FOUND,get started(){return started;},objs:()=>objs,tap,idx,W,H,T,TH,ti,passable,zoomTo,get ROT(){return ROT;},get LODV(){return LODV;},get FITZ(){return FITZ;},get GL(){return !!POST;}};
 requestAnimationFrame(loop);
 })();
