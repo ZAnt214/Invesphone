@@ -3,6 +3,15 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 export type TutorialStep = { target:string, title:string, text:string, place:'panel'|'stage'|'tabs', demo?:boolean }
 
+/** Caixa de um elemento em coordenadas de layout, relativa ao host. Ao contrário de getBoundingClientRect,
+ *  não é afetada por transformações (a base do DHPP gira a tela inteira quando o celular está em pé). */
+function layoutBox(el:Element|null|undefined, host:HTMLElement){
+  if(!el) return undefined
+  const abs=(n:HTMLElement|null)=>{let x=0,y=0;while(n){x+=n.offsetLeft;y+=n.offsetTop;n=n.offsetParent as HTMLElement|null}return {x,y}}
+  const e=el as HTMLElement, a=abs(e), o=abs(host), top=a.y-o.y, left=a.x-o.x
+  return {top,left,width:e.offsetWidth,height:e.offsetHeight,bottom:top+e.offsetHeight,right:left+e.offsetWidth}
+}
+
 /** Dicas curtas e discretas, uma por vez, sobre cada parte da tela. O destaque é só um contorno. */
 export default function Tutorial({steps,onClose}:{steps:TutorialStep[],onClose:()=>void}){
   const [i,setI] = useState(0)
@@ -18,8 +27,8 @@ export default function Tutorial({steps,onClose}:{steps:TutorialStep[],onClose:(
   useLayoutEffect(()=>{
     const host = root.current?.parentElement
     if(!host) return
-    const h = host.getBoundingClientRect()
-    const rect = (sel:string)=>host.querySelector(sel)?.getBoundingClientRect()
+    const h = layoutBox(host,host)!
+    const rect = (sel:string)=>layoutBox(host.querySelector(sel),host)
     if(step.demo) setDemoTop((rect('.ii-main')?.top ?? h.top) - h.top)
     const t = step.demo ? undefined : rect(step.target)
     setSpot(t ? {top:t.top-h.top,left:t.left-h.left,width:t.width,height:t.height} : null)
@@ -33,7 +42,7 @@ export default function Tutorial({steps,onClose}:{steps:TutorialStep[],onClose:(
     const host = root.current?.parentElement
     const d = demoRef.current
     if(!step.demo || !host || !d) return
-    const h = host.getBoundingClientRect(), r = d.getBoundingClientRect()
+    const h = layoutBox(host,host)!, r = layoutBox(d,host)!
     setSpot({top:r.top-h.top,left:r.left-h.left,width:r.width,height:r.height})
   },[step.demo,demoTop])
 

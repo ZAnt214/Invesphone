@@ -25,6 +25,7 @@ import './handset-pages.css'
 import { acceptedProofs, chapters, clues, disclaimer, people, teamMessages, victimMessages } from './case01'
 import EvidenceViewer, { assetUrl } from './evidence/EvidenceViewer'
 import { SAVE_KEY, SAVE_VERSION, advanceTask } from './case/caseSave'
+import { summonRequires } from './case/depositions'
 import { applyRequest, applyTopic, caseTeam, requestOk, teamDialogues, teamIntroMessages, teamMaterialRequests, teamMemberForSender, teamNews, topicOk, type TeamDialogue, type TeamMaterialRequest } from './team/teamData'
 
 const SONIA_PHOTO = `${import.meta.env.BASE_URL}sonia.jpg`
@@ -726,8 +727,6 @@ const isCleared=(game:GameSave,pid:string)=>
 const supportClues=clues.filter(c=>c.support)
 const mainClues=clues.filter(c=>!c.support)
 
-/** Pessoas que só podem ser chamadas depois de o jogador ter as provas para confrontá-las. */
-const summonRequires:Record<string,string[]>={teo:['log_alarme','cinta_bancaria']}
 
 function People({game,setGame,origin='app'}:{game:GameSave;setGame:React.Dispatch<React.SetStateAction<GameSave>>;origin?:'app'|'task'}){
  const discovered=game.discoveredPeople??['livia','caio','rafael','cida']

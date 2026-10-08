@@ -3,6 +3,8 @@
    Lemos anda, a equipe fala, o aparelho leva ao resto do caso. */
 import { applyRequest, applyTopic, caseTeam, requestOk, teamDialogues, teamMaterialRequests, teamNews, topicOk } from '../team/teamData';
 import { readCase, writeCase } from '../case/caseSave';
+import { depoPeople, summon } from '../case/depositions';
+import { openDeposition } from './deposition';
 (() => {
 'use strict';
 const T=32,TH=22,K=TH/T,RISE=16,CAPH=8,W=34,H=26,N=W*H;
@@ -326,6 +328,12 @@ const LOOK={
   denise:{skin:'#a8714a',hair:'#2a1d18',style:'curly',kind:'civil',top:'#7b5a8a',pants:'#2b2f36',shoes:'#222',glasses:1},
   paulo:{skin:'#b67c52',hair:'#1f1a18',style:'side',kind:'campo',top:'#3a2b22',pants:'#3b5a8a',shoes:'#3a2416'},
   plantao:{skin:'#f0c9a0',hair:'#3a2416',style:'cap',kind:'pm',top:'#7d8187',pants:'#2b2f36',shoes:'#111'},
+  livia:{skin:'#e8b58e',hair:'#7a4a2a',style:'bun',kind:'civil',top:'#26282c',pants:'#2b2f36',shoes:'#e8e4da'},
+  caio:{skin:'#d9a273',hair:'#3a2416',style:'curly',kind:'civil',top:'#1e1f22',pants:'#3b4a6a',shoes:'#e8e4da'},
+  teo:{skin:'#c98e64',hair:'#2a1d18',style:'short',kind:'civil',top:'#1c1d20',pants:'#2b2f36',shoes:'#222'},
+  rafael:{skin:'#d9a273',hair:'#2a1d18',style:'curly',kind:'civil',top:'#25272b',pants:'#3b5a8a',shoes:'#e8e4da'},
+  cida:{skin:'#c98e64',hair:'#4a3a30',style:'bun',kind:'civil',top:'#6a2230',pants:'#3a3030',shoes:'#222'},
+  jorge:{skin:'#8a5a3a',hair:'#9a9a9a',style:'grey',kind:'civil',top:'#2b2f2a',pants:'#3a3a32',shoes:'#222'},
   faxina:{skin:'#a8714a',hair:'#1f1a18',style:'curly',kind:'apoio',top:'#5a8aa8',pants:'#3a4a5a',shoes:'#e8e8e8'}
 };
 function personFrames(L){
@@ -575,7 +583,7 @@ const OPEN_PHONE={t:'Abrir o aparelho',s:'Invesphone',href:'/invesphone',main:tr
 const nF=()=>FOUND.length;
 /* ---------- Equipe nas mesas: a mesma conversa do app Equipe, no mesmo save ---------- */
 let CASE=readCase();
-const refreshCase=()=>{CASE=readCase();};
+const refreshCase=()=>{CASE=readCase();if(typeof buildVisitors==='function')buildVisitors();};
 addEventListener('focus',refreshCase);addEventListener('storage',refreshCase);document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCase();});
 const TEAM_IDS=new Set(['sonia','mauricio','renata','paulo','denise']);
 const GREET={
@@ -617,7 +625,7 @@ function exchange(id,ex){
   const after=()=>{
     const menu=teamMenu(id),extra=[];
     if(ex.kind==='request'&&it.assetPaths&&it.assetPaths.length)extra.push({t:'Ver '+it.label.toLowerCase(),s:it.assetPaths.length+(it.assetPaths.length>1?' arquivos':' arquivo'),main:true,keep:true,fn:()=>openGallery(it.assetPaths.map(pth=>({title:it.label,img:pth,cap:it.kind+' · '+m.name})),0)});
-    const ppl=[...(it.callPeople||it.revealsPeople||[])];if(ppl.length)extra.push({t:'Chamar para depoimento',s:'Aparelho',href:'/invesphone'});
+    const ppl=[...(it.callPeople||it.revealsPeople||[])];extra.push(...callOpts(ppl));
     return [...extra,...menu.opts.filter(o=>!extra.some(e=>e.t===o.t))];
   };
   talkSet({who:m.name,role:m.role+' · '+m.specialty,av:id,pages:[{me:true,t:ask},{t:reply,commit:()=>{CASE=writeCase(g=>ex.kind==='topic'?applyTopic(g,it):applyRequest(g,it));}}],opts:null,optsFn:after});
@@ -626,6 +634,42 @@ function replay(id,items){
   const m=memberOf(id),pages=[];
   for(const it of items){if(it.user){pages.push({me:true,t:it.user.text});pages.push({t:it.agent.text});}else{pages.push({me:true,t:`Consegue ${it.label.toLowerCase()} pra mim?`});pages.push({t:it.response.text});}}
   talkSet({who:m.name,role:m.role+' · '+m.specialty,av:id,pages,opts:null,optsFn:()=>teamMenu(id).opts});
+}
+/* ---------- Sala de depoimentos: chamar, ouvir e retomar, no mesmo save ---------- */
+const DEPO_LINE={chamar:p=>({t:'Chamar '+p.first,s:p.role}),sem_provas:p=>({t:'Chamar '+p.first,s:'só com provas contra ele',disabled:true}),
+  ouvir:p=>({t:'Ouvir '+p.first,s:'esperando',main:true}),retomar:p=>({t:'Retomar '+p.first,s:p.pending+(p.pending>1?' perguntas novas':' pergunta nova'),main:true}),registrado:p=>({t:'Rever depoimento de '+p.first,s:'registrado'})};
+function depoOpt(p){
+  const o=DEPO_LINE[p.state](p);
+  if(p.state==='chamar'){o.keep=true;o.fn=()=>{CASE=writeCase(g=>summon(g,p.id));buildVisitors();toast('Sala de depoimentos',`${p.first} foi chamado e espera na recepção.`,{ini:'DH',col:'#96a7ae'});rebuildOpts();};}
+  else if(!o.disabled)o.fn=()=>startDepo(p.id);
+  return o;
+}
+function interroTalk(){
+  const list=depoPeople(CASE),pages=['Mesa de aço, dois copos, um gravador e o espelho que não é espelho. Quem for chamado entra por aqui, separado dos outros.'];
+  const wait=list.filter(p=>p.state==='ouvir');
+  pages.push(wait.length?(wait.length===1?`${wait[0].first} já está esperando.`:`Esperando: ${wait.map(p=>p.first).join(', ')}.`):'Ninguém esperando agora. Quem chamar, e quando, é decisão sua.');
+  return {who:'Sala de depoimentos',role:'Gravação e espelho',av:'icon',pages,optsFn:()=>depoPeople(CASE).map(depoOpt)};
+}
+// atalhos que uma conversa da equipe oferece para as pessoas que ela cita
+function callOpts(ids){
+  const list=depoPeople(CASE);
+  return [...new Set(ids)].map(id=>list.find(p=>p.id===id)).filter(Boolean).map(p=>{
+    if(p.state==='chamar'||p.state==='sem_provas')return Object.assign(depoOpt(p),{t:`Chamar ${p.first} para depoimento`});
+    if(p.state==='ouvir'||p.state==='retomar')return {t:`${p.state==='ouvir'?'Ouvir':'Retomar'} ${p.first}`,s:'sala de depoimentos',main:true,fn:()=>goTalk('hot','interro',p.id)};
+    return null;}).filter(Boolean);
+}
+// quem foi chamado espera na cena: o primeiro na cadeira da sala, os outros no sofá da recepção
+const VFR={};let VIS=[],INTERRO_NEWS=false;
+function buildVisitors(){
+  const all=depoPeople(CASE),wait=all.filter(p=>p.state==='ouvir');INTERRO_NEWS=all.some(p=>p.state==='ouvir'||p.state==='retomar');
+  const seats=[[7,13,-1],[18,15,1],[19,15,1],[20,15,-1],[17,16,1]];
+  VIS=wait.slice(0,seats.length).map((p,k)=>{const v=VFR[p.id]||(VFR[p.id]={id:p.id,name:p.first,look:LOOK[p.id]||LOOK.lemos,walk:0,moving:false});return Object.assign(v,{x:seats[k][0],y:seats[k][1],dir:seats[k][2]});});
+}
+let depoOpen=false;
+function startDepo(id){
+  if(talk)closeTalk();
+  depoOpen=true;const host=$('#depo');host.hidden=false;document.body.classList.add('depo-on');
+  openDeposition(host,id,()=>{host.hidden=true;depoOpen=false;document.body.classList.remove('depo-on');refreshCase();buildVisitors();last=performance.now();});
 }
 const DLG={
   sonia:()=>teamTalk('sonia'),mauricio:()=>teamTalk('mauricio'),renata:()=>teamTalk('renata'),paulo:()=>teamTalk('paulo'),denise:()=>teamTalk('denise'),
@@ -639,8 +683,7 @@ const DLG={
       opts:[{t:'Ver as fotos',s:`${FOUND.length} de 7`,fn:()=>openGallery(0)}]};},
   fotos:()=>FOUND.length?{who:'Mesa de luz',role:'Perícia',av:'icon',pages:['Fotografias periciais da casa, reveladas e penduradas para análise.'],opts:[{t:'Ver as fotos',s:`${FOUND.length} de 7`,fn:()=>openGallery(0),main:true}]}
     :{who:'Mesa de luz',role:'Perícia',av:'icon',pages:['A mesa de luz está apagada. Nenhuma foto da casa chegou ainda.'],opts:[{t:'Voltar à casa',s:'Varredura',href:'/'}]},
-  interro:()=>({who:'Sala de depoimentos',role:'Gravação e espelho',av:'icon',
-    pages:['Mesa de aço, dois copos, um gravador e o espelho que não é espelho. Quem for chamado entra por aqui, separado dos outros.','Ninguém foi convocado ainda. Quem chamar, e quando, é decisão sua.'],opts:[{t:'Escolher no aparelho',s:'Pessoas',href:'/invesphone',main:true}]}),
+  interro:()=>interroTalk(),
   arquivo:()=>({who:'Arquivo Morto',role:'Caixas e prateleiras',av:'icon',
     pages:['Caixas de casos que ninguém fechou, com o nome escrito a lápis na lateral. Todo caso daqui começou parecendo simples.','O de hoje ainda cabe numa gaveta. Ver o que já foi guardado dele é pelo aparelho.'],opts:[{t:'Abrir o aparelho',s:'Arquivo',href:'/invesphone',main:true}]})
 };
@@ -687,11 +730,12 @@ function finishPage(){
   const last=t.page>=t.d.pages.length-1,box=$('#tk-opts');
   if(!last){$('#tk-more').hidden=false;return;}
   box.innerHTML='';const opts=t.d.optsFn?t.d.optsFn():(t.d.opts||[]);
-  for(const o of opts){const b=document.createElement('button');if(o.main)b.className='main';b.innerHTML=`<b>${o.t}</b>${o.s?`<span>${o.s}</span>`:''}`;
+  for(const o of opts){const b=document.createElement('button');if(o.main)b.className='main';if(o.disabled)b.disabled=true;b.innerHTML=`<b>${o.t}</b>${o.s?`<span>${o.s}</span>`:''}`;
     b.addEventListener('click',e=>{e.stopPropagation();if(o.href){location.href=o.href;return;}if(o.keep){o.fn();return;}closeTalk();if(o.fn)o.fn();});box.appendChild(b);}
   const c=document.createElement('button');c.innerHTML='<b>Voltar à base</b>';c.addEventListener('click',e=>{e.stopPropagation();closeTalk();});box.appendChild(c);
   box.scrollTop=0;
 }
+function rebuildOpts(){if(!talk||!talk.done)return;talk.done=false;finishPage();}
 function advance(){
   if(!talk)return;if(!talk.done){finishPage();return;}
   if(talk.page<talk.d.pages.length-1){talk.page++;showPage();}
@@ -728,13 +772,13 @@ function toast(who,text,av){
 function dist(ax,ay,bx,by){return Math.hypot(ax-bx,ay-by);}
 function reachNpc(n){return dist(P1.x,P1.y,n.x,n.y)<=2.3;}
 function reachHot(id){for(let i=0;i<N;i++)if(hot[i]===id&&dist(P1.x,P1.y,i%W,(i/W)|0)<=1.9)return true;return false;}
-function goTalk(kind,id){
-  P1.pend=null;
-  if(kind==='npc'?reachNpc(NPCS.find(n=>n.id===id)):reachHot(id)){P1.path=[];openTalk(id);return;}
+function goTalk(kind,id,depo){
+  P1.pend=null;if(talk)closeTalk();
+  if(kind==='npc'?reachNpc(NPCS.find(n=>n.id===id)):reachHot(id)){P1.path=[];if(depo)startDepo(depo);else openTalk(id);return;}
   const targets=[];if(kind==='npc'){const n=NPCS.find(x=>x.id===id);targets.push([n.x,n.y,2.3]);}else for(let i=0;i<N;i++)if(hot[i]===id)targets.push([i%W,(i/W)|0,1.9]);
   const e=bfs(ti(P1),i=>{if(!walkPass(i))return false;const x=i%W,y=(i/W)|0;return targets.some(t=>dist(x,y,t[0],t[1])<=t[2]);},n=>walkPass(n)||n===ti(P1));
   if(e<0){toast('Base','Não dá para chegar até lá agora.');return;}
-  P1.path=pathTo(e);P1.pend={kind,id};follow=true;
+  P1.path=pathTo(e);P1.pend={kind,id,depo};follow=true;
 }
 function goTile(i){
   P1.pend=null;let e=-1;
@@ -747,6 +791,7 @@ function s2w(sx,sy){const e=cam.z;return {x:cam.x+(sx-VW()/2)/e,ys:cam.y+(sy-VH(
 function tap(sx,sy){
   const w=s2w(sx,sy),wx=w.x,wy=w.ys;
   const ns=[...NPCS].sort((a,b)=>b.y-a.y);
+  for(const v of VIS){const X=v.x*T+16,Y=v.y*TH+TH-2;if(wx>=X-16&&wx<=X+16&&wy>=Y-46&&wy<=Y+4){goTalk('hot','interro',v.id);return;}}
   for(const n of ns){const X=Math.round(n.x*T)+16,Y=Math.round(n.y*TH)+TH-2;if(wx>=X-16&&wx<=X+16&&wy>=Y-50&&wy<=Y+4&&DLG[n.id]){goTalk('npc',n.id);return;}}
   const hs=objs.filter(o=>o.hot&&o.spr).sort((a,b)=>(b.y+b.h)-(a.y+a.h));
   for(const o of hs){const s=o.spr;if(wx>=s.x&&wx<=s.x+s.c.width&&wy>=s.y&&wy<=s.y+s.c.height){goTalk('hot',o.hot);return;}}
@@ -789,7 +834,7 @@ function stepAgent(a,sp,pass){
 function update(dt){
   if(talkOpen)return;
   stepAgent(P1,3.3*dt,i=>passable(i)&&!NPCS.some(n=>ti(n)===i));
-  if(!P1.path.length&&P1.pend){const p=P1.pend;P1.pend=null;if(started)goTalk(p.kind,p.id);}
+  if(!P1.path.length&&P1.pend){const p=P1.pend;P1.pend=null;if(started)goTalk(p.kind,p.id,p.depo);}
   for(const n of NPCS){
     if(n.say){n.say.t+=dt*60;if(n.say.t>n.say.life)n.say=null;}
     else if(started&&(n.sayT-=dt*60)<0){n.sayT=900+Math.random()*1500;if(dist(P1.x,P1.y,n.x,n.y)<9)n.say={txt:pick(n.lines),t:0,life:170};}
@@ -1100,6 +1145,7 @@ function render(){
   for(const o of objs)if(o.spr)R(o.y+o.h-1).o.push(o);
   for(const n of NPCS)R(Math.round(n.y)).p.push([n,!!n.sit&&!n.moving&&isSeat(n),n.k]);
   R(Math.round(P1.y)).p.push([P1,false,9]);
+  VIS.forEach((v,k)=>R(v.y).p.push([v,true,20+k]));
   for(const c of CARS){const k=clamp(Math.floor(c.y/TH),0,H-1);(R(k).x||(R(k).x=[])).push(()=>drawCar2(c));}
   for(const b of PIGEONS){const k=clamp(Math.floor(b.y/TH),0,H-1);(R(k).x||(R(k).x=[])).push(()=>drawPigeon(b));}
   const y0=Math.max(0,Math.floor(-oy/s/TH)-4),y1=Math.min(H-1,Math.ceil((cv.height-oy)/s/TH)+4);
@@ -1124,11 +1170,11 @@ function render(){
   SPR();smokePass();glowPass();
   // camada legível: sinais, falas, nomes
   for(const n of NPCS)if(hasNews(n.id))atUI(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?64:60),()=>drawMarker(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?64:60)));
-  for(const o of objs)if(o.hot&&o.spr&&!o.nomark&&!talkOpen&&!SEEN[o.hot]){const sp=o.spr;drawMarker(o.x*T+o.w*T/2,sp.y-6);}
+  for(const o of objs)if(o.hot&&o.spr&&!o.nomark&&!talkOpen&&(o.hot==='interro'?hasNews('interro'):!SEEN[o.hot])){const sp=o.spr;drawMarker(o.x*T+o.w*T/2,sp.y-6);}
   for(const n of NPCS)if(n.say&&!talkOpen){const al=Math.min(1,(n.say.life-n.say.t)/20,n.say.t/6);drawSay(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?70:74),n.say.txt,al);}
   drawNames();drawRoomLabels();
 }
-function hasNews(id){if(!DLG[id])return false;if(TEAM_IDS.has(id))return teamNews(CASE,id).count>0||(id==='sonia'&&!SEEN.sonia);return !SEEN[id];}
+function hasNews(id){if(!DLG[id])return false;if(id==='interro')return INTERRO_NEWS||!SEEN.interro;if(TEAM_IDS.has(id))return teamNews(CASE,id).count>0||(id==='sonia'&&!SEEN.sonia);return !SEEN[id];}
 function isSeat(n){const i=ti(n);return objs.some(o=>o.nocc&&idx(o.x,o.y)===i);}
 
 /* ---------- Interface ---------- */
@@ -1139,6 +1185,7 @@ function updateUI(){
 }
 let last=performance.now();
 function loop(now){
+  if(depoOpen){last=now;requestAnimationFrame(loop);return;}
   const dt=Math.min(0.1,(now-last)/1000);last=now;
   update(dt);updFX();updAtmo();stepZoom();followCam(dt);frame++;render();if(frame%6===0)updateUI();
   requestAnimationFrame(loop);
@@ -1177,13 +1224,13 @@ function fitCard(){
 $('#rot').addEventListener('click',()=>{ROT=ROT===0?90:ROT===90?-90:0;userVert=(ROT===0);lastL=null;applyLayout(true);});
 addEventListener('resize',()=>applyLayout(false));
 
-newGame();initArt();buildTraffic();applyLayout(true);cam.x=16*T;cam.y=15*TH;clampCam();
+newGame();initArt();buildTraffic();buildVisitors();applyLayout(true);cam.x=16*T;cam.y=15*TH;clampCam();
 setTimeout(()=>{framesHDFor(P1);for(const n of NPCS)framesHDFor(n);},300);
 $('#b-start').addEventListener('click',()=>{
   $('#intro').hidden=true;started=true;
   const e=bfs(ti(P1),i=>i===idx(16,15),walkPass);if(e>=0)P1.path=pathTo(e);
   setTimeout(()=>toast('Sônia Prado','Lemos, na minha sala. A equipe já está com o material da casa.',{img:'/sonia.jpg',col:'#c9a24a'}),1200);
 });
-window.__base={get P1(){return P1;},NPCS:()=>NPCS,cam,goTalk,goTile,openTalk,openGallery,FOUND,get started(){return started;},objs:()=>objs,tap,idx,W,H,T,TH,ti,passable,zoomTo,get ROT(){return ROT;},get LODV(){return LODV;},get FITZ(){return FITZ;}};
+window.__base={startDepo,get CASE(){return CASE;},VIS:()=>VIS,get P1(){return P1;},NPCS:()=>NPCS,cam,goTalk,goTile,openTalk,openGallery,FOUND,get started(){return started;},objs:()=>objs,tap,idx,W,H,T,TH,ti,passable,zoomTo,get ROT(){return ROT;},get LODV(){return LODV;},get FITZ(){return FITZ;}};
 requestAnimationFrame(loop);
 })();
