@@ -7,26 +7,28 @@ const VS = `attribute vec2 p;varying vec2 uv;void main(){uv=p*0.5+0.5;gl_Positio
 
 const FS = {
   // reduz pela metade com média de 4 amostras
-  down: `precision mediump float;varying vec2 uv;uniform sampler2D t;uniform vec2 px;
+  down: `precision highp float;varying vec2 uv;uniform sampler2D t;uniform vec2 px;
 void main(){vec4 c=texture2D(t,uv+px*vec2(-.5,-.5))+texture2D(t,uv+px*vec2(.5,-.5))+texture2D(t,uv+px*vec2(-.5,.5))+texture2D(t,uv+px*vec2(.5,.5));gl_FragColor=c*.25;}`,
   // separa o que brilha (luzes, telas, sol forte) com joelho suave
-  bright: `precision mediump float;varying vec2 uv;uniform sampler2D t;uniform vec2 px;uniform float th;
+  bright: `precision highp float;varying vec2 uv;uniform sampler2D t;uniform vec2 px;uniform float th;
 vec3 s(vec2 o){return texture2D(t,uv+px*o).rgb;}
 void main(){vec3 c=(s(vec2(-1.,-1.))+s(vec2(1.,-1.))+s(vec2(-1.,1.))+s(vec2(1.,1.)))*.25;
 float m=max(c.r,max(c.g,c.b)),k=.18,x=clamp(m-th+k,0.,2.*k);x=x*x/(4.*k+1e-4);float w=max(x,m-th)/max(m,1e-4);
 float sat=m-min(c.r,min(c.g,c.b));gl_FragColor=vec4(c*w*(1.+sat*1.2),1.);}`,
   // desfoque gaussiano separável (9 amostras em 5 leituras lineares)
-  blur: `precision mediump float;varying vec2 uv;uniform sampler2D t;uniform vec2 dir;
+  blur: `precision highp float;varying vec2 uv;uniform sampler2D t;uniform vec2 dir;
 void main(){vec4 c=texture2D(t,uv)*.2270270270;
 c+=(texture2D(t,uv+dir*1.3846153846)+texture2D(t,uv-dir*1.3846153846))*.3162162162;
 c+=(texture2D(t,uv+dir*3.2307692308)+texture2D(t,uv-dir*3.2307692308))*.0702702703;gl_FragColor=c;}`,
-  final: `precision mediump float;varying vec2 uv;
-uniform sampler2D sc,dof,b1,b2;uniform vec2 px,res;uniform vec3 tint;uniform float fy,band,dofk,bloom,t,warm,ca,vig;
+  final: `precision highp float;varying vec2 uv;
+uniform sampler2D sc,dof,b1,b2;uniform vec2 px,res,sres,sub;uniform float k;uniform vec3 tint;uniform float fy,band,dofk,bloom,t,warm,ca,vig;
 float h(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
+// ampliação nítida para pixel art: cada texel vira um bloco liso com só 1 px de transição
+vec3 S(vec2 p){vec2 t=p*sres+vec2(-sub.x,sub.y);return texture2D(sc,(floor(t)+.5+clamp((fract(t)-.5)*k,-.5,.5))/sres).rgb;}
 void main(){
   vec2 d=uv-.5;float r2=dot(d*vec2(res.x/res.y,1.),d*vec2(res.x/res.y,1.));
   vec3 c;
-  if(ca>0.){vec2 o=d*ca*r2*px*60.;c=vec3(texture2D(sc,uv+o).r,texture2D(sc,uv).g,texture2D(sc,uv-o).b);}else c=texture2D(sc,uv).rgb;
+  c=S(uv);if(ca>0.&&r2>.12){vec2 o=d*ca*r2*px*60.;c.r=S(uv+o).r;c.b=S(uv-o).b;}
   // tilt-shift: foco numa faixa em volta de Lemos, desfoca em cima e embaixo
   float dz=abs(uv.y-fy),w=smoothstep(band,band+.32,dz)*dofk;
   c=mix(c,texture2D(dof,uv).rgb,w);
@@ -83,7 +85,7 @@ export function createPost(src) {
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0); return { t, f, w, h }; };
 
   const scene = tex();
-  let W = 0, H = 0, T = {};
+  let W = 0, H = 0, OW = 0, OH = 0, T = {};
   const alloc = () => {
     for (const k in T) { gl.deleteTexture(T[k].t); gl.deleteFramebuffer(T[k].f); }
     const d = (n) => [Math.max(1, Math.round(W / n)), Math.max(1, Math.round(H / n))];
@@ -93,7 +95,7 @@ export function createPost(src) {
   };
 
   const run = (k, out, setup) => { const P = prog[k]; gl.useProgram(P.p);
-    if (out) { gl.bindFramebuffer(gl.FRAMEBUFFER, out.f); gl.viewport(0, 0, out.w, out.h); } else { gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, W, H); }
+    if (out) { gl.bindFramebuffer(gl.FRAMEBUFFER, out.f); gl.viewport(0, 0, out.w, out.h); } else { gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, OW, OH); }
     setup(P.u); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); };
   const bind = (unit, t, loc) => { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t); gl.uniform1i(loc, unit); };
   const blur2 = (a, b, spread) => {
@@ -110,9 +112,13 @@ export function createPost(src) {
     // fy: altura do foco (0 = topo da tela, 1 = base); o resto são intensidades
     render(o) {
       if (lost) return;
-      if (src.width !== W || src.height !== H) { W = cv.width = src.width; H = cv.height = src.height; alloc(); }
+      if (o.outW !== OW || o.outH !== OH) { OW = cv.width = o.outW; OH = cv.height = o.outH; }
+      const fresh = src.width !== W || src.height !== H;
+      if (fresh) { W = src.width; H = src.height; alloc(); }
+      // a cena é ligada depois de alocar as camadas (alloc mexe na textura ativa)
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, scene);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
+      if (fresh) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
+      else gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, gl.RGBA, gl.UNSIGNED_BYTE, src);
       // camada desfocada para a profundidade de campo
       run('down', T.h1, (u) => { bind(0, scene, u.t); gl.uniform2f(u.px, 1 / W, 1 / H); });
       blur2(T.h1, T.h2, 1.6);
@@ -123,7 +129,7 @@ export function createPost(src) {
       blur2(T.e1, T.e2, 1.5); blur2(T.e1, T.e2, 2.5);
       run('final', null, (u) => {
         bind(0, scene, u.sc); bind(1, T.h1.t, u.dof); bind(2, T.q1.t, u.b1); bind(3, T.e1.t, u.b2);
-        gl.uniform2f(u.px, 1 / W, 1 / H); gl.uniform2f(u.res, W, H);
+        gl.uniform2f(u.px, 1 / OW, 1 / OH); gl.uniform2f(u.res, OW, OH); gl.uniform2f(u.sres, W, H); gl.uniform2f(u.sub, o.sub ? o.sub[0] : 0, o.sub ? o.sub[1] : 0); gl.uniform1f(u.k, OW / W);
         gl.uniform1f(u.fy, 1 - o.fy); gl.uniform1f(u.band, o.band); gl.uniform1f(u.dofk, o.dof);
         gl.uniform1f(u.bloom, o.bloom); gl.uniform1f(u.t, o.t % 97); gl.uniform1f(u.warm, o.warm); gl.uniform1f(u.ca, o.ca); gl.uniform1f(u.vig, o.vig); gl.uniform3f(u.tint, o.tint[0], o.tint[1], o.tint[2]);
       });
