@@ -964,7 +964,7 @@ function lightPass(s,ox,oy){
   lctx.globalCompositeOperation='source-over';
   ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='multiply';ctx.imageSmoothingEnabled=true;ctx.drawImage(lc,0,0,cv.width,cv.height);ctx.globalCompositeOperation='source-over';
 }
-const DUST=Array.from({length:42},(_,k)=>({w:WINDOWS[k%WINDOWS.length][0],u:Math.random(),v:Math.random(),s:0.0006+Math.random()*0.001,ph:Math.random()*6}));
+const DUST=Array.from({length:120},(_,k)=>({w:WINDOWS[k%WINDOWS.length][0],u:Math.random(),v:Math.random(),s:0.0004+Math.random()*0.0012,ph:Math.random()*6,big:Math.random()<0.18}));
 function glowPass(){
   ctx.globalCompositeOperation='lighter';
   for(const h of HALOS){ctx.globalAlpha=h.a*(0.9+0.1*Math.sin(frame/6+h.x));ctx.drawImage(lightSprite(h.c),h.x-h.r,h.y-h.r*0.8,h.r*2,h.r*1.6);}
@@ -973,9 +973,9 @@ function glowPass(){
     const sh=1-0.75*sunShade(x*T),y0=2*TH-2,g=ctx.createLinearGradient(0,y0,0,y0+76);g.addColorStop(0,`rgba(255,228,180,${0.22*sh})`);g.addColorStop(1,'rgba(255,228,180,0)');ctx.globalAlpha=1;ctx.fillStyle=g;
     ctx.beginPath();ctx.moveTo(x*T+6,y0);ctx.lineTo(x*T+26,y0);ctx.lineTo(x*T+26+34,y0+76);ctx.lineTo(x*T+6+34,y0+76);ctx.closePath();ctx.fill();ctx.restore();}
   ctx.fillStyle='rgba(255,240,210,.85)';
-  for(const d of DUST){d.u=(d.u+d.s)%1;const w=((d.v+Math.sin(frame/90+d.ph)*0.06)%1+1)%1;ctx.globalAlpha=0.55*(1-d.u)*Math.min(1,d.u*6);ctx.fillRect(Math.round(d.w*T+6+w*20+d.u*34),Math.round(2*TH-2+d.u*76),1,1);}
+  for(const d of DUST){d.u=(d.u+d.s)%1;const w=((d.v+Math.sin(frame/90+d.ph)*0.06)%1+1)%1,tw=0.65+0.35*Math.sin(frame/17+d.ph*5);ctx.globalAlpha=(d.big?0.35:0.6)*tw*(1-d.u)*Math.min(1,d.u*6)*(1-0.7*sunShade(d.w*T));const sz=d.big?2:1;ctx.fillRect(Math.round(d.w*T+6+w*20+d.u*34),Math.round(2*TH-2+d.u*76),sz,sz);}
   // poeira no ar de cada sala, acesa onde há luz
-  ctx.fillStyle='#fff4dc';for(const m of MOTES){const tw=0.5+0.5*Math.sin(frame/23+m.ph*7);ctx.globalAlpha=(m.r==='interro'?0.18:0.3)*tw;ctx.fillRect(Math.round(m.x),Math.round(m.y-m.z),1,1);}
+  ctx.fillStyle='#fff4dc';for(const m of MOTES){const tw=0.5+0.5*Math.sin(frame/23+m.ph*7);ctx.globalAlpha=(m.r==='interro'?0.26:0.42)*tw*(m.big?0.6:1);const sz=m.big?2:1;ctx.fillRect(Math.round(m.x),Math.round(m.y-m.z),sz,sz);}
   // reflexo das lâmpadas no piso encerado
   for(const l of LIGHTS)if(GLOSSY.has(l[5])&&l[2]>2.5){ctx.globalAlpha=0.07*l[4];const r=l[2]*T*0.55;ctx.drawImage(lightSprite([255,255,255]),l[0]*T-r,l[1]*TH-r*0.3,r*2,r*0.6);}
   // tela do monitor de Lemos, de frente, e o reflexo azul do da recepção
@@ -989,8 +989,13 @@ function glowPass(){
 }
 let FXP=[];
 function updFX(){
-  if(frame%9===0){for(const [x,y] of [[20*T+14,6*TH-19],[4*T+24,4*TH-9],[19*T+52,4*TH-8]])if(FXP.length<240)FXP.push({k:'steam',x:x+(Math.random()-0.5)*3,y,z:0,vz:0.22,t:0,life:56,sz:1.4});}
-  for(const p of FXP){p.t++;if(p.k==='leaf'){if(p.y<p.gy){p.x+=p.vx+Math.sin(p.t/14+p.ph)*0.35;p.y+=p.vy;}continue;}p.z+=p.vz;p.x+=(p.vx||0)+(Math.random()-0.5)*0.15;}FXP=FXP.filter(p=>p.t<p.life);if(FXP.length>260)FXP.splice(0,FXP.length-260);
+  if(frame%9===0){for(const [x,y] of [[20*T+14,6*TH-19],[4*T+24,4*TH-9],[19*T+52,4*TH-8]])if(FXP.length<400)FXP.push({k:'steam',x:x+(Math.random()-0.5)*3,y,z:0,vz:0.22,t:0,life:56,sz:1.4});}
+  for(const p of FXP){p.t++;
+    if(p.k==='leaf'||p.k==='feather'||p.k==='ash'){if(p.y<p.gy){p.x+=p.vx+Math.sin(p.t/(p.k==='feather'?20:14)+p.ph)*(p.k==='ash'?0.05:0.35);p.y+=p.vy;}else if(GUST>0.2&&p.k!=='ash'){p.x+=GUST*1.6;}continue;}
+    if(p.k==='drop'){p.vz-=0.09;p.z+=p.vz;p.x+=p.vx;if(p.z<0)p.t=p.life;continue;}
+    if(p.k==='bub'){p.z+=p.vz;p.x+=Math.sin(p.t/4)*0.15;if(p.z>11)p.t=p.life;continue;}
+    p.z+=p.vz;p.x+=(p.vx||0)+(Math.random()-0.5)*0.15;}
+  FXP=FXP.filter(p=>p.t<p.life);if(FXP.length>420)FXP.splice(0,FXP.length-420);
 }
 
 /* ---------- Atmosfera: sombras, reflexos, fumaça, ventilador, nuvens, rua, pombos, folhas, grão ---------- */
@@ -1023,7 +1028,13 @@ function castObj(o){
 const CLOUDS=Array.from({length:4},(_,k)=>({x:(k*13-6)*T,y:(k%2?22:-4)*TH,r:(7+k%3*2)*T,v:0.12+k*0.03}));
 function sunShade(wx){let m=0;for(const c of CLOUDS){const d=Math.hypot(wx-c.x,(-2*TH-c.y)*1.4)/c.r;if(d<1)m=Math.max(m,1-d*d);}return m;}
 // ar parado: poeira em todas as salas
-const MOTES=[];for(const r in ROOM_RECT){const q=ROOM_RECT[r];for(let k=0;k<14;k++)MOTES.push({r,x:(q[0]+Math.random()*(q[2]-q[0]+1))*T,y:(q[1]+Math.random()*(q[3]-q[1]+1))*TH,z:8+Math.random()*34,vx:(Math.random()-0.5)*0.05,vz:(Math.random()-0.5)*0.03,ph:Math.random()*6});}
+const MOTES=[];for(const r in ROOM_RECT){const q=ROOM_RECT[r];for(let k=0;k<30;k++)MOTES.push({r,x:(q[0]+Math.random()*(q[2]-q[0]+1))*T,y:(q[1]+Math.random()*(q[3]-q[1]+1))*TH,z:8+Math.random()*34,vx:(Math.random()-0.5)*0.05,vz:(Math.random()-0.5)*0.03,ph:Math.random()*6,big:Math.random()<0.12});}
+// pátio: pólen e penugem levados pelo vento
+const POLLEN=Array.from({length:120},()=>({x:Math.random()*W*T,y:(18.6+Math.random()*5)*TH,z:4+Math.random()*44,ph:Math.random()*6,v:0.12+Math.random()*0.22,fluff:Math.random()<0.25}));
+// vento: rajadas que varrem folhas, pólen e poeira do pátio
+let GUST=0,gustT=500;
+// mariposas em volta da luminária da sala de depoimentos
+const MOTHS=Array.from({length:3},(_,k)=>({a:k*2.1,r:5+k*3,v:0.07+k*0.025,ph:Math.random()*6}));
 // rua: carros dos dois lados
 const TRAFFIC=[];let CARS=[],nextCar=120;
 function buildTraffic(){
@@ -1041,26 +1052,38 @@ let WETS=[];
 let doorOpen=0;
 function updAtmo(){
   for(const c of CLOUDS){c.x+=c.v;if(c.x-c.r>(W+6)*T)c.x=-12*T;}
+  if(--gustT<=0){gustT=500+Math.random()*700;GUST=1;}GUST*=0.992;
+  for(const q of POLLEN){q.x+=q.v*(1+GUST*5)+Math.sin(frame/60+q.ph)*0.15;q.z+=Math.sin(frame/45+q.ph*3)*0.08+GUST*0.05;if(q.z<3)q.z=3;if(q.z>56)q.z=56;if(q.x>(W+1)*T){q.x=-T;q.y=(18.6+Math.random()*5)*TH;q.z=4+Math.random()*44;}}
+  if(GUST>0.3&&frame%3===0)FXP.push({k:'puff',x:Math.random()*W*T,y:(19+Math.random()*4)*TH,z:1,vz:0.05,vx:1.2*GUST,t:0,life:40,sz:2});
+  for(const m of MOTHS){m.a+=m.v+Math.sin(frame/9+m.ph)*0.05;}
+  // ventilador de teto mexe o ar da sala da delegada
+  {const cx=6*T,cy=5.3*TH;for(const m of MOTES)if(m.r==='sonia'){const dx=m.x-cx,dy=(m.y-cy)/K,d=Math.hypot(dx,dy);if(d<2.6*T&&d>4){const a=0.006*(1-d/(2.6*T)),c=Math.cos(a),sn=Math.sin(a);m.x=cx+dx*c-dy*sn;m.y=cy+(dx*sn+dy*c)*K;}}}
   for(const m of MOTES){m.x+=m.vx+Math.sin(frame/140+m.ph)*0.03;m.z+=m.vz+Math.sin(frame/90+m.ph)*0.02;const q=ROOM_RECT[m.r];if(m.x<q[0]*T)m.x=(q[2]+1)*T;if(m.x>(q[2]+1)*T)m.x=q[0]*T;if(m.z<4||m.z>46)m.vz=-m.vz;}
   // carros
   if(--nextCar<=0){nextCar=240+Math.random()*420;const r=Math.random()<0.5;CARS.push({spr:pick(TRAFFIC),dir:r?1:-1,x:r?-4*T:(W+4)*T,y:r?25.7*TH:24.5*TH,v:(1.1+Math.random()*0.7)});}
-  for(const c of CARS)c.x+=c.v*c.dir;CARS=CARS.filter(c=>c.x>-6*T&&c.x<(W+6)*T);
+  for(const c of CARS){c.x+=c.v*c.dir;const tail=c.x-c.dir*c.spr.width/2;
+    if(frame%4===0)FXP.push({k:'exh',x:tail-c.dir*2,y:c.y-7,z:2,vz:0.06,vx:-c.dir*0.25,t:0,life:70,sz:1.2});
+    if(frame%9===0)FXP.push({k:'puff',x:tail+(Math.random()-0.5)*6,y:c.y-2,z:0,vz:0.04,vx:c.dir*0.3,t:0,life:36,sz:1.6});}CARS=CARS.filter(c=>c.x>-6*T&&c.x<(W+6)*T);
   // pombos: bicam, andam e voam quando Lemos chega perto
   for(const b of PIGEONS){
     b.t++;
-    if(b.st==='g'){if(Math.hypot(P1.x*T+16-b.x,(P1.y*TH+TH)-b.y)<48&&started){b.st='fly';b.vx=(b.x>P1.x*T+16?1:-1)*(1.4+Math.random());b.vy=-0.5-Math.random()*0.5;b.dir=Math.sign(b.vx);b.away=0;}
+    if(b.st==='g'){if(Math.hypot(P1.x*T+16-b.x,(P1.y*TH+TH)-b.y)<48&&started){b.st='fly';b.vx=(b.x>P1.x*T+16?1:-1)*(1.4+Math.random());b.vy=-0.5-Math.random()*0.5;b.dir=Math.sign(b.vx);b.away=0;for(let k=0;k<3;k++)FXP.push({k:'feather',x:b.x+(Math.random()-0.5)*8,y:b.y-8-Math.random()*6,gy:b.y+Math.random()*6,vx:(Math.random()-0.5)*0.3,vy:0.12+Math.random()*0.1,t:0,life:420,c:pick(['#c8ccd2','#a3a9b0','#e8eaee']),ph:Math.random()*6});}
       else if(b.t%120===60&&Math.random()<0.5){b.dir=-b.dir;}else if(b.t%40<6)b.x+=b.dir*0.25;}
     else if(b.st==='fly'){b.x+=b.vx;b.y+=b.vy;b.z+=1.1;b.away++;if(b.away>260){Object.assign(b,newPigeon(b.k,false));}}
     else if(b.st==='land'){b.z-=0.8;b.x+=b.dir*0.4;if(b.z<=0){b.z=0;b.st='g';}}
   }
   // folhas caindo das árvores
-  if(Math.random()<0.04){const tr=objs.filter(o=>o.t==='tree'&&!o.far);if(tr.length){const o=pick(tr);FXP.push({k:'leaf',x:o.x*T+16+(Math.random()-0.5)*30,y:(o.y+1)*TH-50+Math.random()*12,gy:(o.y+1)*TH+Math.random()*30,vx:0.12+Math.random()*0.2,vy:0.25+Math.random()*0.2,t:0,life:520,c:pick(['#4a8a3c','#69ad52','#c9a040','#a8642a']),ph:Math.random()*6});}}
+  if(Math.random()<0.07+GUST*0.3){const tr=objs.filter(o=>o.t==='tree'&&!o.far);if(tr.length){const o=pick(tr);FXP.push({k:'leaf',x:o.x*T+16+(Math.random()-0.5)*30,y:(o.y+1)*TH-50+Math.random()*12,gy:(o.y+1)*TH+Math.random()*30,vx:0.12+Math.random()*0.2,vy:0.25+Math.random()*0.2,t:0,life:520,c:pick(['#4a8a3c','#69ad52','#c9a040','#a8642a']),ph:Math.random()*6});}}
   // cigarro no cinzeiro da sala de depoimentos
   if(frame%7===0)FXP.push({k:'smoke',x:4*T+77,y:12*TH+26,z:2,vz:0.16,t:0,life:240,sz:0.8,ph:Math.random()*6});
   // passos levantam poeira lá fora
   if(P1.moving&&!INSIDE(roomOf(P1))&&frame%10===0)for(let k=0;k<2;k++)FXP.push({k:'puff',x:P1.x*T+16+(Math.random()-0.5)*6,y:P1.y*TH+TH-3,z:1,vz:0.1,vx:(Math.random()-0.5)*0.2,t:0,life:28,sz:1.4});
   // rodo da faxineira
   for(const n of NPCS)if(n.mop&&n.moving&&frame%8===0&&WETS.length<70)WETS.push({x:n.x*T+16+n.dir*9,y:n.y*TH+TH-3,t:0,life:1400,rx:7+Math.random()*4});
+  for(const n of NPCS)if(n.mop&&n.moving&&frame%6===0)for(let k=0;k<2;k++)FXP.push({k:'drop',x:n.x*T+16+n.dir*10+(Math.random()-0.5)*6,y:n.y*TH+TH-3,z:1,vz:0.5+Math.random()*0.5,vx:(Math.random()-0.5)*0.6,t:0,life:40});
+  if(frame%70===0||(frame%70<9&&frame%70%3===0)){const o=objs.find(o=>o.t==='cooler');if(o&&o.spr)FXP.push({k:'bub',x:o.spr.x+12+Math.random()*9,y:o.spr.y+14,z:0,vz:0.22+Math.random()*0.1,t:0,life:44,sz:Math.random()<0.4?2:1});}
+  if(P1.moving&&INSIDE(roomOf(P1))&&frame%14===0)FXP.push({k:'puff',x:P1.x*T+16+(Math.random()-0.5)*6,y:P1.y*TH+TH-3,z:1,vz:0.06,vx:(Math.random()-0.5)*0.15,t:0,life:24,sz:1.2,dim:true});
+  if(frame%160===0)FXP.push({k:'ash',x:4*T+77,y:12*TH+26,gy:12*TH+30,z:0,vx:0,vy:0.1,t:0,life:200,ph:0});
   for(const w of WETS)w.t++;WETS=WETS.filter(w=>w.t<w.life);
   // porta
   const near=[P1,...NPCS].some(a=>Math.abs(a.x-15.5)<1.6&&Math.abs(a.y-18)<1.6);doorOpen+=((near?1:0)-doorOpen)*0.14;
@@ -1108,8 +1131,20 @@ function drawDoor(){
 function smokePass(){
   for(const p of FXP){const k=1-p.t/p.life;
     if(p.k==='smoke'){const curl=Math.sin(p.t/22+p.ph)*(2+p.t*0.03);ctx.globalAlpha=0.16*k*Math.min(1,p.t/12);ctx.fillStyle='#d8dde2';const r=p.sz+p.t*0.035;ctx.beginPath();ctx.ellipse(p.x+curl,p.y-p.z,r*1.3,r,0,0,7);ctx.fill();}
-    else if(p.k==='puff'){ctx.globalAlpha=0.3*k;ctx.fillStyle='#b8b0a0';const r=p.sz+p.t*0.06;ctx.beginPath();ctx.ellipse(p.x,p.y-p.z,r,r*0.7,0,0,7);ctx.fill();}
+    else if(p.k==='exh'){ctx.globalAlpha=0.2*k*Math.min(1,p.t/6);ctx.fillStyle='#8a8e94';const r=p.sz+p.t*0.09;ctx.beginPath();ctx.ellipse(p.x,p.y-p.z,r*1.3,r,0,0,7);ctx.fill();}
+    else if(p.k==='drop'){ctx.globalAlpha=0.8;ctx.fillStyle='#cfe4f2';ctx.fillRect(Math.round(p.x),Math.round(p.y-p.z),1,1);}
+    else if(p.k==='bub'){ctx.globalAlpha=0.75*k;ctx.fillStyle='#e8f6fc';ctx.fillRect(Math.round(p.x),Math.round(p.y-p.z),p.sz,p.sz);}
+    else if(p.k==='feather'){const fade=p.y>=p.gy?Math.min(1,(p.life-p.t)/80):1;ctx.globalAlpha=fade;ctx.fillStyle=p.c;const tl=Math.sin(p.t/10+p.ph)>0;ctx.fillRect(Math.round(p.x),Math.round(p.y),tl?3:2,1);ctx.fillStyle='#ffffff';ctx.fillRect(Math.round(p.x),Math.round(p.y),1,1);}
+    else if(p.k==='ash'){ctx.globalAlpha=Math.min(1,(p.life-p.t)/40);ctx.fillStyle='#8a8680';ctx.fillRect(Math.round(p.x),Math.round(p.y),1,1);}
+    else if(p.k==='puff'){ctx.globalAlpha=(p.dim?0.12:0.3)*k;ctx.fillStyle='#b8b0a0';const r=p.sz+p.t*0.06;ctx.beginPath();ctx.ellipse(p.x,p.y-p.z,r,r*0.7,0,0,7);ctx.fill();}
     else if(p.k==='leaf'){const fade=p.y>=p.gy?Math.min(1,(p.life-p.t)/80):1;ctx.globalAlpha=fade;ctx.fillStyle=p.c;const fl=Math.sin(p.t/6+p.ph)>0;ctx.fillRect(Math.round(p.x),Math.round(p.y),fl?2:1,1);}}
+  // pólen e penugem flutuando no sol do pátio, com a sombrinha no chão
+  for(const q of POLLEN){const sh=1-0.6*sunShade(q.x),tw=0.7+0.3*Math.sin(frame/13+q.ph*4),X=Math.round(q.x),Y=Math.round(q.y-q.z);
+    ctx.globalAlpha=0.16*sh;ctx.fillStyle='#000';ctx.fillRect(Math.round(q.x+q.z*0.35),Math.round(q.y),q.fluff?2:1,1);
+    ctx.globalAlpha=(q.fluff?0.9:0.75)*tw;ctx.fillStyle=q.fluff?'#ffffff':'#ffe9a0';ctx.fillRect(X,Y,1,1);
+    if(q.fluff){ctx.globalAlpha*=0.5;ctx.fillRect(X-1,Y,1,1);ctx.fillRect(X+1,Y,1,1);ctx.fillRect(X,Y-1,1,1);ctx.fillRect(X,Y+1,1,1);}}
+  // mariposas na luminária
+  {const cx=5.5*T+16,cy=12*TH-14;for(const m of MOTHS){const x=Math.round(cx+Math.cos(m.a)*m.r*1.6),y=Math.round(cy+Math.sin(m.a)*m.r*0.7+Math.sin(frame/5+m.ph)*1.5),fl=(frame+m.ph*10|0)%4<2;ctx.globalAlpha=0.85;ctx.fillStyle='#3a342c';ctx.fillRect(x,y,1,1);ctx.fillStyle='#e8d8b0';ctx.globalAlpha=0.7;if(fl){ctx.fillRect(x-1,y-1,1,1);ctx.fillRect(x+1,y-1,1,1);}else{ctx.fillRect(x-1,y,1,1);ctx.fillRect(x+1,y,1,1);}}}
   // a brasa e o filtro do cigarro
   ctx.globalAlpha=1;ctx.fillStyle='#e8e4da';ctx.fillRect(4*T+72,12*TH+26,5,1);ctx.fillStyle='#c98a4a';ctx.fillRect(4*T+71,12*TH+26,2,1);
   ctx.fillStyle=(frame>>4)%3?'#ff7a3a':'#ffb060';ctx.fillRect(4*T+77,12*TH+26,1,1);
