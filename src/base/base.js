@@ -4,8 +4,6 @@
 import { applyRequest, applyTopic, caseTeam, requestOk, teamDialogues, teamMaterialRequests, teamNews, topicOk } from '../team/teamData';
 import { readCase, writeCase } from '../case/caseSave';
 import { depoPeople, summon } from '../case/depositions';
-import { openDeposition } from './deposition';
-import { createPost } from './post';
 (() => {
 'use strict';
 const T=32,TH=22,K=TH/T,RISE=16,CAPH=8,W=34,H=26,N=W*H;
@@ -18,8 +16,10 @@ const LS=3;
 // ?fx=gl liga a versão em WebGL (shader), ?fx=0 desliga tudo.
 const FXQ=(location.search.match(/[?&]fx=(\w+)/)||[])[1],FXMODE=FXQ==='0'?'off':FXQ==='gl'?'gl':'2d';
 if(FXMODE==='off')document.body.classList.add('fxoff');
-let POST=null;if(FXMODE==='gl'){try{POST=createPost(cv);}catch(e){POST=null;}}
-if(POST){cv.after(POST.canvas);document.body.classList.add('gl');POST.onlost=()=>{document.body.classList.remove('gl');POST=null;sizeCanvas();};}
+// o módulo WebGL só é baixado quando pedido
+let POST=null;
+if(FXMODE==='gl')import('./post').then(m=>{try{POST=m.createPost(cv);}catch(e){POST=null;}
+  if(POST){cv.after(POST.canvas);document.body.classList.add('gl');POST.onlost=()=>{document.body.classList.remove('gl');POST=null;sizeCanvas();};sizeCanvas();}});
 // clima de cor de cada lugar: o interrogatório frio e fechado, a delegada quente, o arquivo amarelado
 // soft: cor aplicada em luz suave por cima da cena (versão 2D); tint: o mesmo clima na versão WebGL
 const GRADE={interro:{tint:[0.93,0.99,1.08],soft:[60,92,140,0.3],bloom:0.7,vig:0.62},sonia:{tint:[1.06,1.0,0.92],soft:[255,176,112,0.2],bloom:0.55,vig:0.45},arquivo:{tint:[1.06,1.0,0.88],soft:[224,176,96,0.22],bloom:0.6,vig:0.5},pericia:{tint:[0.97,1.0,1.04],soft:[168,200,232,0.14],bloom:0.4,vig:0.38},equipe:{tint:[0.99,1.0,1.02],soft:[160,184,216,0.1],bloom:0.5,vig:0.42},hall:{tint:[1.02,1.0,0.97],soft:[255,216,168,0.12],bloom:0.48,vig:0.4},fora:{tint:[1.03,1.0,0.96],soft:[255,224,176,0.14],bloom:0.45,vig:0.36}};
@@ -736,10 +736,12 @@ function buildVisitors(){
   VIS=wait.slice(0,seats.length).map((p,k)=>{const v=VFR[p.id]||(VFR[p.id]={id:p.id,name:p.first,look:LOOK[p.id]||LOOK.lemos,walk:0,moving:false});return Object.assign(v,{x:seats[k][0],y:seats[k][1],dir:seats[k][2]});});
 }
 let depoOpen=false;
+// o depoimento (React, retratos, perguntas) é carregado à parte: baixa sozinho alguns segundos depois de entrar na base
+let depoMod=null;const loadDepo=()=>depoMod||(depoMod=import('./deposition'));
 function startDepo(id){
   if(talk)closeTalk();
   depoOpen=true;const host=$('#depo');host.hidden=false;document.body.classList.add('depo-on');
-  openDeposition(host,id,()=>{host.hidden=true;depoOpen=false;document.body.classList.remove('depo-on');refreshCase();buildVisitors();last=performance.now();});
+  loadDepo().then(m=>m.openDeposition(host,id,()=>{host.hidden=true;depoOpen=false;document.body.classList.remove('depo-on');refreshCase();buildVisitors();last=performance.now();}));
 }
 const DLG={
   sonia:()=>teamTalk('sonia'),mauricio:()=>teamTalk('mauricio'),renata:()=>teamTalk('renata'),paulo:()=>teamTalk('paulo'),denise:()=>teamTalk('denise'),
@@ -1421,7 +1423,7 @@ addEventListener('resize',()=>applyLayout(false));
 newGame();initArt();buildTraffic();buildVisitors();applyLayout(true);cam.x=16*T;cam.y=15*TH;clampCam();
 setTimeout(()=>{framesHDFor(P1);for(const n of NPCS)framesHDFor(n);},300);
 $('#b-start').addEventListener('click',()=>{
-  $('#intro').hidden=true;started=true;
+  $('#intro').hidden=true;started=true;setTimeout(loadDepo,4000);
   const e=bfs(ti(P1),i=>i===idx(16,15),walkPass);if(e>=0)P1.path=pathTo(e);
   setTimeout(()=>toast('Sônia Prado','Lemos, na minha sala. A equipe já está com o material da casa.',{img:'/sonia.jpg',col:'#c9a24a'}),1200);
 });
