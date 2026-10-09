@@ -9,7 +9,7 @@ parecidos com a cor do fundo e sem degrau de cor em relação ao vizinho: o cont
 mesmo quando a roupa é tão escura quanto o fundo. A saída é PNG branco com transparência (alfa = figura), com 1,5 px de borda suave.
 
 Uso: python3 scripts/make-figure-mask.py <id> [--seed 0.55] [--ref 30] [--step 7] [--hue 3]
-Ajustes usados no Caso 01: caio --ref 40; rafael --ref 44 --step 8; jorge --hue 6 --step 5; teo, cida e livia no padrão.
+Ajustes usados no Caso 01: caio --ref 40; rafael --ref 44 --step 8 --solid 800; jorge --hue 6 --step 5; teo, cida e livia no padrão.
 Requer: pillow, numpy
 """
 import argparse
@@ -22,6 +22,7 @@ ap.add_argument('id')
 ap.add_argument('--seed', type=float, default=.55, help='altura (fração) até onde as laterais semeiam o fundo')
 ap.add_argument('--ref', type=int, default=30, help='distância máxima (soma RGB) até a cor do fundo')
 ap.add_argument('--step', type=int, default=7, help='degrau máximo (soma RGB) entre vizinhos')
+ap.add_argument('--solid', type=int, default=0, help='abaixo desta linha o tronco é fechado (roupa escura que se confunde com o fundo)')
 ap.add_argument('--hue', type=int, default=3, help='o fundo é azulado: azul menos vermelho mínimo (-99 desliga)')
 a = ap.parse_args()
 
@@ -70,6 +71,15 @@ for sy in range(0, H, 4):
         if cnt > bestn:
             best, bestn = n, cnt
 fgm = lab == best
+if a.solid:
+    # tronco: cada linha vai, no mínimo, de uma ponta à outra da figura na linha de cima (a roupa só alarga para baixo)
+    lo, hi = W, -1
+    for y in range(a.solid, H):
+        xs = np.where(fgm[y])[0]
+        if len(xs):
+            lo, hi = min(lo, xs.min()), max(hi, xs.max())
+        if hi >= lo:
+            fgm[y, lo:hi + 1] = True
 fg = Image.fromarray((fgm * 255).astype(np.uint8))
 # tira pontinhos soltos e fecha furinhos de 1 px antes de suavizar a borda
 fg = fg.filter(ImageFilter.MedianFilter(5)).filter(ImageFilter.GaussianBlur(1.5))
