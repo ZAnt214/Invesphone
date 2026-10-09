@@ -781,9 +781,51 @@ function openTalk(id){
   setSeen(id);talkOpen=true;document.body.classList.add('talking');
   const n=NPCS.find(x=>x.id===id);if(n){n.hold=true;n.path=[];n.moving=false;n.say=null;n.dir=P1.x<n.x?-1:1;}
   if(n&&Math.abs(P1.x-n.x)>0.3)P1.dir=n.x>P1.x?1:-1;
+  talkStopAnims();
   talk={id};talkSet(def());
-  $('#talk').hidden=false;
+  $('#talk').hidden=false;$('#tk-link').removeAttribute('hidden');updLink();talkBirth();
   talkPrevZ=cam.z;follow=true;zoomTo(Math.max(cam.z,TALKZ()));
+}
+/* quem fala, na tela: o anel fica sobre a cabeça (ou sobre o objeto) e o rastro desce até o ponto mais perto do cartão */
+const CALM=()=>!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+let tkAnims=[];
+function talkStopAnims(){for(const a of tkAnims)try{a.cancel();}catch(_){}tkAnims=[];$('#tk-dot').hidden=true;$('#talk').style.pointerEvents='';}
+function talkWho(){
+  if(!talk)return null;
+  const pg=talk.d&&talk.d.pages[talk.page],me=pg&&typeof pg!=='string'&&pg.me,n=me?P1:NPCS.find(x=>x.id===talk.id);
+  let wx,wy;
+  if(n){wx=Math.round(n.x*T)+16;wy=Math.round(n.y*TH)+TH-2-(n._sit?44:50);}
+  else{
+    const o=objs.find(o=>o.hot===talk.id&&o.spr);
+    if(o){wx=o.x*T+o.w*T/2;wy=o.spr.y-4;}
+    else{let sx=0,sy=0,c=0;for(let i=0;i<N;i++)if(hot[i]===talk.id){sx+=i%W;sy+=(i/W)|0;c++;}if(!c)return null;wx=sx/c*T+16;wy=sy/c*TH-20;}
+  }
+  return {x:(wx-cam.x)*cam.z+VW()/2,y:(wy-cam.y)*cam.z+VH()/2-(n?12:0),me:!!me};
+}
+function talkCard(){const el=$('#talk');return {l:el.offsetLeft,t:el.offsetTop,w:el.offsetWidth,h:el.offsetHeight};}
+function cardPoint(c,s){return {x:clamp(s.x,c.l+22,c.l+c.w-22),y:clamp(s.y,c.t+12,c.t+c.h-12)};}
+function updLink(){
+  const s=talkWho(),svg=$('#tk-link');if(!s){svg.style.visibility='hidden';return;}svg.style.visibility='';
+  const a=cardPoint(talkCard(),s),d=Math.hypot(a.x-s.x,a.y-s.y)||1,k=11/d;
+  const L=$('#tk-trail');L.setAttribute('x1',(s.x+(a.x-s.x)*k).toFixed(1));L.setAttribute('y1',(s.y+(a.y-s.y)*k).toFixed(1));L.setAttribute('x2',a.x.toFixed(1));L.setAttribute('y2',a.y.toFixed(1));
+  for(const id of ['#tk-ring','#tk-ring2','#tk-pin']){const c=$(id);c.setAttribute('cx',s.x.toFixed(1));c.setAttribute('cy',s.y.toFixed(1));}
+  svg.classList.toggle('me',s.me);
+}
+/* o ponto amarelo sai de quem fala e vai até o cartão (dur ms) */
+function talkDot(s,a,dur){
+  const dot=$('#tk-dot');dot.hidden=false;
+  const p=(q,sc,o)=>({transform:`translate(${q.x.toFixed(1)}px,${q.y.toFixed(1)}px) scale(${sc})`,opacity:o});
+  const kf=[p(s,.3,0),Object.assign(p(s,1,1),{offset:.22}),Object.assign(p(a,1,1),{offset:.88}),p(a,1.5,0)];
+  const an=dot.animate(kf,{duration:dur,easing:'cubic-bezier(.5,0,.3,1)'});an.onfinish=()=>{dot.hidden=true;};tkAnims.push(an);return an;
+}
+/* nasce de quem fala: o ponto desce deixando o rastro e cresce até virar o cartão */
+function talkBirth(){
+  const el=$('#talk');if(CALM()||!el.animate)return;
+  const s=talkWho();if(!s)return;
+  const c=talkCard(),a=cardPoint(c,s),ax=a.x-c.l,ay=a.y-c.t,R=Math.ceil(Math.hypot(Math.max(ax,c.w-ax),Math.max(ay,c.h-ay)))+6;
+  talkDot(s,a,560);
+  tkAnims.push($('#tk-link').animate([{opacity:0},{opacity:1}],{duration:320,delay:140,fill:'backwards'}));
+  tkAnims.push(el.animate([{clipPath:`circle(0px at ${ax}px ${ay}px)`},{clipPath:`circle(7px at ${ax}px ${ay}px)`,offset:.12},{clipPath:`circle(${R}px at ${ax}px ${ay}px)`}],{duration:480,delay:460,easing:'cubic-bezier(.3,.7,.15,1)',fill:'backwards'}));
 }
 function talkSet(d){if(!talk)return;talk.d=d;talk.page=0;showPage();}
 function speaker(pg){
@@ -791,6 +833,9 @@ function speaker(pg){
   if(me){av.style.background='#d9a273';av.innerHTML='LM';$('#tk-who').textContent='Lemos';$('#tk-role').textContent='Você';}
   else{av.style.background=n?n.col:'#96a7ae';av.innerHTML=avatarHTML(d.av);$('#tk-who').textContent=d.who;$('#tk-role').textContent=d.role;}
   $('#talk').classList.toggle('me',!!me);
+  // a vez passa para o outro: o ponto refaz o caminho de quem fala agora até o cartão
+  if(talk.who!=null&&talk.who!==!!me&&!CALM()&&!$('#talk').hidden){const s=talkWho();if(s)talkDot(s,cardPoint(talkCard(),s),380);}
+  talk.who=!!me;
 }
 function showPage(){
   const t=talk,pg=t.d.pages[t.page],s=typeof pg==='string'?pg:pg.t;t.typed=0;t.done=false;$('#tk-opts').innerHTML='';$('#tk-more').hidden=true;
@@ -816,7 +861,17 @@ function advance(){
 }
 function closeTalk(){
   clearInterval(tkTimer);if(talk){const n=NPCS.find(x=>x.id===talk.id);if(n)n.hold=false;}
-  talk=null;talkOpen=false;document.body.classList.remove('talking');$('#talk').hidden=true;$('#talk').classList.remove('me');follow=true;
+  // o cartão volta a ser um ponto no lugar de onde nasceu
+  const el=$('#talk'),s=!el.hidden&&!CALM()&&el.animate?talkWho():null;
+  talkStopAnims();$('#tk-link').setAttribute('hidden','');
+  if(s){
+    const c=talkCard(),a=cardPoint(c,s),ax=a.x-c.l,ay=a.y-c.t,R=Math.ceil(Math.hypot(Math.max(ax,c.w-ax),Math.max(ay,c.h-ay)))+6;
+    el.style.pointerEvents='none';
+    const an=el.animate([{clipPath:`circle(${R}px at ${ax}px ${ay}px)`},{clipPath:`circle(0px at ${ax}px ${ay}px)`}],{duration:220,easing:'cubic-bezier(.6,0,.8,.4)',fill:'forwards'});
+    tkAnims.push(an);
+    an.onfinish=()=>{if(talk)return;el.hidden=true;el.classList.remove('me');an.cancel();el.style.pointerEvents='';};
+  }else{el.hidden=true;el.classList.remove('me');}
+  talk=null;talkOpen=false;document.body.classList.remove('talking');follow=true;
   if(talkPrevZ!=null){zoomTo(talkPrevZ);talkPrevZ=null;}
 }
 $('#tk-x').addEventListener('click',e=>{e.stopPropagation();closeTalk();});
@@ -1306,7 +1361,7 @@ function render(){
   lightPass(s,ox,oy);
   SPR();smokePass();glowPass();post2d();
   // camada legível: sinais, falas, nomes
-  for(const n of NPCS)if(hasNews(n.id))atUI(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?64:60),()=>drawMarker(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?64:60)));
+  for(const n of NPCS)if(hasNews(n.id)&&!(talk&&talk.id===n.id))atUI(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?64:60),()=>drawMarker(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?64:60)));
   for(const o of objs)if(o.hot&&o.spr&&!o.nomark&&!talkOpen&&(o.hot==='interro'?hasNews('interro'):!SEEN[o.hot])){const sp=o.spr;drawMarker(o.x*T+o.w*T/2,sp.y-6);}
   for(const n of NPCS)if(n.say&&!talkOpen){const al=Math.min(1,(n.say.life-n.say.t)/20,n.say.t/6);drawSay(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?70:74),n.say.txt,al);}
   drawNames();drawRoomLabels();
@@ -1325,7 +1380,7 @@ const PROF={r2d:0};
 function loop(now){
   if(depoOpen){last=now;requestAnimationFrame(loop);return;}
   const raw=now-last,dt=Math.min(0.1,raw/1000);last=now;adaptRS(raw);
-  update(dt);updFX();updAtmo();stepZoom();followCam(dt);if(started)primeBlur();frame++;const r0=performance.now();render();PROF.r2d+=(performance.now()-r0-PROF.r2d)*0.05;postFX(dt);if(frame%6===0)updateUI();
+  update(dt);updFX();updAtmo();stepZoom();followCam(dt);if(started)primeBlur();frame++;const r0=performance.now();render();PROF.r2d+=(performance.now()-r0-PROF.r2d)*0.05;postFX(dt);if(talk)updLink();if(frame%6===0)updateUI();
   requestAnimationFrame(loop);
 }
 
