@@ -358,7 +358,10 @@
   position:relative;container:room/size;
 }
 .ii-room .ii-stage{position:absolute;inset:0;width:auto;height:auto;border:0;background:#0b0d0f}
-.ii-room .ii-camera-fx{background:repeating-linear-gradient(0deg,rgba(0,0,0,.05) 0 1px,transparent 1px 3px);box-shadow:inset 0 0 90px rgba(0,0,0,.6)}
+.ii-room .ii-camera-fx{background:
+    radial-gradient(ellipse 75% 70% at 55% 42%,rgba(120,20,10,0) 55%,rgba(120,20,10,calc(var(--p,0)*.35)) 100%),
+    repeating-linear-gradient(0deg,rgba(0,0,0,.05) 0 1px,transparent 1px 3px);
+  box-shadow:inset 0 0 calc(90px + var(--p,0)*70px) rgba(0,0,0,calc(.6 + var(--p,0)*.25))}
 
 /* cena: câmera na mão, balançando devagar */
 .ii-scene{position:absolute;inset:-3%;animation:ii-sway 9s ease-in-out infinite}
@@ -374,7 +377,20 @@
 /* caixa do depoente: luminária no alto, retrato embaixo (proporção do recorte 740×800 + espaço da luminária) */
 /* caixa do depoente: a imagem inteira (900×1190, até o peito) com o espaço da luminária em cima (252 px na mesma escala).
    O tampo da mesa fica na altura da imagem em que a Lívia apoia as mãos (y≈1125 → 94,8% da caixa). */
-.ii-actor{position:absolute;aspect-ratio:900/1442;left:50%;top:-2.4%;height:51.1%;transform:translateX(-50%)}
+/* centrado sem transform (um transform isolaria a mistura de cor da queda de luz): largura = 51,1% da altura × 900/1442 */
+.ii-actor,.ii-actorfx{position:absolute;aspect-ratio:900/1442;left:calc(50cqw - 15.95cqh);top:-2.4%;height:51.1%}
+.ii-actorfx{pointer-events:none}
+.ii-motes{position:absolute;left:-70%;right:-70%;top:0;bottom:-6%;width:240%;height:106%}
+/* a luz cai de cima: o depoente escurece longe da lâmpada */
+.ii-falloff{position:absolute;left:-60%;right:-60%;top:0;bottom:5.2%;mix-blend-mode:multiply;
+  background:radial-gradient(ellipse 34% 60% at 50% 24%,rgba(255,255,255,1) 30%,rgba(120,120,130,1) 75%,rgba(70,70,80,1))}
+/* cinzeiro na mesa, à esquerda do depoente, com o cigarro aceso */
+.ii-ashtray{position:absolute;left:-17%;top:93.2%;width:13%;height:2.6%;border-radius:50%;
+  background:radial-gradient(ellipse at 50% 45%,#111 38%,#4c4f53 42%,#2c2e31 70%);box-shadow:0 3px 5px rgba(0,0,0,.6)}
+.ii-ashtray i{position:absolute;left:30%;top:-10%;width:85%;height:28%;border-radius:2px;transform:rotate(-6deg);
+  background:linear-gradient(90deg,#c9894a 0 22%,#ece6da 22% 92%,#ff7a3a 92%)}
+.ii-ashtray i::after{content:"";position:absolute;right:-3px;top:-3px;width:7px;height:7px;border-radius:50%;background:rgba(255,120,60,.55);filter:blur(2px);animation:ii-ember 2.6s ease-in-out infinite}
+@keyframes ii-ember{50%{opacity:.35}}
 .ii-room .cp{position:absolute;inset:auto;left:0;right:0;top:17.48%;bottom:0}
 /* as laterais da imagem somem no escuro, fora da luz (o tronco encosta na borda do arquivo) */
 .ii-room .cp canvas{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 13%,#000 87%,transparent);mask-image:linear-gradient(90deg,transparent 0,#000 13%,#000 87%,transparent)}
@@ -384,15 +400,18 @@
 .ii-lamp .cord{bottom:95%;height:400%;width:2px;margin-left:-1px;background:#0c0d0e}
 .ii-lamp .shade{top:8.7%;width:16.4%;height:4%;transform:translateX(-50%);background:linear-gradient(#2a2b2d,#0f1011);clip-path:polygon(28% 0,72% 0,100% 100%,0 100%)}
 .ii-lamp .bulb{top:12.5%;width:5.8%;height:1.75%;transform:translateX(-50%);border-radius:0 0 50% 50%/0 0 100% 100%;background:#fff3d6;
-  box-shadow:0 0 14px 6px rgba(255,214,150,.6),0 0 50px 18px rgba(255,200,130,.22);animation:ii-flick 7s infinite}
-@keyframes ii-flick{0%,100%,47%,49%{opacity:1}48%{opacity:.55}83%{opacity:.8}84%{opacity:1}}
-.ii-cone{position:absolute;left:50%;top:13.5%;width:123%;height:65.5%;transform:translateX(-50%);pointer-events:none;
-  background:linear-gradient(rgba(255,214,160,.18),rgba(255,214,160,.02) 85%);clip-path:polygon(46% 0,54% 0,100% 100%,0 100%);mix-blend-mode:screen;animation:ii-flick 7s infinite}
-.ii-dust i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff3dc;opacity:.55;animation:ii-drift 8s ease-in-out infinite}
-.ii-dust i:nth-child(1){left:36%;top:30%}.ii-dust i:nth-child(2){left:62%;top:22%;animation-delay:-2s;opacity:.35}
-.ii-dust i:nth-child(3){left:30%;top:54%;animation-duration:10s;opacity:.3}.ii-dust i:nth-child(4){left:68%;top:46%;animation-delay:-5s}
-.ii-dust i:nth-child(5){left:50%;top:16%;animation-duration:11s;opacity:.4}.ii-dust i:nth-child(6){left:74%;top:66%;animation-delay:-7s;opacity:.25}
-@keyframes ii-drift{0%,100%{transform:translate(0,0)}50%{transform:translate(9px,-14px)}}
+  box-shadow:0 0 14px 6px rgba(255,214,150,.6),0 0 50px 18px rgba(255,200,130,.22),0 0 120px 50px rgba(255,190,120,.1)}
+/* falha da lâmpada (comandada pelo RoomFx, mais frequente com pressão): tudo o que a luz toca pisca junto */
+.ii-flicker .ii-lamp .bulb,.ii-flicker .ii-cone,.ii-flicker .ii-glow{animation:ii-flick .26s steps(1) both}
+.ii-flicker .ii-far .cp{animation:ii-dim .26s steps(1) both}
+@keyframes ii-flick{0%{opacity:.25}30%{opacity:.9}55%{opacity:.15}80%{opacity:1}}
+@keyframes ii-dim{0%{filter:brightness(.6)}30%{filter:brightness(.95)}55%{filter:brightness(.55)}80%{filter:brightness(1)}}
+.ii-cone{position:absolute;left:50%;top:13.5%;width:140%;height:72%;transform:translateX(-50%);pointer-events:none;mix-blend-mode:screen;
+  background:conic-gradient(from 150deg at 50% 0,rgba(255,214,160,0) 0deg,rgba(255,214,160,.13) 13deg,rgba(255,220,170,.2) 30deg,rgba(255,214,160,.13) 47deg,rgba(255,214,160,0) 60deg,rgba(255,214,160,0) 360deg);
+  -webkit-mask-image:linear-gradient(#000 0,#000 35%,transparent 96%);mask-image:linear-gradient(#000 0,#000 35%,transparent 96%)}
+/* balanço da luminária no fio */
+.ii-swing{position:absolute;inset:0;transform-origin:50% -40%;animation:ii-swing 7s ease-in-out infinite}
+@keyframes ii-swing{0%,100%{transform:rotate(-.7deg)}50%{transform:rotate(.7deg)}}
 /* tampo da mesa em perspectiva: as bordas fogem para o ponto em que o depoente está sentado (--vx),
    com a poça de luz da luminária e a sombra dele logo à frente */
 .ii-room{--vx:50cqw;--tf:48cqw;--tn:95cqw}
@@ -521,7 +540,7 @@
 /* ---------- deitado: caderno à esquerda, depoente à direita ---------- */
 @container room (min-aspect-ratio:1/1){
   .ii-room{--lx:68%}
-  .ii-actor{left:auto;right:7%;transform:none;top:-8.1%;height:92.9%}
+  .ii-actor,.ii-actorfx{left:auto;right:7%;transform:none;top:-8.1%;height:92.9%}
   /* centro do depoente: 7% da borda + metade da largura da caixa (92,9% da altura × 900/1442) */
   .ii-room{--vx:calc(93cqw - 28.99cqh);--tf:30cqw;--tn:62cqw}
   .ii-table{top:80%}
@@ -539,7 +558,7 @@
   .ii-done li:first-child:not(:last-child){display:none}
 }
 @media(prefers-reduced-motion:reduce){
-  .ii-scene,.ii-room .ii-panel{animation:none}
+  .ii-scene,.ii-room .ii-panel,.ii-swing{animation:none}
   .ii-room .ii-far,.ii-room .ii-near,.ii-room .ii-panel,.ii-room .ii-sub{transition:none}
   .ii-circle path{stroke-dashoffset:0}
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 import { ChevronDown, ChevronLeft } from 'lucide-react'
 import CharacterPortrait from '../characters/CharacterPortrait'
 import type { Speech } from '../characters/CharacterPortrait'
@@ -10,6 +11,8 @@ import EmotionMeter from './EmotionMeter'
 import DepositionSummary from './DepositionSummary'
 import SignaturePad from './SignaturePad'
 import Tutorial from './Tutorial'
+import RoomFx from './RoomFx'
+import { roomSfx } from './roomAudio'
 import { sfx } from '../sfx'
 import type { TutorialStep } from './Tutorial'
 import { applyAnswer, askedQuestions, between, clueSummary, getQuestion, pendingQuestions, stageIndex, stagesOf, subtitleChunks, subtitleDuration, waitingExpression } from './logic'
@@ -93,6 +96,8 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
   const [signing,setSigning] = useState(false)
   const [alert,setAlert] = useState<string|null>(null)
   const [tutorial,setTutorial] = useState(()=>!tutorialSeen())
+  /** A lâmpada da sala falhando agora. */
+  const [flicker,setFlicker] = useState(false)
   const closeTutorial = useCallback(()=>{
     setTutorial(false)
     try { localStorage.setItem(TUTORIAL_KEY,'1') } catch { /* sem armazenamento: só não lembra */ }
@@ -126,12 +131,15 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
     setReview(false)
     setPhase('asking')
     sfx.ask()
+    roomSfx.write()
+    later(()=>roomSfx.rustle(),500)
     onProgress({...progressRef.current,currentQuestion:id})
 
     // ela ouve a pergunta antes de responder
     later(()=>{
       setExpression(q.expression ?? 'uncomfortable')
       setPhase('answering')
+      roomSfx.breath()
       // a resposta vai aparecendo em legendas curtas, e a boca segue o texto de cada uma
       const chunks = subtitleChunks(q.answer)
       let at = 250
@@ -180,7 +188,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
     onProgress({...cur,noted:[...(cur.noted ?? []),key]})
     if(!clue) sfx.note()
     if(clue){
-      onClue(clue); sfx.clue()
+      onClue(clue); sfx.clue(); roomSfx.underline()
       setToast(clueTitle(clue) ?? clue)
       later(()=>setToast(null),2600)
     }
@@ -258,7 +266,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
     </main>
   )
   return (
-    <main className={'ii ii-room'+focus}>
+    <main className={'ii ii-room'+focus+(flicker?' ii-flicker':'')} style={{'--p':(progress.pressure ?? 0)/100} as CSSProperties}>
       <section className="ii-stage">
         {/* sala de depoimentos vista pelos olhos do Lemos: a câmera respira junto com ele */}
         <div className="ii-scene">
@@ -267,12 +275,15 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
             {/* o depoente à distância, sob a luminária */}
             <div className="ii-actor">
               <div className="ii-glow" aria-hidden="true"/>
-              <div className="ii-lamp" aria-hidden="true"><i className="cord"/><i className="shade"/><i className="bulb"/></div>
               <CharacterPortrait character={character} expression={expression} speech={speech} transparent/>
-              <div className="ii-cone" aria-hidden="true"/>
-              <div className="ii-dust" aria-hidden="true"><i/><i/><i/><i/><i/><i/></div>
+              {/* a luminária balança de leve no fio, levando o facho junto */}
+              <div className="ii-swing" aria-hidden="true">
+                <div className="ii-lamp"><i className="cord"/><i className="shade"/><i className="bulb"/></div>
+                <div className="ii-cone"/>
+              </div>
             </div>
             <div className="ii-table" aria-hidden="true"/>
+            <RoomFx pressure={progress.pressure ?? 0} onFlicker={setFlicker}/>
           </div>
           <div className="ii-near" aria-hidden="true">
             <div className="ii-steam"><i/><i/><i/></div>
@@ -311,7 +322,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
             {!busy && review && last && (
               <>
                 <AnswerNotes question={last} noted={noted} clueTitle={clueTitle} onNote={note} summary={summary}/>
-                <button className="ii-next" onClick={()=>setReview(false)}>{finished && !retaking ? 'CONTINUAR' : 'PERGUNTAR MAIS'}</button>
+                <button className="ii-next" onClick={()=>{ roomSfx.page(); setReview(false) }}>{finished && !retaking ? 'CONTINUAR' : 'PERGUNTAR MAIS'}</button>
               </>
             )}
 
@@ -354,8 +365,8 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
         </div>
 
         <nav className="ii-tabs" aria-label="Painel do depoimento">
-          <button className={tab==='ask'?'on':''} disabled={busy} onClick={()=>setTab('ask')}>PERGUNTAR</button>
-          <button className={tab==='notes'?'on':''} disabled={busy} onClick={()=>setTab('notes')}>
+          <button className={tab==='ask'?'on':''} disabled={busy} onClick={()=>{ if(tab!=='ask') roomSfx.page(); setTab('ask') }}>PERGUNTAR</button>
+          <button className={tab==='notes'?'on':''} disabled={busy} onClick={()=>{ if(tab!=='notes') roomSfx.page(); setTab('notes') }}>
             ANOTAÇÕES{summary.total>0 && <em>{summary.found}/{summary.total}</em>}
           </button>
           <button className="help" aria-label="Como funciona" disabled={busy} onClick={()=>setTutorial(true)}>?</button>
