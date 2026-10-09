@@ -199,6 +199,10 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
 
   if(!character) return <main className="ii"><div className="ii-portrait-fallback">Retrato indisponível</div></main>
 
+  // olhar do Lemos: enquanto ele escolhe a pergunta, o foco desce para o caderno; quando o depoente fala, volta para o rosto
+  const picking = phase==='idle' && tab==='ask' && !review && !showFarewell && (!finished || retaking) && !tutorial
+  const focus = busy ? ' ii-listen' : picking ? ' ii-pick' : ''
+
   const hud = !character.portrait.hasBakedHud
   // depoimento já encerrado: o resumo vira um arquivo em papel, sem o retrato
   const fileMode = finished && !farewell && !retaking
@@ -246,9 +250,23 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
     </main>
   )
   return (
-    <main className="ii">
+    <main className={'ii ii-room'+focus}>
       <section className="ii-stage">
-        <CharacterPortrait character={character} expression={expression} speech={speech}/>
+        {/* sala de depoimentos vista pelos olhos do Lemos: a câmera respira junto com ele */}
+        <div className="ii-scene">
+          <div className="ii-far">
+            <div className="ii-wall" aria-hidden="true"/>
+            <div className="ii-lamp" aria-hidden="true"><i className="cord"/><i className="shade"/><i className="bulb"/></div>
+            <CharacterPortrait character={character} expression={expression} speech={speech} transparent/>
+            <div className="ii-cone" aria-hidden="true"/>
+            <div className="ii-dust" aria-hidden="true"><i/><i/><i/><i/><i/><i/></div>
+            <div className="ii-table" aria-hidden="true"/>
+          </div>
+          <div className="ii-near" aria-hidden="true">
+            <div className="ii-steam"><i/><i/><i/></div>
+            <div className="ii-mug"><b>DHPP</b></div>
+          </div>
+        </div>
         <div className="ii-camera-fx" aria-hidden="true"/>
         <button className="ii-back" onClick={onBack} aria-label="Sair do depoimento"><ChevronLeft/></button>
         {hud && <>
@@ -273,7 +291,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
             {active && busy && (
               <article className="ii-line ii-question">
                 <small>LEMOS</small>
-                <p>{active.question}</p>
+                <p>{active.question}<svg className="ii-circle" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path d="M8 22 C 6 6, 70 2, 92 12 C 102 18, 96 34, 60 37 C 30 40, 2 34, 6 18 C 8 12, 18 8, 26 7"/></svg></p>
               </article>
             )}
 
