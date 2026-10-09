@@ -266,7 +266,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
     </main>
   )
   return (
-    <main className={'ii ii-room'+focus+(flicker?' ii-flicker':'')} style={{'--p':(progress.pressure ?? 0)/100} as CSSProperties}>
+    <main className={'ii ii-room'+focus+(flicker?' ii-flicker':'')+(!busy && review && tab==='ask' ? ' ii-review' : '')} style={{'--p':(progress.pressure ?? 0)/100} as CSSProperties}>
       <section className="ii-stage">
         {/* sala de depoimentos vista pelos olhos do Lemos: a câmera respira junto com ele */}
         <div className="ii-scene">

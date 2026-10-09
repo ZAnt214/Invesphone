@@ -372,7 +372,7 @@
     linear-gradient(rgba(0,0,0,.3),rgba(0,0,0,.3)) 0 33%/100% 1px no-repeat,
     linear-gradient(rgba(0,0,0,.3),rgba(0,0,0,.3)) 0 62%/100% 1px no-repeat,
     radial-gradient(ellipse 110% 90% at var(--lx) 20%,#2b2d2f,#121416 70%,#08090b)}
-.ii-wall::after{content:"";position:absolute;inset:0;opacity:.32;mix-blend-mode:overlay;
+.ii-wall::after{content:"";position:absolute;inset:0;opacity:.07;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
 /* caixa do depoente: luminária no alto, retrato embaixo (proporção do recorte 740×800 + espaço da luminária) */
 /* caixa do depoente: a imagem inteira (900×1190, até o peito) com o espaço da luminária em cima (252 px na mesma escala).
@@ -382,8 +382,9 @@
 .ii-actorfx{pointer-events:none}
 .ii-motes{position:absolute;left:-70%;right:-70%;top:0;bottom:-6%;width:240%;height:106%}
 /* a luz cai de cima: o depoente escurece longe da lâmpada */
-.ii-falloff{position:absolute;left:-60%;right:-60%;top:0;bottom:5.2%;mix-blend-mode:multiply;
-  background:radial-gradient(ellipse 34% 60% at 50% 24%,rgba(255,255,255,1) 30%,rgba(120,120,130,1) 75%,rgba(70,70,80,1))}
+/* sem mix-blend-mode: no Safari, com camadas animadas por perto, a mistura falha e a camada sai opaca */
+.ii-falloff{position:absolute;left:-60%;right:-60%;top:0;bottom:5.2%;
+  background:radial-gradient(ellipse 34% 60% at 50% 24%,rgba(4,5,8,0) 30%,rgba(4,5,8,.5) 75%,rgba(4,5,8,.7))}
 /* cinzeiro na mesa, à esquerda do depoente, com o cigarro aceso */
 .ii-ashtray{position:absolute;left:-17%;top:93.2%;width:13%;height:2.6%;border-radius:50%;
   background:radial-gradient(ellipse at 50% 45%,#111 38%,#4c4f53 42%,#2c2e31 70%);box-shadow:0 3px 5px rgba(0,0,0,.6)}
@@ -406,7 +407,7 @@
 .ii-flicker .ii-far .cp{animation:ii-dim .26s steps(1) both}
 @keyframes ii-flick{0%{opacity:.25}30%{opacity:.9}55%{opacity:.15}80%{opacity:1}}
 @keyframes ii-dim{0%{filter:brightness(.6)}30%{filter:brightness(.95)}55%{filter:brightness(.55)}80%{filter:brightness(1)}}
-.ii-cone{position:absolute;left:50%;top:13.5%;width:140%;height:72%;transform:translateX(-50%);pointer-events:none;mix-blend-mode:screen;
+.ii-cone{position:absolute;left:50%;top:13.5%;width:140%;height:72%;transform:translateX(-50%);pointer-events:none;
   background:conic-gradient(from 150deg at 50% 0,rgba(255,214,160,0) 0deg,rgba(255,214,160,.13) 13deg,rgba(255,220,170,.2) 30deg,rgba(255,214,160,.13) 47deg,rgba(255,214,160,0) 60deg,rgba(255,214,160,0) 360deg);
   -webkit-mask-image:linear-gradient(#000 0,#000 35%,transparent 96%);mask-image:linear-gradient(#000 0,#000 35%,transparent 96%)}
 /* balanço da luminária no fio */
@@ -553,6 +554,16 @@
   .ii-pad-title{font-size:20px}
   .ii-room .ii-toast,.ii-room .ii-press-alert{left:74%;max-width:46%}
   .ii-room .ii-emo{padding:5px 9px;row-gap:4px}
+}
+@container room (min-aspect-ratio:1/1){
+  .ii-room .ii-howto{display:none}
+  .ii-room .ii-answer{padding:7px 9px}
+  .ii-room .ii-answer-head{margin-bottom:4px}
+  .ii-room .ii-sent{font-size:13px;line-height:1.38;padding:5px 8px}
+  .ii-room .ii-sents{gap:4px}
+  .ii-room .ii-next{min-height:36px}
+  /* na revisão da resposta o título e o medidor dão lugar às frases */
+  .ii-room.ii-review .ii-pad-title,.ii-room.ii-review .ii-emo{display:none}
 }
 @container room (min-aspect-ratio:1/1) and (max-height:420px){
   .ii-done li:first-child:not(:last-child){display:none}
