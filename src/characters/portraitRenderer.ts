@@ -276,7 +276,13 @@ export class PortraitRenderer {
   }
 
   /** Fundo transparente (só com silhueta cadastrada e base fixa): o cenário por trás aparece. */
-  setTransparent(on:boolean){ this.transparent = on }
+  setTransparent(on:boolean){ this.transparent = on; this.applySize() }
+
+  /** Parte do arquivo mostrada: no cenário (fundo transparente) a imagem inteira, com o tronco até embaixo; senão o recorte do retrato. */
+  private view(){
+    const p = this.def.portrait
+    return this.transparent && this.def.figureMask ? { x:0, y:p.crop.y, w:p.width, h:p.height-p.crop.y } : p.crop
+  }
 
   setSpeech(keys:MouthKey[]|null, duration=0){
     this.speech = keys ? { keys, start:performance.now(), duration } : null
@@ -289,7 +295,7 @@ export class PortraitRenderer {
 
   /** Tamanho do canvas conforme a qualidade escolhida. */
   private applySize(){
-    const crop = this.def.portrait.crop
+    const crop = this.view()
     const dpr = Math.min(3, window.devicePixelRatio || 1)
     const device = this.cssWidth*dpr
     const w = Math.max(1,Math.round(this.preset.resCap==null ? device : Math.min(device,crop.w*this.preset.resCap)))
@@ -612,7 +618,7 @@ export class PortraitRenderer {
 
   private draw(now:number){
     const { ctx, canvas, def } = this
-    const crop = def.portrait.crop
+    const crop = this.view(), head = def.portrait.crop
     const k = canvas.width/crop.w
     ctx.setTransform(k,0,0,k,-crop.x*k,-crop.y*k)
     ctx.globalAlpha = 1
@@ -632,7 +638,7 @@ export class PortraitRenderer {
     const breath = calm ? 0 : Math.sin(t*2*Math.PI/4.6)
     const u = this.unit()
     const drift = calm ? 0 : Math.sin(t*.31)*.8*u
-    const pivotX = crop.x+crop.w/2, pivotY = crop.y+crop.h*.45
+    const pivotX = head.x+head.w/2, pivotY = head.y+head.h*.45
     const scale = 1.04 + breath*.002
     ctx.save()
     ctx.translate(pivotX,pivotY)
