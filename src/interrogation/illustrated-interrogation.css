@@ -344,78 +344,94 @@
 .ii-retake-end{margin-top:8px;width:100%}
 
 /* ================================================================
-   Olhar do Lemos: o depoente dentro da sala e o painel como o caderno do detetive.
-   O foco alterna: escolhendo a pergunta, o caderno fica nítido e a sala desfoca;
-   ouvindo a resposta, o rosto volta ao foco e o caderno sai dele.
+   Olhar do Lemos: a tela inteira é a sala de depoimentos vista pelos olhos do detetive.
+   O depoente fica à distância, sob a luminária; o caderno do Lemos é um objeto em primeiro plano,
+   inclinado por cima da cena. O foco alterna: escolhendo a pergunta, a sala desfoca e o caderno sobe;
+   ouvindo a resposta, o caderno abaixa e desfoca, e o rosto volta ao foco.
+   Em pé: depoente em cima, caderno embaixo. Deitado: caderno à esquerda, depoente à direita.
    ================================================================ */
 @font-face{font-family:'Caveat';font-style:normal;font-weight:500 700;font-display:swap;src:url('/fonts/caveat-latin.woff2') format('woff2')}
 .ii-room{
   --paper:#efe3a6;--rule:rgba(60,95,150,.24);--margin:rgba(200,60,60,.5);
   --pen:#1e3a6e;--pencil:#3b4049;--hand:'Caveat','Noteworthy','Bradley Hand','Segoe Print',cursive;
+  --lx:50%;
+  position:relative;container:room/size;
 }
-.ii-room .ii-stage{background:#0b0d0f}
+.ii-room .ii-stage{position:absolute;inset:0;width:auto;height:auto;border:0;background:#0b0d0f}
+.ii-room .ii-camera-fx{background:repeating-linear-gradient(0deg,rgba(0,0,0,.05) 0 1px,transparent 1px 3px);box-shadow:inset 0 0 90px rgba(0,0,0,.6)}
 
 /* cena: câmera na mão, balançando devagar */
 .ii-scene{position:absolute;inset:-3%;animation:ii-sway 9s ease-in-out infinite}
 @keyframes ii-sway{0%,100%{transform:translate(0,0) rotate(0)}25%{transform:translate(-.5%,.3%) rotate(-.2deg)}50%{transform:translate(.25%,-.4%)}75%{transform:translate(.5%,.25%) rotate(.15deg)}}
 .ii-far,.ii-near{position:absolute;inset:0}
-/* o depoente um pouco recuado: a luminária e a parede aparecem em volta dele */
-.ii-room .cp{left:7%;right:7%;top:13%;bottom:-2%}
 .ii-wall{position:absolute;inset:0;
   background:
-    linear-gradient(rgba(0,0,0,.28),rgba(0,0,0,.28)) 0 34%/100% 1px no-repeat,
-    linear-gradient(rgba(0,0,0,.28),rgba(0,0,0,.28)) 0 64%/100% 1px no-repeat,
-    radial-gradient(ellipse 62% 58% at 50% 4%,rgba(255,206,140,.30),rgba(255,206,140,0) 70%),
-    radial-gradient(ellipse 120% 95% at 50% 22%,#2b2d2f,#121416 70%,#090a0c)}
+    linear-gradient(rgba(0,0,0,.3),rgba(0,0,0,.3)) 0 33%/100% 1px no-repeat,
+    linear-gradient(rgba(0,0,0,.3),rgba(0,0,0,.3)) 0 62%/100% 1px no-repeat,
+    radial-gradient(ellipse 110% 90% at var(--lx) 20%,#2b2d2f,#121416 70%,#08090b)}
 .ii-wall::after{content:"";position:absolute;inset:0;opacity:.32;mix-blend-mode:overlay;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+/* caixa do depoente: luminária no alto, retrato embaixo (proporção do recorte 740×800 + espaço da luminária) */
+.ii-actor{position:absolute;aspect-ratio:740/1050;left:50%;top:1%;height:46%;transform:translateX(-50%)}
+.ii-room .cp{position:absolute;inset:auto;left:0;right:0;top:24%;bottom:0}
+.ii-glow{position:absolute;left:50%;top:8%;width:220%;height:80%;transform:translateX(-50%);pointer-events:none;
+  background:radial-gradient(ellipse 50% 60% at 50% 6%,rgba(255,206,140,.28),rgba(255,206,140,0) 70%)}
 .ii-lamp i{position:absolute;left:50%;display:block}
-.ii-lamp .cord{top:0;width:2px;height:6%;margin-left:-1px;background:#0c0d0e}
-.ii-lamp .shade{top:5.6%;width:15%;height:5.5%;transform:translateX(-50%);background:linear-gradient(#2a2b2d,#0f1011);clip-path:polygon(28% 0,72% 0,100% 100%,0 100%)}
-.ii-lamp .bulb{top:10.4%;width:5.4%;height:2.6%;transform:translateX(-50%);border-radius:0 0 50% 50%/0 0 100% 100%;background:#fff3d6;
+.ii-lamp .cord{bottom:95%;height:400%;width:2px;margin-left:-1px;background:#0c0d0e}
+.ii-lamp .shade{top:12%;width:20%;height:5.5%;transform:translateX(-50%);background:linear-gradient(#2a2b2d,#0f1011);clip-path:polygon(28% 0,72% 0,100% 100%,0 100%)}
+.ii-lamp .bulb{top:17.2%;width:7%;height:2.4%;transform:translateX(-50%);border-radius:0 0 50% 50%/0 0 100% 100%;background:#fff3d6;
   box-shadow:0 0 14px 6px rgba(255,214,150,.6),0 0 50px 18px rgba(255,200,130,.22);animation:ii-flick 7s infinite}
 @keyframes ii-flick{0%,100%,47%,49%{opacity:1}48%{opacity:.55}83%{opacity:.8}84%{opacity:1}}
-.ii-cone{position:absolute;left:50%;top:12%;width:96%;height:92%;transform:translateX(-50%);pointer-events:none;
-  background:linear-gradient(rgba(255,214,160,.17),rgba(255,214,160,.02) 85%);clip-path:polygon(46% 0,54% 0,100% 100%,0 100%);mix-blend-mode:screen;animation:ii-flick 7s infinite}
-.ii-dust i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff3dc;opacity:.5;animation:ii-drift 8s ease-in-out infinite}
-.ii-dust i:nth-child(1){left:42%;top:30%}.ii-dust i:nth-child(2){left:57%;top:24%;animation-delay:-2s;opacity:.35}
-.ii-dust i:nth-child(3){left:38%;top:52%;animation-duration:10s;opacity:.3}.ii-dust i:nth-child(4){left:61%;top:46%;animation-delay:-5s}
-.ii-dust i:nth-child(5){left:50%;top:18%;animation-duration:11s;opacity:.4}.ii-dust i:nth-child(6){left:66%;top:64%;animation-delay:-7s;opacity:.25}
+.ii-cone{position:absolute;left:50%;top:18.5%;width:150%;height:90%;transform:translateX(-50%);pointer-events:none;
+  background:linear-gradient(rgba(255,214,160,.18),rgba(255,214,160,.02) 85%);clip-path:polygon(46% 0,54% 0,100% 100%,0 100%);mix-blend-mode:screen;animation:ii-flick 7s infinite}
+.ii-dust i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff3dc;opacity:.55;animation:ii-drift 8s ease-in-out infinite}
+.ii-dust i:nth-child(1){left:36%;top:30%}.ii-dust i:nth-child(2){left:62%;top:22%;animation-delay:-2s;opacity:.35}
+.ii-dust i:nth-child(3){left:30%;top:54%;animation-duration:10s;opacity:.3}.ii-dust i:nth-child(4){left:68%;top:46%;animation-delay:-5s}
+.ii-dust i:nth-child(5){left:50%;top:16%;animation-duration:11s;opacity:.4}.ii-dust i:nth-child(6){left:74%;top:66%;animation-delay:-7s;opacity:.25}
 @keyframes ii-drift{0%,100%{transform:translate(0,0)}50%{transform:translate(9px,-14px)}}
-.ii-table{position:absolute;left:-6%;right:-6%;bottom:-1%;height:16%;
-  background:linear-gradient(#5d6166,#3a3d41 18%,#26282b);clip-path:polygon(5% 0,95% 0,100% 100%,0 100%)}
-.ii-table::before{content:"";position:absolute;left:8%;right:8%;top:0;height:2px;background:linear-gradient(90deg,transparent,rgba(255,230,190,.55) 45%,rgba(255,230,190,.2) 75%,transparent)}
-/* caneca em primeiro plano, fora de foco enquanto se olha o depoente */
-.ii-mug{position:absolute;right:41%;bottom:-3%;width:11%;aspect-ratio:.8;border-radius:8% 8% 14% 14%/6% 6% 10% 10%;
+.ii-table{position:absolute;left:-6%;right:-6%;top:42%;height:12%;
+  background:linear-gradient(#5d6166,#3a3d41 18%,#202225);clip-path:polygon(4% 0,96% 0,100% 100%,0 100%)}
+.ii-table::before{content:"";position:absolute;left:10%;right:10%;top:0;height:2px;background:linear-gradient(90deg,transparent,rgba(255,230,190,.55) 45%,rgba(255,230,190,.2) 75%,transparent)}
+/* caneca em primeiro plano */
+.ii-mug{position:absolute;right:4%;top:36%;height:11%;aspect-ratio:.8;border-radius:8% 8% 14% 14%/6% 6% 10% 10%;
   background:linear-gradient(90deg,#d8d3c8,#f1ede4 35%,#bfb9ad 80%,#9f998e);box-shadow:0 12px 24px rgba(0,0,0,.7)}
 .ii-mug::before{content:"";position:absolute;left:6%;right:6%;top:3%;height:14%;border-radius:50%;background:radial-gradient(#2a1a10 55%,#4a3020)}
-.ii-mug::after{content:"";position:absolute;right:-22%;top:24%;width:30%;height:42%;border:5px solid #c9c3b7;border-left:0;border-radius:0 40% 40% 0}
 .ii-mug b{position:absolute;left:0;right:0;top:44%;text-align:center;font:800 10px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;letter-spacing:.18em;color:#22252a;opacity:.7}
-.ii-steam{position:absolute;right:42.5%;bottom:8%;width:8%;height:30%}
-.ii-steam i{position:absolute;bottom:0;left:30%;width:60%;aspect-ratio:.85;border-radius:50%;background:rgba(230,234,238,.18);filter:blur(5px);animation:ii-steam 4.2s ease-out infinite}
-.ii-steam i:nth-child(2){left:10%;animation-delay:-1.4s}.ii-steam i:nth-child(3){left:45%;animation-delay:-2.8s}
+.ii-steam{position:absolute;right:5%;top:25%;height:12%;aspect-ratio:.5}
+.ii-steam i{position:absolute;bottom:0;left:20%;width:60%;aspect-ratio:.85;border-radius:50%;background:rgba(230,234,238,.18);filter:blur(5px);animation:ii-steam 4.2s ease-out infinite}
+.ii-steam i:nth-child(2){left:0;animation-delay:-1.4s}.ii-steam i:nth-child(3){left:40%;animation-delay:-2.8s}
 @keyframes ii-steam{0%{transform:translate(0,0) scale(.6);opacity:0}25%{opacity:.6}100%{transform:translate(-30%,-260%) scale(2.2);opacity:0}}
 
-/* foco: troca suave entre o rosto e o caderno */
-.ii-room .ii-far,.ii-room .ii-near,.ii-room .ii-panel{transition:filter .7s ease,opacity .7s ease}
-.ii-room .ii-near{filter:blur(2.4px)}
-.ii-room.ii-pick .ii-far{filter:blur(1.3px) brightness(.82);transition-delay:.9s}
-.ii-room.ii-pick .ii-near{filter:none;transition-delay:.9s}
-.ii-room.ii-listen .ii-panel{filter:blur(.6px);opacity:.8}
+/* visor da câmera */
+.ii-room .ii-rec{gap:8px;font-size:10px}
+.ii-room .ii-rec .ii-clock{font:700 10px var(--mono);letter-spacing:.08em;color:#e9edf0}
+.ii-room .ii-rec span{display:none;color:#8a949a;font-weight:700}
+.ii-room .ii-focus{color:#f2c230;font-size:9px;letter-spacing:.16em}
+.ii-room .ii-mark{top:calc(36px + env(safe-area-inset-top));opacity:.32}
+.ii-room .ii-mark b{font-size:18px}.ii-room .ii-mark span{font-size:6.5px}
+.ii-room .ii-status{display:none}
+.ii-room .ii-toast,.ii-room .ii-press-alert{z-index:10}
 
-/* ---------- o caderno ---------- */
+/* ---------- o caderno, por cima da cena ---------- */
 .ii-room .ii-panel{
   --ink:#1d2b44;--mut:#6d6748;--line:rgba(40,60,100,.22);--surf:rgba(255,255,255,.3);
-  position:relative;color:var(--ink);padding-left:34px;
+  position:absolute;z-index:8;left:3%;right:3%;top:47%;bottom:-8px;
+  color:var(--ink);padding:10px 14px calc(18px + var(--safe-b,0px)) 38px;gap:6px;border-radius:4px;
   background:
-    linear-gradient(90deg,transparent 24px,var(--margin) 24px 25px,transparent 25px),
+    linear-gradient(90deg,transparent 28px,var(--margin) 28px 29px,transparent 29px),
     repeating-linear-gradient(transparent 0 25px,var(--rule) 25px 26px),
     var(--paper);
-  box-shadow:inset 0 12px 18px -14px rgba(0,0,0,.55),inset 10px 0 16px -14px rgba(0,0,0,.5)}
-.ii-room .ii-panel::before{content:"";position:absolute;left:6px;top:8px;bottom:8px;width:9px;pointer-events:none;
-  background:radial-gradient(circle at 50% 50%,#2a2c30 0 3px,transparent 3.5px) 0 0/9px 26px repeat-y;opacity:.55}
-/* medidor de emoção como uma etiqueta presa no papel */
-.ii-room .ii-emo{background:rgba(255,255,255,.34);border-color:rgba(40,60,100,.28)}
+  box-shadow:0 18px 40px rgba(0,0,0,.75),0 0 0 1px rgba(0,0,0,.25);
+  rotate:-1.2deg;transform-origin:50% 100%;
+  transition:transform .7s cubic-bezier(.3,.7,.2,1),filter .7s ease,opacity .7s ease;
+  animation:ii-hold 6s ease-in-out infinite}
+@keyframes ii-hold{0%,100%{translate:0 0}50%{translate:0 2px}}
+/* espiral no alto */
+.ii-room .ii-panel::before{content:"";position:absolute;left:10px;right:10px;top:-6px;height:12px;pointer-events:none;
+  background:repeating-linear-gradient(90deg,#3a3d42 0 4px,transparent 4px 13px);border-radius:3px}
+.ii-pad-title{flex:none;margin:0 0 -2px;font:700 22px/1 var(--hand);color:var(--pen);rotate:-1deg;transform-origin:0 50%}
+/* medidor de emoção como etiqueta presa no papel */
+.ii-room .ii-emo{background:rgba(255,255,255,.34);border-color:rgba(40,60,100,.28);padding:6px 10px}
 .ii-room .ii-emo small{color:var(--mut)}
 .ii-room .ii-emo b{color:var(--pen);font:700 19px/1 var(--hand);letter-spacing:.02em;min-width:96px}
 .ii-room .ii-emo-track{background:rgba(30,40,60,.12)}
@@ -424,6 +440,9 @@
 .ii-room .ii-press i{background:var(--pencil)}
 .ii-room .ii-press u{background:rgba(30,40,60,.3)}
 .ii-room .ii-press u.on{background:#c0392b}
+/* perguntas já feitas, riscadas */
+.ii-done{flex:none;list-style:none;margin:0;padding:0 0 0 26px;display:grid;gap:1px}
+.ii-done li{font:600 17px/1.25 var(--hand);color:#8a8466;text-decoration:line-through;text-decoration-color:rgba(30,40,60,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px}
 /* perguntas escritas à mão, uma por linha */
 .ii-room .iv-ask{background:none;border:0;border-bottom:1px dashed rgba(40,60,100,.28);border-radius:0;color:var(--pen);
   font:600 18px/1.2 var(--hand);padding:4px 4px 4px 26px;position:relative;cursor:pointer}
@@ -466,13 +485,44 @@
 .ii-room .ii-notes>li{border-bottom-color:rgba(40,60,100,.22)}
 .ii-room .iv-asked-row{color:var(--pen);font:600 18px/1.12 var(--hand)}
 .ii-room .ii-tabs{border-color:rgba(40,60,100,.3);background:rgba(255,255,255,.22)}
-.ii-room .ii-tabs button{color:#5f5a40}
+.ii-room .ii-tabs button{color:#5f5a40;min-height:40px}
 .ii-room .ii-tabs button+button{border-left-color:rgba(40,60,100,.3)}
 .ii-room .ii-tabs button.on{background:rgba(30,58,110,.13);color:var(--pen)}
 .ii-room .ii-tabs em{background:var(--pen);color:var(--paper)}
 .ii-room .ii-tabs button.help{color:var(--pen)}
+/* legenda sobre a cena, acima do caderno */
+.ii-room .ii-sub{z-index:9;bottom:auto;top:calc(47% - 4.2em);transition:top .7s cubic-bezier(.3,.7,.2,1)}
+.ii-room.ii-listen .ii-sub{top:calc(64% - 4.2em)}
+
+/* ---------- foco ---------- */
+.ii-room .ii-far,.ii-room .ii-near{transition:filter .7s ease}
+.ii-room .ii-near{filter:blur(3px)}
+.ii-room.ii-pick .ii-far{filter:blur(2.6px) brightness(.72);transition-delay:.9s}
+.ii-room.ii-pick .ii-near{filter:none;transition-delay:.9s}
+.ii-room.ii-pick .ii-panel{transition-delay:.9s}
+/* ouvindo: o caderno abaixa e sai de foco */
+.ii-room.ii-listen .ii-panel{transform:translateY(36%);filter:blur(1.6px) brightness(.85)}
+
+/* ---------- deitado: caderno à esquerda, depoente à direita ---------- */
+@container room (min-aspect-ratio:1/1){
+  .ii-room{--lx:68%}
+  .ii-actor{left:auto;right:7%;transform:none;top:-11%;height:97%}
+  .ii-table{top:76%;height:28%}
+  .ii-room .ii-rec span{display:inline}
+  .ii-room .ii-panel{left:1.5%;right:auto;width:47%;top:13%;bottom:-10px;rotate:-2deg;transform-origin:0 100%;padding-top:8px;gap:5px}
+  .ii-room.ii-listen .ii-panel{transform:translate(-4%,58%)}
+  .ii-mug{right:2.5%;top:auto;bottom:-5%;height:25%}
+  .ii-steam{right:4.5%;top:auto;bottom:16%;height:26%}
+  .ii-room .ii-sub,.ii-room.ii-listen .ii-sub{top:auto;bottom:8%;left:48%;right:2%;transition:none}
+  .ii-pad-title{font-size:20px}
+  .ii-room .ii-toast,.ii-room .ii-press-alert{left:74%;max-width:46%}
+  .ii-room .ii-emo{padding:5px 9px;row-gap:4px}
+}
+@container room (min-aspect-ratio:1/1) and (max-height:420px){
+  .ii-done li:first-child:not(:last-child){display:none}
+}
 @media(prefers-reduced-motion:reduce){
-  .ii-scene{animation:none}
-  .ii-room .ii-far,.ii-room .ii-near,.ii-room .ii-panel{transition:none}
+  .ii-scene,.ii-room .ii-panel{animation:none}
+  .ii-room .ii-far,.ii-room .ii-near,.ii-room .ii-panel,.ii-room .ii-sub{transition:none}
   .ii-circle path{stroke-dashoffset:0}
 }

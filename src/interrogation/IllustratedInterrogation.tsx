@@ -44,7 +44,7 @@ const tutorialSeen = () => { try { return localStorage.getItem(TUTORIAL_KEY)==='
 
 const tutorialSteps = (name:string):TutorialStep[] => [
   { target:'.ii-stage', place:'panel', title:'Observe '+name.split(' ')[0],
-    text:'Ela responde em legendas. A expressão e o jeito de falar mostram quando algo a incomoda.' },
+    text:'As respostas aparecem em legendas. A expressão e o jeito de falar mostram quando algo incomoda.' },
   { target:'.ii-emo', place:'panel', title:'Medidor de emoção',
     text:'Mostra como a pessoa se sente. A barra fina é a pressão: cada pergunta dura aumenta. Nos marcadores ela muda de postura e pode ceder.' },
   { target:'.ii-main', place:'stage', title:'Perguntas',
@@ -54,6 +54,14 @@ const tutorialSteps = (name:string):TutorialStep[] => [
   { target:'.ii-tabs', place:'tabs', title:'Anotações',
     text:'Releia tudo o que já foi dito e veja quantas pistas você anotou. O ? reabre estas dicas.' }
 ]
+
+/** Contador da gravação, como no visor da câmera: atualiza sozinho, sem redesenhar o depoimento inteiro. */
+function RecClock(){
+  const [t,setT] = useState(0)
+  useEffect(()=>{ const id = window.setInterval(()=>setT(v=>v+1),1000); return ()=>window.clearInterval(id) },[])
+  const p = (n:number)=>String(n).padStart(2,'0')
+  return <b className="ii-clock">{p(Math.floor(t/3600))}:{p(Math.floor(t/60)%60)}:{p(t%60)}</b>
+}
 
 /** Tempo em que a boca se mexe numa legenda: um pouco menos que o tempo de leitura. */
 const speakingTime = (text:string) => Math.min(subtitleDuration(text)-150, Math.max(700,text.length*68+300))
@@ -256,10 +264,14 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
         <div className="ii-scene">
           <div className="ii-far">
             <div className="ii-wall" aria-hidden="true"/>
-            <div className="ii-lamp" aria-hidden="true"><i className="cord"/><i className="shade"/><i className="bulb"/></div>
-            <CharacterPortrait character={character} expression={expression} speech={speech} transparent/>
-            <div className="ii-cone" aria-hidden="true"/>
-            <div className="ii-dust" aria-hidden="true"><i/><i/><i/><i/><i/><i/></div>
+            {/* o depoente à distância, sob a luminária */}
+            <div className="ii-actor">
+              <div className="ii-glow" aria-hidden="true"/>
+              <div className="ii-lamp" aria-hidden="true"><i className="cord"/><i className="shade"/><i className="bulb"/></div>
+              <CharacterPortrait character={character} expression={expression} speech={speech} transparent/>
+              <div className="ii-cone" aria-hidden="true"/>
+              <div className="ii-dust" aria-hidden="true"><i/><i/><i/><i/><i/><i/></div>
+            </div>
             <div className="ii-table" aria-hidden="true"/>
           </div>
           <div className="ii-near" aria-hidden="true">
@@ -270,8 +282,8 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
         <div className="ii-camera-fx" aria-hidden="true"/>
         <button className="ii-back" onClick={onBack} aria-label="Sair do depoimento"><ChevronLeft/></button>
         {hud && <>
-          <div className="ii-rec"><i/>REC</div>
-          <div className="ii-deposition">{config.depositionLabel}</div>
+          <div className="ii-rec"><i/>REC <RecClock/><span>{config.depositionLabel}</span></div>
+          <div className="ii-deposition ii-focus">FOCO · {busy ? config.name.split(' ')[0].toUpperCase() : 'CADERNO'}</div>
         </>}
         <div className="ii-mark" aria-hidden="true"><b>DHPP</b><i/><span>HOMICÍDIOS</span></div>
         {toast && <div className="ii-toast" key={toast} role="status"><i/><span><small>NOVA PISTA REGISTRADA</small><b>{toast}</b></span></div>}
@@ -284,6 +296,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
       </section>
 
       <section className="ii-panel">
+        <h3 className="ii-pad-title" aria-hidden="true">{config.name.split(' ')[0]} · perguntas</h3>
         <EmotionMeter name={config.name} expression={expression} pressure={progress.pressure ?? 0} stages={stagesOf(config)}/>
 
         <div className="ii-main">
@@ -310,6 +323,11 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
               </button>
             )}
 
+            {!busy && !review && (!finished || retaking) && asked.length>0 && (
+              <ul className="ii-done" aria-label="Últimas perguntas feitas">
+                {asked.slice(-2).map(q=><li key={q.id}>{q.question}</li>)}
+              </ul>
+            )}
             {!busy && !review && (!finished || retaking) && (
               <QuestionPager questions={pending} onPick={ask} clueTitle={clueTitle} materialTitle={materialTitle} blocked={blocked}/>
             )}
