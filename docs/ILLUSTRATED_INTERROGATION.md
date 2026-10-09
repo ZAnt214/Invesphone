@@ -26,6 +26,12 @@ Cada expressão é uma imagem oficial; nada é redesenhado. Cada imagem tem marc
 
 Com `faceMask` no personagem (PNG em tons de cinza do interior do rosto, `public/characters/<id>/face-mask.png`), a imagem neutra é a base imutável (cabelo, pescoço, corpo e fundo) e só o interior do rosto, com borda suave, vem da imagem de cada expressão e se mistura com a anterior em 0,34 s. A máscara é gerada por `scripts/make-face-mask.py` a partir do retrato neutro e de um polígono do rosto; ela deixa de fora as mechas de cabelo que entram no rosto, para não deformarem quando a expressão troca. Sem `faceMask`, a troca usa regiões de feições: ela dura 0,34 s e só mistura as regiões das feições (sobrancelhas e olhos; boca), sobre a imagem da expressão anterior, que vira a nova no fim. Cabeça, cabelo, corpo e fundo não se misturam (o fundo é único e a cabeça é alinhada por olhos, cabelo e pescoço), então não há fantasma de contorno. As regiões estão em `MORPH_REGIONS` no renderer. Expressão sem imagem (ex.: `angry`) usa a neutra.
 
+### Silhueta e sala do depoimento
+
+Com `figureMask` no personagem (PNG branco com transparência, `public/characters/<id>/figure-mask.png`), o retrato pode sair com fundo transparente (`<CharacterPortrait transparent/>`): a silhueta da imagem neutra recorta tudo o que o renderer desenhou, e como corpo e cabelo vêm sempre da neutra (base fixa da `faceMask`), ela vale para todas as expressões. A máscara é gerada por `scripts/make-figure-mask.py <id>` (preenche o fundo azulado a partir das bordas, parando nos contornos do desenho; os ajustes usados no Caso 01 estão no próprio script). Confira o recorte sobre uma cor forte depois de gerar.
+
+A tela de depoimento usa isso na direção "olhar do Lemos": o depoente aparece dentro da sala (parede, luminária com facho e poeira, mesa e caneca com vapor em primeiro plano), a câmera balança devagar, e o painel é o caderno do Lemos (perguntas à mão, com a fonte Caveat em `public/fonts/`). O foco alterna pela fase: escolhendo a pergunta (`ii-pick`), a sala desfoca e o caderno fica nítido; ouvindo a resposta (`ii-listen`), o rosto volta ao foco e o caderno sai dele. A pergunta feita fica circulada em vermelho enquanto ele responde; pistas anotadas viram marca-texto. Tudo está no fim de `illustrated-interrogation.css` (`.ii-room`), sem nada específico de personagem.
+
 ## Fala
 
 A resposta aparece em legendas curtas dentro da imagem. Para cada legenda, a boca segue as letras por um tempo um pouco menor que o de leitura. Sem áudio.

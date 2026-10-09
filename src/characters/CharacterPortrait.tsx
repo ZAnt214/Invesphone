@@ -10,15 +10,19 @@ type Props = {
   expression:Expression
   /** Texto sendo falado agora. A boca segue as letras durante `duration` ms. */
   speech?:Speech|null
+  /** Fundo transparente: o personagem aparece por cima do cenário em volta (precisa de `figureMask`). */
+  transparent?:boolean
 }
 
 /** Retrato animado de qualquer personagem que tenha arte oficial cadastrada. */
-export default function CharacterPortrait({character,expression,speech=null}:Props){
+export default function CharacterPortrait({character,expression,speech=null,transparent=false}:Props){
   const wrap = useRef<HTMLDivElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
   const renderer = useRef<PortraitRenderer|null>(null)
   const exprRef = useRef(expression)
   exprRef.current = expression
+  const transparentRef = useRef(transparent)
+  transparentRef.current = transparent
 
   useEffect(()=>{
     if(!canvas.current || !wrap.current) return
@@ -29,11 +33,13 @@ export default function CharacterPortrait({character,expression,speech=null}:Pro
     const ro = new ResizeObserver(fit)
     ro.observe(wrap.current)
     r.setExpression(exprRef.current)
+    r.setTransparent(transparentRef.current)
     r.start().catch(()=>{})
     return ()=>{ ro.disconnect(); r.destroy(); renderer.current = null }
   },[character])
 
   useEffect(()=>{ renderer.current?.setExpression(expression) },[expression])
+  useEffect(()=>{ renderer.current?.setTransparent(transparent) },[transparent])
 
   useEffect(()=>{
     if(!speech) renderer.current?.setSpeech(null)

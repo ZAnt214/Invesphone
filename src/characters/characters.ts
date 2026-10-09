@@ -36,6 +36,7 @@ const cast = (id:string, name:string, m:{cx:number,rim:number,half:number,bottom
     portrait:{ width:900, height:1200, crop:{ x:80, y:10, w:740, h:800 }, eyeMid:n.eyeMid },
     assets,
     faceMask:`${base}characters/${id}/face-mask.png`,
+    figureMask:`${base}characters/${id}/figure-mask.png`,
     visemes:USE_VISEMES ? { src:`${base}characters/${id}/visemes.png`, cellW:400, cellH:120, order:['A','E','I','O','U','M'], center:[200,60], lipWidth:108, reach:1 } : undefined,
     face:{ cx:n.eyeMid[0], cy:n.eyeMid[1]+18, size:420 }
   }
@@ -124,6 +125,7 @@ export const characters:Record<string,CharacterDef> = {
       }
     },
     faceMask:`${base}characters/livia/face-mask.png`,
+    figureMask:`${base}characters/livia/figure-mask.png`,
     visemes:{
       src:`${base}characters/livia/visemes.png`,
       cellW:400, cellH:120,

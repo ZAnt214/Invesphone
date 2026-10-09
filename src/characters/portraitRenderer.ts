@@ -78,6 +78,9 @@ export class PortraitRenderer {
   /** a imagem neutra é a base imutável; só o interior do rosto muda (personagem com `facePolygon`) */
   private stable = false
   private faceMask:HTMLCanvasElement|null = null
+  /** Silhueta do retrato neutro: com `transparent`, recorta o fundo para o personagem aparecer dentro de um cenário. */
+  private figure:HTMLImageElement|null = null
+  private transparent = false
   private faceBox = { x:0, y:0, w:0, h:0 }
   private patch:HTMLCanvasElement|null = null
   private masks:HTMLCanvasElement[] = []
@@ -217,6 +220,7 @@ export class PortraitRenderer {
     await Promise.all([
       this.def.visemes ? loadImage(this.def.visemes.src).then(a=>{ this.atlas = a },()=>{}) : null,
       this.def.faceMask ? loadImage(this.def.faceMask).then(m=>{ this.buildFaceMask(m); this.stable = true },()=>{}) : null,
+      this.def.figureMask ? loadImage(this.def.figureMask).then(m=>{ this.figure = m },()=>{}) : null,
       this.loadRaw('neutral'),
       this.loadRaw(this.expression)
     ])
@@ -270,6 +274,9 @@ export class PortraitRenderer {
     this.shown = from
     this.trans = { from, to:next, t:0 }
   }
+
+  /** Fundo transparente (só com silhueta cadastrada e base fixa): o cenário por trás aparece. */
+  setTransparent(on:boolean){ this.transparent = on }
 
   setSpeech(keys:MouthKey[]|null, duration=0){
     this.speech = keys ? { keys, start:performance.now(), duration } : null
@@ -611,8 +618,13 @@ export class PortraitRenderer {
     ctx.globalAlpha = 1
     ctx.imageSmoothingEnabled = true
     ctx.imageSmoothingQuality = 'high'
-    ctx.fillStyle = rgb(this.bg)
-    ctx.fillRect(crop.x-40,crop.y-40,crop.w+80,crop.h+80)
+    // recorte só com base fixa: o corpo e o cabelo vêm sempre da neutra, então a silhueta dela serve para todas as expressões
+    const cut = this.transparent && !!this.figure && this.stable
+    if(cut) ctx.clearRect(crop.x-40,crop.y-40,crop.w+80,crop.h+80)
+    else {
+      ctx.fillStyle = rgb(this.bg)
+      ctx.fillRect(crop.x-40,crop.y-40,crop.w+80,crop.h+80)
+    }
 
     // câmera: só respiração e uma deriva lenta (sem tremor)
     const t = now/1000
@@ -642,6 +654,11 @@ export class PortraitRenderer {
       }
       const top = tr && tr.t>=.5 ? tr.to : this.shown
       this.drawOverlays(top,now)
+      if(cut){
+        ctx.globalCompositeOperation = 'destination-in'
+        ctx.drawImage(this.figure!,0,0)
+        ctx.globalCompositeOperation = 'source-over'
+      }
     }
     ctx.restore()
   }

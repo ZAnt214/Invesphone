@@ -78,6 +78,11 @@ export type CharacterDef = {
    * e só o interior do rosto vem da imagem de cada expressão. Mechas de cabelo ficam fora da máscara.
    */
   faceMask?: string
+  /**
+   * Silhueta do personagem (PNG branco com transparência, mesmo tamanho do retrato) gerada por
+   * `scripts/make-figure-mask.py`. Com ela o retrato pode sair com fundo transparente, dentro de um cenário.
+   */
+  figureMask?: string
   /** Recorte quadrado do rosto (no retrato neutro) para listas e perfis. */
   face: { cx:number; cy:number; size:number }
 }
