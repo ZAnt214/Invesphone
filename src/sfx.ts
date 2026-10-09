@@ -19,6 +19,9 @@ const audio = () => {
   } catch { return null }
 }
 
+/** Contexto de áudio compartilhado (null com o som desligado): o ambiente das salas usa o mesmo. */
+export const audioContext = audio
+
 type Tone = { f:number; to?:number; at?:number; dur:number; vol?:number; type?:OscillatorType }
 const play = (tones:Tone[]) => {
   const c = audio(); if(!c) return
