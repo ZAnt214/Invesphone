@@ -71,27 +71,42 @@ body.tiny .clk span{display:none}body.tiny .hbtn.phone span{display:none}
 .av{display:grid;place-items:center;border-radius:50%;overflow:hidden;font:700 12px/1 var(--tfont);letter-spacing:.06em;color:#10161a;background:var(--accent);flex:none;width:44px;height:44px}
 .av img{width:100%;height:100%;object-fit:cover}
 
-/* conversa */
-#talk{position:absolute;z-index:8;display:flex;flex-direction:column;max-height:calc(100% - 84px);left:50%;bottom:calc(var(--sb,env(safe-area-inset-bottom,0px)) + 12px);transform:translateX(-50%);width:min(560px,calc(100% - 20px));box-sizing:border-box;
-  background:linear-gradient(180deg,rgba(26,30,34,.97),rgba(10,12,14,.98));padding:12px 14px 12px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22),0 -10px 36px rgba(0,0,0,.55);
-  clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% 100%,0 100%,0 12px);animation:tkin .28s cubic-bezier(.2,.9,.3,1.1)}
-@keyframes tkin{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
+/* conversa: um cartão claro que nasce de quem fala (um ponto sai do personagem, desce deixando um rastro e cresce) */
+#talk{position:absolute;z-index:8;display:flex;flex-direction:column;max-height:calc(100% - 84px);left:10px;right:10px;margin:0 auto;bottom:calc(var(--sb,env(safe-area-inset-bottom,0px)) + 12px);width:min(540px,calc(100% - 20px));box-sizing:border-box;
+  background:#f5f3ee;color:#1b1f24;padding:13px 15px 12px;border-radius:16px;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 14px 40px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.25)}
 .tk-h{display:flex;align-items:center;gap:10px}
 .tk-h div{flex:1;min-width:0}
-.tk-h small{display:block;font:700 10px/1 var(--tfont);letter-spacing:.16em;text-transform:uppercase;color:var(--mark)}
-.tk-h b{display:block;margin-top:2px;font:700 18px/1.1 var(--tfont)}
-#tk-x{width:30px;height:30px;border:1px solid var(--line);background:transparent;border-radius:3px;font-size:18px;line-height:1;cursor:pointer;color:var(--mut)}
-#tk-text{flex:none;margin:10px 0 0;min-height:3.9em;font:400 16px/1.4 var(--serif);color:#f4f2ec;white-space:pre-line}
-#tk-more{display:block;margin-top:8px;font:600 10px/1 var(--tfont);letter-spacing:.18em;text-transform:uppercase;color:var(--mut);text-align:right;font-style:normal;animation:blink 1.2s infinite}
+.tk-h small{display:block;font:800 10px/1 var(--tfont);letter-spacing:.2em;text-transform:uppercase;color:#9a7a14}
+.tk-h b{display:block;margin-top:3px;font:700 17px/1.1 var(--tfont);color:#1b1f24}
+#talk .av{width:38px;height:38px;box-shadow:0 0 0 2px #f2c230}
+#tk-x{width:30px;height:30px;border:0;background:rgba(27,31,36,.07);border-radius:50%;font-size:18px;line-height:1;cursor:pointer;color:#4a525a}
+#tk-text{flex:none;margin:9px 0 0;min-height:3.9em;font:400 16px/1.42 var(--serif);color:#1b1f24;white-space:pre-line}
+#tk-more{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:6px;font:700 9.5px/1 var(--tfont);letter-spacing:.18em;text-transform:uppercase;color:#8a8478;font-style:normal;animation:blink 1.2s infinite}
+#tk-more::after{content:"";width:0;height:0;border:4px solid transparent;border-top:5px solid #c79c12;border-bottom:0}
 @keyframes blink{50%{opacity:.35}}
-#tk-opts{display:flex;flex-direction:column;gap:6px;margin-top:10px;overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-#talk.me #tk-text{font-style:italic;color:#e6e0d2}
-#talk.me .tk-h small{color:#9fc0dc}
+#tk-opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+#talk.me #tk-text{font-style:italic;color:#3b434b}
+#talk.me .tk-h small{color:#4f6f8c}
+#talk.me .av{box-shadow:0 0 0 2px #7fa6c8}
 #tk-opts:empty{display:none}
-#tk-opts button{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:9px 12px;border:1px solid var(--line);background:rgba(255,255,255,.06);cursor:pointer;font:700 14px/1.1 var(--tfont);letter-spacing:.03em;border-radius:3px}
-#tk-opts button:active{background:rgba(255,255,255,.14)}
-#tk-opts button.main{border-color:rgba(242,194,48,.6);color:var(--mark);background:rgba(242,194,48,.08)}
-#tk-opts button span{font:500 11.5px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--mut);margin-left:auto;text-align:right}
+#tk-opts button{display:flex;align-items:center;gap:8px;flex:1 1 auto;max-width:100%;text-align:left;padding:9px 14px;border:1px solid rgba(27,31,36,.14);background:#ebe7de;color:#1b1f24;cursor:pointer;font:700 13.5px/1.15 var(--tfont);letter-spacing:.02em;border-radius:999px;transition:transform .12s,background .12s}
+#tk-opts button:active{transform:scale(.97);background:#dfdad0}
+#tk-opts button.main{flex-basis:100%;border-color:#d9a91c;background:#f2c230;color:#1b1f24;box-shadow:0 3px 0 #b88c0e}
+#tk-opts button.main:active{background:#e6b521;box-shadow:0 1px 0 #b88c0e;transform:translateY(2px)}
+#tk-opts button span{font:500 11px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#6b665c;margin-left:auto;text-align:right}
+#tk-opts button.main span{color:#5a4708}
+#tk-opts button:last-child:not(.main){flex:0 1 auto;background:transparent;border-style:dashed;color:#5b6168}
+/* quem fala: anel amarelo sobre a cabeça, rastro pontilhado até o cartão e o ponto que vira cartão */
+#tk-link{position:absolute;inset:0;width:100%;height:100%;z-index:7;pointer-events:none;overflow:visible}
+#tk-link[hidden]{display:none}
+#tk-trail{stroke:#f2c230;stroke-width:2;stroke-dasharray:1 6;stroke-linecap:round;fill:none;opacity:.85;filter:drop-shadow(0 1px 1px rgba(0,0,0,.6))}
+#tk-ring{fill:none;stroke:#f2c230;stroke-width:2.2;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
+#tk-ring2{fill:none;stroke:#f2c230;stroke-width:1.5;opacity:0;transform-box:fill-box;transform-origin:center;animation:tkpulse 1.6s ease-out infinite}
+#tk-pin{fill:#f2c230}
+#tk-link.me #tk-trail,#tk-link.me #tk-ring,#tk-link.me #tk-ring2{stroke:#9cc3e4}#tk-link.me #tk-pin{fill:#9cc3e4}
+@keyframes tkpulse{0%{opacity:.8;transform:scale(1)}100%{opacity:0;transform:scale(2.2)}}
+#tk-dot{position:absolute;left:0;top:0;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:#f2c230;box-shadow:0 0 0 3px rgba(242,194,48,.25),0 2px 6px rgba(0,0,0,.6);z-index:9;pointer-events:none}
+#tk-dot[hidden]{display:none}
 
 /* fotos */
 .viewer{position:absolute;inset:0;z-index:9;background:rgba(0,0,0,.95);display:flex;flex-direction:column;gap:10px;
@@ -125,10 +140,9 @@ body.tiny .clk span{display:none}body.tiny .hbtn.phone span{display:none}
 .card .disc{font-size:9.5px;color:#697277;line-height:1.4;margin-top:10px}
 body.short .modal{padding:10px}body.short .card{padding:13px}body.short .card h1{font-size:22px;margin:4px 0 7px}body.short .card .call{margin-bottom:8px;gap:9px}body.short .card .call p{font-size:14px;line-height:1.3}body.short .card ul{gap:5px;margin-bottom:10px;font-size:11.5px;line-height:1.3}body.short .card li{grid-template-columns:18px 1fr;gap:6px}body.short .card li svg{width:17px;height:17px}body.short .card .go{padding:11px}body.short .card .disc{display:none}
 /* deitado: a conversa vai para a direita e a cena fica à esquerda */
-body.land #talk{left:auto;right:calc(var(--sr,env(safe-area-inset-right,0px)) + 10px);bottom:calc(var(--sb,env(safe-area-inset-bottom,0px)) + 10px);transform:none;width:min(400px,46%);animation:tkinL .28s cubic-bezier(.2,.9,.3,1.1)}
-@keyframes tkinL{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+body.land #talk{left:auto;margin:0;right:calc(var(--sr,env(safe-area-inset-right,0px)) + 10px);bottom:calc(var(--sb,env(safe-area-inset-bottom,0px)) + 10px);transform:none;width:min(400px,46%)}
 body.land #tk-text{font-size:15px;min-height:0}
-body.low.land #talk{padding:10px 12px}body.low.land .tk-h b{font-size:16px}body.low.land #tk-text{margin-top:6px;font-size:14px;line-height:1.35}body.low.land #tk-opts{margin-top:7px;gap:5px}body.low.land #tk-opts button{padding:7px 10px}body.low.land #tk-more{margin-top:5px}
+body.low.land #talk{padding:10px 12px;border-radius:14px}body.low.land .tk-h b{font-size:15px}body.low.land #talk .av{width:32px;height:32px}body.low.land #tk-text{margin-top:6px;font-size:14px;line-height:1.35}body.low.land #tk-opts{margin-top:7px;gap:5px}body.low.land #tk-opts button{padding:7px 12px;font-size:13px}body.low.land #tk-more{margin-top:5px}
 
 /* depoimento ilustrado por cima da cena; deitado, retrato à esquerda e perguntas à direita */
 #depo{position:absolute;inset:0;z-index:12;background:#050607}
