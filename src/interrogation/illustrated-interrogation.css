@@ -385,13 +385,6 @@
 /* sem mix-blend-mode: no Safari, com camadas animadas por perto, a mistura falha e a camada sai opaca */
 .ii-falloff{position:absolute;left:-60%;right:-60%;top:0;bottom:5.2%;
   background:radial-gradient(ellipse 34% 60% at 50% 24%,rgba(4,5,8,0) 30%,rgba(4,5,8,.5) 75%,rgba(4,5,8,.7))}
-/* cinzeiro na mesa, à esquerda do depoente, com o cigarro aceso */
-.ii-ashtray{position:absolute;left:-17%;top:93.2%;width:13%;height:2.6%;border-radius:50%;
-  background:radial-gradient(ellipse at 50% 45%,#111 38%,#4c4f53 42%,#2c2e31 70%);box-shadow:0 3px 5px rgba(0,0,0,.6)}
-.ii-ashtray i{position:absolute;left:30%;top:-10%;width:85%;height:28%;border-radius:2px;transform:rotate(-6deg);
-  background:linear-gradient(90deg,#c9894a 0 22%,#ece6da 22% 92%,#ff7a3a 92%)}
-.ii-ashtray i::after{content:"";position:absolute;right:-3px;top:-3px;width:7px;height:7px;border-radius:50%;background:rgba(255,120,60,.55);filter:blur(2px);animation:ii-ember 2.6s ease-in-out infinite}
-@keyframes ii-ember{50%{opacity:.35}}
 .ii-room .cp{position:absolute;inset:auto;left:0;right:0;top:17.48%;bottom:0}
 /* as laterais da imagem somem no escuro, fora da luz (o tronco encosta na borda do arquivo) */
 .ii-room .cp canvas{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 13%,#000 87%,transparent);mask-image:linear-gradient(90deg,transparent 0,#000 13%,#000 87%,transparent)}

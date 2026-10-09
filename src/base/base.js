@@ -741,7 +741,9 @@ let depoMod=null;const loadDepo=()=>depoMod||(depoMod=import('./deposition'));
 function startDepo(id){
   if(talk)closeTalk();
   depoOpen=true;const host=$('#depo');host.hidden=false;document.body.classList.add('depo-on');
-  loadDepo().then(m=>m.openDeposition(host,id,()=>{host.hidden=true;depoOpen=false;document.body.classList.remove('depo-on');refreshCase();buildVisitors();last=performance.now();}));
+  // a base fica escondida atrás do depoimento: libera a memória das telas dela (no iPhone, faltar memória recarrega a página)
+  cv.width=cv.height=1;lc.width=lc.height=1;
+  loadDepo().then(m=>m.openDeposition(host,id,()=>{host.hidden=true;depoOpen=false;document.body.classList.remove('depo-on');sizeCanvas();refreshCase();buildVisitors();last=performance.now();}));
 }
 const DLG={
   sonia:()=>teamTalk('sonia'),mauricio:()=>teamTalk('mauricio'),renata:()=>teamTalk('renata'),paulo:()=>teamTalk('paulo'),denise:()=>teamTalk('denise'),
