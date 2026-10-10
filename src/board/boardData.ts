@@ -19,16 +19,30 @@ export const ZONES:Record<ZoneId,{x:number;y:number;label:string;tab:string;q:st
 }
 export const ZONE_W=562, ZONE_H=390, WORLD_W=1688, WORLD_H=780
 
-/** Etapas do quadro = capítulos do caso (src/case01.ts). O quadro abre na etapa atual e só mostra as áreas dela;
-    as anteriores ficam para rever, as seguintes não existem ainda. */
-export const STAGES:{short:string;q:string;zones:ZoneId[]}[] = [
-  {short:'A casa',q:'Foi um roubo?',zones:['cena']},
-  {short:'Versões',q:'Quem estava onde, e quem podia entrar sem forçar?',zones:['pessoas','acesso']},
-  {short:'A janela',q:'O que houve entre 23:52 e 00:56, e por quê?',zones:['noite','motivo']},
-  {short:'O dinheiro',q:'De onde vem o dinheiro?',zones:['dinheiro','motivo']},
-  {short:'A última versão',q:'Quem fez o quê?',zones:['pessoas','motivo']},
+/** Partes da cortiça em cada capítulo (área de 562×390). */
+export type Section =
+  |{kind:'scene'}                                                  // croqui com as fotos da varredura
+  |{kind:'people';notes:Record<string,string[]>}                    // fotos das pessoas conhecidas, com as falas de cada uma embaixo
+  |{kind:'night'}                                                  // linha da noite (22:00 → 01:15)
+  |{kind:'grid';title:string;x:number;y:number;w:number;cols:number;ids:string[]}
+const ACCESS=['livia_chave','livia_codigo','inconsistencia_caio_codigo','caio_viu_digitando','livia_porta_aberta','livia_passou_codigo','rafael_nao_prendeu']
+/** Etapas do quadro = capítulos do caso (src/case01.ts). O quadro abre na etapa atual e mostra só o que é dela,
+    arrumado para responder a pergunta do capítulo; as anteriores ficam para rever, as seguintes não aparecem. */
+export const CHAPTERS:{short:string;q:string;sections:Section[]}[] = [
+  {short:'A casa',q:'Foi um roubo?',sections:[{kind:'scene'}]},
+  {short:'Versões',q:'Quem estava onde, e quem podia entrar sem forçar?',sections:[
+    {kind:'people',notes:{livia:['brigas_namoro','pergunta_inventario'],caio:['caio_horario','caio_gol_dele'],rafael:['lan_paga','rafael_lan_confirmada'],cida:['alibi_cida','cida_alibi_termo'],jorge:['vigia_gol','vigia_horario']}},
+    {kind:'grid',title:'Quem podia entrar sem forçar?',x:6,y:246,w:550,cols:4,ids:ACCESS}]},
+  {short:'A janela',q:'O que houve entre 23:52 e 00:56, e por quê?',sections:[
+    {kind:'night'},
+    {kind:'grid',title:'Por quê?',x:300,y:240,w:256,cols:2,ids:['agenda_helena','ameaca_heranca','brigas_namoro','pergunta_inventario']}]},
+  {short:'O dinheiro',q:'De onde vem o dinheiro, e quem ganhava com as mortes?',sections:[
+    {kind:'grid',title:'O dinheiro',x:6,y:22,w:550,cols:5,ids:['extrato_ricardo','carta_cobranca','moto_dolares','cinta_bancaria','teo_adiantamento']},
+    {kind:'grid',title:'Por quê?',x:6,y:262,w:550,cols:4,ids:['ameaca_heranca','livia_sabia_heranca','pergunta_inventario','agenda_helena']}]},
+  {short:'A última versão',q:'Quem fez o quê?',sections:[
+    {kind:'people',notes:{livia:['livia_passou_codigo','livia_porta_aberta'],caio:['caio_saiu_22h30','caio_sem_intervalo'],rafael:['rafael_nao_prendeu','rafael_lan_confirmada'],cida:['cida_alibi_termo'],jorge:['jorge_so_o_carro'],teo:['confissao_teo','teo_adiantamento']}},
+    {kind:'grid',title:'Provas principais',x:6,y:262,w:550,cols:6,ids:['valores_intactos','log_alarme','nota_motel','cinta_bancaria','confissao_teo','agenda_helena']}]},
 ]
-/** Etapa do caso pelo marcador interno (o mesmo dos capítulos do aparelho). */
 export const stageOfTask=(t:number)=>t<=1?1:t===2?2:t<=4?3:t<=6?4:5
 
 /** ph = foto da varredura, doc = documento, nt = nota (fala ou registro da equipe). */
