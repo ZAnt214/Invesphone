@@ -415,7 +415,7 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
  if(game.app==='chapters')return <PhonePage title="Arquivo do caso" back={()=>openApp('home')}><ChapterMap game={game}/></PhonePage>
  const status = ({
   0:'Ocorrência recebida',1:'Cena em processamento',2:'Versões sendo colhidas',3:'Aguardando retorno técnico',4:'Janela de horário em aberto',
-  5:'Linha financeira aberta',6:'Dinheiro sob análise',7:'Téo precisa explicar o dinheiro',8:'Investigação pronta para relatório'
+  5:'Linha financeira aberta',6:'Dinheiro sob análise',7:'Separando quem fez o quê',8:'Investigação pronta para relatório'
  } as Record<number,string>)[game.task] ?? current.title
  const go=(to:StepGo)=>{
   if(to.kind==='team')setGame(g=>({...g,app:'team',teamFocus:to.memberId}))
