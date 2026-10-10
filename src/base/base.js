@@ -737,22 +737,32 @@ function buildVisitors(){
 }
 let depoOpen=false;
 // o depoimento (React, retratos, perguntas) é carregado à parte: baixa sozinho alguns segundos depois de entrar na base
-let depoMod=null;const loadDepo=()=>depoMod||(depoMod=import('./deposition'));
+/* Partes carregadas à parte (depoimento, quadro). Depois de uma atualização do jogo, a página aberta ainda aponta para os
+   arquivos da versão anterior, que já não existem: a importação falha e a sala ficaria preta. Nesse caso a página
+   recarrega uma vez, já na versão nova; uma falha não fica guardada (a próxima tentativa importa de novo). */
+const lazyPart=imp=>{let p=null;return ()=>p||(p=imp().then(m=>{if(!m)throw new Error('parte vazia');safe(()=>sessionStorage.removeItem('base.reload'));return m;}).catch(e=>{p=null;throw e;}));};
+function partFailed(close,reopen){
+  close();
+  if(!safe(()=>sessionStorage.getItem('base.reload'),null)){safe(()=>{sessionStorage.setItem('base.reload','1');if(reopen)sessionStorage.setItem('base.reopen',reopen);});location.reload();return;}
+  toast('Base','Não deu para abrir agora. Verifique a conexão e tente de novo.');
+}
+const loadDepo=lazyPart(()=>import('./deposition'));
 function startDepo(id){
   if(talk)closeTalk();
   depoOpen=true;const host=$('#depo');host.hidden=false;document.body.classList.add('depo-on');
   // a base fica escondida atrás do depoimento: libera a memória das telas dela (no iPhone, faltar memória recarrega a página)
   cv.width=cv.height=1;lc.width=lc.height=1;
-  loadDepo().then(m=>m.openDeposition(host,id,()=>{host.hidden=true;depoOpen=false;document.body.classList.remove('depo-on');sizeCanvas();refreshCase();buildVisitors();last=performance.now();}));
+  const back=()=>{host.hidden=true;depoOpen=false;document.body.classList.remove('depo-on');sizeCanvas();refreshCase();buildVisitors();last=performance.now();};
+  loadDepo().then(m=>m.openDeposition(host,id,back),()=>partFailed(back,'depo:'+id));
 }
 // quadro do caso: React à parte, como o depoimento; a base pausa e libera a memória enquanto ele está aberto
-let boardMod=null;const loadBoard=()=>boardMod||(boardMod=import('./board'));
+const loadBoard=lazyPart(()=>import('./board'));
 function startBoard(){
   if(talk)closeTalk();
   depoOpen=true;const host=$('#board');host.hidden=false;document.body.classList.add('depo-on');
   cv.width=cv.height=1;lc.width=lc.height=1;
   const back=()=>{host.hidden=true;depoOpen=false;document.body.classList.remove('depo-on');sizeCanvas();refreshCase();buildVisitors();last=performance.now();};
-  loadBoard().then(m=>m.openBoard(host,{found:FOUND,onClose:back,onDeposition:id=>startDepo(id),onTeam:id=>goTalk('npc',id),onSummoned:()=>{refreshCase();}}));
+  loadBoard().then(m=>m.openBoard(host,{found:FOUND,onClose:back,onDeposition:id=>startDepo(id),onTeam:id=>goTalk('npc',id),onSummoned:()=>{refreshCase();}}),()=>partFailed(back,'board'));
 }
 const DLG={
   sonia:()=>teamTalk('sonia'),mauricio:()=>teamTalk('mauricio'),renata:()=>teamTalk('renata'),paulo:()=>teamTalk('paulo'),denise:()=>teamTalk('denise'),
@@ -1485,7 +1495,10 @@ addEventListener('resize',()=>applyLayout(false));
 newGame();initArt();buildTraffic();buildVisitors();applyLayout(true);cam.x=16*T;cam.y=15*TH;clampCam();
 setTimeout(()=>{framesHDFor(P1);for(const n of NPCS)framesHDFor(n);},300);
 $('#b-start').addEventListener('click',()=>{
-  $('#intro').hidden=true;started=true;setTimeout(loadDepo,4000);
+  $('#intro').hidden=true;started=true;setTimeout(()=>loadDepo().catch(()=>{}),4000);
+  // voltou de uma recarga feita para pegar a versão nova: reabre o que o jogador tinha pedido
+  const reopen=safe(()=>sessionStorage.getItem('base.reopen'),null);
+  if(reopen){safe(()=>sessionStorage.removeItem('base.reopen'));setTimeout(()=>reopen==='board'?startBoard():startDepo(reopen.slice(5)),500);}
   const e=bfs(ti(P1),i=>i===idx(16,15),walkPass);if(e>=0)P1.path=pathTo(e);
   setTimeout(()=>toast('Sônia Prado','Lemos, na minha sala. A equipe já está com o material da casa.',{img:'/sonia.jpg',col:'#c9a24a'}),1200);
 });
