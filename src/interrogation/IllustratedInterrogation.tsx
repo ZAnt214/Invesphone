@@ -92,7 +92,8 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
   /** Mensagem de encerramento, mostrada logo depois da última resposta. */
   const [farewell,setFarewell] = useState(false)
   /** Depoimento já encerrado que o jogador reabriu para fazer perguntas novas (material ou prova que chegou depois). */
-  const [retaking,setRetaking] = useState(false)
+  // quem volta a um depoimento encerrado porque há pergunta nova entra direto nas perguntas, não no arquivo
+  const [retaking,setRetaking] = useState(()=>progress.completed && pendingQuestions(config,progress,registeredClues,registeredMaterials).length>0)
   const [signing,setSigning] = useState(false)
   const [alert,setAlert] = useState<string|null>(null)
   const [tutorial,setTutorial] = useState(()=>!tutorialSeen())
@@ -308,6 +309,7 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
 
       <section className="ii-panel">
         <h3 className="ii-pad-title" aria-hidden="true">{config.name.split(' ')[0]} · perguntas</h3>
+        <button type="button" className="ii-pad-exit" onClick={onBack} disabled={busy}>Sair</button>
         <EmotionMeter name={config.name} expression={expression} pressure={progress.pressure ?? 0} stages={stagesOf(config)}/>
 
         <div className="ii-main">
