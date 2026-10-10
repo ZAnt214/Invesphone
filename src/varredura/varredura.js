@@ -2962,7 +2962,10 @@ initArt();buildAmbient();buildSeg7();buildRail();buildCrew();applyLayout(true);
 setTimeout(()=>{for(const a of S.crew)framesHDFor(a);bedOverlay(BODIES,GORE,true);},400);
 window.__acacias={S:()=>S,cam,ez,VW,VH,get ROT(){return ROT;},T,TH,discover,say,IML,FX,setGore,get LODV(){return LODV;},FLY,startFlyby,spawnCar,spawnCiv,giveOrder,CARBLK,get cmd(){return cmd;},showCoach,LANDED,HUDPAD};
 setTool(null);setSpeed(0);updateUI();
-$('#b-start').addEventListener('click',()=>{SND.init();SND.resume();$('#intro').hidden=true;setSpeed(1);msg('sonia','Maurício já está na casa e a PM segura a frente. Revise a cena antes de ouvir qualquer versão.');clearTimeout(coachTm);coachTm=setTimeout(showCoach,9000);});
+$('#b-start').addEventListener('click',()=>{SND.init();SND.resume();$('#intro').hidden=true;
+  // enquanto o jogador revisa a casa, o material do resto do caso vai baixando aos poucos (src/preload)
+  setTimeout(()=>import('../preload/prep').then(m=>m.background()).catch(()=>{}),8000);
+  setSpeed(1);msg('sonia','Maurício já está na casa e a PM segura a frente. Revise a cena antes de ouvir qualquer versão.');clearTimeout(coachTm);coachTm=setTimeout(showCoach,9000);});
 addEventListener('pointerdown',()=>SND.resume(),{passive:true});
 document.querySelectorAll('.tool,.speed button,.hbtn,#zoom button').forEach(b=>b.addEventListener('click',()=>SND.click()));
 $('#z-in').addEventListener('click',()=>zoomTo(cam.z*1.6,VW()/2,VH()/2));

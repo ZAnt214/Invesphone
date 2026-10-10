@@ -116,6 +116,11 @@ export const VICTIMS=[['ricardo','Ricardo'],['helena','Helena']] as const
  *  O original oficial continua sendo o que abre no visualizador. */
 export const thumb=(src:string)=>/^\/(evidence\/case01\/new|characters)\/.+\.jpg$/.test(src)?'/thumbs'+src:src
 export const portrait=(id:string)=>id==='ricardo'||id==='helena'?`/characters/${id}/portrait.jpg`:`/characters/${id}/expressions/neutral.jpg`
+/** Entrada do quadro: Lemos de costas (versão leve da arte oficial public/characters/lemos/back.png) e a parede do fundo. */
+export const LEMOS_BACK:string|null='/thumbs/characters/lemos/back.webp'
+export const WALL_IMGS=['/evidence/case01/new/croqui_rua.jpg','/evidence/case01/new/capa_inquerito.jpg','/evidence/case01/new/termo_depoimento_modelo.jpg',
+  '/evidence/case01/new/comodos/comodo_02_sala.jpg','/evidence/case01/new/comodos/comodo_05_corredor.jpg','/evidence/case01/new/comodos/comodo_03_cozinha.jpg',
+  '/evidence/case01/new/comodos/comodo_01_entrada.jpg','/evidence/case01/new/croqui_residencia.jpg'].map(thumb)
 export const personOf=(id:string)=>casePeople.find(p=>p.id===id)
 export const clueOf=(id:string)=>caseClues.find(c=>c.id===id)
 export const titleOf=(id:string)=>SHORT[id]??clueOf(id)?.title??id

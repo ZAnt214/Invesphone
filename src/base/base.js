@@ -785,6 +785,8 @@ function callOpts(ids){
 const VFR={};let VIS=[],INTERRO_NEWS=false;
 function buildVisitors(){
   const all=depoPeople(CASE),wait=all.filter(p=>p.state==='ouvir');INTERRO_NEWS=all.some(p=>p.state==='ouvir'||p.state==='retomar');
+  // quem está esperando para depor passa na frente da fila de download
+  if(started)loadPrep().then(m=>m.prioritize(all.filter(p=>p.state==='ouvir'||p.state==='retomar').map(p=>p.id))).catch(()=>{});
   const seats=[[5,11.45,1],[18,15,1],[19,15,1],[20,15,-1],[17,16,1]];
   VIS=wait.slice(0,seats.length).map((p,k)=>{const v=VFR[p.id]||(VFR[p.id]={id:p.id,name:p.first,look:LOOK[p.id]||LOOK.lemos,walk:0,moving:false});return Object.assign(v,{x:seats[k][0],y:seats[k][1],dir:seats[k][2]});});
 }
@@ -810,8 +812,20 @@ function startDepo(id){
 }
 // quadro do caso: React à parte, como o depoimento; a base pausa e libera a memória enquanto ele está aberto
 const loadBoard=lazyPart(()=>import('./board'));
-// a primeira abertura do quadro não espera a rede: com a base parada, já baixa o código e as imagens dele
-function prefetchBoard(){const go=()=>loadBoard().then(m=>m.preloadBoard()).catch(()=>{});if(window.requestIdleCallback)requestIdleCallback(go,{timeout:6000});else setTimeout(go,3000);}
+// carregamento em duas fases: o essencial do momento do caso antes de entrar (com barra no cartão de abertura)
+// e o resto aos poucos enquanto o jogador anda pela base (src/preload)
+const loadPrep=lazyPart(()=>import('../preload/prep'));
+function prepIntro(){
+  const btn=$('#b-start'),box=$('#b-prep'),fill=box.querySelector('b'),label=box.querySelector('span'),txt=btn.textContent;
+  let ready=false;
+  const finish=()=>{if(ready)return;ready=true;clearTimeout(slow);clearTimeout(giveUp);btn.disabled=false;btn.textContent=txt;box.hidden=true;};
+  // se já está tudo no aparelho, termina antes de a barra aparecer
+  const slow=setTimeout(()=>{if(!ready){box.hidden=false;btn.disabled=true;btn.textContent='Preparando o caso…';}},350);
+  const giveUp=setTimeout(finish,12000);
+  const prog=(d,t)=>{const k=t?d/t:1;fill.style.width=Math.round(k*100)+'%';label.textContent=`Baixando o material do caso · ${Math.round(k*100)}%`;};
+  Promise.all([loadPrep().then(m=>m.prepare(prog)),loadBoard(),loadDepo()]).then(finish,finish);
+}
+prepIntro();
 function startBoard(){
   if(talk)closeTalk();
   depoOpen=true;const host=$('#board');host.hidden=false;document.body.classList.add('depo-on');
@@ -1583,7 +1597,7 @@ addEventListener('resize',()=>applyLayout(false));
 newGame();initArt();buildTraffic();buildVisitors();applyLayout(true);cam.x=16*T;cam.y=15*TH;clampCam();
 setTimeout(()=>{framesHDFor(P1);for(const n of NPCS)framesHDFor(n);},300);
 $('#b-start').addEventListener('click',()=>{
-  $('#intro').hidden=true;started=true;setTimeout(()=>loadDepo().catch(()=>{}),4000);setTimeout(prefetchBoard,2500);
+  $('#intro').hidden=true;started=true;setTimeout(()=>loadDepo().catch(()=>{}),4000);setTimeout(()=>loadPrep().then(m=>m.background()).catch(()=>{}),3000);
   // voltou de uma recarga feita para pegar a versão nova: reabre o que o jogador tinha pedido
   const reopen=safe(()=>sessionStorage.getItem('base.reopen'),null);
   if(reopen){safe(()=>sessionStorage.removeItem('base.reopen'));setTimeout(()=>reopen==='board'?startBoard():startDepo(reopen.slice(5)),500);}
