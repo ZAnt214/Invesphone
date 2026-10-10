@@ -62,7 +62,7 @@ export const liviaInterrogation:InterrogationConfig = {
       question:'Tinha algum sinal de arrombamento?',
       answer:'Eu não reparei nisso. Eu só vi a casa daquele jeito e achei que alguém tinha entrado.',
       expression:'defensive',
-      unlocks:['alarm_code','confront_door','show_lock'],
+      unlocks:['alarm_code','confront_door','show_lock','thor_routine'],
       highlights:[{ phrase:'Eu não reparei nisso', clue:'porta_intacta' }]
     },
     {
@@ -116,7 +116,23 @@ export const liviaInterrogation:InterrogationConfig = {
       question:'Você disse que nunca passou o código. Como o Caio saberia?',
       answer:'Ele… ele me viu digitando uma vez, no portão. Eu nunca falei o número pra ele.',
       expression:'lying',
+      unlocks:['confront_preparation'],
       highlights:[{ phrase:'me viu digitando', clue:'caio_viu_digitando' }]
+    },
+    {
+      id:'thor_routine',
+      requiresClue:'cao_canil',
+      question:'Thor costumava passar a noite preso no canil?',
+      answer:'Não. Normalmente ele ficava solto. Quando o Caio vinha e o Thor ficava agitado, eu prendia ele às vezes.',
+      expression:'nervous',
+      highlights:[{ phrase:'eu prendia ele às vezes', clue:'livia_thor_caio' }]
+    },
+    {
+      id:'confront_preparation',
+      requiresClue:'plano_preparado_antes',
+      question:'Téo diz que Caio chegou já sabendo o código, que Thor estaria preso e onde procurar o dinheiro. Como ele teria esse conjunto de informações?',
+      answer:'Eu não sei. O Caio conhecia a casa. Eu nunca montei plano nenhum com ele.',
+      expression:'shaken'
     },
     {
       id:'confront_family',
