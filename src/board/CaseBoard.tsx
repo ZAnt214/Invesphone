@@ -37,6 +37,24 @@ const ENDINGS={A:['Caso Encerrado','O relatório separa quem entrou na casa de q
   B:['Meia Justiça','Os executores estão no relatório. O papel de quem preparou a noite ficou de fora.','“Você fechou quem entrou na casa. Não necessariamente quem colocou os dois lá.” · Sônia'],
   C:['Arquivado','O relatório não sustenta a acusação contra quem foi apontado.','Sem uma cadeia coerente de provas, o caso perde força.']} as const
 const ROT=[-2,1.5,-1,2,-1.5,1,-.5,1.2]
+/** Arte oficial do Lemos de costas (pedido em creative-requests/inbox/2026-10-10-lemos-de-costas-quadro.md).
+    Enquanto não chega, a entrada usa a silhueta em contraluz abaixo. */
+const LEMOS_BACK:string|null=null
+const CINE_FULL=2900, CINE_SHORT=900
+/** Silhueta temporária do Lemos de costas, só sombra contra a luz do quadro (sem desenhar o personagem). */
+function LemosSilhouette(){
+  return <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+    <defs><linearGradient id="cb-rim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ffcf8a" stopOpacity=".55"/><stop offset=".35" stopColor="#ffcf8a" stopOpacity=".08"/><stop offset="1" stopColor="#ffcf8a" stopOpacity="0"/></linearGradient></defs>
+    <g fill="#07080a">
+      <path d="M0 500 L0 392 C 18 338 88 306 150 296 C 166 284 171 266 173 246 L227 246 C 229 266 234 284 250 296 C 312 306 382 338 400 392 L400 500 Z"/>
+      <ellipse cx="200" cy="168" rx="64" ry="80"/><ellipse cx="137" cy="178" rx="11" ry="20"/><ellipse cx="263" cy="178" rx="11" ry="20"/>
+    </g>
+    <g fill="none" stroke="url(#cb-rim)" strokeWidth="3">
+      <path d="M0 392 C 18 338 88 306 150 296 C 166 284 171 266 173 246"/><path d="M227 246 C 229 266 234 284 250 296 C 312 306 382 338 400 392"/>
+      <ellipse cx="200" cy="168" rx="64" ry="80"/>
+    </g>
+  </svg>
+}
 
 export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}:Props){
   const [g,setG]=useState<CaseSave>(()=>advanceTask(readCase()))
@@ -58,7 +76,15 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}
   const [stage,setStage]=useState(current)
   const CH=CHAPTERS[stage-1]
   const [intro,setIntro]=useState(()=>current>(b.stage??0)?current:0)
-  useEffect(()=>{if(current>(b.stage??0))saveBoard(()=>({stage:current}));if(intro){const t=window.setTimeout(()=>setIntro(0),3000);return ()=>window.clearTimeout(t)}},[])
+  /* entrada de cinema: a câmera passa por trás do Lemos, que olha o quadro, e chega até a cortiça.
+     Inteira na primeira vez da sessão; nas outras, só a aproximação. Um toque pula. */
+  const [cine,setCine]=useState<'full'|'short'|null>(()=>{
+    if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return null
+    let seen=false;try{seen=sessionStorage.getItem('board.cine')==='1';sessionStorage.setItem('board.cine','1')}catch{/* sem armazenamento */}
+    return seen?'short':'full'})
+  useEffect(()=>{if(!cine)return;const t=window.setTimeout(()=>setCine(null),cine==='full'?CINE_FULL:CINE_SHORT);return ()=>window.clearTimeout(t)},[cine])
+  useEffect(()=>{if(current>(b.stage??0))saveBoard(()=>({stage:current}))},[])
+  useEffect(()=>{if(!intro||cine)return;const t=window.setTimeout(()=>setIntro(0),3000);return ()=>window.clearTimeout(t)},[cine])
 
   const [sel,setSel]=useState<Sel>(null)
   const [viewer,setViewer]=useState<{img:string;t:string;d:string}|null>(null)
@@ -282,7 +308,9 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}
     </div>}
   </aside>
 
-  return <div ref={root} className={'cb'+(vert?' vert':'')+(zoomed?' zoomed':'')}>
+  const cineStyle={'--ox':`${area.x+area.w/2}px`,'--oy':`${area.y+area.h/2}px`} as React.CSSProperties
+  return <div ref={root} className={'cb'+(vert?' vert':'')+(zoomed?' zoomed':'')+(cine?' cine cine-'+cine:'')} style={cineStyle}>
+    {cine==='full'&&<div className="cb-room" aria-hidden="true"/>}
     <div className="cb-pan" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onWheel={onWheel} onClickCapture={onClickCapture}>
       <div className={'cb-world'+(glide?' glide':'')} style={{width:W,height:H,transform:`translate(${cam.x}px,${cam.y}px) scale(${cam.s})`}}>
         <canvas ref={cork} className="cb-cork" style={{width:W,height:H}}/>
@@ -302,7 +330,12 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}
       <button className="cb-chip cb-x" aria-label="Fechar o quadro" onClick={onClose}>×</button>
     </div>
     {toast&&<div className="cb-toast">{toast}</div>}
-    {intro>0&&<button className="cb-chapter" onClick={()=>setIntro(0)}><small>Capítulo {intro}</small><b>{chapters[intro-1].title}</b><p>{chapters[intro-1].summary}</p><em>{CHAPTERS[intro-1].q}</em></button>}
+    {cine==='full'&&<button className="cb-cine" aria-label="Pular" onClick={()=>setCine(null)}>
+      <span className="cb-lamp"/>
+      <span className="cb-lemos">{LEMOS_BACK?<img src={LEMOS_BACK} alt=""/>:<LemosSilhouette/>}</span>
+      <i className="cb-bar t"/><i className="cb-bar b"/>
+    </button>}
+    {intro>0&&!cine&&<button className="cb-chapter" onClick={()=>setIntro(0)}><small>Capítulo {intro}</small><b>{chapters[intro-1].title}</b><p>{chapters[intro-1].summary}</p><em>{CHAPTERS[intro-1].q}</em></button>}
     {viewer&&<div className="cb-viewer" onClick={()=>setViewer(null)}><img src={viewer.img} alt=""/><div><b>{viewer.t}</b><p>{viewer.d}</p></div></div>}
     {confirm&&<div className="cb-end"><div className="cb-card"><small>Relatório de acusação</small><h3>Protocolar agora?</h3><p>Depois de protocolado, o relatório encerra sua participação operacional no caso.</p>
       <div className="cb-row"><button onClick={()=>setConfirm(false)}>Revisar</button><button className="cb-gold" onClick={protocol}>Protocolar relatório</button></div></div></div>}
