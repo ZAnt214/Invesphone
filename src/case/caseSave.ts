@@ -33,7 +33,7 @@ export function advanceTask<G extends TeamGame>(g:G):G{
   if(next===2&&heardInitial>=4)next=3
   if(next===3&&g.clues.includes('log_alarme'))next=4
   if(next===4&&g.clues.includes('nota_motel'))next=5
-  if(next===5&&g.clues.includes('extrato_ricardo')&&g.clues.includes('carta_cobranca'))next=6
+  if(next===5&&g.clues.includes('ameaca_heranca')&&g.clues.includes('extrato_ricardo')&&g.clues.includes('carta_cobranca'))next=6
   if(next===6&&g.clues.includes('cinta_bancaria')&&(g.discoveredPeople??[]).includes('teo'))next=7
   if(next===7&&g.clues.includes('confissao_teo'))next=8
   return next===g.task?g:{...g,task:next}
