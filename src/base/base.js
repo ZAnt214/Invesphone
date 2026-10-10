@@ -96,9 +96,10 @@ function buildMap(){
   // perícia
   add('stool',25,3,1,1,{nocc:true});add('bench',24,4,4,1);add('lightbox',28,6,3,1,{hot:'fotos'});add('locker',30,2,1,1);add('locker',31,2,1,1);add('bagtable',24,6,2,1);add('plant',23,7,1,1);
   // recepção
-  add('chair',14,11,1,1,{nocc:true});add('counter',12,12,5,1);add('wetsign',20,14,1,1);add('sofa',18,15,3,1);add('cooler',21,11,1,1);add('plant',11,16,1,1,{v:'tall'});add('plant',21,16,1,1,{v:'tall'});add('plant',13,15,1,1);
+  add('chair',14,11,1,1,{nocc:true});add('counter',12,12,5,1);add('wetsign',20,14,1,1);add('sofa',18,15,3,1);add('espera',17,16,1,1);add('cooler',21,11,1,1);add('plant',11,16,1,1,{v:'tall'});add('plant',21,16,1,1,{v:'tall'});add('plant',13,15,1,1);
   // sala de depoimentos
-  add('metalchair',3,13,1,1);add('metalchair',7,13,1,1);add('itable',4,12,3,2,{hot:'interro'});add('filing',2,15,1,1);
+  // o depoente fica atrás da mesa, de frente para a câmera; a cadeira de quem pergunta fica do lado de cá, de costas
+  add('metalchair',5,11,1,1,{v:'front'});add('itable',4,12,3,2,{hot:'interro'});add('metalchair',5,14,1,1,{v:'back'});add('filing',2,15,1,1);
   // arquivo
   add('shelf',24,11,3,1,{v:'arq'});add('shelf',28,11,3,1,{v:'arq'});add('shelf',24,14,3,1,{v:'arq'});add('shelf',28,14,3,1,{v:'arq',hot:'arquivo'});add('boxes',23,16,1,1);add('boxes',30,16,1,1);add('boxes',31,16,1,1);
   // pátio
@@ -213,10 +214,20 @@ const FACT={
   stool(){return [4,(P,E,g,t,fw,fh,B)=>{E(16,10,9,3,'#2b2f36');E(16,9,9,3,'#454b54');P(15,12,2,10,'#8a9298');E(16,23,8,2,'#5a6268');}];},
   // cadeira de visita, de costas para a câmera (virada para a mesa): o encosto fica na frente e o assento só aparece dos lados
   cadeira(){return [8,(P,E,g,t,fw,fh,B)=>{P(8,4,4,3,'#2a1812');P(20,4,4,3,'#2a1812');P(4,8,24,5,'#5a4030');P(4,8,24,1,'#7a5848');P(6,0,20,20,'#3e2c22');P(6,0,20,2,'#5e4434');P(7,2,1,17,'#4e382c');P(24,2,1,17,'#2e2018');P(9,4,14,12,'#36261c');P(9,4,14,1,'#2a1c14');P(6,20,2,8,'#2a1812');P(24,20,2,8,'#2a1812');P(6,27,2,1,'#1a0e08');P(24,27,2,1,'#1a0e08');}];},
-  // cadeira de metal de perfil, virada para a mesa do depoimento
-  metalchair(o){const right=o.x<5;return [8,(P,E,g,t,fw,fh,B)=>{const R=(x,y,w,h,c)=>P(right?x:fw-x-w,y,w,h,c);
-    R(8,0,3,18,'#8a9298');R(8,0,1,18,'#a9b1b6');R(9,2,2,12,'#6a7076');
-    R(8,14,18,4,'#7d858b');R(8,14,18,1,'#a9b1b6');R(8,18,2,10,'#6a7076');R(24,18,2,10,'#6a7076');R(12,18,2,9,'#5a6066');R(20,18,2,9,'#5a6066');}];},
+  // cadeiras de metal do depoimento: a do depoente, atrás da mesa, vista de frente (encosto atrás do assento);
+  // a de quem pergunta, do lado da câmera, vista de costas (o encosto tampa o assento, que só aparece dos lados)
+  metalchair(o){return [8,(P,E,g,t,fw,fh,B)=>{
+    if(o.v==='front'){
+      P(9,0,2,15,'#8a9298');P(21,0,2,15,'#8a9298');P(9,0,1,15,'#a9b1b6');P(10,1,12,8,'#7d858b');P(10,1,12,1,'#a9b1b6');P(10,8,12,1,'#5a6066');
+      P(10,19,2,6,'#4a5056');P(20,19,2,6,'#4a5056');
+      P(7,14,18,5,'#7d858b');P(7,14,18,1,'#a9b1b6');P(7,18,18,1,'#5a6066');P(7,19,2,B-19,'#6a7076');P(23,19,2,B-19,'#6a7076');
+    }else{
+      P(6,10,20,4,'#7d858b');P(6,10,20,1,'#a9b1b6');P(7,14,2,9,'#4a5056');P(23,14,2,9,'#4a5056');
+      P(8,0,2,B,'#8a9298');P(22,0,2,B,'#6a7076');P(8,0,1,B,'#a9b1b6');P(10,1,12,10,'#6a7076');P(10,1,12,1,'#8a9298');P(10,10,12,1,'#4a5056');
+    }
+  }];},
+  // cadeira de espera da recepção, de frente, no estofado do sofá
+  espera(){return [10,(P,E,g,t,fw,fh,B)=>{P(7,0,18,14,'#33414f');P(7,0,18,2,'#4a5d72');P(6,13,20,8,'#485b72');P(6,13,20,2,'#6a82a0');P(5,6,3,15,'#2b3644');P(24,6,3,15,'#2b3644');P(7,21,2,B-21,'#14181d');P(23,21,2,B-21,'#14181d');}];},
   shelf(o){const arq=o.v==='arq';return [arq?40:36,(P,E,g,t,fw,fh,B)=>{
     const rnd=mulberry32(o.x*31+o.y*17+fw);
     if(arq){
@@ -252,15 +263,19 @@ const FACT={
   }];},
   xerox(){return [26,(P,E,g,t,fw,fh,B)=>{P(1,4,30,B-4,'#d3cfc4');P(1,4,30,7,'#b9b5aa');P(1,4,30,1,'#e6e2d8');P(19,6,10,4,'#5a6670');P(20,7,2,1,'#7fe0a0');P(23,7,2,1,'#f2c230');P(3,13,14,3,'#ffffff');P(3,16,14,1,'#c9c5ba');P(1,20,30,1,'#a39f94');P(1,29,30,1,'#a39f94');P(14,23,6,2,'#6a665c');P(14,32,6,2,'#6a665c');P(1,B-3,30,3,'#5a574f');}];},
   board(o){return [44,(P,E,g,t,fw,fh,B)=>{
-    P(6,B-14,3,14,'#5a4630');P(fw-9,B-14,3,14,'#5a4630');P(4,B-2,7,2,'#3a2a1c');P(fw-11,B-2,7,2,'#3a2a1c');
-    P(0,2,fw,B-14,'#5a3c24');P(0,2,fw,2,'#7a5434');P(3,5,fw-6,B-20,'#b0814f');
-    for(let k=0;k<70;k++)P(4+Math.floor(hash(k,1,o.x)*(fw-8)),6+Math.floor(hash(k,2,o.x)*(B-22)),1,1,hash(k,3,o.x)<0.5?'#9a6e3e':'#c4945e');
-    P(6,7,22,6,'#f6efc9');P(7,9,18,1,'#7a6a4a');P(fw-30,8,24,16,'#e8e4da');for(let k=0;k<4;k++)P(fw-28,10+k*3,20,1,['#9cc0d8','#c9a24a','#9cc0d8','#7aa86a'][k]);
-    const ph=[[8,16,'#6f8aa0'],[26,14,'#a0856f'],[44,17,'#7a8f6e'],[60,15,'#9a7a8a'],[78,19,'#8a8f96'],[18,30,'#8a7a6a'],[52,30,'#6a7a8a']];
+    // quadro de cortiça em cavalete com rodinhas, em pé e de frente para a câmera
+    for(const x of [2,fw-5]){P(x,0,3,B-3,'#4a3a2a');P(x,0,1,B-3,'#6a5640');P(x-1,-1,5,2,'#2e241a');}
+    P(0,B-5,8,2,'#2e241a');P(fw-8,B-5,8,2,'#2e241a');for(const x of [0,6,fw-8,fw-2])P(x,B-3,2,3,'#111');
+    P(4,B-12,fw-8,2,'#4a3a2a');
+    P(5,2,fw-10,B-20,'#5a3c24');P(5,2,fw-10,2,'#7a5434');P(8,5,fw-16,B-26,'#b0814f');
+    P(6,B-18,fw-12,2,'#7a8086');P(6,B-18,fw-12,1,'#a2a9ae');P(20,B-19,8,1,'#c0392b');P(30,B-19,8,1,'#2f5a8a');
+    for(let k=0;k<70;k++)P(9+Math.floor(hash(k,1,o.x)*(fw-18)),6+Math.floor(hash(k,2,o.x)*(B-28)),1,1,hash(k,3,o.x)<0.5?'#9a6e3e':'#c4945e');
+    P(10,7,22,6,'#f6efc9');P(11,9,18,1,'#7a6a4a');P(fw-34,8,24,16,'#e8e4da');for(let k=0;k<4;k++)P(fw-32,10+k*3,20,1,['#9cc0d8','#c9a24a','#9cc0d8','#7aa86a'][k]);
+    const ph=[[11,16,'#6f8aa0'],[27,14,'#a0856f'],[44,17,'#7a8f6e'],[59,15,'#9a7a8a'],[73,26,'#8a8f96'],[18,30,'#8a7a6a'],[52,30,'#6a7a8a']];
     const pins=[];
     ph.forEach(([x,y,c],k)=>{if(x>fw-14)return;P(x,y,13,15,'#f1ece0');P(x+1,y+1,11,10,c);P(x+1,y+1,11,3,lt(c,.2));P(x+3,y+12,7,1,'#777');const red=k<FOUND.length;P(x+5,y-1,3,3,red?'#d6382c':'#3b6aa8');pins.push([x+6,y]);});
     g.strokeStyle='#c0392b';g.lineWidth=1;g.beginPath();pins.slice(0,Math.max(2,FOUND.length)).forEach(([x,y],k)=>k?g.lineTo(x+.5,y+.5):g.moveTo(x+.5,y+.5));g.stroke();
-    P(34,B-26,16,8,'#f6efc9');P(36,B-24,12,1,'#777');P(36,B-21,8,1,'#777');
+    P(34,B-29,16,8,'#f6efc9');P(36,B-27,12,1,'#777');P(36,B-24,8,1,'#777');
   }];},
   bench(o){return [26,(P,E,g,t,fw,fh,B)=>{
     const ty=t;
@@ -273,7 +288,8 @@ const FACT={
     P(64,ty-6,18,6,'#e9e4d0');P(64,ty-6,18,1,'#ffffff');P(66,ty-4,8,1,'#999');P(84,ty-8,12,8,'#c4a06c');P(84,ty-8,12,1,'#d8bd8a');P(87,ty-6,6,3,'#f1ece0');
     // tampo de aço e armários
     P(0,ty,fw,7,'#b5bec3');P(0,ty,fw,1,'#dfe6ea');P(0,ty+6,fw,1,'#7d868c');
-    P(0,ty+7,fw,B-ty-7,'#6a757c');for(let x=2;x<fw-2;x+=31){P(x,ty+9,29,B-ty-12,'#5a646b');P(x,ty+9,29,1,'#7d878e');P(x+12,ty+13,6,1,'#c9ccce');}
+    // lado da câmera: as costas da bancada (as gavetas ficam do lado do perito)
+    P(0,ty+7,fw,B-ty-7,'#6a757c');P(0,ty+7,fw,1,'#4e575d');for(let x=31;x<fw-2;x+=31)P(x,ty+8,1,B-ty-10,'#5a646b');P(0,B-5,fw,1,'#5a646b');
     P(0,B-2,fw,2,'#3a4248');
   }];},
   lightbox(o){return [22,(P,E,g,t,fw,fh,B)=>{
@@ -731,7 +747,7 @@ function callOpts(ids){
 const VFR={};let VIS=[],INTERRO_NEWS=false;
 function buildVisitors(){
   const all=depoPeople(CASE),wait=all.filter(p=>p.state==='ouvir');INTERRO_NEWS=all.some(p=>p.state==='ouvir'||p.state==='retomar');
-  const seats=[[7,13,-1],[18,15,1],[19,15,1],[20,15,-1],[17,16,1]];
+  const seats=[[5,11.45,1],[18,15,1],[19,15,1],[20,15,-1],[17,16,1]];
   VIS=wait.slice(0,seats.length).map((p,k)=>{const v=VFR[p.id]||(VFR[p.id]={id:p.id,name:p.first,look:LOOK[p.id]||LOOK.lemos,walk:0,moving:false});return Object.assign(v,{x:seats[k][0],y:seats[k][1],dir:seats[k][2]});});
 }
 let depoOpen=false;
@@ -1351,7 +1367,7 @@ function render(){
   const R=k=>ROWS[clamp(k,0,H-1)];
   for(const n of NPCS){n._sit=!!n.sit&&!n.moving&&isSeat(n);n._k=n.k;R(Math.round(n.y)).p.push(n);}
   P1._sit=false;P1._k=9;R(Math.round(P1.y)).p.push(P1);
-  VIS.forEach((v,k)=>{v._sit=true;v._k=20+k;R(v.y).p.push(v);});
+  VIS.forEach((v,k)=>{v._sit=true;v._k=20+k;R(Math.round(v.y)).p.push(v);});
   for(const c of CARS)R(Math.floor(c.y/TH)).x.push(c);
   for(const b of PIGEONS)R(Math.floor(b.y/TH)).x.push(b);
   const y0=Math.max(0,Math.floor(-oy/s/TH)-4),y1=Math.min(H-1,Math.ceil((cv.height-oy)/s/TH)+4);
@@ -1376,7 +1392,7 @@ function render(){
   SPR();smokePass();glowPass();post2d();
   // camada legível: sinais, falas, nomes
   for(const n of NPCS)if(hasNews(n.id)&&!(talk&&talk.id===n.id))atUI(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?64:60),()=>drawMarker(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?64:60)));
-  for(const o of objs)if(o.hot&&o.spr&&!o.nomark&&!talkOpen&&(o.hot==='interro'?hasNews('interro'):!SEEN[o.hot])){const sp=o.spr;drawMarker(o.x*T+o.w*T/2,sp.y-6);}
+  for(const o of objs)if(o.hot&&o.spr&&!o.nomark&&!talkOpen&&(o.hot==='interro'?hasNews('interro'):!SEEN[o.hot])){const sp=o.spr;drawMarker(o.x*T+o.w*T/2,o.hot==='interro'?sp.y-36:sp.y-6);}
   for(const n of NPCS)if(n.say&&!talkOpen){const al=Math.min(1,(n.say.life-n.say.t)/20,n.say.t/6);drawSay(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?70:74),n.say.txt,al);}
   drawNames();drawRoomLabels();
 }
