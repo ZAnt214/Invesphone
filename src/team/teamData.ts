@@ -75,10 +75,11 @@ export const teamDialogues:TeamDialogue[] = [
     agent:{time:'05:35',text:'Então não pergunta mais se o álibi existe. Pergunta o que aconteceu dentro dessa janela. E fala com eles separados de novo.'}
   },
   {
-    id:'sonia_papeis',memberId:'sonia',label:'Acho que não foi todo mundo com o mesmo papel.',
-    requiresClues:['cinta_bancaria','confissao_teo'],
-    user:{time:'06:42',text:'A participação está ficando clara, mas não acho que todo mundo entrou nisso do mesmo jeito.'},
-    agent:{time:'06:43',text:'É aí que você fecha o caso de verdade. Quem planejou, quem abriu caminho, quem entrou e quem recebeu. Não mistura participação com função.'}
+    id:'sonia_papeis',memberId:'sonia',label:'As peças já permitem separar os papéis.',
+    requiresClues:['teo_entrou_com_caio','caio_digitou_alarme','plano_preparado_antes'],
+    user:{time:'06:42',text:'Téo colocou ele e o Caio dentro da casa, e diz que o acesso já estava preparado antes. Quero separar presença de preparação.'},
+    agent:{time:'06:43',text:'Então não espera uma confissão te dar a resposta. Separa o que coloca alguém dentro da casa do que mostra quem tinha motivo e informação para preparar a entrada. Depois volta a cada um com isso.'},
+    callPeople:['livia','caio','teo']
   },
 
   {
