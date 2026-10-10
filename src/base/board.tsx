@@ -16,10 +16,10 @@ export function prewarm(){
   })()
 }
 
-export function openBoard(host:HTMLElement,o:{found:string[];onClose:()=>void;onDeposition:(id:string)=>void;onTeam:(id:string)=>void;onSummoned:(id:string)=>void}){
+export function openBoard(host:HTMLElement,o:{found:string[];onShown?:()=>void;onClose:()=>void;onDeposition:(id:string)=>void;onTeam:(id:string)=>void;onSummoned:(id:string)=>void}){
   if(root)root.unmount()
   const r=root=createRoot(host)
   const close=(then?:()=>void)=>{r.unmount();if(root===r)root=null;o.onClose();then?.()}
   void prewarm()
-  r.render(<CaseBoard found={o.found} onClose={()=>close()} onDeposition={id=>close(()=>o.onDeposition(id))} onTeam={id=>close(()=>o.onTeam(id))} onSummoned={o.onSummoned}/>)
+  r.render(<CaseBoard found={o.found} onShown={o.onShown} onClose={()=>close()} onDeposition={id=>close(()=>o.onDeposition(id))} onTeam={id=>close(()=>o.onTeam(id))} onSummoned={o.onSummoned}/>)
 }

@@ -829,10 +829,11 @@ function prepIntro(){
 prepIntro();
 function startBoard(){
   if(talk)closeTalk();
-  depoOpen=true;const host=$('#board');host.hidden=false;document.body.classList.add('depo-on');
-  cv.width=cv.height=1;lc.width=lc.height=1;
-  const back=()=>{host.hidden=true;depoOpen=false;document.body.classList.remove('depo-on');sizeCanvas();refreshCase();buildVisitors();last=performance.now();};
-  loadBoard().then(m=>m.openBoard(host,{found:FOUND,onClose:back,onDeposition:id=>startDepo(id),onTeam:id=>goTalk('npc',id),onSummoned:()=>{refreshCase();}}),()=>partFailed(back,'board'));
+  // a base continua na tela (parada) até o quadro pintar o primeiro quadro da entrada: nunca aparece tela preta no meio
+  depoOpen=true;const host=$('#board');host.style.opacity='0';host.hidden=false;
+  const shown=()=>{host.style.opacity='';document.body.classList.add('depo-on');cv.width=cv.height=1;lc.width=lc.height=1;};
+  const back=()=>{host.hidden=true;host.style.opacity='';depoOpen=false;document.body.classList.remove('depo-on');sizeCanvas();refreshCase();buildVisitors();last=performance.now();};
+  loadBoard().then(m=>m.openBoard(host,{found:FOUND,onShown:shown,onClose:back,onDeposition:id=>startDepo(id),onTeam:id=>goTalk('npc',id),onSummoned:()=>{refreshCase();}}),()=>partFailed(back,'board'));
 }
 const DLG={
   sonia:()=>teamTalk('sonia'),mauricio:()=>teamTalk('mauricio'),renata:()=>teamTalk('renata'),paulo:()=>teamTalk('paulo'),denise:()=>teamTalk('denise'),

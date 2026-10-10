@@ -202,7 +202,7 @@
 .cb.cine .cb-pan{transform-origin:var(--ox) var(--oy)}
 .cb.cine-full .cb-pan{animation:cb-dolly 4.6s linear both}
 .cb.cine-short .cb-pan{animation:cb-dolly-s .9s cubic-bezier(.3,.7,.2,1) both}
-@keyframes cb-dolly{0%{transform:scale(.3);filter:blur(1.4px) brightness(.15)}
+@keyframes cb-dolly{0%{transform:scale(.3);filter:blur(1.4px) brightness(.75)}
   12%{transform:scale(.3);filter:blur(1.4px) brightness(.75)}14%{filter:blur(1.4px) brightness(.3)}16%{filter:blur(1.4px) brightness(.8)}
   24%{transform:scale(.3);filter:blur(1.4px) brightness(.9);animation-timing-function:cubic-bezier(.45,0,.2,1)}
   100%{transform:none;filter:none}}
@@ -239,7 +239,7 @@
   animation:cb-grain .5s steps(4) infinite,cb-room 4.6s ease both}
 @keyframes cb-grain{0%{transform:translate(0,0)}25%{transform:translate(-5%,3%)}50%{transform:translate(4%,-4%)}75%{transform:translate(-3%,-2%)}100%{transform:translate(2%,4%)}}
 .cb-vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 80% at var(--ox) 45%,rgba(0,0,0,0) 40%,rgba(0,0,0,.7));animation:cb-vigflick 4.6s ease both}
-@keyframes cb-vigflick{0%{opacity:1}12%{opacity:.6}14%{opacity:1}16%{opacity:.7}22%{opacity:.55}80%{opacity:.6}100%{opacity:0}}
+@keyframes cb-vigflick{0%{opacity:.6}12%{opacity:.6}14%{opacity:1}16%{opacity:.7}22%{opacity:.55}80%{opacity:.6}100%{opacity:0}}
 @media (prefers-reduced-motion:reduce){.cb-window,.cb-grain,.cb-wbeam,.cb-bulb{animation:none}}
 
 /* luminária acima do quadro (coordenadas do quadro: a cortiça do capítulo tem 562×390) */
@@ -250,4 +250,4 @@
 .cb-wbeam{position:absolute;left:-390px;top:30px;width:780px;height:600px;clip-path:polygon(46% 0,54% 0,100% 100%,0 100%);
   background:linear-gradient(180deg,rgba(255,220,160,.42),rgba(255,214,150,.16) 55%,rgba(255,214,150,.03));animation:cb-lamp 4.6s ease both}
 .cb-wbeam .cb-dust{position:absolute;inset:0;width:100%;height:100%}
-@keyframes cb-lamp{0%{opacity:0}12%{opacity:1}14%{opacity:.25}16%{opacity:1}75%{opacity:.85}100%{opacity:0}}
+@keyframes cb-lamp{0%{opacity:1}12%{opacity:1}14%{opacity:.25}16%{opacity:1}75%{opacity:.85}100%{opacity:0}}

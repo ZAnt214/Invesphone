@@ -25,6 +25,8 @@ type Props = {
   onTeam?:(id:string)=>void
   /** alguém foi chamado: a base põe a pessoa na recepção */
   onSummoned?:(id:string)=>void
+  /** o primeiro quadro já foi pintado (quem abriu pode tirar a cena de baixo) */
+  onShown?:()=>void
 }
 type Sel = {kind:'clue'|'person';id:string}|null
 type Pos = {x:number;y:number;r:number;w:number;variant?:string}
@@ -132,7 +134,7 @@ const wallArt=()=>wallCache??=Promise.all(WALL_IMGS.map(src=>new Promise<HTMLIma
 /** Desenha antes a cortiça e a parede do fundo (o que mais pesa ao abrir), para a entrada começar sem travar. */
 export async function prewarmBoard(){corkArt();await wallArt()}
 
-export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}:Props){
+export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,onShown}:Props){
   const [g,setG]=useState<CaseSave>(()=>advanceTask(readCase()))
   const b=boardOf(g)
   const save=(fn:(x:CaseSave)=>CaseSave)=>setG(writeCase(fn))
@@ -249,6 +251,7 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}
   useEffect(()=>{const el=root.current;if(!el)return
     const h=(e:Event)=>{const i=e.target;if(i instanceof HTMLImageElement&&i.src.includes('/thumbs/')&&!i.dataset.full){i.dataset.full='1';i.src=i.src.replace('/thumbs/','/').replace(/back\.webp$/,'back.png')}}
     el.addEventListener('error',h,true);return ()=>el.removeEventListener('error',h,true)},[])
+  useEffect(()=>{let a=0;a=requestAnimationFrame(()=>{a=requestAnimationFrame(()=>onShown?.())});return ()=>cancelAnimationFrame(a)},[])
   /* cortiça e parede: desenhadas uma vez (de preferência antes, em prewarmBoard) e só copiadas ao abrir */
   const wall=useRef<HTMLCanvasElement>(null)
   useEffect(()=>{let alive=true
