@@ -253,7 +253,7 @@ export function createStreet({lemosLook,onEnter}){
   const R=rnd(17);
   const peds=Array.from({length:14},(_,i)=>({x:R()*STREET_W,y:WALK[0]+4+R()*(WALK[1]-WALK[0]-4),dir:R()<.5?-1:1,v:10+R()*9,walk:R()*10,frames:miniFrames(i<PED_LOOKS.length?PED_LOOKS[i]:randomLook(R)),pause:0,id:i}));
   const cars=[];const moving=CARS.slice(1);
-  for(let l=0;l<LANES.length;l++)for(let i=0;i<3;i++){const kind=moving[(l*4+i)%moving.length];cars.push({kind,spr:carSprite(kind,imgs),lane:l,x:i*STREET_W/3+R()*160,v:LANES[l].v*(0.85+R()*0.3)});}
+  for(let l=0;l<LANES.length;l++)for(let i=0;i<3;i++){const kind=moving[(l*4+i)%moving.length];const v=LANES[l].v*(0.85+R()*0.3);cars.push({kind,spr:carSprite(kind,imgs),lane:l,x:i*STREET_W/3+R()*160,v,v0:v});}
   let camX=lemos.x,t=0;
 
   function update(dt){
@@ -270,7 +270,14 @@ export function createStreet({lemosLook,onEnter}){
       if(p.x<-30){p.x=STREET_W+20;p.y=WALK[0]+4+R()*(WALK[1]-WALK[0]-4);}else if(p.x>STREET_W+30){p.x=-20;p.y=WALK[0]+4+R()*(WALK[1]-WALK[0]-4);}
     }
     // trânsito
-    for(const k of cars){const ln=LANES[k.lane];k.x+=ln.dir*k.v*dt;if(ln.dir>0&&k.x>STREET_W+40)k.x=-k.spr.width-40-R()*200;if(ln.dir<0&&k.x<-k.spr.width-40)k.x=STREET_W+40+R()*200;}
+    // cada um segue o da frente na mesma faixa (sem atravessar), com folga de um carro pequeno
+    for(let l=0;l<LANES.length;l++){const dir=LANES[l].dir,ln=cars.filter(k=>k.lane===l).sort((a,b)=>dir>0?b.x-a.x:a.x-b.x);
+      for(let i=0;i<ln.length;i++){const k=ln[i],lead=ln[i-1];let v=k.v0;
+        if(lead){const gap=dir>0?lead.x-(k.x+k.spr.width):k.x-(lead.x+lead.spr.width);if(gap<40)v=Math.min(v,lead.v*(gap<16?0.6:1));}
+        k.v+=(v-k.v)*Math.min(1,dt*3);k.x+=dir*k.v*dt;
+        // saiu da tela: volta pela outra ponta, atrás do último da faixa
+        if(dir>0&&k.x>STREET_W+40){const back=Math.min(...ln.map(o=>o.x));k.x=Math.min(-k.spr.width-40,back-k.spr.width-60)-R()*200;}
+        if(dir<0&&k.x<-k.spr.width-40){const back=Math.max(...ln.map(o=>o.x+o.spr.width));k.x=Math.max(STREET_W+40,back+60)+R()*200;}}}
   }
 
   // s: pixels do canvas por pixel de arte
@@ -290,7 +297,7 @@ export function createStreet({lemosLook,onEnter}){
     for(const p of peds)ents.push({y:p.y,d:()=>person(ctx,p)});
     ents.push({y:lemos.y,d:()=>person(ctx,lemos)});
     for(const x of POLES)ents.push({y:POLE_Y,d:()=>drawPole(ctx,x)});
-    for(const p of PROPS){const im=imgs['prop-'+p.id];if(im)ents.push({y:p.y,d:()=>ctx.drawImage(im,Math.round(p.x-im.width/2),Math.round(p.y-im.height))});}
+    for(const p of PROPS){const im=imgs['prop-'+p.id];if(im)ents.push({y:p.y,d:()=>{ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();ctx.ellipse(p.x,p.y,Math.max(4,im.width*.45),2.5,0,0,7);ctx.fill();ctx.drawImage(im,Math.round(p.x-im.width/2),Math.round(p.y-im.height));}});}
     for(const p of parked)ents.push({y:p.y,d:()=>{ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(p.x+p.spr.width/2,p.y-2,p.spr.width/2,4,0,0,7);ctx.fill();ctx.drawImage(p.spr,Math.round(p.x),Math.round(p.y-p.spr.height));}});
     for(const k of cars)ents.push({y:LANES[k.lane].y,d:()=>{const sp=k.spr,flip=LANES[k.lane].dir<0;
       ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(k.x+sp.width/2,LANES[k.lane].y-2,sp.width/2,4,0,0,7);ctx.fill();
@@ -324,5 +331,5 @@ export function createStreet({lemosLook,onEnter}){
     else{lemos.x=viatura.x+viatura.spr.width/2;lemos.y=WALK[1];lemos.dir=1;}
     camX=lemos.x;
   }
-  return {update,draw,tap,place,lemos,get view(){return lastView;}};
+  return {update,draw,tap,place,lemos,get view(){return lastView;},get cars(){return cars;}};
 }
