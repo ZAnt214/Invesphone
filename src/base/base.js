@@ -745,16 +745,20 @@ function startDepo(id){
   cv.width=cv.height=1;lc.width=lc.height=1;
   loadDepo().then(m=>m.openDeposition(host,id,()=>{host.hidden=true;depoOpen=false;document.body.classList.remove('depo-on');sizeCanvas();refreshCase();buildVisitors();last=performance.now();}));
 }
+// quadro do caso: React à parte, como o depoimento; a base pausa e libera a memória enquanto ele está aberto
+let boardMod=null;const loadBoard=()=>boardMod||(boardMod=import('./board'));
+function startBoard(){
+  if(talk)closeTalk();
+  depoOpen=true;const host=$('#board');host.hidden=false;document.body.classList.add('depo-on');
+  cv.width=cv.height=1;lc.width=lc.height=1;
+  const back=()=>{host.hidden=true;depoOpen=false;document.body.classList.remove('depo-on');sizeCanvas();refreshCase();buildVisitors();last=performance.now();};
+  loadBoard().then(m=>m.openBoard(host,{found:FOUND,onClose:back,onDeposition:id=>startDepo(id),onSummoned:()=>{refreshCase();}}));
+}
 const DLG={
   sonia:()=>teamTalk('sonia'),mauricio:()=>teamTalk('mauricio'),renata:()=>teamTalk('renata'),paulo:()=>teamTalk('paulo'),denise:()=>teamTalk('denise'),
   sonia_mesa:()=>({who:'Mesa da delegada',role:'Sala de Sônia Prado',av:'icon',pages:['Pasta aberta, telefone fora do gancho pela metade, xícara vazia. Nada aqui é para você mexer sem ela dizer.'],opts:[]}),
   plantao:()=>({who:'Plantão',role:'Recepção · DHPP',av:'plantao',pages:['A imprensa ligou duas vezes. Respondi o que a delegada mandou: sem comentários.','Se alguém procurar a equipe, passa por mim primeiro.'],opts:[]}),
   mesa_lemos:()=>({who:'Sua mesa',role:'Lemos · DHPP',av:'icon',pages:['Café frio e a pasta do Caso 01 ainda fechada. O que importa está no aparelho.'],opts:[OPEN_PHONE]}),
-  quadro:()=>{
-    if(!FOUND.length)return {who:'Quadro do caso',role:'Sala da equipe',av:'icon',pages:['Caso 01 · Rua das Acácias. O quadro está quase vazio: a varredura da casa ainda não deixou nada aqui.'],opts:[{t:'Voltar à casa',s:'Varredura',href:'/'}]};
-    return {who:'Quadro do caso',role:'Caso 01 · Rua das Acácias',av:'icon',
-      pages:['Casal Valença, vítimas. Rua das Acácias. Em vermelho, o que a varredura trouxe:',FOUND.map(id=>'• '+CLUES[id].title+': '+CLUES[id].desc).join('\n'),FOUND.length>=7?'Roubo comum não explica a cena.':'Faltam achados na casa. O quadro só mostra o que foi visto.'],
-      opts:[{t:'Ver as fotos',s:`${FOUND.length} de 7`,fn:()=>openGallery(0)}]};},
   fotos:()=>FOUND.length?{who:'Mesa de luz',role:'Perícia',av:'icon',pages:['Fotografias periciais da casa, reveladas e penduradas para análise.'],opts:[{t:'Ver as fotos',s:`${FOUND.length} de 7`,fn:()=>openGallery(0),main:true}]}
     :{who:'Mesa de luz',role:'Perícia',av:'icon',pages:['A mesa de luz está apagada. Nenhuma foto da casa chegou ainda.'],opts:[{t:'Voltar à casa',s:'Varredura',href:'/'}]},
   interro:()=>interroTalk(),
@@ -776,6 +780,7 @@ function talkFocus(){
   return c?[(P1.x+sx/c)/2,(P1.y+sy/c)/2]:[P1.x,P1.y];
 }
 function openTalk(id){
+  if(id==='quadro'){setSeen(id);startBoard();return;}
   const def=DLG[id];if(!def)return;
   refreshCase();
   setSeen(id);talkOpen=true;document.body.classList.add('talking');

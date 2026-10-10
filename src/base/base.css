@@ -145,7 +145,7 @@ body.land #tk-text{font-size:15px;min-height:0}
 body.low.land #talk{padding:10px 12px;border-radius:14px}body.low.land .tk-h b{font-size:15px}body.low.land #talk .av{width:32px;height:32px}body.low.land #tk-text{margin-top:6px;font-size:14px;line-height:1.35}body.low.land #tk-opts{margin-top:7px;gap:5px}body.low.land #tk-opts button{padding:7px 12px;font-size:13px}body.low.land #tk-more{margin-top:5px}
 
 /* depoimento ilustrado por cima da cena; deitado, retrato à esquerda e perguntas à direita */
-#depo{position:absolute;inset:0;z-index:12;background:#050607}
+#depo,#board{position:absolute;inset:0;z-index:12;background:#050607}
 #depo .ii{height:100%;max-width:none;margin:0;box-shadow:none}
 body.land #depo .ii:not(.ii-file):not(.ii-room){flex-direction:row}
 body.land #depo .ii:not(.ii-file):not(.ii-room) .ii-stage{width:44%;height:100%;border-bottom:0;border-right:1px solid var(--line)}
