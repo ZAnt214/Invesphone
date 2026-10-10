@@ -394,13 +394,20 @@ const LOOK={
   jorge:{skin:'#8a5a3a',hair:'#9a9a9a',style:'grey',kind:'civil',top:'#2b2f2a',pants:'#3a3a32',shoes:'#222'},
   faxina:{skin:'#a8714a',hair:'#1f1a18',style:'curly',kind:'apoio',top:'#5a8aa8',pants:'#3a4a5a',shoes:'#e8e8e8'}
 };
+// gestos de quem está parado: cada um tem um quadro em pé e um sentado (ver poseFrame)
+const POSES=['phone','drink','cross','stretch','read','chin','watch','scratch'];
+// quadros: 0–3 andando, 4 sentado, depois cada gesto em pé (5+2k) e sentado (6+2k)
+const poseFrame=(pose,sit)=>{const k=POSES.indexOf(pose);return k<0?(sit?4:0):5+k*2+(sit?1:0);};
+const isSitF=f=>f===4||(f>4&&(f-5)%2===1);
+const poseOfF=f=>f>4?POSES[(f-5)>>1]:null;
 function personFrames(L){
   const sh=c=>rgbs(mul(hex(c),0.78)),hi=c=>rgbs(mix(hex(c),[255,255,255],0.18));
   const frames=[];
-  for(let f=0;f<5;f++){
+  for(let f=0;f<5+POSES.length*2;f++){
+    const sit=isSitF(f),pose=poseOfF(f);
     const c=S2(26,46,(P,E)=>{
-      const cr=f===4?4:0;const lp=f===1?1:f===3?-1:0;
-      if(f===4){P(7,36,6,4,L.pants);P(14,37,6,3,L.pants);P(6,40,7,3,L.shoes);P(15,40,6,3,L.shoes);}
+      const cr=sit?4:0;const lp=f===1?1:f===3?-1:0;
+      if(sit){P(7,36,6,4,L.pants);P(14,37,6,3,L.pants);P(6,40,7,3,L.shoes);P(15,40,6,3,L.shoes);}
       else{P(8,31,5,10+lp,L.pants);P(14,31,5,10-lp,L.pants);P(13,31,1,4,sh(L.pants));P(10,32,1,7+lp,lt(L.pants,.08));P(16,32,1,7-lp,lt(L.pants,.08));P(7+(lp>0?-1:0),41+lp,6,3,L.shoes);P(14+(lp<0?1:0),41-lp,6,3,L.shoes);P(8+(lp>0?-1:0),41+lp,2,1,lt(L.shoes,.35));P(15+(lp<0?1:0),41-lp,2,1,lt(L.shoes,.35));}
       const ty=18+cr;P(7,ty,12,13,L.top);P(7,ty,2,13,hi(L.top));P(17,ty,2,13,sh(L.top));P(7,ty+12,12,1,sh(L.pants));P(7,ty+11,12,1,'#1a1816');P(12,ty+11,2,1,'#a89878');
       if(L.kind==='civil'){P(11,ty,4,3,'#e8e4da');if(L.tie){P(12,ty+1,2,9,L.tie);P(12,ty+1,1,1,lt(L.tie,.35));}P(10,ty+1,1,6,sh(L.top));P(15,ty+1,1,6,sh(L.top));P(9,ty+7,1,1,sh(L.top));P(16,ty+7,1,1,sh(L.top));if(L.badge){P(8,ty+8,3,3,'#d4af37');P(8,ty+8,1,1,'#fff3b0');}}
@@ -408,9 +415,21 @@ function personFrames(L){
       if(L.kind==='campo'){P(11,ty+1,4,10,'#cfc8b8');P(8,ty+8,2,2,'#d4af37');}
       if(L.kind==='pm'){P(5,ty,2,3,'#c0392b');P(17,ty+7,2,5,'#111');P(8,ty+2,2,1,'#d4af37');P(7,ty+11,12,2,'#23262b');}
       const as=f===1?1:f===3?-1:0;const hand=L.gloves?'#f2f2f2':L.skin;
-      if(f===4){P(5,ty+3,2,7,L.top);P(19,ty+3,2,7,L.top);P(7,ty+9,2,2,hand);P(17,ty+9,2,2,hand);}
-      else{P(5,ty+1+as,2,9,hi(L.top));P(19,ty+1-as,2,9,sh(L.top));P(5,ty+10+as,2,2,hand);P(19,ty+10-as,2,2,hand);}
-      const hy=3+cr;P(11,hy+12,4,3,sh(L.skin));P(7,hy+1,12,11,L.skin);P(8,hy,10,13,L.skin);P(17,hy+1,2,11,sh(L.skin));
+      const hy=3+cr,top=L.top;
+      const armL=()=>{if(sit){P(5,ty+3,2,7,top);P(7,ty+9,2,2,hand);}else{P(5,ty+1+as,2,9,hi(top));P(5,ty+10+as,2,2,hand);}};
+      const armR=()=>{if(sit){P(19,ty+3,2,7,top);P(17,ty+9,2,2,hand);}else{P(19,ty+1-as,2,9,sh(top));P(19,ty+10-as,2,2,hand);}};
+      switch(pose){
+        case null:armL();armR();break;
+        case 'phone':armL();P(19,ty+1,2,4,sh(top));P(19,hy+9,2,ty+1-(hy+9),top);break;
+        case 'drink':armL();P(19,ty+1,2,5,sh(top));P(17,ty+4,3,2,top);P(16,ty-2,2,7,top);break;
+        case 'chin':armL();P(19,ty+1,2,5,sh(top));P(17,ty+4,3,2,top);P(16,ty-2,2,7,top);break;
+        case 'cross':P(5,ty+1,2,5,hi(top));P(19,ty+1,2,5,sh(top));P(6,ty+4,14,4,top);P(6,ty+4,14,1,hi(top));P(6,ty+7,14,1,sh(top));P(17,ty+4,2,2,hand);P(7,ty+6,2,2,hand);break;
+        case 'read':P(5,ty+1,2,5,hi(top));P(19,ty+1,2,5,sh(top));P(6,ty+5,3,2,top);P(17,ty+5,3,2,top);
+          P(8,ty+1,10,8,'#f1ece0');P(8,ty+1,10,1,'#ffffff');for(const [y,w] of [[3,7],[5,6],[7,7]])P(9,ty+y,w,1,'#9a948a');P(7,ty+4,2,3,hand);P(17,ty+4,2,3,hand);break;
+        case 'watch':armR();P(5,ty+1,2,4,hi(top));P(6,ty+4,9,2,top);P(10,ty+4,2,2,'#c9a24a');P(15,ty+4,2,2,hand);break;
+        case 'scratch':case 'stretch':if(pose==='scratch')armL();break;
+      }
+P(11,hy+12,4,3,sh(L.skin));P(7,hy+1,12,11,L.skin);P(8,hy,10,13,L.skin);P(17,hy+1,2,11,sh(L.skin));
       P(10,hy+6,1,2,'#1a1412');P(15,hy+6,1,2,'#1a1412');P(12,hy+10,2,1,sh(sh(L.skin)));P(9,hy+9,1,1,'rgba(200,90,80,.35)');P(16,hy+9,1,1,'rgba(200,90,80,.35)');
       if(L.glasses){P(9,hy+5,3,1,'#2a2a2a');P(14,hy+5,3,1,'#2a2a2a');P(12,hy+6,2,1,'#2a2a2a');}
       const hc=L.hair;const hh=lt(hc,.28);
@@ -423,6 +442,12 @@ function personFrames(L){
         case 'bun':P(7,hy-1,12,4,hc);P(6,hy,1,8,hc);P(19,hy,1,8,hc);E(13,hy-2,5,3,hc);P(8,hy+3,3,1,hc);P(14,hy+3,1,1,'#9a8a7a');P(11,hy-3,4,1,hh);P(9,hy-1,3,1,hh);break;
         case 'cap':P(6,hy-2,14,5,'#23262b');P(5,hy+3,16,2,'#16181c');P(12,hy-1,2,2,'#d4af37');P(6,hy+5,1,4,hc);P(19,hy+5,1,4,hc);break;
       }
+      // o que passa na frente da cabeça: telefone no ouvido, xícara, mão no queixo, mão na cabeça, braços para cima
+      if(pose==='phone'){P(17,hy+4,2,7,'#1c1e22');P(17,hy+4,1,7,'#3a3e44');P(18,hy+7,2,3,hand);}
+      if(pose==='drink'){P(14,hy+8,4,5,'#f3efe4');P(14,hy+8,4,1,'#4a2a18');P(18,hy+9,1,2,'#f3efe4');P(16,hy+11,3,2,hand);}
+      if(pose==='chin')P(14,hy+11,4,2,hand);
+      if(pose==='scratch'){P(19,hy+3,2,ty+3-(hy+3),sh(top));P(16,hy-1,4,3,hand);}
+      if(pose==='stretch'){P(5,hy-1,2,ty+2-(hy-1),hi(top));P(19,hy-1,2,ty+2-(hy-1),sh(top));P(5,hy-3,2,2,hand);P(19,hy-3,2,2,hand);}
     });
     frames.push(outlined(refine(c,3)));
   }
@@ -432,7 +457,7 @@ function personFramesHD(L,base){
   return base.map((fr,f)=>{
     const c=document.createElement('canvas');c.width=fr.width*2;c.height=fr.height*2;const g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(fr,0,0,c.width,c.height);
     const H=(x,y,w,h,col)=>{g.fillStyle=col;g.fillRect(Math.round((x+1)*2),Math.round((y+1)*2),Math.max(1,Math.round(w*2)),Math.max(1,Math.round(h*2)));};
-    const cr=f===4?4:0,hy=3+cr,ty=18+cr,sk=hex(L.skin),skin=L.skin,sh=rgbs(mul(sk,0.82)),dkk=rgbs(mul(sk,0.62));
+    const pose=poseOfF(f),cr=isSitF(f)?4:0,hy=3+cr,ty=18+cr,sk=hex(L.skin),skin=L.skin,sh=rgbs(mul(sk,0.82)),dkk=rgbs(mul(sk,0.62));
     const hair=L.hair||'#2a1d18',hairHi=rgbs(mix(hex(hair),[255,255,255],0.3)),brow=rgbs(mul(hex(hair==='#9a9a9a'?'#6a6a6a':hair),0.8));
     for(const ex of [10,15])H(ex,hy+6,1,2,skin);H(11,hy+9,2,1,skin);
     for(const ex of [10,15]){H(ex-0.5,hy+5.5,1.5,1.5,'#f4f1ea');H(ex,hy+6,1,1,'#2a1a14');H(ex,hy+6,0.5,0.5,'#ffffff');}
@@ -445,7 +470,8 @@ function personFramesHD(L,base){
     if(L.style==='bun'){H(11,hy-3.5,4,.5,hairHi);H(16,hy+6,.5,4,hc2(hair));}
     if(L.style==='cap'){H(11.5,hy-1.5,1,1,'#f0d060');H(4.5,hy+3.5,15,.5,'rgba(255,255,255,.18)');}
     const top=hex(L.top||'#888888');
-    switch(L.kind){
+    // braços cruzados e papel na mão tampam o peito: sem os detalhes da roupa por cima
+    if(pose!=='cross'&&pose!=='read'&&pose!=='watch')switch(L.kind){
       case 'pm':
         H(6.5,ty,2.5,.5,'#2b2f36');H(17,ty,2.5,.5,'#2b2f36');H(8,ty+2,1.5,1.5,'#d4af37');H(8.5,ty+1.5,.5,2.5,'#f0d060');H(7.5,ty+2.5,2.5,.5,'#f0d060');
         H(14,ty+3,3,.75,'#1d1f22');H(14.25,ty+3.2,2.5,.3,'#c9ccd0');H(12,ty+11.5,2,1,'#c9ccd0');break;
@@ -633,14 +659,26 @@ function buildLamp(){ // luminária pendente da sala de depoimentos
 
 /* ---------- Estado ---------- */
 const NPCDEF=[
-  {id:'sonia',name:'Sônia Prado',role:'Delegada · DHPP',look:'sonia',x:5,y:3,sit:true,ini:'SP',col:'#c9a24a',act:'write',lines:['Hm.','Assina aqui, depois.','Café, alguém?']},
-  {id:'renata',name:'Renata Leal',role:'Investigadora',look:'renata',x:13,y:3,sit:true,ini:'RL',col:'#7fc9b6',act:'type',lines:['Cruzando registro.','Cadê a minha caneta?','Isso aqui é coincidência.']},
-  {id:'denise',name:'Denise Rocha',role:'Escrivã',look:'denise',x:17,y:3,sit:true,ini:'DR',col:'#c9a7d9',act:'type',lines:['Fita nova no gravador.','Folha 2 de 3.']},
-  {id:'paulo',name:'Paulo Vieira',role:'Investigador de campo',look:'paulo',x:19,y:6,ini:'PV',col:'#d6b27a',walk:[[19,6],[16,7],[18,2]],lines:['Café requentado de novo.','A rua acordou cedo.','Vou pegar o carro já já.']},
-  {id:'mauricio',name:'Maurício Farias',role:'Perito criminal',look:'mauricio',x:25,y:3,sit:true,ini:'MF',col:'#9fb7c9',act:'type',walk:[[25,3],[27,5]],lines:['Luva nova.','Etiqueta, lacre, assinatura.','Foto 14, refaz.']},
-  {id:'faxina',name:'Limpeza',role:'Equipe de apoio',look:'faxina',x:13,y:15,ini:'LP',col:'#8fb0c8',mop:true,walk:[[13,15],[19,13],[17,16],[12,14],[18,12]],lines:['Cuidado, tá molhado.','Bom dia, doutor.','Esse café mancha tudo.']},
-  {id:'plantao',name:'Plantão',role:'Recepção · DHPP',look:'plantao',x:14,y:11,sit:true,ini:'PL',col:'#a9b8c6',act:'write',lines:['DHPP, bom dia.','Um momento, por favor.','Sem comentários.']}
+  {id:'sonia',name:'Sônia Prado',role:'Delegada · DHPP',look:'sonia',x:5,y:3,sit:true,ini:'SP',col:'#c9a24a',act:'write',lines:['Hm.','Assina aqui, depois.','Café, alguém?'],idle:['phone','read','chin','drink','read'],poseLines:{phone:['Alô. Sim, doutor.','Me manda isso por escrito.','Ainda não. Estou com a equipe.']}},
+  {id:'renata',name:'Renata Leal',role:'Investigadora',look:'renata',x:13,y:3,sit:true,ini:'RL',col:'#7fc9b6',act:'type',lines:['Cruzando registro.','Cadê a minha caneta?','Isso aqui é coincidência.'],idle:['chin','drink','scratch','stretch','phone'],poseLines:{phone:['Oi, é a Renata, do DHPP.','Pode me mandar a lista inteira?'],stretch:['Ai, minhas costas.']}},
+  {id:'denise',name:'Denise Rocha',role:'Escrivã',look:'denise',x:17,y:3,sit:true,ini:'DR',col:'#c9a7d9',act:'type',lines:['Fita nova no gravador.','Folha 2 de 3.'],idle:['read','drink','stretch','chin','read']},
+  {id:'paulo',name:'Paulo Vieira',role:'Investigador de campo',look:'paulo',x:19,y:6,ini:'PV',col:'#d6b27a',walk:[[19,6,'drink'],[16,7,'phone'],[18,2,'watch']],lines:['Café requentado de novo.','A rua acordou cedo.','Vou pegar o carro já já.'],idle:['cross','watch','scratch','phone'],poseLines:{phone:['Fala, chefe. Tô na base.','Passa aqui mais tarde.'],drink:['Tá frio de novo.']}},
+  {id:'mauricio',name:'Maurício Farias',role:'Perito criminal',look:'mauricio',x:25,y:3,sit:true,ini:'MF',col:'#9fb7c9',act:'type',walk:[[25,3],[27,5,'read']],lines:['Luva nova.','Etiqueta, lacre, assinatura.','Foto 14, refaz.'],idle:['read','chin','scratch','stretch']},
+  {id:'faxina',name:'Limpeza',role:'Equipe de apoio',look:'faxina',x:13,y:15,ini:'LP',col:'#8fb0c8',mop:true,walk:[[13,15],[19,13,'stretch'],[17,16],[12,14,'watch'],[18,12]],lines:['Cuidado, tá molhado.','Bom dia, doutor.','Esse café mancha tudo.'],idle:['watch','scratch']},
+  {id:'plantao',name:'Plantão',role:'Recepção · DHPP',look:'plantao',x:14,y:11,sit:true,ini:'PL',col:'#a9b8c6',act:'write',lines:['DHPP, bom dia.','Um momento, por favor.','Sem comentários.'],idle:['phone','phone','read','cross','drink'],poseLines:{phone:['DHPP, bom dia.','Não, senhor. Sem comentários.','Vou transferir, aguarde.']}}
 ];
+// conversa de fundo entre colegas (nada do caso: só o dia a dia da base). Os dois precisam estar parados e perto.
+const CHATS=[
+  ['renata','denise','Denise, tem grampeador aí?','Gaveta de cima. Devolve, hein.'],
+  ['denise','renata','Esse ar-condicionado tá de brincadeira.','Pede pro Paulo bater nele de novo.'],
+  ['paulo','renata','Vai um café?','Se for do bom, vou.'],
+  ['paulo','denise','Alguém viu a chave da viatura?','No gancho, onde sempre fica.'],
+  ['faxina','plantao','Passei pano na entrada.','E o povo pisa igual. Obrigado.'],
+  ['plantao','faxina','Chegou mais copo pra copa?','Amanhã cedo.']
+];
+// quanto dura cada gesto, em quadros (60 por segundo)
+const POSE_DUR={phone:420,drink:200,cross:360,stretch:110,read:400,chin:300,watch:110,scratch:120};
+let chatT=900;
 let BG=null,WALLROWS=null,SIGN=null,DOORSPR=null,SHADOW=null,LAMP=null;
 let P1,NPCS=[],frame=0,started=false,follow=true,talkOpen=false;
 let SEEN=safe(()=>JSON.parse(localStorage.getItem('base.seen')||'{}'),{});
@@ -649,7 +687,7 @@ let gameMin=8*60+10,lastClock=0;
 function newGame(){
   buildMap();
   P1={id:'lemos',x:16,y:20,path:[],dir:1,walk:0,moving:false,look:LOOK.lemos,pend:null};
-  NPCS=NPCDEF.map((d,k)=>({...d,k,dir:d.id==='paulo'?-1:1,path:[],walk:0,moving:false,timer:120+Math.floor(Math.random()*200),wp:0,hold:false,say:null,sayT:600+Math.floor(Math.random()*900)}));
+  NPCS=NPCDEF.map((d,k)=>({...d,k,dir:d.id==='paulo'?-1:1,path:[],walk:0,moving:false,timer:120+Math.floor(Math.random()*200),wp:0,hold:false,say:null,sayT:600+Math.floor(Math.random()*900),pose:null,poseT:0,poseCD:60+Math.floor(Math.random()*500),sayQ:null}));
 }
 function framesFor(p){if(!p.frames)p.frames=personFrames(p.look||LOOK[p.lookId]);return p.frames;}
 function framesHDFor(p){if(!p.framesHD)p.framesHD=personFramesHD(p.look,framesFor(p));return p.framesHD;}
@@ -994,18 +1032,50 @@ function update(dt){
   if(talkOpen)return;
   stepAgent(P1,3.3*dt,i=>passable(i)&&!NPCS.some(n=>ti(n)===i));
   if(!P1.path.length&&P1.pend){const p=P1.pend;P1.pend=null;if(started)goTalk(p.kind,p.id,p.depo);}
+  idleChats(dt);
+  // quem espera para depor também se mexe: braços cruzados, relógio, mão no queixo
+  for(const v of VIS){if(v.poseCD==null){v.poseCD=200+Math.random()*700;v.idle=['cross','watch','chin','cross'];}idlePose(v,dt);}
   for(const n of NPCS){
+    if(n.sayQ&&(n.sayQ.d-=dt*60)<=0){n.say={txt:n.sayQ.txt,t:0,life:170};n.sayQ=null;}
     if(n.say){n.say.t+=dt*60;if(n.say.t>n.say.life)n.say=null;}
     else if(started&&(n.sayT-=dt*60)<0){n.sayT=900+Math.random()*1500;if(dist(P1.x,P1.y,n.x,n.y)<9)n.say={txt:pick(n.lines),t:0,life:170};}
-    if(n.hold)continue;
-    if(n.path.length){stepAgent(n,1.5*dt,i=>passable(i)&&ti(P1)!==i&&!NPCS.some(m=>m!==n&&ti(m)===i));if(!n.path.length&&n.id==='paulo')n.dir=-1;continue;}
+    if(n.hold){n.pose=null;continue;}
+    if(n.path.length){n.pose=null;stepAgent(n,1.5*dt,i=>passable(i)&&ti(P1)!==i&&!NPCS.some(m=>m!==n&&ti(m)===i));
+      if(!n.path.length){if(n.id==='paulo')n.dir=-1;const g=n.walk&&n.walk[n.wp];if(g&&g[2])startPose(n,g[2]);}continue;}
+    idlePose(n,dt);
     if(!n.walk||!n.walk.length)continue;
-    n.timer-=dt*60;if(n.timer>0)continue;n.timer=300+Math.random()*420;n.wp=(n.wp+1)%n.walk.length;
+    n.timer-=dt*60;if(n.timer>0||n.pose)continue;n.timer=300+Math.random()*420;n.wp=(n.wp+1)%n.walk.length;
     const g=n.walk[n.wp],tgt=idx(g[0],g[1]);if(ti(n)===tgt)continue;
     const e=bfs(ti(n),i=>i===tgt,i=>(passable(i)||i===tgt||!!objs[occ[i]]&&objs[occ[i]].nocc)&&!NPCS.some(m=>m!==n&&ti(m)===i)&&ti(P1)!==i);
     if(e>=0)n.path=pathTo(e);
   }
   lastClock+=dt;if(lastClock>3){lastClock=0;gameMin++;}
+}
+
+/* ---------- Vida dos NPCs: gestos, olhar para o Lemos e conversa de fundo ---------- */
+function startPose(n,pose){
+  n.pose=pose;n.poseT=(POSE_DUR[pose]||200)*(0.8+Math.random()*0.5);
+  const ln=n.poseLines&&n.poseLines[pose];
+  if(ln&&!n.say&&!n.sayQ&&Math.random()<0.6&&dist(P1.x,P1.y,n.x,n.y)<9)n.say={txt:pick(ln),t:0,life:160};
+}
+function idlePose(n,dt){
+  // quem está perto vira para o Lemos quando ele passa
+  const near=dist(P1.x,P1.y,n.x,n.y)<2.6;
+  if(near&&Math.abs(P1.x-n.x)>0.3)n.dir=P1.x<n.x?-1:1;
+  if(n.pose){if((n.poseT-=dt*60)<=0){n.pose=null;n.poseCD=240+Math.random()*520;}return;}
+  if((n.poseCD-=dt*60)>0||!n.idle||!n.idle.length||near)return;
+  startPose(n,pick(n.idle));
+}
+function idleChats(dt){
+  if(!started||(chatT-=dt*60)>0)return;
+  chatT=1100+Math.random()*1400;
+  const free=n=>n&&!n.hold&&!n.moving&&!n.path.length&&!n.say&&!n.sayQ;
+  const opts=CHATS.filter(([a,b])=>{const A=NPCS.find(n=>n.id===a),B=NPCS.find(n=>n.id===b);
+    return free(A)&&free(B)&&dist(A.x,A.y,B.x,B.y)<6&&dist(P1.x,P1.y,A.x,A.y)<10;});
+  if(!opts.length){chatT=300;return;}
+  const [a,b,l1,l2]=pick(opts),A=NPCS.find(n=>n.id===a),B=NPCS.find(n=>n.id===b);
+  A.dir=B.x<A.x?-1:1;B.dir=A.x<B.x?-1:1;A.pose=null;
+  A.say={txt:l1,t:0,life:170};B.sayQ={txt:l2,d:150};
 }
 
 /* ---------- Câmera e zoom ---------- */
@@ -1313,7 +1383,7 @@ function rimLight(p){
 }
 function drawPerson(p,sit,id){
   const fr=framesFor(p);let f=0,dy=0;
-  if(p.moving)f=Math.floor(p.walk*3.2)%4;else if(sit){f=4;if(p.act==='type'&&((frame>>2)+id)%6<2)dy=-1;if(p.act==='write'&&((frame>>4)+id)%5===0)dy=-1;}
+  if(p.moving)f=Math.floor(p.walk*3.2)%4;else if(p.pose)f=poseFrame(p.pose,sit);else if(sit){f=4;if(p.act==='type'&&((frame>>2)+id)%6<2)dy=-1;if(p.act==='write'&&((frame>>4)+id)%5===0)dy=-1;}
   const X=DP(p.x*T+16),Y=DP(p.y*TH+TH-2);
   const bob=p.moving?((Math.floor(p.walk*3.2)%2)?-1:0):sit?dy:(Math.sin(frame/26+(id||0)*1.7)>0.55?-1:0);
   const hdA=clamp((LODE-2.2)/0.35,0,1),img=hdA>=1?framesHDFor(p)[f]:fr[f],dw=fr[f].width,dh=fr[f].height;
@@ -1323,7 +1393,8 @@ function drawPerson(p,sit,id){
   put(img);if(hdA>0&&hdA<1){ctx.save();ctx.globalAlpha=hdA;put(framesHDFor(p)[f]);ctx.restore();}
   if(LODV>=1){const rl=rimLight(p);if(rl&&rl.a>0.05){const st=Math.max(1,Math.round(img.width/dw));ctx.save();ctx.globalAlpha=rl.a;if(dw0<0.5)put(rimImg(img,p.dir<0?-rl.lx:rl.lx,rl.ly,rl.col,st),true);ctx.restore();}}
   // piscar
-  if(LODV>=2&&!p.moving&&((frame+(id||0)*53)%190)<6){const sk=p.look.skin,cy=f===4?4:0;ctx.fillStyle=sk;
+  if(p.pose==='drink'&&LODV>=1){const cx=X+(p.dir<0?-2:2),cy=Y-45+bob+(sit?4:0)+3+6;ctx.fillStyle='rgba(255,255,255,.35)';for(let k=0;k<3;k++){const ph=(frame/14+k*0.33)%1;ctx.globalAlpha=1-ph;ctx.fillRect(Math.round(cx+Math.sin(frame/9+k*2)*1.2),Math.round(cy-ph*7),1,1);}ctx.globalAlpha=1;}
+  if(LODV>=2&&!p.moving&&((frame+(id||0)*53)%190)<6){const sk=p.look.skin,cy=isSitF(f)?4:0;ctx.fillStyle=sk;
     if(LODV>=3){const xs=p.dir<0?[X+2,X-3]:[X-3.5,X+1.5];for(const x of xs){ctx.fillStyle=sk;ctx.fillRect(x,Y-35.5+bob+cy,1.5,1.5);ctx.fillStyle=rgbs(mul(hex(sk),0.55));ctx.fillRect(x,Y-34.3+bob+cy,1.5,.35);}}
     else{ctx.fillRect(X-3,Y-35+bob+cy,1,2);ctx.fillRect(X+2,Y-35+bob+cy,1,2);}}
 }
