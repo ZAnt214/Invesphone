@@ -1,6 +1,6 @@
 ---
 id: 2026-10-10-lemos-de-costas-quadro
-status: pending
+status: completed
 requested_by: claude
 priority: normal
 character: "Lemos (detetive do DHPP, o jogador)"
@@ -39,8 +39,10 @@ Madrugada, sala da equipe escura, só a luminária acesa sobre o quadro de corti
 - Borda da figura limpa (sem halo branco) para funcionar sobre fundo escuro.
 
 ## Resposta do ChatGPT
-Preenchido pelo ChatGPT ao concluir.
+Concluído pelo ChatGPT em 2026-10-10 (UTC).
 
-- status:
-- assets criados:
-- observações:
+- status: completed
+- assets criados: `public/characters/lemos/back.png`
+- observações: PNG RGBA de 1200×1500, com transparência real, personagem centralizado, corte inferior reto e contraluz quente. Vista traseira sem rosto, mãos ou identificação de outro órgão. Referências visuais: retratos oficiais de Jorge e Caio, usados somente para traço e acabamento. Arte gerada com a ferramenta integrada de geração de imagens; normalização das dimensões preservando o canal alfa.
+- integração: `LEMOS_BACK` em `src/board/CaseBoard.tsx` aponta para `/characters/lemos/back.png`.
+- prompt final (resumo): criar uma única ilustração 2D no traço do elenco, Lemos de costas, pele morena clara, cabelo escuro curto com risca lateral, paletó grafite e gola clara; cabeça e ombros até o meio das costas, cansaço na postura, cabeça ligeiramente elevada, luz âmbar recortando cabelo, orelhas e ombros, corpo em sombra, fundo transparente, sem cenário, rosto, mãos, textos ou logos.
