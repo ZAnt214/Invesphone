@@ -752,7 +752,7 @@ function startBoard(){
   depoOpen=true;const host=$('#board');host.hidden=false;document.body.classList.add('depo-on');
   cv.width=cv.height=1;lc.width=lc.height=1;
   const back=()=>{host.hidden=true;depoOpen=false;document.body.classList.remove('depo-on');sizeCanvas();refreshCase();buildVisitors();last=performance.now();};
-  loadBoard().then(m=>m.openBoard(host,{found:FOUND,onClose:back,onDeposition:id=>startDepo(id),onSummoned:()=>{refreshCase();}}));
+  loadBoard().then(m=>m.openBoard(host,{found:FOUND,onClose:back,onDeposition:id=>startDepo(id),onTeam:id=>goTalk('npc',id),onSummoned:()=>{refreshCase();}}));
 }
 const DLG={
   sonia:()=>teamTalk('sonia'),mauricio:()=>teamTalk('mauricio'),renata:()=>teamTalk('renata'),paulo:()=>teamTalk('paulo'),denise:()=>teamTalk('denise'),
