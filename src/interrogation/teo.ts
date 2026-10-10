@@ -8,7 +8,7 @@ export const teoInterrogation:InterrogationConfig = {
   depositionLabel:'INTERROGATÓRIO 06',
   idleExpression:'defensive',
   initial:['where'],
-  requiredForFinal:['where','caio_out','confess'],
+  requiredForFinal:['where','caio_out','prepared','confess'],
   finalQuestion:'untold',
   closingLabel:'INTERROGATÓRIO ENCERRADO',
   farewell:'Obrigado pela colaboração, Téo. Seu depoimento foi registrado e será encaminhado ao Ministério Público.',
@@ -45,8 +45,7 @@ export const teoInterrogation:InterrogationConfig = {
       id:'known',
       question:'Você conhecia a casa dos Valença?',
       answer:'Nunca fui.',
-      expression:'lying',
-      unlocks:['confront_alarm']
+      expression:'lying'
     },
     {
       id:'confront_money',
@@ -61,23 +60,34 @@ export const teoInterrogation:InterrogationConfig = {
       id:'confront_bank',
       requiresClue:'cinta_bancaria',
       question:'A cinta do dinheiro é do Banco Meridional, de 15 de outubro. De onde veio?',
-      answer:'Isso veio da casa. Eu só levei a minha parte, o resto ficou com o Caio.',
+      answer:'Eu entrei com o Caio pra pegar o dinheiro. Foi dentro daquela casa, tá? Eu levei uma parte. Não vou falar do resto.',
       expression:'shaken',
-      unlocks:['confess']
+      unlocks:['confront_alarm'],
+      highlights:[{ phrase:'Eu entrei com o Caio', clue:'teo_entrou_com_caio' }]
     },
     {
       id:'confront_alarm',
       requiresClue:'log_alarme',
       question:'O alarme foi desativado às 23h52 com o código mestre. Quem digitou?',
-      answer:'O Caio digitou. A Lívia tinha passado o código pra ele.',
+      answer:'O Caio digitou. Eu não sabia o número. Quando a gente chegou, ele já sabia o que fazer.',
+      expression:'shaken',
+      unlocks:['prepared'],
+      highlights:[{ phrase:'O Caio digitou', clue:'caio_digitou_alarme' }]
+    },
+    {
+      id:'prepared',
+      requiresClue:'caio_viu_digitando',
+      question:'Antes de entrar, o que vocês já sabiam sobre a casa?',
+      answer:'O Caio já chegou com tudo: horário, o código, que o cachorro ia estar preso e onde procurar o dinheiro. Isso já estava acertado antes de eu ir.',
       expression:'shaken',
       unlocks:['confess'],
-      highlights:[{ phrase:'A Lívia tinha passado o código pra ele', clue:'livia_passou_codigo' }]
+      highlights:[{ phrase:'Isso já estava acertado antes de eu ir', clue:'plano_preparado_antes' }]
     },
     {
       id:'confess',
-      question:'O que aconteceu dentro da casa?',
-      answer:'A Lívia deixou tudo pronto. O código, o cachorro… A gente só entrou. Eu fui com o Caio pelo dinheiro, não queria que fosse assim.',
+      requiresClue:'livia_thor_caio',
+      question:'Quem preparou essas informações com o Caio?',
+      answer:'A Lívia deixou tudo pronto. O código, o cachorro… O Caio me passou o resto. Eu entrei com ele. É isso.',
       expression:'teary',
       highlights:[{ phrase:'A Lívia deixou tudo pronto', clue:'confissao_teo' }]
     },
