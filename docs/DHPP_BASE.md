@@ -13,6 +13,12 @@ Cena 2D navegável, feita na mesma técnica da Varredura das Acácias: pixel art
 - Lê `varredura.fim` (gravado ao fim da Varredura): o quadro do caso e a mesa de luz mostram só os achados vistos na casa.
 - O botão **Aparelho** abre `/invesphone`; **Casa** volta à Varredura. O fim da Varredura leva a `/base/`.
 
+## Rua do DHPP (lado de fora)
+
+O lado de fora é uma cena própria, de frente como em *Beat Cop* (`src/base/street.js`): fachadas altas da quadra (padaria, beco, DHPP, lavanderia, bar, sobrado, drogaria, esquinas), cidade ao fundo, calçada com gente passando (para às vezes), postes com fios, orelhão, banca, e a rua com trânsito nos dois sentidos e a viatura do DHPP parada. O jogo começa ali: Lemos ao lado da viatura, o sinal amarelo na porta do DHPP. Tocar na calçada anda; tocar na porta ou na fachada do DHPP leva até a porta e entra (a planta aparece na recepção). Na planta, tocar no pátio leva Lemos até a porta da frente e volta para a calçada. Mesma rotação de tela e mesmo cabeçalho da base; o local aparece como "Rua do DHPP".
+
+Arte: os desenhos da rua são provisórios. A arte oficial foi pedida ao ChatGPT (`creative-requests/inbox/2026-10-10-rua-do-dhpp.md`) com nomes e tamanhos exatos; cada `public/base/street/<id>.png` que chegar substitui o provisório do mesmo id no próximo build (a lista do que existe é feita no `vite.config.ts`, então não há pedido de arquivo que não existe).
+
 ## Equipe nas mesas
 
 Sônia, Maurício, Renata, Paulo e Denise têm na base a mesma conversa do app Equipe: tocar no integrante mostra os assuntos e diligências disponíveis agora; Lemos pergunta, o integrante responde e o save do caso é gravado (assuntos, materiais, pistas e pessoas reveladas). Materiais recebidos abrem no visualizador. O sinal amarelo acende quando há assunto ou pedido novo. Chamar alguém para depoimento ainda é pelo aparelho (próxima etapa: depoimentos na sala).
@@ -24,7 +30,7 @@ A mesa da sala de depoimentos lista quem a investigação já descobriu e o que 
 O Invesphone está sendo trazido para dentro das cenas por etapas, cada mecânica no seu lugar físico: Equipe nas mesas (feito), depoimentos na sala de depoimentos (feito), pistas no quadro, arquivo no Arquivo Morto, relatório na sala da delegada. O celular fica com o que é de celular: mensagens, ligações e notificações.
 
 ## Salas
-Recepção (Plantão), Sala da delegada (Sônia), Sala da equipe (Renata, Denise, Paulo, quadro do caso, mesa de Lemos), Perícia (Maurício, mesa de luz), Sala de depoimentos, Arquivo Morto, pátio com viatura.
+Recepção (Plantão), Sala da delegada (Sônia), Sala da equipe (Renata, Denise, Paulo, quadro do caso, mesa de Lemos), Perícia (Maurício, mesa de luz), Sala de depoimentos, Arquivo Morto. Lá fora, a Rua do DHPP.
 
 ## Regras de conteúdo
 Falas só usam fatos do início do Caso 01 (cena lida, painel, Thor, valores, log pedido). Nenhum nome de envolvido é citado antes de ser descoberto. Novos textos seguem `docs/CASE01_STORY_BIBLE.md` e `docs/TEAM_MATERIAL_REQUESTS.md`.

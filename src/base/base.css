@@ -164,3 +164,7 @@ body.land #depo .ii:not(.ii-file):not(.ii-room) .ii-tut-card{left:calc(44% + 12p
 body.gl #cv{opacity:0}
 body.gl #vig{display:none}
 body:not(.gl) #glv{display:none}
+
+/* passagem rua ⇄ planta pela porta do DHPP */
+#fade{position:absolute;inset:0;z-index:9;background:#050607;opacity:0;pointer-events:none;transition:opacity .2s ease}
+#fade.on{opacity:1}

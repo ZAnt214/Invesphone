@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath } from 'node:url'
 import { createHash } from 'node:crypto'
-import { readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
 // Três páginas: a raiz é a Varredura das Acácias (cena 2D do Caso 01), /base é a base do
@@ -19,9 +19,12 @@ const artHash = (() => {
   return h.digest('hex').slice(0, 10)
 })()
 const ART_CACHE = 'case-art-' + artHash
+// arte oficial da rua que já chegou (public/base/street/*.png): o jogo só carrega o que existe; o resto segue provisório
+const streetDir = page('./public/base/street')
+const STREET_ART = existsSync(streetDir) ? readdirSync(streetDir).filter(f => f.endsWith('.png')).map(f => f.slice(0, -4)).sort() : []
 
 export default defineConfig({
-  define: { __ART_CACHE__: JSON.stringify(ART_CACHE) },
+  define: { __ART_CACHE__: JSON.stringify(ART_CACHE), __STREET_ART__: JSON.stringify(STREET_ART) },
   build: {
     rollupOptions: {
       input: {
@@ -38,7 +41,7 @@ export default defineConfig({
       workbox: {
         // instala só o app (código, fontes, ícones e as versões leves do quadro); as ilustrações e evidências
         // grandes vêm pelo carregador do jogo (src/preload) e ficam no cache ART_CACHE, que o worker serve sem rede
-        globPatterns: ['**/*.{js,css,html,ico,woff2,svg}', 'thumbs/**/*.{jpg,webp}', 'sonia.jpg'],
+        globPatterns: ['**/*.{js,css,html,ico,woff2,svg}', 'thumbs/**/*.{jpg,webp}', 'base/street/*.png', 'sonia.jpg'],
         runtimeCaching: [{
           urlPattern: ({ url }) => url.pathname.startsWith('/characters/') || url.pathname.startsWith('/evidence/'),
           handler: 'CacheFirst',
