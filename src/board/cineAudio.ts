@@ -1,7 +1,7 @@
 /**
  * Som da entrada de cinema do quadro, gerado na hora (sem arquivos), no mesmo contexto dos outros efeitos:
- * madrugada na sala da equipe (ar parado, chuva na janela, trânsito ao longe, relógio), o interruptor e a luminária
- * acendendo com falhas e zumbido, a respiração do Lemos, um grave de cinema que cresce com a câmera e o papel do quadro
+ * madrugada na sala da equipe (ar parado, chuva na janela, trânsito ao longe, relógio), a luminária acesa falhando
+ * e zumbindo, a respiração do Lemos, um grave de cinema que cresce com a câmera e o papel do quadro
  * quando ela chega. Os tempos acompanham a animação em case-board.css (4,6 s). Respeita o som desligado em Ajustes.
  */
 import { audioContext } from '../sfx'
@@ -59,11 +59,10 @@ export function playCine():()=>void{
   burst(c,master,{at:t0+1.6,dur:2.2,vol:.03,type:'lowpass',f:200,to:700,attack:1.1,pan:.5})
   // relógio de parede
   for(let i=0;i<5;i++){const at=t0+.3+i;tone(c,master,{at,f:2400,dur:.025,vol:.012,type:'square'});burst(c,master,{at,dur:.03,vol:.01,f:4200,q:5})}
-  // interruptor e luminária acendendo, com as falhas da animação (12%, 14%, 16% e 22% de 4,6 s)
-  burst(c,master,{at:t0+.48,dur:.035,vol:.12,f:1800,q:3});tone(c,master,{at:t0+.48,f:180,dur:.04,vol:.05,type:'triangle'})
+  // a luminária já acesa falha (12%, 14%, 16% e 22% de 4,6 s)
   for(const [t,v] of [[.55,.09],[.66,.05],[.74,.08],[1.0,.07]] as const){
     burst(c,master,{at:t0+t,dur:.06,vol:v,type:'highpass',f:3000,q:.8});tone(c,master,{at:t0+t,f:120,dur:.08,vol:v*.4,type:'sawtooth'})}
-  const hum = c.createGain(); hum.gain.setValueAtTime(0.0001,t0); hum.gain.setValueAtTime(0.0001,t0+.98); hum.gain.exponentialRampToValueAtTime(.012,t0+1.1); hum.connect(master)
+  const hum = c.createGain(); hum.gain.setValueAtTime(0.0001,t0); hum.gain.exponentialRampToValueAtTime(.012,t0+.3); hum.connect(master)
   for(const [f,v] of [[120,1],[240,.45],[360,.18]] as const){const o=c.createOscillator();o.frequency.value=f;const g=c.createGain();g.gain.value=v;o.connect(g).connect(hum);o.start(t0);loops.push(o)}
   // o Lemos solta o ar, cansado
   burst(c,master,{at:t0+1.25,dur:1.3,vol:.035,f:520,to:380,q:.9,attack:.35})
