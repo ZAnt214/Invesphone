@@ -17,7 +17,7 @@ Cena 2D navegável, feita na mesma técnica da Varredura das Acácias: pixel art
 
 O lado de fora é uma cena própria, de frente como em *Beat Cop* (`src/base/street.js`): fachadas altas da quadra (padaria, beco, DHPP, lavanderia, bar, sobrado, drogaria, esquinas), cidade ao fundo, calçada com gente passando (para às vezes), postes com fios, orelhão, banca, e a rua com trânsito nos dois sentidos e a viatura do DHPP parada. O jogo começa ali: Lemos ao lado da viatura, o sinal amarelo na porta do DHPP. Tocar na calçada anda; tocar na porta ou na fachada do DHPP leva até a porta e entra (a planta aparece na recepção). Na planta, tocar no pátio leva Lemos até a porta da frente e volta para a calçada. Mesma rotação de tela e mesmo cabeçalho da base; o local aparece como "Rua do DHPP".
 
-Arte: os desenhos da rua são provisórios. A arte oficial foi pedida ao ChatGPT (`creative-requests/inbox/2026-10-10-rua-do-dhpp.md`) com nomes e tamanhos exatos; cada `public/base/street/<id>.png` que chegar substitui o provisório do mesmo id no próximo build (a lista do que existe é feita no `vite.config.ts`, então não há pedido de arquivo que não existe).
+Arte: as fachadas, a cidade ao fundo e os veículos são a arte oficial do ChatGPT (`public/base/street/`, pedido `creative-requests/completed/2026-10-10-rua-do-dhpp.md`); cada `<id>.png` entra no lugar do desenho provisório do mesmo id (a lista do que existe é feita no `vite.config.ts`). O jogo desenha por cima a calçada, a rua, os postes com fios e a gente: figuras de 12×28 px na escala das fachadas (a porta do DHPP tem 32 px), com as mesmas cores do boneco de cada um na base.
 
 ## Equipe nas mesas
 
