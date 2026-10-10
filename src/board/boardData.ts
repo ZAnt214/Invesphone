@@ -9,13 +9,13 @@ import type { CaseSave } from '../case/caseSave'
 
 export type ZoneId = 'cena'|'pessoas'|'noite'|'acesso'|'motivo'|'dinheiro'
 /** Cada área é uma pergunta do caso. As áreas ficam numa parede de 3×2 (cada uma com 562×390). */
-export const ZONES:Record<ZoneId,{x:number;y:number;label:string;q:string}> = {
-  cena:{x:0,y:0,label:'A cena',q:'Foi um roubo?'},
-  pessoas:{x:563,y:0,label:'Pessoas',q:'Quem estava onde?'},
-  noite:{x:1126,y:0,label:'A noite · 16 → 17/10',q:'O que houve entre 23:52 e 00:56?'},
-  acesso:{x:0,y:390,label:'Acesso',q:'Quem podia entrar sem forçar?'},
-  motivo:{x:563,y:390,label:'Motivo',q:'Por quê?'},
-  dinheiro:{x:1126,y:390,label:'Dinheiro',q:'De onde vem o dinheiro?'},
+export const ZONES:Record<ZoneId,{x:number;y:number;label:string;tab:string;q:string}> = {
+  cena:{x:0,y:0,tab:'Cena',label:'A cena',q:'Foi um roubo?'},
+  pessoas:{x:563,y:0,tab:'Pessoas',label:'Pessoas',q:'Quem estava onde?'},
+  noite:{x:1126,y:0,tab:'Noite',label:'A noite · 16 → 17/10',q:'O que houve entre 23:52 e 00:56?'},
+  acesso:{x:0,y:390,tab:'Acesso',label:'Acesso',q:'Quem podia entrar sem forçar?'},
+  motivo:{x:563,y:390,tab:'Motivo',label:'Motivo',q:'Por quê?'},
+  dinheiro:{x:1126,y:390,tab:'Dinheiro',label:'Dinheiro',q:'De onde vem o dinheiro?'},
 }
 export const ZONE_W=562, ZONE_H=390, WORLD_W=1688, WORLD_H=780
 
