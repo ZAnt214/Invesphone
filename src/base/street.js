@@ -238,7 +238,9 @@ function randomLook(R){
     pants:pick(['#2b2f36','#3a3a40','#3b5a8a','#3a4a5a','#3a3a32','#5a4a3a','#1f242b']),shoes:pick(['#222','#e8e4da','#3a2416','#111'])};
 }
 
-export function createStreet({lemosLook,onEnter}){
+// altura do boneco do Lemos dentro da base (px de arte): a rua usa o mesmo zoom de dentro para ele ter o mesmo tamanho na tela
+const BASE_FIG=46;
+export function createStreet({lemosLook,onEnter,getZoom}){
   const imgs={};let layer=buildStatic(imgs);
   // arte oficial: entra no lugar do desenho provisório quando o arquivo existir
   // __STREET_ART__: os arquivos que existem em public/base/street (lista feita no build, vite.config.ts)
@@ -254,7 +256,7 @@ export function createStreet({lemosLook,onEnter}){
   const peds=Array.from({length:14},(_,i)=>({x:R()*STREET_W,y:WALK[0]+4+R()*(WALK[1]-WALK[0]-4),dir:R()<.5?-1:1,v:10+R()*9,walk:R()*10,frames:miniFrames(i<PED_LOOKS.length?PED_LOOKS[i]:randomLook(R)),pause:0,id:i}));
   const cars=[];const moving=CARS.slice(1);
   for(let l=0;l<LANES.length;l++)for(let i=0;i<3;i++){const kind=moving[(l*4+i)%moving.length];const v=LANES[l].v*(0.85+R()*0.3);cars.push({kind,spr:carSprite(kind,imgs),lane:l,x:i*STREET_W/3+R()*160,v,v0:v});}
-  let camX=lemos.x,t=0;
+  let camX=lemos.x,camY=null,t=0;
 
   function update(dt){
     t+=dt;
@@ -281,15 +283,24 @@ export function createStreet({lemosLook,onEnter}){
   }
 
   // s: pixels do canvas por pixel de arte
-  // o mundo inteiro na altura da tela: fachadas cortadas no alto (o cabeçalho fica por cima delas) e o chão na metade de baixo
-  function view(cw,ch,rs){const s=Math.min(ch/(STREET_H-15),cw/380);const vw=cw/s;camX+=(clamp(lemos.x,vw/2,STREET_W-vw/2)-camX)*0.12;camX=clamp(camX,vw/2,STREET_W-vw/2);return {s,left:camX-vw/2,top:-(ch/s-STREET_H)/2,rs};}
+  // mesma proximidade de dentro do DHPP: o Lemos (28 px aqui) fica do tamanho que tem na base (46 px × zoom da base).
+  // A câmera segue o Lemos nos dois eixos; se a tela couber a rua inteira na altura, ela encosta embaixo.
+  function view(cw,ch,rs){
+    const z=getZoom?getZoom():0,s=z>0?rs*z*BASE_FIG/MH:Math.min(ch/(STREET_H-15),cw/380);
+    const vw=cw/s,vh=ch/s;
+    camX+=(clamp(lemos.x,vw/2,STREET_W-vw/2)-camX)*0.12;camX=clamp(camX,vw/2,STREET_W-vw/2);
+    let top;
+    if(vh>=STREET_H)top=STREET_H-vh;
+    else{const want=clamp(lemos.y-vh*0.68,0,STREET_H-vh);camY=camY==null?want:camY+(want-camY)*0.12;top=clamp(camY,0,STREET_H-vh);}
+    return {s,left:camX-vw/2,top,rs};
+  }
   const clamp=(v,a,b)=>a>b?(a+b)/2:v<a?a:v>b?b:v;
 
   function draw(ctx,cw,ch,rs,marker){
     const V=view(cw,ch,rs),{s,left}=V;
     ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';ctx.filter='none';
     ctx.fillStyle='#2a2b2e';ctx.fillRect(0,0,cw,ch);ctx.imageSmoothingEnabled=false;
-    const oy=ch-STREET_H*s; // a rua encosta embaixo; sobra de altura vira céu
+    const oy=-V.top*s; // topo da vista; se sobrar altura (top<0), sobra vira céu
     if(oy>0){ctx.fillStyle='#8fa9c4';ctx.fillRect(0,0,cw,oy);}
     ctx.setTransform(s,0,0,s,-left*s,oy);
     ctx.drawImage(layer,0,0);
@@ -329,7 +340,7 @@ export function createStreet({lemosLook,onEnter}){
     lemos.tx=null;lemos.enter=false;lemos.moving=false;
     if(where==='porta'){lemos.x=DOOR.x;lemos.y=DOOR.y+6;lemos.dir=1;}
     else{lemos.x=viatura.x+viatura.spr.width/2;lemos.y=WALK[1];lemos.dir=1;}
-    camX=lemos.x;
+    camX=lemos.x;camY=null;
   }
   return {update,draw,tap,place,lemos,get view(){return lastView;},get cars(){return cars;}};
 }
