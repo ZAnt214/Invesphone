@@ -178,15 +178,10 @@ function CRTback(P,x,y){ // monitor de tubo visto por trás: o volume bege
   P(x+3,y+4,16,12,'#c9c0a8');P(x+3,y+4,16,1,'#b8af98');for(let k=0;k<4;k++)P(x+6,y+7+k*2,10,1,'#aaa189');
   P(x+5,y+19,12,2,'#b8af98');P(x+7,y+21,8,1,'#8f876f');
 }
-function CRTfront(P,x,y,scr){ // monitor de tubo de frente
-  P(x,y,22,19,'#d8d0bc');P(x,y,22,2,'#ece6d4');P(x+20,y+2,2,17,'#b8af98');
-  P(x+3,y+3,16,12,'#1b2a24');P(x+4,y+4,14,10,scr||'#22394a');P(x+4,y+4,5,2,'rgba(255,255,255,.18)');
-  P(x+17,y+16,2,1,'#54e07a');P(x+6,y+19,10,2,'#c9c1ab');P(x+4,y+21,14,1,'#a89f88');
-}
 const FACT={
   desk(o){return [26,(P,E,g,t,fw,fh,B)=>{
     const ty=t,v=o.v,wood='#a77b50';
-    if(v!=='lemos')CRTback(P,3,ty-21);else CRTfront(P,3,ty-21,'#16241e');
+    CRTback(P,3,ty-21);
     // tampo
     P(0,ty,fw,7,wood);P(0,ty,fw,1,'#c39368');P(0,ty+6,fw,1,'#7e5838');for(let x=4;x<fw;x+=11)P(x,ty+2,6,1,'#b28558');
     // coisas da mesa
@@ -196,7 +191,7 @@ const FACT={
     P(fw-13,ty-3,9,4,'#2d2d30');P(fw-12,ty-4,7,2,'#3a3a3e');P(fw-11,ty-5,5,1,'#2d2d30');
     // frente: painel e gaveteiro
     P(0,ty+7,fw,B-ty-7,'#7a5434');P(0,ty+7,fw,1,'#5a3c24');P(2,ty+9,3,B-ty-11,'#6a4a2e');
-    P(fw-24,ty+8,22,B-ty-10,'#8a6040');P(fw-24,ty+8,22,1,'#a07450');for(let k=0;k<2;k++){P(fw-24,ty+14+k*6,22,1,'#5a3c24');P(fw-16,ty+10+k*6,6,1,'#d4af37');}
+    P(fw-24,ty+8,22,B-ty-10,'#80583a');P(fw-24,ty+8,22,1,'#9a6c48');P(fw-24,ty+8,1,B-ty-10,'#6a4a2e');
     P(0,B-2,fw,2,'#3a2818');
   }];},
   deskboss(o){return [24,(P,E,g,t,fw,fh,B)=>{
@@ -216,8 +211,12 @@ const FACT={
   chair(){return [14,(P,E,g,t,fw,fh,B)=>{P(9,0,14,17,'#2b2f36');P(9,0,14,2,'#454b54');P(10,3,12,1,'#3a3f46');P(7,15,18,6,'#3a3f46');P(7,15,18,1,'#535a63');P(15,21,2,8,'#1c1f22');P(8,29,16,2,'#1c1f22');P(7,30,3,2,'#0e0f10');P(22,30,3,2,'#0e0f10');}];},
   execchair(){return [18,(P,E,g,t,fw,fh,B)=>{P(7,0,18,21,'#3a2620');P(7,0,18,2,'#5a3a30');for(let y=4;y<18;y+=5)for(let x=10;x<24;x+=5)P(x,y,1,1,'#2a1812');P(5,19,22,6,'#4a3028');P(5,19,22,1,'#6a463a');P(4,14,3,10,'#2a1812');P(25,14,3,10,'#2a1812');P(15,25,2,6,'#1c1f22');P(8,31,16,2,'#1c1f22');}];},
   stool(){return [4,(P,E,g,t,fw,fh,B)=>{E(16,10,9,3,'#2b2f36');E(16,9,9,3,'#454b54');P(15,12,2,10,'#8a9298');E(16,23,8,2,'#5a6268');}];},
-  cadeira(){return [8,(P,E,g,t,fw,fh,B)=>{P(6,0,20,16,'#4a3428');P(6,0,20,2,'#6a4a3a');for(const x of [10,16,22])P(x,5,1,1,'#2e1e16');P(8,9,16,1,'#3a2820');P(4,14,24,6,'#5a4030');P(4,14,24,1,'#7a5848');P(4,20,24,2,'#3a2820');P(6,22,2,6,'#2a1812');P(24,22,2,6,'#2a1812');}];},
-  metalchair(){return [8,(P,E,g,t,fw,fh,B)=>{P(8,0,16,2,'#8a9298');P(8,0,2,16,'#8a9298');P(22,0,2,16,'#8a9298');P(10,3,12,8,'#6a7076');P(6,14,20,4,'#7d858b');P(6,14,20,1,'#a9b1b6');P(7,18,2,10,'#6a7076');P(23,18,2,10,'#6a7076');}];},
+  // cadeira de visita, de costas para a câmera (virada para a mesa): o encosto fica na frente e o assento só aparece dos lados
+  cadeira(){return [8,(P,E,g,t,fw,fh,B)=>{P(8,4,4,3,'#2a1812');P(20,4,4,3,'#2a1812');P(4,8,24,5,'#5a4030');P(4,8,24,1,'#7a5848');P(6,0,20,20,'#3e2c22');P(6,0,20,2,'#5e4434');P(7,2,1,17,'#4e382c');P(24,2,1,17,'#2e2018');P(9,4,14,12,'#36261c');P(9,4,14,1,'#2a1c14');P(6,20,2,8,'#2a1812');P(24,20,2,8,'#2a1812');P(6,27,2,1,'#1a0e08');P(24,27,2,1,'#1a0e08');}];},
+  // cadeira de metal de perfil, virada para a mesa do depoimento
+  metalchair(o){const right=o.x<5;return [8,(P,E,g,t,fw,fh,B)=>{const R=(x,y,w,h,c)=>P(right?x:fw-x-w,y,w,h,c);
+    R(8,0,3,18,'#8a9298');R(8,0,1,18,'#a9b1b6');R(9,2,2,12,'#6a7076');
+    R(8,14,18,4,'#7d858b');R(8,14,18,1,'#a9b1b6');R(8,18,2,10,'#6a7076');R(24,18,2,10,'#6a7076');R(12,18,2,9,'#5a6066');R(20,18,2,9,'#5a6066');}];},
   shelf(o){const arq=o.v==='arq';return [arq?40:36,(P,E,g,t,fw,fh,B)=>{
     const rnd=mulberry32(o.x*31+o.y*17+fw);
     if(arq){
