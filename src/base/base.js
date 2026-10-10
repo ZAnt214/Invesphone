@@ -1514,7 +1514,7 @@ function isSeat(n){const i=ti(n);return objs.some(o=>o.nocc&&idx(o.x,o.y)===i);}
 let lastRoom='',lastClk='';
 /* ---------- Rua (lado de fora) ⇄ planta (lado de dentro) ---------- */
 let SCENE='rua',STREET=null;
-const street=()=>STREET||(STREET=createStreet({personFrames,lemosLook:LOOK.lemos,onEnter:()=>enterBase()}));
+const street=()=>STREET||(STREET=createStreet({lemosLook:LOOK.lemos,onEnter:()=>enterBase()}));
 const FADE=document.createElement('div');FADE.id='fade';FADE.setAttribute('aria-hidden','true');appEl.appendChild(FADE);
 function fadeTo(fn){FADE.classList.add('on');setTimeout(()=>{fn();requestAnimationFrame(()=>FADE.classList.remove('on'));},200);}
 function setWhere(t){lastRoom=null;$('#where-n').textContent=t;}

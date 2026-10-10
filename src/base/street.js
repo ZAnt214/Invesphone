@@ -5,7 +5,8 @@
    Arte: cada fachada, carro e peça da rua tem um arquivo oficial esperado em public/base/street/ (pedido ao ChatGPT em
    creative-requests/). Enquanto o arquivo não existe, a peça é desenhada aqui, no mesmo tamanho, como provisório;
    quando a imagem oficial chega, ela entra no lugar sozinha (mesmo nome, mesmo tamanho, fundo transparente).
-   Unidade: 1 pixel de arte = 1 pixel das figuras da base (Lemos tem 46 px de altura). */
+   Unidade: 1 pixel de arte = 1 pixel das imagens da rua. A gente da rua é desenhada aqui em 12×28 px (porta do DHPP = 32 px),
+   com as mesmas cores do boneco de cada um na base. */
 
 export const STREET_W=1600,STREET_H=320;
 const GY=196;            // pé das fachadas = começo da calçada
@@ -28,13 +29,8 @@ export const BUILDINGS=[
 ];
 export const DHPP=BUILDINGS.find(b=>b.id==='dhpp');
 export const DOOR={x:DHPP.x+DHPP.w/2,y:WALK[0]+4};  // onde Lemos entra
-const PROPS=[
-  {id:'poste',xs:[140,372,840,1180,1560]},
-  {id:'orelhao',x:740},
-  {id:'banca',x:1290},
-  {id:'lixeira',x:300},
-  {id:'mesas-bar',x:900}
-];
+// postes com os fios (o jogo desenha; as fachadas oficiais não trazem rua nem fios)
+const PROPS=[{id:'poste',xs:[140,372,840,1180,1560]}];
 
 /* ---------- helpers de desenho em pixel ---------- */
 function painter(c){
@@ -122,9 +118,16 @@ function buildStatic(imgs){
   for(const b of BUILDINGS){const im=imgs[b.id];if(im)c.drawImage(im,b.x,GY-im.height);else drawBuilding(c,b);}
   // calçada (concreto com juntas), meio-fio e rua
   P(0,GY,STREET_W,CURB-GY,'#b4aea2');for(let x=0;x<STREET_W;x+=16)P(x,GY,1,CURB-GY,'#a39d91');for(let y=GY+12;y<CURB;y+=12)P(0,y,STREET_W,1,'#a39d91');
+  for(let x=0;x<STREET_W;x+=16)for(let y=GY;y<CURB;y+=12)if(R()<.18)P(x+1,y+1,15,11,R()<.5?'rgba(120,110,96,.14)':'rgba(255,250,240,.10)'); // placas mais gastas ou mais novas
   for(let i=0;i<900;i++)P(R()*STREET_W,GY+2+R()*(CURB-GY-4),2,1,'#9a948a');
+  for(let i=0;i<40;i++){const x=R()*STREET_W,y=GY+6+R()*(CURB-GY-12);c.fillStyle='rgba(70,62,52,.16)';c.beginPath();c.ellipse(x,y,4+R()*8,1.5+R()*2,0,0,7);c.fill();} // manchas
+  for(let i=0;i<30;i++){let x=R()*STREET_W,y=GY+4+R()*(CURB-GY-8);for(let k=0;k<6;k++){P(x,y,2,1,'#8f897d');x+=2;y+=R()<.5?1:-1;}} // rachaduras
+  P(0,GY,STREET_W,2,'rgba(0,0,0,.22)');P(0,GY+2,STREET_W,2,'rgba(0,0,0,.10)'); // sombra no pé das fachadas
   P(0,CURB,STREET_W,4,'#8a857a');P(0,CURB,STREET_W,1,'#d8d2c6');
   P(0,CURB+4,STREET_W,STREET_H-CURB-4,'#4a4c52');for(let i=0;i<2600;i++)P(R()*STREET_W,CURB+4+R()*(STREET_H-CURB-4),1,1,R()<.5?'#55575d':'#404248');
+  P(0,CURB+4,STREET_W,3,'#3a3c40'); // sarjeta
+  for(let i=0;i<14;i++){const x=R()*STREET_W,y=CURB+12+R()*(STREET_H-CURB-20);c.fillStyle='rgba(20,20,24,.28)';c.beginPath();c.ellipse(x,y,6+R()*10,2+R()*2,0,0,7);c.fill();} // óleo
+  for(const x of [210,640,1010,1430]){P(x,CURB+56,14,5,'#3a3c40');P(x+1,CURB+57,12,3,'#55575d');for(let k=0;k<12;k+=3)P(x+1+k,CURB+57,1,3,'#3a3c40');} // bueiros
   for(let x=0;x<STREET_W;x+=40)P(x+6,CURB+50,22,2,'#e8c63a');
   drawProps(c);
   return cv;
@@ -160,7 +163,48 @@ const PED_LOOKS=[
   {skin:'#b67c52',hair:'#2a1d18',style:'short',kind:'rua',top:'#7a8a3a',pants:'#3a3a32',shoes:'#3a2416'}
 ];
 
-export function createStreet({personFrames,lemosLook,onEnter}){
+/* gente na escala das fachadas: 12×28 px, as mesmas cores do boneco da base (pele, cabelo, roupa, gravata) */
+const MW=12,MH=28;
+function miniFrames(L){
+  const frames=[];
+  for(let f=0;f<4;f++){
+    const cv=document.createElement('canvas');cv.width=MW+2;cv.height=MH+2;const c=cv.getContext('2d');
+    const P=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(x+1,y+1,w,h);};
+    const lp=f===1?1:f===3?-1:0,sk=L.skin,top=L.top||'#666',pants=L.pants||'#333',shoes=L.shoes||'#222',hair=L.hair||'#2a1d18';
+    // pernas e sapatos (passo)
+    P(3,18,2,8+lp,pants);P(7,18,2,8-lp,pants);P(2+(lp>0?-1:0),26+lp,3,2,shoes);P(7+(lp<0?1:0),26-lp,3,2,shoes);
+    // tronco e braços
+    P(2,9,8,10,top);P(2,9,1,10,'rgba(255,255,255,.18)');P(9,9,1,10,'rgba(0,0,0,.2)');
+    P(1,10+lp,1,6,top);P(10,10-lp,1,6,top);P(1,16+lp,1,1,sk);P(10,16-lp,1,1,sk);
+    if(L.kind==='civil'){P(5,9,2,2,'#e8e4da');if(L.tie)P(5,10,2,5,L.tie);if(L.badge)P(3,15,1,1,'#d4af37');}
+    // cabeça
+    P(5,8,2,1,sk);P(3,2,6,6,sk);P(4,4,1,1,'#1a1412');P(7,4,1,1,'#1a1412');
+    switch(L.style){
+      case 'long':P(3,1,6,2,hair);P(2,2,1,7,hair);P(9,2,1,7,hair);break;
+      case 'bun':P(3,1,6,2,hair);P(5,0,2,1,hair);P(2,2,1,3,hair);P(9,2,1,3,hair);break;
+      case 'curly':P(2,0,8,3,hair);P(2,3,1,2,hair);P(9,3,1,2,hair);break;
+      case 'grey':P(3,1,6,1,hair);P(2,2,1,3,hair);P(9,2,1,3,hair);break;
+      case 'cap':P(2,1,8,2,'#23262b');P(1,3,10,1,'#16181c');break;
+      default:P(3,1,6,2,hair);P(2,2,1,3,hair);P(9,2,1,2,hair);P(3,3,2,1,hair);
+    }
+    // contorno escuro de 1 px, como nas figuras da base
+    const d=c.getImageData(0,0,cv.width,cv.height),a=d.data,W=cv.width,H=cv.height,m=new Uint8Array(W*H);
+    for(let i=0;i<W*H;i++)m[i]=a[i*4+3]>100?1:0;
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;if(m[i])continue;
+      if((x>0&&m[i-1])||(x<W-1&&m[i+1])||(y>0&&m[i-W])||(y<H-1&&m[i+W])){a[i*4]=24;a[i*4+1]=20;a[i*4+2]=18;a[i*4+3]=200;}}
+    c.putImageData(d,0,0);frames.push(cv);
+  }
+  return frames;
+}
+// pedestres variados (cores de rua de São Paulo)
+function randomLook(R){
+  const pick=a=>a[Math.floor(R()*a.length)];
+  return {skin:pick(['#f0c9a0','#e0b48c','#d9a273','#c98e64','#b67c52','#a8714a','#8a5a3a','#6e4630']),hair:pick(['#1f1a18','#2a1d18','#4a2f1d','#7a4a2a','#9a9a9a','#3a2416']),
+    style:pick(['short','side','long','bun','curly','grey','cap']),kind:'rua',top:pick(['#c0392b','#3b7a6b','#e8e2d4','#5a3a6a','#d8a040','#2f5a8a','#7a8a3a','#26282c','#8a5a8a','#4a6a8a','#e0e0d8']),
+    pants:pick(['#2b2f36','#3a3a40','#3b5a8a','#3a4a5a','#3a3a32','#5a4a3a','#1f242b']),shoes:pick(['#222','#e8e4da','#3a2416','#111'])};
+}
+
+export function createStreet({lemosLook,onEnter}){
   const imgs={};let layer=buildStatic(imgs);
   // arte oficial: entra no lugar do desenho provisório quando o arquivo existir
   // __STREET_ART__: os arquivos que existem em public/base/street (lista feita no build, vite.config.ts)
@@ -168,10 +212,10 @@ export function createStreet({personFrames,lemosLook,onEnter}){
   const want=[...BUILDINGS.map(b=>b.id),'skyline',...CARS.map(k=>'car-'+k.id)].filter(id=>have.has(id));
   for(const id of want){const im=new Image();im.onload=()=>{imgs[id]=im;layer=buildStatic(imgs);for(const k of cars)k.spr=carSprite(k.kind,imgs);parked.spr=carSprite(parked.kind,imgs);};im.src=ART+id+'.png';}
 
-  const lemos={x:DHPP.x-40,y:WALK[0]+18,dir:1,walk:0,moving:false,frames:personFrames(lemosLook),tx:null,ty:null,enter:false};
+  const lemos={x:DHPP.x-40,y:WALK[0]+18,dir:1,walk:0,moving:false,frames:miniFrames(lemosLook),tx:null,ty:null,enter:false};
   const parked={kind:CARS[0],x:DHPP.x+DHPP.w/2-130,y:CURB+30};parked.spr=carSprite(parked.kind,imgs);
   const R=rnd(17);
-  const peds=PED_LOOKS.map((L,i)=>({x:R()*STREET_W,y:WALK[0]+4+R()*(WALK[1]-WALK[0]-4),dir:R()<.5?-1:1,v:16+R()*14,walk:R()*10,frames:personFrames(L),pause:0,id:i}));
+  const peds=Array.from({length:14},(_,i)=>({x:R()*STREET_W,y:WALK[0]+4+R()*(WALK[1]-WALK[0]-4),dir:R()<.5?-1:1,v:10+R()*9,walk:R()*10,frames:miniFrames(i<PED_LOOKS.length?PED_LOOKS[i]:randomLook(R)),pause:0,id:i}));
   const cars=[];const moving=CARS.slice(1);
   for(let l=0;l<LANES.length;l++)for(let i=0;i<4;i++){const kind=moving[(l*4+i)%moving.length];cars.push({kind,spr:carSprite(kind,imgs),lane:l,x:i*STREET_W/4+R()*120,v:LANES[l].v*(0.85+R()*0.3)});}
   let camX=lemos.x,t=0;
@@ -179,13 +223,13 @@ export function createStreet({personFrames,lemosLook,onEnter}){
   function update(dt){
     t+=dt;
     // Lemos
-    if(lemos.tx!=null){const dx=lemos.tx-lemos.x,dy=lemos.ty-lemos.y,d=Math.hypot(dx,dy),sp=78*dt;
+    if(lemos.tx!=null){const dx=lemos.tx-lemos.x,dy=lemos.ty-lemos.y,d=Math.hypot(dx,dy),sp=48*dt;
       if(d<=sp){lemos.x=lemos.tx;lemos.y=lemos.ty;lemos.tx=null;lemos.moving=false;if(lemos.enter){lemos.enter=false;onEnter();}}
-      else{lemos.x+=dx/d*sp;lemos.y+=dy/d*sp;lemos.walk+=sp/22;lemos.moving=true;if(Math.abs(dx)>0.5)lemos.dir=dx>0?1:-1;}}
+      else{lemos.x+=dx/d*sp;lemos.y+=dy/d*sp;lemos.walk+=sp/13;lemos.moving=true;if(Math.abs(dx)>0.5)lemos.dir=dx>0?1:-1;}}
     // gente na calçada: anda, às vezes para um pouco (vitrine, celular), e some numa ponta para voltar na outra
     for(const p of peds){
       if(p.pause>0){p.pause-=dt;p.moving=false;continue;}
-      p.x+=p.dir*p.v*dt;p.walk+=p.v*dt/22;p.moving=true;
+      p.x+=p.dir*p.v*dt;p.walk+=p.v*dt/13;p.moving=true;
       if(R()<dt*0.08)p.pause=1+R()*3;
       if(p.x<-30){p.x=STREET_W+20;p.y=WALK[0]+4+R()*(WALK[1]-WALK[0]-4);}else if(p.x>STREET_W+30){p.x=-20;p.y=WALK[0]+4+R()*(WALK[1]-WALK[0]-4);}
     }
@@ -215,17 +259,18 @@ export function createStreet({personFrames,lemosLook,onEnter}){
       if(flip){ctx.save();ctx.translate(Math.round(k.x)+sp.width,0);ctx.scale(-1,1);ctx.drawImage(sp,0,LANES[k.lane].y-sp.height);ctx.restore();}
       else ctx.drawImage(sp,Math.round(k.x),LANES[k.lane].y-sp.height);}});
     ents.sort((a,b)=>a.y-b.y);for(const e of ents)e.d();
-    if(marker){const b=Math.round(Math.sin(t*6)*2),X=DOOR.x,Y=GY-70+b;ctx.fillStyle='#1e1611';ctx.beginPath();ctx.moveTo(X,Y+8);ctx.lineTo(X-7,Y);ctx.lineTo(X,Y-8);ctx.lineTo(X+7,Y);ctx.fill();
+    if(marker){const b=Math.round(Math.sin(t*6)*2),X=DOOR.x,Y=GY-16+b;ctx.fillStyle='#1e1611';ctx.beginPath();ctx.moveTo(X,Y+8);ctx.lineTo(X-7,Y);ctx.lineTo(X,Y-8);ctx.lineTo(X+7,Y);ctx.fill();
       ctx.fillStyle='#f2c230';ctx.beginPath();ctx.moveTo(X,Y+6);ctx.lineTo(X-5,Y);ctx.lineTo(X,Y-6);ctx.lineTo(X+5,Y);ctx.fill();ctx.fillStyle='#1e1611';ctx.fillRect(X-1,Y-4,2,5);ctx.fillRect(X-1,Y+2,2,1.5);}
     ctx.restore();
     lastView={...V,oy,cw,ch};
   }
   let lastView=null;
   function person(ctx,p){
-    const f=p.moving?Math.floor(p.walk*3.2)%4:0,img=p.frames[f],X=Math.round(p.x),Y=Math.round(p.y);
-    ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();ctx.ellipse(X,Y,9,3,0,0,7);ctx.fill();
-    if(p.dir<0){ctx.save();ctx.translate(X,0);ctx.scale(-1,1);ctx.drawImage(img,-14,Y-45);ctx.restore();}else ctx.drawImage(img,X-14,Y-45);
+    const f=p.moving?Math.floor(p.walk*2.4)%4:0,img=p.frames[f],X=Math.round(p.x),Y=Math.round(p.y);
+    ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();ctx.ellipse(X,Y,6,2,0,0,7);ctx.fill();
+    if(p.dir<0){ctx.save();ctx.translate(X,0);ctx.scale(-1,1);ctx.drawImage(img,-7,Y-MH-1);ctx.restore();}else ctx.drawImage(img,X-7,Y-MH-1);
   }
+
 
   /** toque na tela (px do canvas): na porta ou na fachada do DHPP entra; na calçada anda até lá */
   function tap(px,py){
