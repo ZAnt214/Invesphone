@@ -10,7 +10,7 @@ import { depoPeople, summon } from '../case/depositions'
 import { fileReport, reportEnding } from '../case/report'
 import { nextSteps, type GuideStepData } from '../case/nextSteps'
 import { chapters } from '../case01'
-import { BOARD_PEOPLE, CARDS, CHAPTERS, CONFRONT, boardOf, clueOf, cluesOf, discoveredOf, heardOf, personOf, portrait, sourcesOf, stageOfTask, titleOf,
+import { BOARD_PEOPLE, CARDS, CHAPTERS, CONFRONT, boardOf, clueOf, cluesOf, discoveredOf, heardOf, personOf, portrait, sourcesOf, stageOfTask, thumb, titleOf,
   type BoardSave, type Section } from './boardData'
 import { playCine } from './cineAudio'
 import './case-board.css'
@@ -39,14 +39,14 @@ const ENDINGS={A:['Caso Encerrado','O relatório separa quem entrou na casa de q
   C:['Arquivado','O relatório não sustenta a acusação contra quem foi apontado.','Sem uma cadeia coerente de provas, o caso perde força.']} as const
 const ROT=[-2,1.5,-1,2,-1.5,1,-.5,1.2]
 /** Arte oficial do Lemos de costas (creative-requests/completed/2026-10-10-lemos-de-costas-quadro.md). */
-const LEMOS_BACK:string|null='/characters/lemos/back.png'
+export const LEMOS_BACK:string|null='/thumbs/characters/lemos/back.webp'
 const CINE_FULL=4600, CINE_SHORT=900
 /* a parede inteira do caso, em volta da parte do capítulo: papéis, fotos e fios fora de foco, para dar o tamanho do caso.
    Só usa material que não adianta nada da investigação (fotos da casa, croquis e papéis em branco) e fica desfocado. */
 const WALL={x:-720,y:-380,w:2002,h:1150}
-const WALL_IMGS=['/evidence/case01/new/croqui_rua.jpg','/evidence/case01/new/capa_inquerito.jpg','/evidence/case01/new/termo_depoimento_modelo.jpg',
+export const WALL_IMGS=['/evidence/case01/new/croqui_rua.jpg','/evidence/case01/new/capa_inquerito.jpg','/evidence/case01/new/termo_depoimento_modelo.jpg',
   '/evidence/case01/new/comodos/comodo_02_sala.jpg','/evidence/case01/new/comodos/comodo_05_corredor.jpg','/evidence/case01/new/comodos/comodo_03_cozinha.jpg',
-  '/evidence/case01/new/comodos/comodo_01_entrada.jpg','/evidence/case01/new/croqui_residencia.jpg']
+  '/evidence/case01/new/comodos/comodo_01_entrada.jpg','/evidence/case01/new/croqui_residencia.jpg'].map(thumb)
 function drawWall(cv:HTMLCanvasElement,imgs:HTMLImageElement[]){
   const K=.6,c=cv.getContext('2d');if(!c)return
   cv.width=Math.round(WALL.w*K);cv.height=Math.round(WALL.h*K);c.scale(K,K);c.translate(-WALL.x,-WALL.y)
@@ -227,6 +227,10 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}
   const onClickCapture=(e:React.MouseEvent)=>{if(gest.current?.moved){e.stopPropagation();e.preventDefault()}}
   const zoomed=cam.s>fitS*1.04
 
+  /* se faltar alguma versão leve, cai no original */
+  useEffect(()=>{const el=root.current;if(!el)return
+    const h=(e:Event)=>{const i=e.target;if(i instanceof HTMLImageElement&&i.src.includes('/thumbs/')&&!i.dataset.full){i.dataset.full='1';i.src=i.src.replace('/thumbs/','/').replace(/back\.webp$/,'back.png')}}
+    el.addEventListener('error',h,true);return ()=>el.removeEventListener('error',h,true)},[])
   /* cortiça desenhada uma vez */
   const wall=useRef<HTMLCanvasElement>(null)
   useEffect(()=>{let alive=true
@@ -286,21 +290,21 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}
     const c=CARDS[id],p=layout.pos.get(id)!,cls=['cb-c','k-'+c.kind,sel?.kind==='clue'&&sel.id===id?'sel':'',fresh.has(id)?'new':'',p.variant==='col'?'cb-col':'',p.variant==='sm'?'sm':'',id==='confissao_teo'?'yl':''].join(' ')
     const st={left:p.x,top:p.y,'--r':p.r+'deg',width:c.kind==='nt'?p.w:undefined} as React.CSSProperties
     const lk=(b.links[id]??[]).filter(x=>people.includes(x)&&!layout.mugs.some(m=>m.p===x))
-    const extra=<>{stage===5&&b.proofs.includes(id)&&<span className="cb-proof"/>}{lk.length>0&&<span className="cb-lk">{lk.map(x=><img key={x} className={firm(id,x)?'firm':''} src={portrait(x)} alt={firstName(x)}/>)}</span>}</>
-    if(c.kind!=='nt')return <button key={id} className={cls} style={st} onClick={()=>openClue(id)}><img src={c.img} alt=""/><i>{titleOf(id)}</i>{extra}</button>
+    const extra=<>{stage===5&&b.proofs.includes(id)&&<span className="cb-proof"/>}{lk.length>0&&<span className="cb-lk">{lk.map(x=><img key={x} className={firm(id,x)?'firm':''} src={thumb(portrait(x))} alt={firstName(x)}/>)}</span>}</>
+    if(c.kind!=='nt')return <button key={id} className={cls} style={st} onClick={()=>openClue(id)}><img src={thumb(c.img??'')} alt=""/><i>{titleOf(id)}</i>{extra}</button>
     const heard=heardOf(g,id)[0],col=p.variant==='col'
     return <button key={id} className={cls+(heard&&!col?'':' blank')} style={st} onClick={()=>openClue(id)}>
-      {heard&&!col&&<img src={portrait(heard.person)} alt=""/>}<b>{titleOf(id)}</b>
+      {heard&&!col&&<img src={thumb(portrait(heard.person))} alt=""/>}<b>{titleOf(id)}</b>
       <small>{col?(c.img?'documento':'depoimento'):heard?firstName(heard.person)+' · depoimento':clueOf(id)?.category==='depoimento'?'depoimento':'equipe'}</small>{extra}</button>
   }
   const sectionEl=(sec:Section,i:number)=>{
-    if(sec.kind==='scene')return <div key={i}><div className="cb-croqui" style={{left:CROQUI.x,top:CROQUI.y,width:CROQUI.w,height:CROQUI.h}}><img src="/evidence/case01/new/croqui_residencia.jpg" alt="Croqui da residência"/></div>
+    if(sec.kind==='scene')return <div key={i}><div className="cb-croqui" style={{left:CROQUI.x,top:CROQUI.y,width:CROQUI.w,height:CROQUI.h}}><img src={thumb('/evidence/case01/new/croqui_residencia.jpg')} alt="Croqui da residência"/></div>
       <span className="cb-tape" style={{left:136,top:96,transform:'rotate(-38deg)'}}/><span className="cb-tape" style={{left:398,top:94,transform:'rotate(36deg)'}}/>
       {!have.some(id=>CARDS[id].zone==='cena'&&CARDS[id].kind==='ph')&&<p className="cb-empty" style={{left:170,top:300}}>As fotos da casa entram aqui.</p>}</div>
     if(sec.kind==='people')return <div key={i}>{layout.mugs.map((m,k)=>{const p=m.p,st=g.interviewed.includes(p)?'OUVID'+art(p).toUpperCase():(g.summonedPeople??[]).includes(p)?'CHAMAD'+art(p).toUpperCase():''
       const role=stage===5&&roles[p]&&roles[p]!=='fora'?<span className="cb-stamp ink">{roles[p]==='exec'?'EXECUTOR':'MENTOR'}</span>:null,d=depo.find(x=>x.id===p)
       return <button key={p} className={'cb-c k-mug'+(sel?.kind==='person'&&sel.id===p?' sel':'')} style={{left:m.x,top:m.y,'--r':ROT[k]+'deg'} as React.CSSProperties} onClick={()=>openPerson(p)}>
-        <img src={portrait(p)} alt=""/><i>{firstName(p)}</i><u>{personOf(p)?.role.split(' · ')[0]}</u>{st&&<span className="cb-stamp">{st}</span>}{role}{(d?.state==='retomar'||d?.state==='ouvir')&&<em className="cb-new">{d.state==='ouvir'?'esperando':'novo'}</em>}</button>})}</div>
+        <img src={thumb(portrait(p))} alt=""/><i>{firstName(p)}</i><u>{personOf(p)?.role.split(' · ')[0]}</u>{st&&<span className="cb-stamp">{st}</span>}{role}{(d?.state==='retomar'||d?.state==='ouvir')&&<em className="cb-new">{d.state==='ouvir'?'esperando':'novo'}</em>}</button>})}</div>
     if(sec.kind==='night'){const both=has('log_alarme')&&has('nota_motel')
       return <div key={i}><div className="cb-tl" style={{top:LINE_Y}}/>{[0,30,60,90,120,150,180].map(m=><span key={m} className="cb-tick" style={{left:lineX(m),top:LINE_Y+8}}>{String(Math.floor((22*60+m)/60)%24).padStart(2,'0')}:{String(m%60).padStart(2,'0')}</span>)}
         {both&&<div className="cb-gap" style={{left:lineX(112),width:lineX(176)-lineX(112),top:LINE_Y+24}}><span>1h04</span></div>}
@@ -318,7 +322,7 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}
     const id=sel.id,c=CARDS[id],cl=clueOf(id),heard=heardOf(g,id),src=sourcesOf(g,id,found),ln=(b.links[id]??[]).filter(p=>people.includes(p)),last=ln[ln.length-1]
     const img=c.img??src.find(s=>s.img)?.img,lastState=last?depo.find(x=>x.id===last)?.state:undefined
     detail=<>
-      <header>{img?<img src={img} alt=""/>:heard[0]?<img src={portrait(heard[0].person)} alt=""/>:null}<div><small className="cb-k">{c.kind==='ph'?'Foto da perícia':c.kind==='doc'||c.img?'Documento':'Depoimento'}</small><h3>{cl?.title}</h3></div></header>
+      <header>{img?<img src={thumb(img)} alt=""/>:heard[0]?<img src={thumb(portrait(heard[0].person))} alt=""/>:null}<div><small className="cb-k">{c.kind==='ph'?'Foto da perícia':c.kind==='doc'||c.img?'Documento':'Depoimento'}</small><h3>{cl?.title}</h3></div></header>
       <p>{cl?.description}</p>
       {src.map((s,i)=><div key={i} className="cb-src">{s.text}</div>)}
       {heard.map((s,i)=><div key={'h'+i} className="cb-src">{firstName(s.person)}, no depoimento: <q>{s.phrase}</q></div>)}
@@ -330,7 +334,7 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}
         {stage===5&&reportReady&&<button className={b.proofs.includes(id)?'on':''} onClick={()=>saveBoard(x=>({proofs:x.proofs.includes(id)?x.proofs.filter(y=>y!==id):[...x.proofs,id]}))}>{b.proofs.includes(id)?'✓ Prova no relatório':'Usar como prova no relatório'}</button>}
       </div>
       <div className="cb-dl">Isso aponta para…</div>
-      <div className="cb-faces">{people.map(p=><button key={p} className={ln.includes(p)?(firm(id,p)?'on':'pencil'):''} onClick={()=>toggleLink(id,p)}><img src={portrait(p)} alt=""/>{firstName(p)}</button>)}</div>
+      <div className="cb-faces">{people.map(p=><button key={p} className={ln.includes(p)?(firm(id,p)?'on':'pencil'):''} onClick={()=>toggleLink(id,p)}><img src={thumb(portrait(p))} alt=""/>{firstName(p)}</button>)}</div>
       {last&&(firm(id,last)
         ?<><div className="cb-fb firm"><b>Dá para confrontar</b>Isso sustenta uma pergunta no depoimento de {firstName(last)}.</div>
           <div className="cb-act">{lastState==='chamar'?<button className="main" onClick={()=>callIn(last)}>Chamar {firstName(last)} para depor</button>
@@ -345,7 +349,7 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}
     const list=(arr:string[])=>arr.length?arr.map(id=><button key={id} onClick={()=>openClue(id)}>{titleOf(id)}</button>):<span className="cb-src">Nada ainda.</span>
     const label={chamar:`Chamar ${firstName(p)} para depor`,sem_provas:'Só com provas contra ele',ouvir:`Ouvir ${firstName(p)}`,retomar:`Retomar ${firstName(p)} · ${d?.pending} nova${(d?.pending??0)>1?'s':''}`,registrado:'Rever depoimento'}
     detail=<>
-      <header><img src={portrait(p)} alt=""/><div><small className="cb-k">{st}</small><h3>{P?.name}</h3><span className="cb-src plain">{P?.role}</span></div></header>
+      <header><img src={thumb(portrait(p))} alt=""/><div><small className="cb-k">{st}</small><h3>{P?.name}</h3><span className="cb-src plain">{P?.role}</span></div></header>
       {stage===5&&reportReady&&<><div className="cb-dl">No relatório, {firstName(p)} é…</div><div className="cb-roles">{([['exec','Executor'],['mentor','Mentor'],['fora','Fora']] as const).map(([k,t])=><button key={k} className={roles[p]===k?'on':''} onClick={()=>setRole(p,k)}>{t}</button>)}</div></>}
       {d&&<div className="cb-act"><button className={d.state==='ouvir'||d.state==='retomar'||d.state==='chamar'?'main':''} disabled={d.state==='sem_provas'} onClick={()=>d.state==='chamar'?callIn(p):onDeposition(p)}>{label[d.state]}</button></div>}
       <div className="cb-dl">O que {firstName(p)} disse e foi marcado</div><div className="cb-act">{list(said)}</div>

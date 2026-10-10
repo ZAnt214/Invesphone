@@ -810,6 +810,8 @@ function startDepo(id){
 }
 // quadro do caso: React à parte, como o depoimento; a base pausa e libera a memória enquanto ele está aberto
 const loadBoard=lazyPart(()=>import('./board'));
+// a primeira abertura do quadro não espera a rede: com a base parada, já baixa o código e as imagens dele
+function prefetchBoard(){const go=()=>loadBoard().then(m=>m.preloadBoard()).catch(()=>{});if(window.requestIdleCallback)requestIdleCallback(go,{timeout:6000});else setTimeout(go,3000);}
 function startBoard(){
   if(talk)closeTalk();
   depoOpen=true;const host=$('#board');host.hidden=false;document.body.classList.add('depo-on');
@@ -1581,7 +1583,7 @@ addEventListener('resize',()=>applyLayout(false));
 newGame();initArt();buildTraffic();buildVisitors();applyLayout(true);cam.x=16*T;cam.y=15*TH;clampCam();
 setTimeout(()=>{framesHDFor(P1);for(const n of NPCS)framesHDFor(n);},300);
 $('#b-start').addEventListener('click',()=>{
-  $('#intro').hidden=true;started=true;setTimeout(()=>loadDepo().catch(()=>{}),4000);
+  $('#intro').hidden=true;started=true;setTimeout(()=>loadDepo().catch(()=>{}),4000);setTimeout(prefetchBoard,2500);
   // voltou de uma recarga feita para pegar a versão nova: reabre o que o jogador tinha pedido
   const reopen=safe(()=>sessionStorage.getItem('base.reopen'),null);
   if(reopen){safe(()=>sessionStorage.removeItem('base.reopen'));setTimeout(()=>reopen==='board'?startBoard():startDepo(reopen.slice(5)),500);}

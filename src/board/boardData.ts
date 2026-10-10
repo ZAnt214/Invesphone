@@ -112,6 +112,9 @@ export const SHORT:Record<string,string> = {
 
 export const BOARD_PEOPLE=['livia','caio','rafael','cida','jorge','teo']
 export const VICTIMS=[['ricardo','Ricardo'],['helena','Helena']] as const
+/** Versão leve (public/thumbs, feita por scripts/make-board-thumbs.py) das fotos que o quadro mostra pequenas.
+ *  O original oficial continua sendo o que abre no visualizador. */
+export const thumb=(src:string)=>/^\/(evidence\/case01\/new|characters)\/.+\.jpg$/.test(src)?'/thumbs'+src:src
 export const portrait=(id:string)=>id==='ricardo'||id==='helena'?`/characters/${id}/portrait.jpg`:`/characters/${id}/expressions/neutral.jpg`
 export const personOf=(id:string)=>casePeople.find(p=>p.id===id)
 export const clueOf=(id:string)=>caseClues.find(c=>c.id===id)
