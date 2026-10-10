@@ -222,6 +222,8 @@
 @keyframes cb-bars{0%,70%{transform:none}100%{transform:scaleY(0)}}
 .cb-bar.t{transform-origin:top}.cb-bar.b{transform-origin:bottom}
 @media (prefers-reduced-motion:reduce){.cb.cine .cb-pan,.cb-cine *{animation:none}}
+/* esperando a arte do Lemos: tudo parado no primeiro quadro (sala escura) */
+.cb.hold,.cb.hold *{animation-play-state:paused!important}
 
 /* a parede inteira do caso, fora de foco em volta do capítulo */
 .cb-wall{position:absolute;z-index:0;pointer-events:none;filter:blur(1px) brightness(.62) saturate(.85)}

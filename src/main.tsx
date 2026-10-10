@@ -12,6 +12,9 @@ if((navigator as Navigator & { standalone?:boolean }).standalone || window.match
 fitSafeArea()
 installTapSound()
 
+// o material do caso vai baixando aos poucos enquanto o jogador usa o aparelho (src/preload)
+window.setTimeout(()=>{void import('./preload/prep').then(m=>m.background()).catch(()=>undefined)},6000)
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />

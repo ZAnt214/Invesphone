@@ -10,7 +10,7 @@ import { depoPeople, summon } from '../case/depositions'
 import { fileReport, reportEnding } from '../case/report'
 import { nextSteps, type GuideStepData } from '../case/nextSteps'
 import { chapters } from '../case01'
-import { BOARD_PEOPLE, CARDS, CHAPTERS, CONFRONT, boardOf, clueOf, cluesOf, discoveredOf, heardOf, personOf, portrait, sourcesOf, stageOfTask, thumb, titleOf,
+import { BOARD_PEOPLE, CARDS, CHAPTERS, CONFRONT, boardOf, clueOf, cluesOf, discoveredOf, heardOf, LEMOS_BACK, WALL_IMGS, personOf, portrait, sourcesOf, stageOfTask, thumb, titleOf,
   type BoardSave, type Section } from './boardData'
 import { playCine } from './cineAudio'
 import './case-board.css'
@@ -25,6 +25,8 @@ type Props = {
   onTeam?:(id:string)=>void
   /** alguém foi chamado: a base põe a pessoa na recepção */
   onSummoned?:(id:string)=>void
+  /** a arte da entrada (Lemos de costas) já baixou: até lá a cena fica parada no primeiro quadro, no escuro */
+  artReady?:Promise<unknown>
 }
 type Sel = {kind:'clue'|'person';id:string}|null
 type Pos = {x:number;y:number;r:number;w:number;variant?:string}
@@ -39,14 +41,10 @@ const ENDINGS={A:['Caso Encerrado','O relatório separa quem entrou na casa de q
   C:['Arquivado','O relatório não sustenta a acusação contra quem foi apontado.','Sem uma cadeia coerente de provas, o caso perde força.']} as const
 const ROT=[-2,1.5,-1,2,-1.5,1,-.5,1.2]
 /** Arte oficial do Lemos de costas (creative-requests/completed/2026-10-10-lemos-de-costas-quadro.md). */
-export const LEMOS_BACK:string|null='/thumbs/characters/lemos/back.webp'
 const CINE_FULL=4600, CINE_SHORT=900
 /* a parede inteira do caso, em volta da parte do capítulo: papéis, fotos e fios fora de foco, para dar o tamanho do caso.
    Só usa material que não adianta nada da investigação (fotos da casa, croquis e papéis em branco) e fica desfocado. */
 const WALL={x:-720,y:-380,w:2002,h:1150}
-export const WALL_IMGS=['/evidence/case01/new/croqui_rua.jpg','/evidence/case01/new/capa_inquerito.jpg','/evidence/case01/new/termo_depoimento_modelo.jpg',
-  '/evidence/case01/new/comodos/comodo_02_sala.jpg','/evidence/case01/new/comodos/comodo_05_corredor.jpg','/evidence/case01/new/comodos/comodo_03_cozinha.jpg',
-  '/evidence/case01/new/comodos/comodo_01_entrada.jpg','/evidence/case01/new/croqui_residencia.jpg'].map(thumb)
 function drawWall(cv:HTMLCanvasElement,imgs:HTMLImageElement[]){
   const K=.6,c=cv.getContext('2d');if(!c)return
   cv.width=Math.round(WALL.w*K);cv.height=Math.round(WALL.h*K);c.scale(K,K);c.translate(-WALL.x,-WALL.y)
@@ -114,7 +112,7 @@ function LemosSilhouette(){
   </svg>
 }
 
-export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}:Props){
+export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,artReady}:Props){
   const [g,setG]=useState<CaseSave>(()=>advanceTask(readCase()))
   const b=boardOf(g)
   const save=(fn:(x:CaseSave)=>CaseSave)=>setG(writeCase(fn))
@@ -140,11 +138,14 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}
     if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return null
     let off=false;try{off=localStorage.getItem('board.cine.off')==='1'}catch{/* sem armazenamento */}
     return off?'short':'full'})
+  const [hold,setHold]=useState(!!artReady)
+  useEffect(()=>{if(!artReady)return;let alive=true;const go=()=>{if(alive)setHold(false)}
+    artReady.then(go,go);const t=window.setTimeout(go,1500);return ()=>{alive=false;window.clearTimeout(t)}},[])
   const cineOff=()=>{try{localStorage.setItem('board.cine.off','1')}catch{/* sem armazenamento */}setCine(null)}
-  useEffect(()=>{if(!cine)return;const t=window.setTimeout(()=>setCine(null),cine==='full'?CINE_FULL:CINE_SHORT);return ()=>window.clearTimeout(t)},[cine])
+  useEffect(()=>{if(!cine||hold)return;const t=window.setTimeout(()=>setCine(null),cine==='full'?CINE_FULL:CINE_SHORT);return ()=>window.clearTimeout(t)},[cine,hold])
   // som da cena: quando o jogador pula, sai rápido; no fim natural, o resto do ambiente some sozinho
-  useEffect(()=>{if(cine!=='full')return;const t0=performance.now(),stop=playCine()
-    return ()=>{if(performance.now()-t0<CINE_FULL-200)stop()}},[cine])
+  useEffect(()=>{if(cine!=='full'||hold)return;const t0=performance.now(),stop=playCine()
+    return ()=>{if(performance.now()-t0<CINE_FULL-200)stop()}},[cine,hold])
   useEffect(()=>{if(current>(b.stage??0))saveBoard(()=>({stage:current}))},[])
   useEffect(()=>{if(!intro||cine)return;const t=window.setTimeout(()=>setIntro(0),3000);return ()=>window.clearTimeout(t)},[cine])
 
@@ -380,7 +381,7 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}
   </aside>
 
   const cineStyle={'--ox':`${area.x+area.w/2}px`,'--oy':`${area.y+area.h/2}px`} as React.CSSProperties
-  return <div ref={root} className={'cb'+(vert?' vert':'')+(zoomed?' zoomed':'')+(cine?' cine cine-'+cine:'')} style={cineStyle}>
+  return <div ref={root} className={'cb'+(vert?' vert':'')+(zoomed?' zoomed':'')+(cine?' cine cine-'+cine:'')+(hold&&cine?' hold':'')} style={cineStyle}>
     {cine==='full'&&<div className="cb-room" aria-hidden="true"/>}
     <div className="cb-pan" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onWheel={onWheel} onClickCapture={onClickCapture}>
       <div className={'cb-world'+(glide?' glide':'')} style={{width:W,height:H,transform:`translate(${cam.x}px,${cam.y}px) scale(${cam.s})`}}>

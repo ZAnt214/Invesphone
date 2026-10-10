@@ -137,6 +137,11 @@ body.tiny .clk span{display:none}body.tiny .hbtn.phone span{display:none}
 .card li{display:grid;grid-template-columns:22px 1fr;gap:8px}
 .card li svg{width:20px;height:20px;stroke:var(--mark);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .card .go{width:100%;font:700 15px/1 var(--tfont);letter-spacing:.12em;text-transform:uppercase;padding:13px;border:0;background:var(--ink);color:#0b0e10;cursor:pointer;border-radius:3px}
+.card .go:disabled{opacity:.6;cursor:default}
+.prep{margin:0 0 10px;display:flex;flex-direction:column;gap:6px}
+.prep i{display:block;height:4px;border-radius:2px;background:rgba(255,255,255,.12);overflow:hidden}
+.prep b{display:block;height:100%;width:0;background:#f2c230;transition:width .25s ease}
+.prep span{font-size:12px;letter-spacing:.04em;opacity:.75}
 .card .disc{font-size:9.5px;color:#697277;line-height:1.4;margin-top:10px}
 body.short .modal{padding:10px}body.short .card{padding:13px}body.short .card h1{font-size:22px;margin:4px 0 7px}body.short .card .call{margin-bottom:8px;gap:9px}body.short .card .call p{font-size:14px;line-height:1.3}body.short .card ul{gap:5px;margin-bottom:10px;font-size:11.5px;line-height:1.3}body.short .card li{grid-template-columns:18px 1fr;gap:6px}body.short .card li svg{width:17px;height:17px}body.short .card .go{padding:11px}body.short .card .disc{display:none}
 /* deitado: a conversa vai para a direita e a cena fica à esquerda */
@@ -151,7 +156,7 @@ body.land #depo .ii:not(.ii-file):not(.ii-room){flex-direction:row}
 body.land #depo .ii:not(.ii-file):not(.ii-room) .ii-stage{width:44%;height:100%;border-bottom:0;border-right:1px solid var(--line)}
 body.land #depo .ii:not(.ii-file):not(.ii-room) .ii-panel{flex:1;min-width:0;height:100%}
 body.land #depo .ii-file{max-width:760px;margin:0 auto}
-body.depo-on .hud,body.depo-on #toast{display:none}
+body.depo-on .hud,body.depo-on #toast,body.depo-on #cv,body.depo-on #vig{display:none}
 #tk-opts button:disabled{opacity:.45;cursor:default}
 body.land #depo .ii:not(.ii-file):not(.ii-room) .ii-tut-card{left:calc(44% + 12px);right:12px}
 /* pós-processamento em WebGL por cima do canvas 2D: o 2D continua recebendo os toques */
