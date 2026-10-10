@@ -37,9 +37,8 @@ const ENDINGS={A:['Caso Encerrado','O relatório separa quem entrou na casa de q
   B:['Meia Justiça','Os executores estão no relatório. O papel de quem preparou a noite ficou de fora.','“Você fechou quem entrou na casa. Não necessariamente quem colocou os dois lá.” · Sônia'],
   C:['Arquivado','O relatório não sustenta a acusação contra quem foi apontado.','Sem uma cadeia coerente de provas, o caso perde força.']} as const
 const ROT=[-2,1.5,-1,2,-1.5,1,-.5,1.2]
-/** Arte oficial do Lemos de costas (pedido em creative-requests/inbox/2026-10-10-lemos-de-costas-quadro.md).
-    Enquanto não chega, a entrada usa a silhueta em contraluz abaixo. */
-const LEMOS_BACK:string|null=null
+/** Arte oficial do Lemos de costas (creative-requests/completed/2026-10-10-lemos-de-costas-quadro.md). */
+const LEMOS_BACK:string|null='/characters/lemos/back.png'
 const CINE_FULL=2900, CINE_SHORT=900
 /** Silhueta temporária do Lemos de costas, só sombra contra a luz do quadro (sem desenhar o personagem). */
 function LemosSilhouette(){
