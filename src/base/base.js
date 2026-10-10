@@ -823,7 +823,8 @@ function prepIntro(){
   const slow=setTimeout(()=>{if(!ready){box.hidden=false;btn.disabled=true;btn.textContent='Preparando o caso…';}},350);
   const giveUp=setTimeout(finish,12000);
   const prog=(d,t)=>{const k=t?d/t:1;fill.style.width=Math.round(k*100)+'%';label.textContent=`Baixando o material do caso · ${Math.round(k*100)}%`;};
-  Promise.all([loadPrep().then(m=>m.prepare(prog)),loadBoard(),loadDepo()]).then(finish,finish);
+  // o quadro já fica pronto para abrir sem travar (Lemos decodificado, cortiça e parede desenhadas)
+  Promise.all([loadPrep().then(m=>m.prepare(prog)).then(()=>loadBoard()).then(m=>m.prewarm()),loadDepo()]).then(finish,finish);
 }
 prepIntro();
 function startBoard(){

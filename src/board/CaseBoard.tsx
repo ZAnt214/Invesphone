@@ -25,8 +25,6 @@ type Props = {
   onTeam?:(id:string)=>void
   /** alguém foi chamado: a base põe a pessoa na recepção */
   onSummoned?:(id:string)=>void
-  /** a arte da entrada (Lemos de costas) já baixou: até lá a cena fica parada no primeiro quadro, no escuro */
-  artReady?:Promise<unknown>
 }
 type Sel = {kind:'clue'|'person';id:string}|null
 type Pos = {x:number;y:number;r:number;w:number;variant?:string}
@@ -112,7 +110,29 @@ function LemosSilhouette(){
   </svg>
 }
 
-export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,artReady}:Props){
+const copyCanvas=(cv:HTMLCanvasElement,src:HTMLCanvasElement)=>{cv.width=src.width;cv.height=src.height;cv.getContext('2d')?.drawImage(src,0,0)}
+let corkCache:HTMLCanvasElement|null=null
+function corkArt(){
+  if(corkCache)return corkCache
+  const cv=document.createElement('canvas')
+  const K=Math.min(2,(window.devicePixelRatio||1));cv.width=W*K;cv.height=H*K
+  const c=cv.getContext('2d');if(!c)return cv
+  const w=cv.width,h=cv.height;let s=7;const R=()=>(s=s*16807%2147483647)/2147483647
+  c.fillStyle='#8a5c33';c.fillRect(0,0,w,h)
+  for(let i=0;i<90;i++){const x=R()*w,y=R()*h,r=(40+R()*120)*K,gr=c.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,R()<.5?'rgba(52,30,12,.22)':'rgba(196,146,92,.16)');gr.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=gr;c.fillRect(x-r,y-r,r*2,r*2)}
+  const pal=['rgba(70,40,16,.55)','rgba(110,70,36,.5)','rgba(176,128,78,.5)','rgba(205,160,104,.42)','rgba(48,26,10,.5)','rgba(150,104,60,.55)']
+  for(let i=0,n=w*h/6;i<n;i++){c.fillStyle=pal[(R()*6)|0];const z=(.5+Math.pow(R(),2.2)*2.2)*K;c.fillRect(R()*w,R()*h,z,z*(.6+R()*.8))}
+  for(let i=0;i<50;i++){const x=R()*w,y=R()*h;c.fillStyle='rgba(20,10,4,.7)';c.beginPath();c.arc(x,y,1.2*K,0,7);c.fill()}
+  const gr=c.createRadialGradient(w/2,h*.3,0,w/2,h*.4,w*.7);gr.addColorStop(0,'rgba(255,236,200,.18)');gr.addColorStop(.6,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.4)');c.fillStyle=gr;c.fillRect(0,0,w,h)
+  return corkCache=cv
+}
+let wallCache:Promise<HTMLCanvasElement>|null=null
+const wallArt=()=>wallCache??=Promise.all(WALL_IMGS.map(src=>new Promise<HTMLImageElement>(res=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>res(i);i.src=src})))
+  .then(imgs=>{const cv=document.createElement('canvas');drawWall(cv,imgs);return cv})
+/** Desenha antes a cortiça e a parede do fundo (o que mais pesa ao abrir), para a entrada começar sem travar. */
+export async function prewarmBoard(){corkArt();await wallArt()}
+
+export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}:Props){
   const [g,setG]=useState<CaseSave>(()=>advanceTask(readCase()))
   const b=boardOf(g)
   const save=(fn:(x:CaseSave)=>CaseSave)=>setG(writeCase(fn))
@@ -138,14 +158,11 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
     if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return null
     let off=false;try{off=localStorage.getItem('board.cine.off')==='1'}catch{/* sem armazenamento */}
     return off?'short':'full'})
-  const [hold,setHold]=useState(!!artReady)
-  useEffect(()=>{if(!artReady)return;let alive=true;const go=()=>{if(alive)setHold(false)}
-    artReady.then(go,go);const t=window.setTimeout(go,1500);return ()=>{alive=false;window.clearTimeout(t)}},[])
   const cineOff=()=>{try{localStorage.setItem('board.cine.off','1')}catch{/* sem armazenamento */}setCine(null)}
-  useEffect(()=>{if(!cine||hold)return;const t=window.setTimeout(()=>setCine(null),cine==='full'?CINE_FULL:CINE_SHORT);return ()=>window.clearTimeout(t)},[cine,hold])
+  useEffect(()=>{if(!cine)return;const t=window.setTimeout(()=>setCine(null),cine==='full'?CINE_FULL:CINE_SHORT);return ()=>window.clearTimeout(t)},[cine])
   // som da cena: quando o jogador pula, sai rápido; no fim natural, o resto do ambiente some sozinho
-  useEffect(()=>{if(cine!=='full'||hold)return;const t0=performance.now(),stop=playCine()
-    return ()=>{if(performance.now()-t0<CINE_FULL-200)stop()}},[cine,hold])
+  useEffect(()=>{if(cine!=='full')return;const t0=performance.now(),stop=playCine()
+    return ()=>{if(performance.now()-t0<CINE_FULL-200)stop()}},[cine])
   useEffect(()=>{if(current>(b.stage??0))saveBoard(()=>({stage:current}))},[])
   useEffect(()=>{if(!intro||cine)return;const t=window.setTimeout(()=>setIntro(0),3000);return ()=>window.clearTimeout(t)},[cine])
 
@@ -232,26 +249,13 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
   useEffect(()=>{const el=root.current;if(!el)return
     const h=(e:Event)=>{const i=e.target;if(i instanceof HTMLImageElement&&i.src.includes('/thumbs/')&&!i.dataset.full){i.dataset.full='1';i.src=i.src.replace('/thumbs/','/').replace(/back\.webp$/,'back.png')}}
     el.addEventListener('error',h,true);return ()=>el.removeEventListener('error',h,true)},[])
-  /* cortiça desenhada uma vez */
+  /* cortiça e parede: desenhadas uma vez (de preferência antes, em prewarmBoard) e só copiadas ao abrir */
   const wall=useRef<HTMLCanvasElement>(null)
   useEffect(()=>{let alive=true
-    Promise.all(WALL_IMGS.map(src=>new Promise<HTMLImageElement>(res=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>res(i);i.src=src})))
-      .then(imgs=>{if(alive&&wall.current)drawWall(wall.current,imgs)})
+    void wallArt().then(src=>{const cv=wall.current;if(alive&&cv)copyCanvas(cv,src)})
     return ()=>{alive=false;if(wall.current)wall.current.width=wall.current.height=1}},[])
   const cork=useRef<HTMLCanvasElement>(null)
-  useEffect(()=>{
-    const cv=cork.current;if(!cv)return
-    const K=Math.min(2,(window.devicePixelRatio||1));cv.width=W*K;cv.height=H*K
-    const c=cv.getContext('2d');if(!c)return
-    const w=cv.width,h=cv.height;let s=7;const R=()=>(s=s*16807%2147483647)/2147483647
-    c.fillStyle='#8a5c33';c.fillRect(0,0,w,h)
-    for(let i=0;i<90;i++){const x=R()*w,y=R()*h,r=(40+R()*120)*K,gr=c.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,R()<.5?'rgba(52,30,12,.22)':'rgba(196,146,92,.16)');gr.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=gr;c.fillRect(x-r,y-r,r*2,r*2)}
-    const pal=['rgba(70,40,16,.55)','rgba(110,70,36,.5)','rgba(176,128,78,.5)','rgba(205,160,104,.42)','rgba(48,26,10,.5)','rgba(150,104,60,.55)']
-    for(let i=0,n=w*h/6;i<n;i++){c.fillStyle=pal[(R()*6)|0];const z=(.5+Math.pow(R(),2.2)*2.2)*K;c.fillRect(R()*w,R()*h,z,z*(.6+R()*.8))}
-    for(let i=0;i<50;i++){const x=R()*w,y=R()*h;c.fillStyle='rgba(20,10,4,.7)';c.beginPath();c.arc(x,y,1.2*K,0,7);c.fill()}
-    const gr=c.createRadialGradient(w/2,h*.3,0,w/2,h*.4,w*.7);gr.addColorStop(0,'rgba(255,236,200,.18)');gr.addColorStop(.6,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.4)');c.fillStyle=gr;c.fillRect(0,0,w,h)
-    return ()=>{cv.width=cv.height=1}
-  },[])
+  useLayoutEffect(()=>{const cv=cork.current;if(!cv)return;copyCanvas(cv,corkArt());return ()=>{cv.width=cv.height=1}},[])
 
   /* ações */
   const openClue=(id:string)=>setSel({kind:'clue',id})
@@ -381,7 +385,7 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
   </aside>
 
   const cineStyle={'--ox':`${area.x+area.w/2}px`,'--oy':`${area.y+area.h/2}px`} as React.CSSProperties
-  return <div ref={root} className={'cb'+(vert?' vert':'')+(zoomed?' zoomed':'')+(cine?' cine cine-'+cine:'')+(hold&&cine?' hold':'')} style={cineStyle}>
+  return <div ref={root} className={'cb'+(vert?' vert':'')+(zoomed?' zoomed':'')+(cine?' cine cine-'+cine:'')} style={cineStyle}>
     {cine==='full'&&<div className="cb-room" aria-hidden="true"/>}
     <div className="cb-pan" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onWheel={onWheel} onClickCapture={onClickCapture}>
       <div className={'cb-world'+(glide?' glide':'')} style={{width:W,height:H,transform:`translate(${cam.x}px,${cam.y}px) scale(${cam.s})`}}>
