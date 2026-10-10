@@ -83,14 +83,14 @@ function DustMotes(){
     const cv=ref.current;if(!cv)return
     const dpr=Math.min(1.5,window.devicePixelRatio||1),W=cv.clientWidth,H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr
     const c=cv.getContext('2d');if(!c)return
-    const cx=parseFloat(getComputedStyle(cv).getPropertyValue('--ox'))||W/2
-    const motes=Array.from({length:90},()=>({x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*.012,vy:-.004-Math.random()*.01,r:.5+Math.random()*1.6,ph:Math.random()*6}))
+    const cx=W/2,top=W*.046
+    const motes=Array.from({length:110},()=>({x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*.012,vy:-.004-Math.random()*.01,r:.5+Math.random()*1.6,ph:Math.random()*6}))
     let raf=0,last=performance.now();const t0=last
     const frame=(now:number)=>{const dt=Math.min(.05,(now-last)/1000);last=now;const T=(now-t0)/1000
       c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);c.globalCompositeOperation='lighter'
       const lit=T<.55?0:T<.66?.8:T<.74?.2:T<1?.9:1
       for(const m of motes){m.ph+=dt;m.x+=(m.vx+Math.sin(m.ph)*.004)*dt;m.y+=m.vy*dt;if(m.y<-.02)m.y=1.02;if(m.x<0)m.x=1;if(m.x>1)m.x=0
-        const x=m.x*W,y=m.y*H,half=40+y*.55,d=Math.abs(x-cx)/half;if(d>=1)continue
+        const x=m.x*W,y=m.y*H,half=top+(y/H)*(W/2-top),d=Math.abs(x-cx)/half;if(d>=1)continue
         const a=(1-d)*(1-y/H*.6)*lit*(.5+.5*Math.sin(m.ph*3));if(a<.03)continue
         c.globalAlpha=a*.8;c.fillStyle='#ffe2b0';c.beginPath();c.arc(x,y,m.r,0,7);c.fill()}
       c.globalAlpha=1;raf=requestAnimationFrame(frame)}
@@ -386,6 +386,8 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}
         {[...layout.pos.keys()].map(cardEl)}
         <svg className="cb-str" style={{width:W,height:H}} viewBox={`0 0 ${W} ${H}`}>{strings}</svg>
         <div className="cb-pins">{pins}</div>
+        {/* a luminária pendurada acima do quadro: o facho cai sobre a cortiça e avança junto com a câmera */}
+        {cine==='full'&&<div className="cb-lampw" aria-hidden="true"><i className="cb-cord"/><i className="cb-shade"/><i className="cb-bulb"/><div className="cb-wbeam"><DustMotes/></div></div>}
       </div>
     </div>
     <div className="cb-light"/>
@@ -400,9 +402,6 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}
     {toast&&<div className="cb-toast">{toast}</div>}
     {cine==='full'&&<button className="cb-cine" aria-label="Pular" onClick={()=>setCine(null)}>
       <span className="cb-window"/>
-      <span className="cb-beam"/>
-      <span className="cb-lamp"/>
-      <DustMotes/>
       <span className="cb-lemos">{LEMOS_BACK?<img src={LEMOS_BACK} alt=""/>:<LemosSilhouette/>}</span>
       <span className="cb-grain"/>
       <span className="cb-vig"/>

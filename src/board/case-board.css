@@ -212,8 +212,6 @@
 .cb:not(.cine) .cb-panel{animation:cb-panel-in .5s cubic-bezier(.3,.8,.2,1) both}
 @keyframes cb-panel-in{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
 .cb-cine{position:absolute;inset:0;z-index:66;border:0;padding:0;background:none;cursor:pointer;overflow:hidden}
-.cb-lamp{position:absolute;left:calc(var(--ox) - 30%);width:60%;top:-10%;height:90%;background:radial-gradient(ellipse 50% 60% at 50% 30%,rgba(255,214,150,.22),rgba(255,214,150,0) 70%);animation:cb-lamp 4.6s ease both;pointer-events:none}
-@keyframes cb-lamp{0%{opacity:0}10%{opacity:1}14%{opacity:.25}20%{opacity:1}75%{opacity:.7}100%{opacity:0}}
 .cb-lemos{position:absolute;left:var(--ox);bottom:-14%;height:96%;aspect-ratio:4/5;transform:translateX(-50%);animation:cb-pass 4.6s linear both;filter:blur(.6px)}
 .cb-lemos svg,.cb-lemos img{display:block;width:100%;height:100%;object-fit:contain;object-position:bottom}
 @keyframes cb-pass{0%{transform:translateX(-50%) scale(1);filter:blur(.6px)}
@@ -235,15 +233,21 @@
 /* atmosfera da entrada: janela com chuva, facho de luz com poeira, granulado de filme, câmera na mão */
 .cb-window{position:absolute;left:0;top:0;bottom:0;width:30%;pointer-events:none;opacity:.3;
   background:linear-gradient(90deg,rgba(70,100,150,.4),rgba(70,100,150,0));animation:cb-room 4.6s ease both}
-.cb-beam{position:absolute;left:calc(var(--ox) - 34%);width:68%;top:-6%;height:96%;pointer-events:none;
-  background:linear-gradient(180deg,rgba(255,214,150,.20),rgba(255,214,150,.05) 70%,rgba(255,214,150,0));clip-path:polygon(42% 0,58% 0,100% 100%,0 100%);
-  animation:cb-lamp 4.6s ease both,cb-sway 4.6s ease-in-out both;transform-origin:50% 0}
 @keyframes cb-sway{0%{transform:rotate(-.4deg)}100%{transform:rotate(.4deg)}}
-.cb-dust{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;animation:cb-room 4.6s ease both}
 .cb-grain{position:absolute;inset:-50%;pointer-events:none;opacity:.16;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.6 0 0 0 -.75'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   animation:cb-grain .5s steps(4) infinite,cb-room 4.6s ease both}
 @keyframes cb-grain{0%{transform:translate(0,0)}25%{transform:translate(-5%,3%)}50%{transform:translate(4%,-4%)}75%{transform:translate(-3%,-2%)}100%{transform:translate(2%,4%)}}
 .cb-vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 80% at var(--ox) 45%,rgba(0,0,0,0) 40%,rgba(0,0,0,.7));animation:cb-vigflick 4.6s ease both}
 @keyframes cb-vigflick{0%{opacity:1}12%{opacity:.6}14%{opacity:1}16%{opacity:.7}22%{opacity:.55}80%{opacity:.6}100%{opacity:0}}
-@media (prefers-reduced-motion:reduce){.cb-window,.cb-grain,.cb-beam{animation:none}}
+@media (prefers-reduced-motion:reduce){.cb-window,.cb-grain,.cb-wbeam,.cb-bulb{animation:none}}
+
+/* luminária acima do quadro (coordenadas do quadro: a cortiça do capítulo tem 562×390) */
+.cb-lampw{position:absolute;left:281px;top:-190px;width:0;height:0;z-index:8;pointer-events:none}
+.cb-cord{position:absolute;left:-1px;top:-400px;width:2px;height:400px;background:#111}
+.cb-shade{position:absolute;left:-42px;top:-4px;width:84px;height:36px;background:linear-gradient(#2b2f33,#14171a);clip-path:polygon(26% 0,74% 0,100% 100%,0 100%);border-bottom:2px solid #3b3f44}
+.cb-bulb{position:absolute;left:-60px;top:6px;width:120px;height:70px;border-radius:50%;background:radial-gradient(ellipse at 50% 40%,rgba(255,236,190,.95),rgba(255,210,140,.35) 35%,rgba(255,200,120,0) 70%);animation:cb-lamp 4.6s ease both}
+.cb-wbeam{position:absolute;left:-390px;top:30px;width:780px;height:600px;clip-path:polygon(46% 0,54% 0,100% 100%,0 100%);
+  background:linear-gradient(180deg,rgba(255,220,160,.42),rgba(255,214,150,.16) 55%,rgba(255,214,150,.03));animation:cb-lamp 4.6s ease both}
+.cb-wbeam .cb-dust{position:absolute;inset:0;width:100%;height:100%}
+@keyframes cb-lamp{0%{opacity:0}12%{opacity:1}14%{opacity:.25}16%{opacity:1}75%{opacity:.85}100%{opacity:0}}
