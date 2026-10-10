@@ -78,7 +78,8 @@ export const caioInterrogation:InterrogationConfig = {
       question:'Seu irmão Téo estava com você?',
       answer:'O Téo? O que o Téo tem a ver com isso? Ele nem conhecia a família.',
       expression:'defensive',
-      revealsPeople:['teo']
+      revealsPeople:['teo'],
+      unlocks:['confront_teo_entry','confront_alarm_use','confront_prepared']
     },
     {
       id:'confront_gol',
@@ -110,6 +111,28 @@ export const caioInterrogation:InterrogationConfig = {
       answer:'Eu já disse que cheguei onze e pouco. Esse quadro tá errado, ou o motel anotou errado. Eu não fico olhando relógio.',
       expression:'lying',
       highlights:[{ phrase:'Esse quadro tá errado', clue:'caio_sem_intervalo' }]
+    },
+    {
+      id:'confront_teo_entry',
+      requiresClue:'teo_entrou_com_caio',
+      question:'Téo admitiu que entrou na casa com você. Ele está mentindo?',
+      answer:'Ele tá tentando se salvar. Se ele fez alguma coisa, problema dele. Eu não vou carregar o que meu irmão resolveu fazer.',
+      expression:'shaken'
+    },
+    {
+      id:'confront_alarm_use',
+      requiresClue:'caio_digitou_alarme',
+      question:'Téo diz que foi você quem digitou o código às 23h52.',
+      answer:'Tá. Eu sabia o código. Já tinha visto a Lívia digitar antes. Isso não prova que eu entrei naquela casa.',
+      expression:'shaken',
+      highlights:[{ phrase:'Eu sabia o código', clue:'caio_admite_codigo' }]
+    },
+    {
+      id:'confront_prepared',
+      requiresClue:'plano_preparado_antes',
+      question:'Téo diz que você já chegou sabendo o horário, o cachorro e onde estava o dinheiro.',
+      answer:'Ele tá misturando um monte de coisa. Eu conhecia a casa, só isso. Conhecer não é planejar crime nenhum.',
+      expression:'nervous'
     },
     {
       id:'untold',
