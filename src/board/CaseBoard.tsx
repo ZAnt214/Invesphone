@@ -25,8 +25,10 @@ type Props = {
   onTeam?:(id:string)=>void
   /** alguém foi chamado: a base põe a pessoa na recepção */
   onSummoned?:(id:string)=>void
-  /** o primeiro quadro já foi pintado (quem abriu pode tirar a cena de baixo) */
+  /** o quadro está na tela (no mesmo quadro em que a entrada começa; quem abriu pode tirar a cena de baixo) */
   onShown?:()=>void
+  /** false: montado de antemão e escondido (o Lemos indo até o quadro); a entrada, o som e o save só começam com true */
+  live?:boolean
 }
 type Sel = {kind:'clue'|'person';id:string}|null
 type Pos = {x:number;y:number;r:number;w:number;variant?:string}
@@ -134,7 +136,7 @@ const wallArt=()=>wallCache??=Promise.all(WALL_IMGS.map(src=>new Promise<HTMLIma
 /** Desenha antes a cortiça e a parede do fundo (o que mais pesa ao abrir), para a entrada começar sem travar. */
 export async function prewarmBoard(){corkArt();await wallArt()}
 
-export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,onShown}:Props){
+export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,onShown,live=true}:Props){
   const [g,setG]=useState<CaseSave>(()=>advanceTask(readCase()))
   const b=boardOf(g)
   const save=(fn:(x:CaseSave)=>CaseSave)=>setG(writeCase(fn))
@@ -147,7 +149,7 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
 
   // o que chegou desde a última visita entra com animação; depois fica marcado como visto
   const [fresh]=useState(()=>new Set(have.filter(id=>!b.seen.includes(id))))
-  useEffect(()=>{const t=window.setTimeout(()=>saveBoard(x=>({seen:[...new Set([...x.seen,...have])]})),1600);return ()=>window.clearTimeout(t)},[have.join()])
+  useEffect(()=>{if(!live)return;const t=window.setTimeout(()=>saveBoard(x=>({seen:[...new Set([...x.seen,...have])]})),1600);return ()=>window.clearTimeout(t)},[have.join(),live])
 
   /* capítulo: o atual abre sozinho; os anteriores dá para rever */
   const current=stageOfTask(g.task)
@@ -156,17 +158,18 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
   const [intro,setIntro]=useState(()=>current>(b.stage??0)?current:0)
   /* entrada de cinema: a câmera passa por trás do Lemos, que olha o quadro, e chega até a cortiça.
      Inteira na primeira vez da sessão; nas outras, só a aproximação. Um toque pula. */
-  const [cine,setCine]=useState<'full'|'short'|null>(()=>{
+  const [cineS,setCine]=useState<'full'|'short'|null>(()=>{
     if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return null
     let off=false;try{off=localStorage.getItem('board.cine.off')==='1'}catch{/* sem armazenamento */}
     return off?'short':'full'})
+  const cine=live?cineS:null
   const cineOff=()=>{try{localStorage.setItem('board.cine.off','1')}catch{/* sem armazenamento */}setCine(null)}
   useEffect(()=>{if(!cine)return;const t=window.setTimeout(()=>setCine(null),cine==='full'?CINE_FULL:CINE_SHORT);return ()=>window.clearTimeout(t)},[cine])
   // som da cena: quando o jogador pula, sai rápido; no fim natural, o resto do ambiente some sozinho
   useEffect(()=>{if(cine!=='full')return;const t0=performance.now(),stop=playCine()
     return ()=>{if(performance.now()-t0<CINE_FULL-200)stop()}},[cine])
-  useEffect(()=>{if(current>(b.stage??0))saveBoard(()=>({stage:current}))},[])
-  useEffect(()=>{if(!intro||cine)return;const t=window.setTimeout(()=>setIntro(0),3000);return ()=>window.clearTimeout(t)},[cine])
+  useEffect(()=>{if(live&&current>(b.stage??0))saveBoard(()=>({stage:current}))},[live])
+  useEffect(()=>{if(!live||!intro||cine)return;const t=window.setTimeout(()=>setIntro(0),3000);return ()=>window.clearTimeout(t)},[cine,live])
 
   const [sel,setSel]=useState<Sel>(null)
   const [viewer,setViewer]=useState<{img:string;t:string;d:string}|null>(null)
@@ -251,7 +254,8 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
   useEffect(()=>{const el=root.current;if(!el)return
     const h=(e:Event)=>{const i=e.target;if(i instanceof HTMLImageElement&&i.src.includes('/thumbs/')&&!i.dataset.full){i.dataset.full='1';i.src=i.src.replace('/thumbs/','/').replace(/back\.webp$/,'back.png')}}
     el.addEventListener('error',h,true);return ()=>el.removeEventListener('error',h,true)},[])
-  useEffect(()=>{let a=0;a=requestAnimationFrame(()=>{a=requestAnimationFrame(()=>onShown?.())});return ()=>cancelAnimationFrame(a)},[])
+  // avisa antes da pintura: o primeiro quadro que aparece já é o da entrada (sem tela vazia no meio)
+  useLayoutEffect(()=>{if(live)onShown?.()},[live])
   /* cortiça e parede: desenhadas uma vez (de preferência antes, em prewarmBoard) e só copiadas ao abrir */
   const wall=useRef<HTMLCanvasElement>(null)
   useEffect(()=>{let alive=true

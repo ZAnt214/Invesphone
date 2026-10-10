@@ -829,11 +829,26 @@ function prepIntro(){
 prepIntro();
 function startBoard(){
   if(talk)closeTalk();
-  // a base continua na tela (parada) até o quadro pintar o primeiro quadro da entrada: nunca aparece tela preta no meio
-  depoOpen=true;const host=$('#board');host.style.opacity='0';host.hidden=false;
-  const shown=()=>{host.style.opacity='';document.body.classList.add('depo-on');cv.width=cv.height=1;lc.width=lc.height=1;};
-  const back=()=>{host.hidden=true;host.style.opacity='';depoOpen=false;document.body.classList.remove('depo-on');sizeCanvas();refreshCase();buildVisitors();last=performance.now();};
-  loadBoard().then(m=>m.openBoard(host,{found:FOUND,onShown:shown,onClose:back,onDeposition:id=>startDepo(id),onTeam:id=>goTalk('npc',id),onSummoned:()=>{refreshCase();}}),()=>partFailed(back,'board'));
+  // a base continua na tela (parada) até o quadro estar pronto para pintar a entrada: nunca aparece tela preta no meio
+  depoOpen=true;boardPrepT=0;const host=$('#board');hideHost(host);host.hidden=false;
+  const shown=()=>{host.style.visibility='';host.style.pointerEvents='';document.body.classList.add('depo-on');cv.width=cv.height=1;lc.width=lc.height=1;};
+  const back=()=>{host.hidden=true;showHost(host);boardPrepared=false;depoOpen=false;document.body.classList.remove('depo-on');sizeCanvas();refreshCase();buildVisitors();last=performance.now();};
+  loadBoard().then(m=>m.openBoard(host,boardOpts(shown,back)),()=>partFailed(back,'board'));
+}
+const hideHost=h=>{h.style.visibility='hidden';h.style.pointerEvents='none';};
+const showHost=h=>{h.style.visibility='';h.style.pointerEvents='';};
+const boardOpts=(shown,back)=>({found:FOUND,onShown:shown,onClose:back,onDeposition:id=>startDepo(id),onTeam:id=>goTalk('npc',id),onSummoned:()=>{refreshCase();}});
+// o quadro é montado escondido quando o Lemos vai até ele ou passa perto; ao chegar, só aparece (sem espera)
+let boardPrepared=false,boardPrepT=0,boardCase=null,boardCaseJ='';
+function boardNearTick(dt){
+  if(!started||depoOpen)return;
+  // o caso mudou (uma conversa, um pedido): refaz o quadro escondido já com o caso novo
+  if(boardPrepared&&boardCase!==CASE){const j=JSON.stringify(CASE);if(j===boardCaseJ)boardCase=CASE;else{boardPrepared=false;loadBoard().then(m=>{if(!depoOpen)m.discardBoard();}).catch(()=>{});}}
+  const want=(P1.pend&&P1.pend.id==='quadro')||(roomOf(P1)==='equipe'&&dist(P1.x,P1.y,15,6.5)<4);
+  if(want){boardPrepT=0;if(!boardPrepared){boardPrepared=true;boardCase=CASE;boardCaseJ=JSON.stringify(CASE);const host=$('#board');hideHost(host);host.hidden=false;
+    loadBoard().then(m=>{if(boardPrepared&&!depoOpen)m.prepareBoard(host,boardOpts(()=>{},()=>{}));}).catch(()=>{boardPrepared=false;});}}
+  // longe do quadro por um tempo: desmonta para liberar a memória
+  else if(boardPrepared&&(boardPrepT+=dt)>2){boardPrepared=false;boardPrepT=0;loadBoard().then(m=>{if(!depoOpen){m.discardBoard();$('#board').hidden=true;}}).catch(()=>{});}
 }
 const DLG={
   sonia:()=>teamTalk('sonia'),mauricio:()=>teamTalk('mauricio'),renata:()=>teamTalk('renata'),paulo:()=>teamTalk('paulo'),denise:()=>teamTalk('denise'),
@@ -1051,6 +1066,7 @@ function update(dt){
   stepAgent(P1,3.3*dt,i=>passable(i)&&!NPCS.some(n=>ti(n)===i));
   if(!P1.path.length&&P1.pend){const p=P1.pend;P1.pend=null;if(started)goTalk(p.kind,p.id,p.depo);}
   idleChats(dt);
+  boardNearTick(dt);
   // quem espera para depor também se mexe: braços cruzados, relógio, mão no queixo
   for(const v of VIS){if(v.poseCD==null){v.poseCD=200+Math.random()*700;v.idle=['cross','watch','chin','cross'];}idlePose(v,dt);}
   for(const n of NPCS){
