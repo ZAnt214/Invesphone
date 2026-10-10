@@ -5,14 +5,20 @@
    Arte: cada fachada, carro e peça da rua tem um arquivo oficial esperado em public/base/street/ (pedido ao ChatGPT em
    creative-requests/). Enquanto o arquivo não existe, a peça é desenhada aqui, no mesmo tamanho, como provisório;
    quando a imagem oficial chega, ela entra no lugar sozinha (mesmo nome, mesmo tamanho, fundo transparente).
+   Câmera alta (como Beat Cop): fachadas de frente e o chão visto de cima; carros em 3/4.
    Unidade: 1 pixel de arte = 1 pixel das imagens da rua. A gente da rua é desenhada aqui em 12×28 px (porta do DHPP = 32 px),
    com as mesmas cores do boneco de cada um na base. */
 
-export const STREET_W=1600,STREET_H=320;
-const GY=196;            // pé das fachadas = começo da calçada
-const WALK=[GY+8,GY+42]; // faixa da calçada onde dá para andar
-const CURB=GY+48;
-const LANES=[{y:CURB+42,dir:-1,v:52},{y:CURB+66,dir:1,v:64}];
+/* Câmera alta, como em Beat Cop: as fachadas de frente, cortadas no alto, e o chão (calçada funda e rua com três faixas)
+   visto de cima, ocupando metade da tela; carros em 3/4 (teto e lateral), gente andando em várias profundidades. */
+const GY=196;              // pé das fachadas = começo da calçada
+const SIDE=64;             // fundura da calçada
+const CURB=GY+SIDE;        // beira da calçada (topo do meio-fio)
+const ROAD=CURB+9;         // começo do asfalto (depois da face do meio-fio)
+export const STREET_W=1600,STREET_H=ROAD+120;
+const WALK=[GY+8,CURB-10]; // faixa da calçada onde dá para andar
+const PARK=ROAD+32;        // faixa de estacionamento, encostada no meio-fio
+const LANES=[{y:ROAD+72,dir:1,v:58},{y:ROAD+114,dir:-1,v:66}];
 const ART='/base/street/';
 
 /* ---------- fachadas: da esquerda para a direita; x e w em pixels de arte, h = altura até a calçada ---------- */
@@ -30,7 +36,12 @@ export const BUILDINGS=[
 export const DHPP=BUILDINGS.find(b=>b.id==='dhpp');
 export const DOOR={x:DHPP.x+DHPP.w/2,y:WALK[0]+4};  // onde Lemos entra
 // postes com os fios (o jogo desenha; as fachadas oficiais não trazem rua nem fios)
-const PROPS=[{id:'poste',xs:[140,372,840,1180,1560]}];
+const POLES=[140,372,840,1180,1560],POLE_Y=CURB-3,POLE_TOP=POLE_Y-176;
+// mobiliário da calçada: só aparece com a arte oficial (public/base/street/prop-<id>.png), pé no ponto (x,y)
+export const PROPS=[
+  {id:'orelhao',x:752,y:CURB-6},{id:'banca',x:1268,y:GY+40},{id:'lixeira',x:300,y:CURB-5},{id:'lixeira',x:1004,y:CURB-5},
+  {id:'hidrante',x:610,y:CURB-4},{id:'ponto-de-onibus',x:1090,y:CURB-4},{id:'mesas-bar',x:880,y:GY+26}
+];
 
 /* ---------- helpers de desenho em pixel ---------- */
 function painter(c){
@@ -94,18 +105,16 @@ function drawBuilding(c,b){
   if(R()<.8)drawTag(c,x+w*.2+R()*w*.4,sy-8-R()*30,['#1a1a1a','#c0392b','#2a2a8a'][Math.floor(R()*3)]);
 }
 
-function drawProps(c){
-  const {P,T}=painter(c);
-  for(const p of PROPS){
-    if(p.id==='poste')for(const x of p.xs){P(x,GY-150,3,190,'#7a7e82');P(x-9,GY-148,21,2,'#7a7e82');P(x+9,GY-154,6,4,'#e8e8e0');P(x-2,GY+38,7,3,'#5a5e62');}
-    if(p.id==='orelhao'){P(p.x,GY+8,2,28,'#5a5a5a');c.fillStyle='#e8a020';c.beginPath();c.ellipse(p.x+1,GY+9,11,9,0,Math.PI,0);c.fill();P(p.x-4,GY+10,10,9,'#3a5a8a');}
-    if(p.id==='banca'){P(p.x,GY+2,58,32,'#2f6a3a');P(p.x+2,GY+4,54,9,'#e8e2d4');T('BANCA',p.x+8,GY+12,8,'#2f6a3a');for(let i=0;i<7;i++)P(p.x+3+i*8,GY+16,7,10,['#c0392b','#2f5a8a','#f2c230'][i%3]);}
-    if(p.id==='lixeira'){P(p.x,GY+14,9,14,'#2f6a3a');P(p.x-1,GY+12,11,3,'#3a7a46');}
-    if(p.id==='mesas-bar')for(const x of [p.x,p.x+30])P(x,GY+16,16,2,'#e8e8e0'),P(x+7,GY+18,2,10,'#e8e8e0'),P(x-3,GY+22,3,7,'#d0d0c8'),P(x+16,GY+22,3,7,'#d0d0c8');
-  }
-  // fios entre os postes (São Paulo)
-  const xs=PROPS[0].xs;c.strokeStyle='rgba(20,20,24,.85)';c.lineWidth=1;
-  for(let k=0;k<4;k++){c.beginPath();for(let i=0;i<xs.length-1;i++){const a=xs[i],b=xs[i+1];c.moveTo(a-7+k*3,GY-146+k);c.quadraticCurveTo((a+b)/2,GY-122+k*3,b-7+k*3,GY-146+k);}c.stroke();}
+// fios entre os topos dos postes (São Paulo); os postes em si vão na camada de profundidade (drawPole)
+function drawWires(c){
+  c.strokeStyle='rgba(20,20,24,.85)';c.lineWidth=1;
+  for(let k=0;k<4;k++){c.beginPath();for(let i=0;i<POLES.length-1;i++){const a=POLES[i],b=POLES[i+1];c.moveTo(a-7+k*3,POLE_TOP+4+k);c.quadraticCurveTo((a+b)/2,POLE_TOP+30+k*3,b-7+k*3,POLE_TOP+4+k);}c.stroke();}
+}
+function drawPole(ctx,x){
+  ctx.fillStyle='rgba(0,0,0,.22)';ctx.beginPath();ctx.ellipse(x+1,POLE_Y,6,2,0,0,7);ctx.fill();
+  ctx.fillStyle='#6a6e72';ctx.fillRect(x,POLE_TOP,3,POLE_Y-POLE_TOP);ctx.fillStyle='#8a8e92';ctx.fillRect(x,POLE_TOP,1,POLE_Y-POLE_TOP);
+  ctx.fillStyle='#6a6e72';ctx.fillRect(x-9,POLE_TOP+2,21,2);ctx.fillStyle='#e8e8e0';ctx.fillRect(x+9,POLE_TOP-2,6,4);
+  ctx.fillStyle='#4a4e52';ctx.fillRect(x-2,POLE_Y-4,7,4);
 }
 
 /* camada parada: céu, cidade ao fundo, fachadas, calçada e rua (redesenhada quando chega uma imagem oficial) */
@@ -116,39 +125,64 @@ function buildStatic(imgs){
   if(imgs.skyline)c.drawImage(imgs.skyline,0,GY-imgs.skyline.height);
   else for(let x=0;x<STREET_W;){const w=20+R()*40,h=60+R()*80;P(x,GY-60-h,w,h+60,'#a9b3c2');for(let y=GY-60-h+5;y<GY-60;y+=6)for(let xx=x+3;xx<x+w-3;xx+=5)if(R()<.25)P(xx,y,2,3,'#d8dde4');x+=w+2;}
   for(const b of BUILDINGS){const im=imgs[b.id];if(im)c.drawImage(im,b.x,GY-im.height);else drawBuilding(c,b);}
-  // calçada (concreto com juntas), meio-fio e rua
-  P(0,GY,STREET_W,CURB-GY,'#b4aea2');for(let x=0;x<STREET_W;x+=16)P(x,GY,1,CURB-GY,'#a39d91');for(let y=GY+12;y<CURB;y+=12)P(0,y,STREET_W,1,'#a39d91');
-  for(let x=0;x<STREET_W;x+=16)for(let y=GY;y<CURB;y+=12)if(R()<.18)P(x+1,y+1,15,11,R()<.5?'rgba(120,110,96,.14)':'rgba(255,250,240,.10)'); // placas mais gastas ou mais novas
-  for(let i=0;i<900;i++)P(R()*STREET_W,GY+2+R()*(CURB-GY-4),2,1,'#9a948a');
-  for(let i=0;i<40;i++){const x=R()*STREET_W,y=GY+6+R()*(CURB-GY-12);c.fillStyle='rgba(70,62,52,.16)';c.beginPath();c.ellipse(x,y,4+R()*8,1.5+R()*2,0,0,7);c.fill();} // manchas
-  for(let i=0;i<30;i++){let x=R()*STREET_W,y=GY+4+R()*(CURB-GY-8);for(let k=0;k<6;k++){P(x,y,2,1,'#8f897d');x+=2;y+=R()<.5?1:-1;}} // rachaduras
-  P(0,GY,STREET_W,2,'rgba(0,0,0,.22)');P(0,GY+2,STREET_W,2,'rgba(0,0,0,.10)'); // sombra no pé das fachadas
-  P(0,CURB,STREET_W,4,'#8a857a');P(0,CURB,STREET_W,1,'#d8d2c6');
-  P(0,CURB+4,STREET_W,STREET_H-CURB-4,'#4a4c52');for(let i=0;i<2600;i++)P(R()*STREET_W,CURB+4+R()*(STREET_H-CURB-4),1,1,R()<.5?'#55575d':'#404248');
-  P(0,CURB+4,STREET_W,3,'#3a3c40'); // sarjeta
-  for(let i=0;i<14;i++){const x=R()*STREET_W,y=CURB+12+R()*(STREET_H-CURB-20);c.fillStyle='rgba(20,20,24,.28)';c.beginPath();c.ellipse(x,y,6+R()*10,2+R()*2,0,0,7);c.fill();} // óleo
-  for(const x of [210,640,1010,1430]){P(x,CURB+56,14,5,'#3a3c40');P(x+1,CURB+57,12,3,'#55575d');for(let k=0;k<12;k+=3)P(x+1+k,CURB+57,1,3,'#3a3c40');} // bueiros
-  for(let x=0;x<STREET_W;x+=40)P(x+6,CURB+50,22,2,'#e8c63a');
-  drawProps(c);
+  // calçada funda vista de cima: placas de concreto, manchas, rachaduras e a sombra no pé das fachadas
+  P(0,GY,STREET_W,SIDE,'#b4aea2');
+  for(let y=GY;y<CURB;y+=13)P(0,y,STREET_W,1,'#a39d91');
+  for(let y=GY,r=0;y<CURB;y+=13,r++)for(let x=(r%2)*9;x<STREET_W;x+=18)P(x,y,1,13,'#a39d91');
+  for(let y=GY,r=0;y<CURB;y+=13,r++)for(let x=(r%2)*9;x<STREET_W;x+=18)if(R()<.2)P(x+1,y+1,17,12,R()<.5?'rgba(120,110,96,.14)':'rgba(255,250,240,.10)');
+  for(let i=0;i<1400;i++)P(R()*STREET_W,GY+2+R()*(SIDE-4),2,1,'#9a948a');
+  for(let i=0;i<60;i++){const x=R()*STREET_W,y=GY+6+R()*(SIDE-12);c.fillStyle='rgba(70,62,52,.16)';c.beginPath();c.ellipse(x,y,4+R()*9,1.5+R()*2.5,0,0,7);c.fill();}
+  for(let i=0;i<45;i++){let x=R()*STREET_W,y=GY+4+R()*(SIDE-8);for(let k=0;k<6;k++){P(x,y,2,1,'#8f897d');x+=2;y+=R()<.5?1:-1;}}
+  P(0,GY,STREET_W,3,'rgba(0,0,0,.24)');P(0,GY+3,STREET_W,3,'rgba(0,0,0,.10)');
+  // meio-fio: o topo claro e a face de pedra virada para a câmera
+  P(0,CURB,STREET_W,3,'#d0cabe');P(0,CURB+3,STREET_W,6,'#8a857a');P(0,CURB+3,STREET_W,1,'#a49e92');P(0,CURB+8,STREET_W,1,'#5a564e');
+  for(let x=0;x<STREET_W;x+=26)P(x,CURB+3,1,6,'#6e6a60');
+  // asfalto: sarjeta, faixa de estacionamento, duas faixas de trânsito, faixa amarela no meio
+  P(0,ROAD,STREET_W,STREET_H-ROAD,'#4a4c52');for(let i=0;i<4200;i++)P(R()*STREET_W,ROAD+R()*(STREET_H-ROAD),1,1,R()<.5?'#55575d':'#404248');
+  P(0,ROAD,STREET_W,4,'#3a3c40');
+  for(let x=0;x<STREET_W;x+=10)P(x,ROAD+38,6,1,'rgba(232,232,224,.55)'); // linha da vaga
+  for(let x=0;x<STREET_W;x+=40)P(x+6,ROAD+80,24,2,'#e8c63a');
+  for(let i=0;i<20;i++){const x=R()*STREET_W,y=ROAD+8+R()*(STREET_H-ROAD-14);c.fillStyle='rgba(20,20,24,.28)';c.beginPath();c.ellipse(x,y,6+R()*12,2+R()*3,0,0,7);c.fill();}
+  for(const x of [210,640,1010,1430]){P(x,ROAD+52,16,7,'#3a3c40');P(x+1,ROAD+53,14,5,'#55575d');for(let k=0;k<14;k+=3)P(x+1+k,ROAD+53,1,5,'#3a3c40');}
+  drawWires(c);
   return cv;
 }
 
-/* ---------- carros (de lado): desenho provisório, trocado pela imagem oficial do mesmo id ---------- */
+/* ---------- carros em 3/4, vistos de cima (teto e lateral), virados para a direita ----------
+   Desenho provisório; a imagem oficial car34-<id>.png do mesmo tamanho entra no lugar sozinha. */
 export const CARS=[
-  {id:'viatura',w:72,body:'#eef0ee',pol:true},{id:'taxi',w:66,body:'#f2f2ea',taxi:true},
-  {id:'carro-vermelho',w:64,body:'#b8392b'},{id:'carro-azul',w:60,body:'#2f5a8a'},{id:'carro-verde',w:68,body:'#3a6a3a'},
-  {id:'carro-amarelo',w:62,body:'#d8b44a'},{id:'carro-prata',w:66,body:'#8a8e96'},{id:'onibus',w:150,body:'#d8d2c2',bus:true}
+  {id:'viatura',w:74,body:'#eef0ee',pol:true},{id:'taxi',w:68,body:'#f2f2ea',taxi:true},
+  {id:'carro-vermelho',w:66,body:'#b8392b'},{id:'carro-azul',w:62,body:'#2f5a8a'},{id:'carro-verde',w:72,body:'#3a6a3a'},
+  {id:'carro-amarelo',w:64,body:'#d8b44a'},{id:'carro-prata',w:68,body:'#8a8e96'},{id:'onibus',w:156,body:'#d8d2c2',bus:true}
 ];
+const shade=(c,f)=>{const n=parseInt(c.slice(1),16),r=n>>16,g=n>>8&255,b=n&255,m=v=>Math.max(0,Math.min(255,Math.round(f>1?v+(255-v)*(f-1):v*f)));return `rgb(${m(r)},${m(g)},${m(b)})`;};
+export const carSize=k=>({w:k.w,h:k.bus?62:40});
 function carSprite(k,imgs){
-  if(imgs['car-'+k.id])return imgs['car-'+k.id];
-  const h=k.bus?44:28,cv=document.createElement('canvas');cv.width=k.w;cv.height=h;const c=cv.getContext('2d');const {P,T}=painter(c);const w=k.w;
-  if(k.bus){P(2,4,w-4,h-12,k.body);P(2,4,w-4,3,'#f6f2e6');for(let i=0;i<8;i++)P(10+i*17,10,13,12,'#6f8fb0');P(2,26,w-4,4,'#2f6a8a');T('ÔNIBUS',w/2-20,40,8,'#2f3a44');
-    for(const wx of [24,w-26]){c.fillStyle='#141416';c.beginPath();c.arc(wx,h-6,6,0,7);c.fill();c.fillStyle='#8a8e94';c.beginPath();c.arc(wx,h-6,2.4,0,7);c.fill();}return cv;}
-  P(1,11,w-2,h-17,k.body);P(1,11,w-2,2,'rgba(255,255,255,.3)');P(w*.2,3,w*.56,10,k.body);P(w*.23,5,w*.22,7,'#7a9ab6');P(w*.5,5,w*.22,7,'#7a9ab6');P(w*.23,5,w*.22,1,'#c8dcec');
-  P(w-3,14,3,3,'#fff2c0');P(0,14,3,3,'#c0392b');P(1,h-8,w-2,2,'rgba(0,0,0,.25)');
-  if(k.pol){P(1,16,w-2,4,'#1c1f22');P(w*.42,0,8,3,'#c0392b');P(w*.42+8,0,8,3,'#2f5aa8');T('DHPP',w*.36,h-9,7,'#1c1f22');}
-  if(k.taxi){P(w*.43,0,12,3,'#f2c230');}
-  for(const wx of [w*.2,w*.8]){c.fillStyle='#141416';c.beginPath();c.arc(wx,h-6,4.5,0,7);c.fill();c.fillStyle='#8a8e94';c.beginPath();c.arc(wx,h-6,1.8,0,7);c.fill();}
+  const off=imgs['car34-'+k.id];if(off)return off;
+  const {w,h}=carSize(k),cv=document.createElement('canvas');cv.width=w;cv.height=h;const c=cv.getContext('2d');const {P,T}=painter(c);
+  const top=shade(k.body,1.22),side=k.body,low=shade(k.body,.72),glass='#2a3a4a',glassHi='#5a7a94';
+  const wheel=(x,y,r)=>{c.fillStyle='#141416';c.beginPath();c.ellipse(x,y,r,r*.9,0,0,7);c.fill();c.fillStyle='#7a7e84';c.beginPath();c.ellipse(x,y,r*.42,r*.38,0,0,7);c.fill();};
+  if(k.bus){
+    const tH=16,sY=tH;P(2,2,w-4,tH,top);P(2,2,w-4,2,shade(k.body,1.35));for(let i=0;i<4;i++)P(16+i*34,6,18,8,shade(k.body,1.05)); // teto com escotilhas
+    P(1,sY,w-2,h-sY-8,side);P(1,sY+26,w-2,h-sY-34,low);P(1,sY+22,w-2,4,'#2f6a8a');
+    for(let i=0;i<8;i++){P(10+i*17,sY+4,13,15,glass);P(10+i*17,sY+4,13,2,glassHi);}P(w-14,sY+4,10,26,glass);P(w-14,sY+4,10,2,glassHi); // janelas e porta
+    P(w-4,sY+28,3,4,'#fff2c0');P(1,sY+28,3,4,'#c0392b');wheel(26,h-8,7);wheel(w-30,h-8,7);return cv;
+  }
+  // teto/capô/porta-malas (faixa de cima) — a cabine com o para-brisa e o vidro de trás
+  const tH=14,sY=tH,cx0=Math.round(w*.3),cx1=Math.round(w*.64);
+  P(3,5,w-6,tH-4,top);P(3,5,w-6,1,shade(k.body,1.4));               // capô e porta-malas
+  P(cx0,1,cx1-cx0,tH-1,shade(k.body,1.3));P(cx0,1,cx1-cx0,1,shade(k.body,1.5));   // teto da cabine (o ponto mais alto)
+  P(cx1,2,8,tH-2,glass);P(cx1,2,8,1,glassHi);P(cx1+1,3,2,tH-5,'rgba(140,175,200,.35)'); // para-brisa, descendo para o capô
+  P(cx0-6,2,6,tH-2,glass);P(cx0-6,2,6,1,glassHi);                                      // vidro de trás
+  P(cx1+8,5,w-cx1-11,1,shade(k.body,1.05));P(3,5,cx0-9,1,shade(k.body,1.05));
+  // lateral
+  P(1,sY,w-2,h-sY-7,side);P(1,sY+11,w-2,h-sY-18,low);P(1,sY,w-2,1,shade(k.body,1.1));
+  P(cx0-3,sY,cx1-cx0+8,7,glass);P(cx0-3,sY,cx1-cx0+8,1,glassHi);P(Math.round((cx0+cx1)/2)+1,sY,2,7,side); // vidros laterais e coluna
+  P(Math.round((cx0+cx1)/2)+1,sY+7,1,9,shade(k.body,.6));                // linha da porta
+  P(w-4,sY+4,3,4,'#fff2c0');P(1,sY+4,3,4,'#c0392b');P(1,h-12,w-2,2,'#2b2c30'); // faróis e para-choque
+  if(k.pol){P(1,sY+8,w-2,5,'#1c1f22');P(Math.round(w*.42),0,6,3,'#c0392b');P(Math.round(w*.42)+6,0,6,3,'#2f5aa8');T('DHPP',Math.round(w*.36),sY+13,6,'#eef0ee');}
+  if(k.taxi){P(Math.round(w*.43),0,10,3,'#f2c230');P(Math.round(w*.43),0,10,1,'#fff0a0');}
+  wheel(Math.round(w*.2),h-7,6);wheel(Math.round(w*.8),h-7,6);
   return cv;
 }
 
@@ -209,15 +243,17 @@ export function createStreet({lemosLook,onEnter}){
   // arte oficial: entra no lugar do desenho provisório quando o arquivo existir
   // __STREET_ART__: os arquivos que existem em public/base/street (lista feita no build, vite.config.ts)
   const have=new Set(typeof __STREET_ART__!=='undefined'?__STREET_ART__:[]);
-  const want=[...BUILDINGS.map(b=>b.id),'skyline',...CARS.map(k=>'car-'+k.id)].filter(id=>have.has(id));
-  for(const id of want){const im=new Image();im.onload=()=>{imgs[id]=im;layer=buildStatic(imgs);for(const k of cars)k.spr=carSprite(k.kind,imgs);parked.spr=carSprite(parked.kind,imgs);};im.src=ART+id+'.png';}
+  const want=[...BUILDINGS.map(b=>b.id),'skyline',...CARS.map(k=>'car34-'+k.id),...new Set(PROPS.map(p=>'prop-'+p.id))].filter(id=>have.has(id));
+  for(const id of want){const im=new Image();im.onload=()=>{imgs[id]=im;layer=buildStatic(imgs);for(const k of [...cars,...parked])k.spr=carSprite(k.kind,imgs);};im.src=ART+id+'.png';}
 
   const lemos={x:DHPP.x-40,y:WALK[0]+18,dir:1,walk:0,moving:false,frames:miniFrames(lemosLook),tx:null,ty:null,enter:false};
-  const parked={kind:CARS[0],x:DHPP.x+DHPP.w/2-130,y:CURB+30};parked.spr=carSprite(parked.kind,imgs);
+  // estacionados junto ao meio-fio: a viatura do DHPP na frente do prédio e mais alguns
+  const parked=[[0,DHPP.x+28],[2,190],[6,1040],[5,1420]].map(([i,x])=>({kind:CARS[i],x,y:PARK}));for(const p of parked)p.spr=carSprite(p.kind,imgs);
+  const viatura=parked[0];
   const R=rnd(17);
   const peds=Array.from({length:14},(_,i)=>({x:R()*STREET_W,y:WALK[0]+4+R()*(WALK[1]-WALK[0]-4),dir:R()<.5?-1:1,v:10+R()*9,walk:R()*10,frames:miniFrames(i<PED_LOOKS.length?PED_LOOKS[i]:randomLook(R)),pause:0,id:i}));
   const cars=[];const moving=CARS.slice(1);
-  for(let l=0;l<LANES.length;l++)for(let i=0;i<4;i++){const kind=moving[(l*4+i)%moving.length];cars.push({kind,spr:carSprite(kind,imgs),lane:l,x:i*STREET_W/4+R()*120,v:LANES[l].v*(0.85+R()*0.3)});}
+  for(let l=0;l<LANES.length;l++)for(let i=0;i<3;i++){const kind=moving[(l*4+i)%moving.length];cars.push({kind,spr:carSprite(kind,imgs),lane:l,x:i*STREET_W/3+R()*160,v:LANES[l].v*(0.85+R()*0.3)});}
   let camX=lemos.x,t=0;
 
   function update(dt){
@@ -238,8 +274,8 @@ export function createStreet({lemosLook,onEnter}){
   }
 
   // s: pixels do canvas por pixel de arte
-  // sobra um pouco de céu em cima para o cabeçalho do jogo não cobrir o alto dos prédios
-  function view(cw,ch,rs){const s=Math.min(ch/(STREET_H+56),cw/420);const vw=cw/s;camX+=(clamp(lemos.x,vw/2,STREET_W-vw/2)-camX)*0.12;camX=clamp(camX,vw/2,STREET_W-vw/2);return {s,left:camX-vw/2,top:-(ch/s-STREET_H)/2,rs};}
+  // o mundo inteiro na altura da tela: fachadas cortadas no alto (o cabeçalho fica por cima delas) e o chão na metade de baixo
+  function view(cw,ch,rs){const s=Math.min(ch/(STREET_H-15),cw/380);const vw=cw/s;camX+=(clamp(lemos.x,vw/2,STREET_W-vw/2)-camX)*0.12;camX=clamp(camX,vw/2,STREET_W-vw/2);return {s,left:camX-vw/2,top:-(ch/s-STREET_H)/2,rs};}
   const clamp=(v,a,b)=>a>b?(a+b)/2:v<a?a:v>b?b:v;
 
   function draw(ctx,cw,ch,rs,marker){
@@ -253,9 +289,11 @@ export function createStreet({lemosLook,onEnter}){
     const ents=[];
     for(const p of peds)ents.push({y:p.y,d:()=>person(ctx,p)});
     ents.push({y:lemos.y,d:()=>person(ctx,lemos)});
-    ents.push({y:parked.y,d:()=>ctx.drawImage(parked.spr,Math.round(parked.x),Math.round(parked.y-parked.spr.height))});
+    for(const x of POLES)ents.push({y:POLE_Y,d:()=>drawPole(ctx,x)});
+    for(const p of PROPS){const im=imgs['prop-'+p.id];if(im)ents.push({y:p.y,d:()=>ctx.drawImage(im,Math.round(p.x-im.width/2),Math.round(p.y-im.height))});}
+    for(const p of parked)ents.push({y:p.y,d:()=>{ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(p.x+p.spr.width/2,p.y-2,p.spr.width/2,4,0,0,7);ctx.fill();ctx.drawImage(p.spr,Math.round(p.x),Math.round(p.y-p.spr.height));}});
     for(const k of cars)ents.push({y:LANES[k.lane].y,d:()=>{const sp=k.spr,flip=LANES[k.lane].dir<0;
-      ctx.fillStyle='rgba(0,0,0,.28)';ctx.fillRect(Math.round(k.x+4),LANES[k.lane].y-3,sp.width-8,4);
+      ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(k.x+sp.width/2,LANES[k.lane].y-2,sp.width/2,4,0,0,7);ctx.fill();
       if(flip){ctx.save();ctx.translate(Math.round(k.x)+sp.width,0);ctx.scale(-1,1);ctx.drawImage(sp,0,LANES[k.lane].y-sp.height);ctx.restore();}
       else ctx.drawImage(sp,Math.round(k.x),LANES[k.lane].y-sp.height);}});
     ents.sort((a,b)=>a.y-b.y);for(const e of ents)e.d();
@@ -277,13 +315,13 @@ export function createStreet({lemosLook,onEnter}){
     if(!lastView)return;const {s,left,oy}=lastView,wx=left+px/s,wy=(py-oy)/s;
     const onDhpp=wx>=DHPP.x&&wx<=DHPP.x+DHPP.w&&wy<GY+6;
     if(onDhpp){lemos.tx=DOOR.x;lemos.ty=DOOR.y;lemos.enter=true;return;}
-    lemos.tx=clamp(wx,12,STREET_W-12);lemos.ty=clamp(wy,WALK[0],WALK[1]);lemos.enter=false;
+    lemos.tx=clamp(wx,12,STREET_W-12);lemos.ty=clamp(wy,WALK[0],WALK[1]);lemos.enter=false; // tocou na rua: vai até a beira da calçada
   }
   /** posiciona Lemos: 'porta' (saindo do DHPP) ou 'carro' (chegando na viatura) */
   function place(where){
     lemos.tx=null;lemos.enter=false;lemos.moving=false;
     if(where==='porta'){lemos.x=DOOR.x;lemos.y=DOOR.y+6;lemos.dir=1;}
-    else{lemos.x=parked.x+parked.spr.width+8;lemos.y=WALK[1]-4;lemos.dir=1;}
+    else{lemos.x=viatura.x+viatura.spr.width/2;lemos.y=WALK[1];lemos.dir=1;}
     camX=lemos.x;
   }
   return {update,draw,tap,place,lemos,get view(){return lastView;}};
