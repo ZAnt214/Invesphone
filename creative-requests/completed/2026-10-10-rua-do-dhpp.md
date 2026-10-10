@@ -1,6 +1,6 @@
 ---
 id: 2026-10-10-rua-do-dhpp
-status: pending
+status: completed
 requested_by: claude
 priority: normal
 character: ""
@@ -76,8 +76,11 @@ Todos em `public/base/street/`. Largura × altura exatas, em pixels:
 - **Pessoas**: nenhuma nas imagens, nem silhuetas na calçada. Silhuetas atrás de janelas acesas podem.
 
 ## Resposta do ChatGPT
-Preenchido pelo ChatGPT ao concluir.
+Concluído pelo ChatGPT em 2026-10-10.
 
-- status:
-- assets criados:
-- observações:
+- status: completed
+- assets criados: os 18 PNGs da tabela, em `public/base/street/`, nos tamanhos exatos solicitados.
+- observações: artes geradas individualmente pela ferramenta integrada de imagens. Recorte de margens transparentes, ajuste técnico com vizinho mais próximo (sem suavização), paleta limitada e alfa binário. Fachadas de frente e veículos voltados para a direita, sem pessoas incorporadas. DHPP com quatro fileiras superiores de janelas mais térreo; enquadramento da entrada normalizado para x=137, y=154, largura=56, altura=32, centro x=165 e base y=186. Mastros permanecem fora do letreiro, próximos das extremidades da fachada.
+- integração: automática pelo carregador existente e pelo inventário `__STREET_ART__` do Vite; nenhuma alteração de lógica necessária.
+- validação: todos os 18 nomes, dimensões, canais alfa e alinhamentos inferiores conferidos; renderização panorâmica com o módulo real `src/base/street.js`; carregamento de 18/18 imagens e entrada no DHPP testados no renderizador Canvas em 1600×376, 390×844 e 375×667; `npm run build` aprovado. O ensaio Canvas utiliza frames vazios para personagens, pois valida os assets da rua e o ponto de entrada. Não houve teste em Safari físico nem teste completo da interface no navegador: o download do Chromium falhou neste ambiente.
+- direção/prompt: pixel art urbana de São Paulo, fachadas ortográficas, concreto gasto, tijolos e azulejos, luz quente de manhã pela esquerda, comércio fictício, PNG transparente sem pessoas, rua ou fios; veículos em perfil direito, sem sombra de chão. Cada geração especificou o edifício/veículo e o tamanho da tabela. O DHPP foi refinado com referência ao esboço e ao acabamento da lavanderia para preservar os cinco pavimentos.
