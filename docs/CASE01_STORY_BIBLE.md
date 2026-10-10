@@ -1019,6 +1019,61 @@ ligar o dinheiro retirado da casa à trilha financeira de Téo.
 Prova final aceita:
 sim.
 
+## teo_entrou_com_caio
+
+Fonte:
+confronto financeiro de Téo.
+
+Função:
+antes da confissão final, colocar Téo e Caio fisicamente dentro da residência pela própria admissão de Téo.
+
+Não define sozinho quem planejou.
+
+## caio_digitou_alarme
+
+Fonte:
+confronto de Téo com o log do alarme.
+
+Função:
+atribuir a Caio a ação operacional de desativar o sistema às 23:52.
+
+Deve aparecer antes de Lívia ser nomeada como facilitadora.
+
+## plano_preparado_antes
+
+Fonte:
+admissão parcial de Téo.
+
+Conteúdo:
+Caio já chegou sabendo horário, código, situação de Thor e onde procurar o dinheiro.
+
+Função:
+mostrar que a execução dependia de preparação anterior por alguém com conhecimento doméstico.
+
+Não nomeia Lívia sozinho.
+
+## livia_thor_caio
+
+Fonte:
+retorno ao depoimento de Lívia.
+
+Conteúdo:
+Lívia admite que conhecia a reação de Thor a Caio e que às vezes prendia o cachorro quando ele vinha.
+
+Função:
+ligar Lívia de forma independente a uma das condições práticas usadas na preparação da entrada.
+
+## caio_admite_codigo
+
+Fonte:
+retorno ao depoimento de Caio depois da admissão de Téo.
+
+Conteúdo:
+Caio abandona a negativa absoluta e admite que conhecia o código, dizendo que já havia visto Lívia digitá-lo.
+
+Função:
+reforçar o papel operacional de Caio sem produzir confissão completa.
+
 ## confissao_teo
 
 Fonte:
