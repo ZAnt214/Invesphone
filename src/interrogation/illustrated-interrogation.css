@@ -438,6 +438,11 @@
 .ii-room .ii-mark{top:calc(36px + env(safe-area-inset-top));opacity:.32}
 .ii-room .ii-mark b{font-size:18px}.ii-room .ii-mark span{font-size:6.5px}
 .ii-room .ii-status{display:none}
+/* no caderno, o botão de sair fica sempre à mão (o de cima some atrás do caderno com o celular deitado) */
+.ii-room .ii-back{display:none}
+.ii-pad-exit{display:none}
+.ii-room .ii-pad-exit{display:block;position:absolute;right:12px;top:8px;z-index:3;border:1.5px solid var(--pen);border-radius:999px;background:rgba(255,255,255,.35);color:var(--pen);font:700 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;padding:7px 12px 6px;cursor:pointer}
+.ii-room .ii-pad-exit:disabled{opacity:.35}
 .ii-room .ii-toast,.ii-room .ii-press-alert{z-index:10}
 
 /* ---------- o caderno, por cima da cena ---------- */
