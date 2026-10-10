@@ -4,6 +4,7 @@
 import { applyRequest, applyTopic, caseTeam, requestOk, teamDialogues, teamMaterialRequests, teamNews, topicOk } from '../team/teamData';
 import { readCase, writeCase } from '../case/caseSave';
 import { depoPeople, summon } from '../case/depositions';
+import { createStreet } from './street';
 (() => {
 'use strict';
 const T=32,TH=22,K=TH/T,RISE=16,CAPH=8,W=34,H=26,N=W*H;
@@ -83,6 +84,8 @@ function buildMap(){
   for(const r in ROOM_RECT){const [a,b,c,d]=ROOM_RECT[r];set(a,b,c,d,F.FLOOR,r);}
   // as linhas coladas à parede sul ficam atrás dela: não se anda ali
   block(2,8,14,8);block(17,8,31,8);block(2,17,14,17);block(17,17,31,17);
+  // o lado de fora agora é a cena da rua (street.js): na planta, sair é pela porta da frente
+  block(0,19,W-1,22);
   for(const [x,y,r] of [[10,5,'equipe'],[22,5,'equipe'],[10,14,'hall'],[22,14,'hall']]){floor[idx(x,y)]=F.DOOR;room[idx(x,y)]=r;}
   for(const x of [15,16]){set(x,9,x,9,F.FLOOR,'hall');set(x,18,x,18,F.DOOR,'hall');}
   for(const [x,y] of [[4,1],[5,1],[13,1],[19,1],[25,1],[29,1],[4,18],[5,18],[9,18],[12,18],[19,18],[22,18],[26,18],[29,18]])floor[idx(x,y)]=F.WIN;
@@ -1011,6 +1014,7 @@ function goTalk(kind,id,depo){
   P1.path=pathTo(e);P1.pend={kind,id,depo};follow=true;
 }
 function goTile(i){
+  if(((i/W)|0)>=18){goExit();return;}
   P1.pend=null;let e=-1;
   if(walkPass(i))e=bfs(ti(P1),n=>n===i,n=>walkPass(n));
   else{const t=bfs(i,n=>walkPass(n),()=>true);if(t<0)return;e=bfs(ti(P1),n=>n===t,n=>walkPass(n));}
@@ -1033,11 +1037,12 @@ cv.addEventListener('contextmenu',e=>e.preventDefault());
 cv.addEventListener('pointerdown',e=>{
   if(!started||talkOpen)return;try{cv.setPointerCapture(e.pointerId);}catch(_){}
   ptrs.set(e.pointerId,{x:PX(e),y:PY(e)});
-  if(ptrs.size===2){drag=null;ZA=null;const [a,b]=[...ptrs.values()];pinch={d:Math.max(10,Math.hypot(a.x-b.x,a.y-b.y)),z:cam.z,w:s2w((a.x+b.x)/2,(a.y+b.y)/2)};return;}
+  if(ptrs.size===2&&SCENE!=='rua'){drag=null;ZA=null;const [a,b]=[...ptrs.values()];pinch={d:Math.max(10,Math.hypot(a.x-b.x,a.y-b.y)),z:cam.z,w:s2w((a.x+b.x)/2,(a.y+b.y)/2)};return;}
   drag={sx:PX(e),sy:PY(e),cx:cam.x,cy:cam.y,moved:false};
 });
 cv.addEventListener('pointermove',e=>{
   const p=ptrs.get(e.pointerId);if(!p)return;p.x=PX(e);p.y=PY(e);
+  if(SCENE==='rua'){if(drag&&Math.hypot(PX(e)-drag.sx,PY(e)-drag.sy)>8)drag.moved=true;return;}
   if(pinch&&ptrs.size>=2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;cam.z=clamp(pinch.z*d/pinch.d,ZMIN,ZMAX);cam.x=pinch.w.x-(mx-VW()/2)/cam.z;cam.y=pinch.w.ys-(my-VH()/2)/cam.z;clampCam();follow=false;zoomAnchor=[mx,my];lastZoomIn=performance.now();return;}
   if(!drag)return;const dx=PX(e)-drag.sx,dy=PY(e)-drag.sy;
   if(!drag.moved&&Math.hypot(dx,dy)>8)drag.moved=true;
@@ -1045,6 +1050,7 @@ cv.addEventListener('pointermove',e=>{
 });
 function up(e){
   const had=ptrs.delete(e.pointerId);
+  if(SCENE==='rua'){if(drag&&had&&e.type==='pointerup'&&!drag.moved)street().tap(PX(e)*RS,PY(e)*RS);drag=null;pinch=null;return;}
   if(pinch){if(ptrs.size<2)pinch=null;drag=null;return;}
   if(drag&&had&&e.type==='pointerup'&&!drag.moved){const sx=PX(e),sy=PY(e),now=performance.now();
     if(lastTap&&now-lastTap.t<320&&Math.hypot(sx-lastTap.x,sy-lastTap.y)<30){lastTap=null;zoomTo(cam.z>=ZMAX*0.6?FITZ:Math.min(ZMAX,cam.z*2),sx,sy);}
@@ -1052,7 +1058,7 @@ function up(e){
   drag=null;
 }
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
-cv.addEventListener('wheel',e=>{e.preventDefault();if(!started||talkOpen)return;ZA=null;const dy=e.deltaMode===1?e.deltaY*16:e.deltaY;const w=s2w(PX(e),PY(e));cam.z=clamp(cam.z*Math.pow(1.0018,-clamp(dy,-120,120)),ZMIN,ZMAX);cam.x=w.x-(PX(e)-VW()/2)/cam.z;cam.y=w.ys-(PY(e)-VH()/2)/cam.z;clampCam();follow=false;zoomAnchor=[PX(e),PY(e)];lastZoomIn=performance.now();},{passive:false});
+cv.addEventListener('wheel',e=>{e.preventDefault();if(!started||talkOpen||SCENE==='rua')return;ZA=null;const dy=e.deltaMode===1?e.deltaY*16:e.deltaY;const w=s2w(PX(e),PY(e));cam.z=clamp(cam.z*Math.pow(1.0018,-clamp(dy,-120,120)),ZMIN,ZMAX);cam.x=w.x-(PX(e)-VW()/2)/cam.z;cam.y=w.ys-(PY(e)-VH()/2)/cam.z;clampCam();follow=false;zoomAnchor=[PX(e),PY(e)];lastZoomIn=performance.now();},{passive:false});
 
 function stepAgent(a,sp,pass){
   a.moving=false;if(!a.path.length)return;
@@ -1064,7 +1070,7 @@ function stepAgent(a,sp,pass){
 function update(dt){
   if(talkOpen)return;
   stepAgent(P1,3.3*dt,i=>passable(i)&&!NPCS.some(n=>ti(n)===i));
-  if(!P1.path.length&&P1.pend){const p=P1.pend;P1.pend=null;if(started)goTalk(p.kind,p.id,p.depo);}
+  if(!P1.path.length&&P1.pend){const p=P1.pend;P1.pend=null;if(p.kind==='exit')toStreet();else if(started)goTalk(p.kind,p.id,p.depo);}
   idleChats(dt);
   boardNearTick(dt);
   // quem espera para depor também se mexe: braços cruzados, relógio, mão no queixo
@@ -1506,6 +1512,28 @@ function isSeat(n){const i=ti(n);return objs.some(o=>o.nocc&&idx(o.x,o.y)===i);}
 
 /* ---------- Interface ---------- */
 let lastRoom='',lastClk='';
+/* ---------- Rua (lado de fora) ⇄ planta (lado de dentro) ---------- */
+let SCENE='rua',STREET=null;
+const street=()=>STREET||(STREET=createStreet({personFrames,lemosLook:LOOK.lemos,onEnter:()=>enterBase()}));
+const FADE=document.createElement('div');FADE.id='fade';FADE.setAttribute('aria-hidden','true');appEl.appendChild(FADE);
+function fadeTo(fn){FADE.classList.add('on');setTimeout(()=>{fn();requestAnimationFrame(()=>FADE.classList.remove('on'));},200);}
+function setWhere(t){lastRoom=null;$('#where-n').textContent=t;}
+// entrou pela porta do DHPP: aparece na recepção, logo depois da porta
+function enterBase(instant){
+  const go=()=>{SCENE='base';P1.x=16;P1.y=17;P1.path=[];P1.pend=null;P1.dir=1;
+    const e=bfs(ti(P1),i=>i===idx(16,15),walkPass);if(e>=0)P1.path=pathTo(e);
+    cam.x=P1.x*T+16;cam.y=P1.y*TH;clampCam();follow=true;last=performance.now();updateUI();};
+  if(instant)go();else fadeTo(go);
+}
+// saiu pela porta da frente: volta para a calçada, na porta do DHPP
+function toStreet(){fadeTo(()=>{SCENE='rua';street().place('porta');setWhere('Rua do DHPP');});}
+function goExit(){
+  P1.pend=null;if(talk)closeTalk();
+  const door=i=>i===idx(16,18)||i===idx(15,18);
+  if(door(ti(P1))){toStreet();return;}
+  const e=bfs(ti(P1),door,n=>walkPass(n)||door(n));if(e<0)return;
+  P1.path=pathTo(e);P1.pend={kind:'exit'};follow=true;
+}
 function updateUI(){
   const r=roomOf(P1),nm=ROOM_NAME[r]||'';if(r!==lastRoom){lastRoom=r;$('#where-n').textContent=nm;}
   const c=clockStr();if(c!==lastClk){lastClk=c;$('#clk').textContent=c;}
@@ -1515,6 +1543,8 @@ const PROF={r2d:0};
 function loop(now){
   if(depoOpen){last=now;requestAnimationFrame(loop);return;}
   const raw=now-last,dt=Math.min(0.1,raw/1000);last=now;adaptRS(raw);
+  if(SCENE==='rua'){const st=street();st.update(dt);st.draw(ctx,cv.width,cv.height,RS,started);frame++;if(frame%6===0){const c=clockStr();if(c!==lastClk){lastClk=c;$('#clk').textContent=c;}}
+    lastClock+=dt;if(lastClock>3){lastClock=0;gameMin++;}requestAnimationFrame(loop);return;}
   update(dt);updFX();updAtmo();stepZoom();followCam(dt);if(started)primeBlur();frame++;const r0=performance.now();render();PROF.r2d+=(performance.now()-r0-PROF.r2d)*0.05;postFX(dt);if(talk)updLink();if(frame%6===0)updateUI();
   requestAnimationFrame(loop);
 }
@@ -1618,10 +1648,10 @@ $('#b-start').addEventListener('click',()=>{
   $('#intro').hidden=true;started=true;setTimeout(()=>loadDepo().catch(()=>{}),4000);setTimeout(()=>loadPrep().then(m=>m.background()).catch(()=>{}),3000);
   // voltou de uma recarga feita para pegar a versão nova: reabre o que o jogador tinha pedido
   const reopen=safe(()=>sessionStorage.getItem('base.reopen'),null);
-  if(reopen){safe(()=>sessionStorage.removeItem('base.reopen'));setTimeout(()=>reopen==='board'?startBoard():startDepo(reopen.slice(5)),500);}
-  const e=bfs(ti(P1),i=>i===idx(16,15),walkPass);if(e>=0)P1.path=pathTo(e);
+  if(reopen){safe(()=>sessionStorage.removeItem('base.reopen'));enterBase(true);setTimeout(()=>reopen==='board'?startBoard():startDepo(reopen.slice(5)),500);}
+  else{street().place('carro');setWhere('Rua do DHPP');}
   setTimeout(()=>toast('Sônia Prado','Lemos, na minha sala. A equipe já está com o material da casa.',{img:'/sonia.jpg',col:'#c9a24a'}),1200);
 });
-window.__base={startDepo,get CASE(){return CASE;},VIS:()=>VIS,get P1(){return P1;},NPCS:()=>NPCS,cam,goTalk,goTile,openTalk,openGallery,FOUND,get started(){return started;},objs:()=>objs,tap,idx,W,H,T,TH,ti,passable,zoomTo,get ROT(){return ROT;},get LODV(){return LODV;},get FITZ(){return FITZ;},get GL(){return !!POST;},prof:()=>({r2d:+PROF.r2d.toFixed(2),post:+FX.ms.toFixed(2),frame:+frameMs.toFixed(2),RS})};
+window.__base={get scene(){return SCENE;},setScene:s=>{if(s==='base')enterBase(true);else{SCENE='rua';street().place('porta');}},street:()=>street(),startDepo,get CASE(){return CASE;},VIS:()=>VIS,get P1(){return P1;},NPCS:()=>NPCS,cam,goTalk,goTile,openTalk,openGallery,FOUND,get started(){return started;},objs:()=>objs,tap,idx,W,H,T,TH,ti,passable,zoomTo,get ROT(){return ROT;},get LODV(){return LODV;},get FITZ(){return FITZ;},get GL(){return !!POST;},prof:()=>({r2d:+PROF.r2d.toFixed(2),post:+FX.ms.toFixed(2),frame:+frameMs.toFixed(2),RS})};
 requestAnimationFrame(loop);
 })();
