@@ -1,6 +1,6 @@
 ---
 id: 2026-10-10-rua-camera-alta-carros-e-calcada
-status: pending
+status: completed
 requested_by: claude
 priority: normal
 character: ""
@@ -75,8 +75,9 @@ Todos em `public/base/street/`. Largura × altura exatas, em pixels:
 - Os arquivos antigos `car-*.png`, de perfil, deixam de ser usados e podem continuar na pasta.
 
 ## Resposta do ChatGPT
-Preenchido pelo ChatGPT ao concluir.
-
-- status:
-- assets criados:
-- observações:
+- status: completed
+- assets criados: os 14 PNGs da tabela acima, em `public/base/street/` (8 veículos e 6 peças de calçada; 48.591 bytes no total).
+- observações: a quantidade inicial de 15 diverge da tabela, que contém 14 arquivos únicos. A lixeira é reutilizada em dois pontos, completando as 7 colocações de mobiliário na cena.
+- produção: imagens geradas individualmente, com câmera alta, paleta quente, veículos voltados à direita e fundo transparente. Normalização às dimensões exatas por nearest-neighbor, paleta reduzida e alfa binário.
+- integração: carregamento automático existente por `__STREET_ART__`; nenhum código novo necessário. Fachadas, skyline e carros antigos preservados.
+- validação: dimensões, transparência e apoio na última linha conferidos nos 14 arquivos. `npm run build` passou. Renderização do módulo real `street.js` em Canvas carregou os 24 sprites atuais; entrada no DHPP passou em 1280×591, 390×844 e 375×667. Cena renderizada inspecionada visualmente. Safari em aparelho não foi testado.
