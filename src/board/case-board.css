@@ -195,3 +195,31 @@
 .cb-slot{position:absolute;width:262px;padding:10px 12px;border:2px dashed rgba(40,26,14,.45);border-radius:4px;background:rgba(244,239,227,.25);transform:rotate(-1deg)}
 .cb-slot b{display:block;font:700 19px/1.05 var(--hand);color:#2a1c10}
 .cb-slot span{display:block;margin-top:3px;font:600 11px/1.3 var(--ui);color:rgba(40,26,14,.75)}
+
+/* entrada de cinema: por trás do Lemos até o quadro */
+.cb-room{position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 60% 70% at var(--ox) 40%,#2a1d12,#0b0806 70%);animation:cb-room 2.9s ease both}
+@keyframes cb-room{0%{opacity:1}80%{opacity:1}100%{opacity:0}}
+.cb.cine .cb-pan{transform-origin:var(--ox) var(--oy)}
+.cb.cine-full .cb-pan{animation:cb-dolly 2.9s cubic-bezier(.5,.02,.18,1) both}
+.cb.cine-short .cb-pan{animation:cb-dolly-s .9s cubic-bezier(.3,.7,.2,1) both}
+@keyframes cb-dolly{0%{transform:translate(3%,5%) scale(.44);filter:blur(2.4px) brightness(.15)}
+  12%{filter:blur(2.4px) brightness(.75)}16%{filter:blur(2.4px) brightness(.3)}22%{filter:blur(2.2px) brightness(.85)}
+  45%{transform:translate(2%,3%) scale(.52);filter:blur(1.6px) brightness(.85)}100%{transform:none;filter:none}}
+@keyframes cb-dolly-s{0%{transform:scale(.88);filter:blur(1.5px) brightness(.6)}100%{transform:none;filter:none}}
+.cb.cine .cb-world{box-shadow:0 0 0 9px #3a2817,0 0 0 11px #1c120a,0 30px 60px rgba(0,0,0,.7)}
+.cb.cine .cb-panel,.cb.cine .cb-hud,.cb.cine .cb-light{opacity:0}
+.cb-panel,.cb-hud{transition:opacity .5s ease}
+.cb:not(.cine) .cb-panel{animation:cb-panel-in .5s cubic-bezier(.3,.8,.2,1) both}
+@keyframes cb-panel-in{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
+.cb-cine{position:absolute;inset:0;z-index:66;border:0;padding:0;background:none;cursor:pointer;overflow:hidden}
+.cb-lamp{position:absolute;left:calc(var(--ox) - 30%);width:60%;top:-10%;height:90%;background:radial-gradient(ellipse 50% 60% at 50% 30%,rgba(255,214,150,.22),rgba(255,214,150,0) 70%);animation:cb-lamp 2.9s ease both;pointer-events:none}
+@keyframes cb-lamp{0%{opacity:0}10%{opacity:1}14%{opacity:.25}20%{opacity:1}75%{opacity:.7}100%{opacity:0}}
+.cb-lemos{position:absolute;left:var(--ox);bottom:-14%;height:96%;aspect-ratio:4/5;transform:translateX(-50%);animation:cb-pass 2.9s cubic-bezier(.55,.05,.3,1) both;filter:blur(.6px)}
+.cb-lemos svg,.cb-lemos img{display:block;width:100%;height:100%;object-fit:contain;object-position:bottom}
+@keyframes cb-pass{0%{transform:translateX(-50%) scale(1);filter:blur(.6px)}30%{transform:translateX(-56%) scale(1.04);filter:blur(.8px)}
+  70%{transform:translateX(-95%) translateY(10%) scale(1.45);filter:blur(4px);opacity:1}100%{transform:translateX(-170%) translateY(28%) scale(2.1);filter:blur(9px);opacity:0}}
+.cb-bar{position:absolute;left:0;right:0;height:11%;background:#000;animation:cb-bars 2.9s ease both}
+.cb-bar.t{top:0}.cb-bar.b{bottom:0}
+@keyframes cb-bars{0%,70%{transform:none}100%{transform:scaleY(0)}}
+.cb-bar.t{transform-origin:top}.cb-bar.b{transform-origin:bottom}
+@media (prefers-reduced-motion:reduce){.cb.cine .cb-pan,.cb-cine *{animation:none}}
