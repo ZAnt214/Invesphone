@@ -818,9 +818,11 @@ O jogador agora deve saber:
 - existe motivo familiar e patrimonial;
 - Téo recebeu dinheiro ligado à casa.
 
-Mas ainda falta responder:
+O Ato 3 não existe para Téo contar a solução. Ele existe para transformar essas linhas em uma hipótese de papéis que o jogador consegue defender antes da confissão.
 
-**quem planejou?**
+Pergunta de entrada:
+
+**quem esteve dentro, quem preparou o acesso e quem tinha motivo para fazer isso sem estar na casa?**
 
 ---
 
@@ -846,7 +848,9 @@ O jogo mostra evidências selecionáveis:
 - dinheiro;
 - cinta;
 - Caio;
-- acesso.
+- acesso;
+- Thor;
+- motivo de Lívia.
 
 O jogador escolhe a ordem de pressão.
 
@@ -854,45 +858,109 @@ A ordem pode mudar pequenas falas, mas não o resultado canônico.
 
 ---
 
-# 33. CENA 24 — TÉO QUEBRA
+# 33. CENA 24 — ADMISSÕES PARCIAIS DE TÉO
+
+ID: `teo_partial_admissions`
+
+Téo quebra por partes, sem organizar a solução para Lemos.
+
+Ordem funcional:
+
+1. dinheiro liga Téo à quantia retirada da casa;
+2. Téo admite que **entrou na residência com Caio**;
+3. admite que **Caio digitou o código mestre às 23:52**;
+4. revela que Caio já chegou sabendo horário, código, situação de Thor e onde procurar o dinheiro;
+5. deixa claro que essa preparação existia antes de Téo entrar no plano.
+
+Pistas de papel:
+- `teo_entrou_com_caio`;
+- `caio_digitou_alarme`;
+- `plano_preparado_antes`.
+
+Nesse momento, Téo ainda não deve nomear Lívia como responsável pela preparação.
+
+---
+
+# 34. CENA 25 — HIPÓTESE DE PAPÉIS
+
+ID: `role_hypothesis`
+
+Antes da confissão, o jogo precisa permitir ao jogador chegar à leitura:
+
+- **Caio e Téo estiveram na execução**;
+- **o acesso foi preparado por alguém que conhecia a casa**;
+- **Lívia concentra motivo, código, rotina de Thor, acesso e participação no álibi posterior**.
+
+A hipótese nasce da combinação, não de uma fala:
+
+Téo entrou com Caio  
++ Caio usou o código  
++ preparação anterior  
++ Lívia muda a versão sobre o código  
++ Lívia sabia lidar com Thor quando Caio vinha  
++ motivo patrimonial  
++ motel posterior à janela crítica.
+
+Virada 3:
+
+**Caio e Téo executaram; Lívia preparou o acesso.**
+
+Ainda é uma hipótese investigativa. Falta confirmação direta.
+
+---
+
+# 35. CENA 26 — ÚLTIMOS CONFRONTOS ANTES DA CONFISSÃO
+
+IDs:
+- `livia_preconfession_confront`;
+- `caio_preconfession_confront`.
+
+Lívia é confrontada com o fato de que Caio chegou ao crime já sabendo código, cachorro e dinheiro.
+
+Ela nega planejamento.
+
+Caio é confrontado com:
+- admissão de Téo de que entraram juntos;
+- afirmação de que Caio digitou o alarme.
+
+Caio abandona a negativa absoluta e admite que conhecia o código, mas continua negando o crime.
+
+Função:
+dar ao jogador chance de testar a hipótese em cada ponta antes da confirmação final.
+
+---
+
+# 36. CENA 27 — TÉO CONFIRMA
 
 ID: `teo_break`
 
-Estrutura em estágios.
+Somente depois das admissões parciais e da hipótese de papéis.
 
-## Estágio 1
-Téo nega.
-
-## Estágio 2
-Admite que Caio o chamou.
-
-## Estágio 3
-Admite que esteve na região.
-
-## Estágio 4
-Confrontado com dinheiro, admite participação.
-
-## Estágio 5
-Explica que não precisaram arrombar.
-
-## Estágio 6
-Lívia aparece pela primeira vez explicitamente como facilitadora.
+Pergunta final:
+quem preparou aquelas informações com Caio?
 
 Frase-chave:
 
 "A Lívia deixou tudo pronto. O código, o cachorro…"
 
 Pista:
-confissao_teo.
+`confissao_teo`.
 
 Importante:
-não transformar Téo em narrador que explica o caso inteiro.
+a confissão **confirma** a arquitetura que o jogador já podia montar.
 
-O jogador deve completar as conexões.
+Ela não pode ser a primeira vez em que o jogador descobre:
+- que Caio e Téo estiveram dentro;
+- que o acesso foi preparado;
+- ou que Lívia é a candidata lógica a facilitadora.
+
+Sensação desejada:
+
+**"Eu já tinha chegado nisso. Agora Téo confirmou."**
 
 ---
 
-# 34. CENA 25 — SILÊNCIO DEPOIS DA CONFISSÃO
+# 37. CENA 28 — SILÊNCIO DEPOIS DA CONFISSÃO
 
 ID: `post_confession`
 
@@ -909,7 +977,7 @@ Isso abre a fase final.
 
 ---
 
-# 35. CENA 26 — QUADRO FINAL DO CASO
+# 38. CENA 29 — QUADRO FINAL DO CASO
 
 ID: `final_board`
 
@@ -934,7 +1002,7 @@ Não adicionar pista nova aqui.
 
 ---
 
-# 36. CENA 27 — RELATÓRIO DE ACUSAÇÃO
+# 39. CENA 30 — RELATÓRIO DE ACUSAÇÃO
 
 ID: `accusation_report`
 
@@ -976,7 +1044,7 @@ Confirmação séria:
 
 ---
 
-# 37. CENA 28 — RESULTADO
+# 40. CENA 31 — RESULTADO
 
 ## Final A — Caso Encerrado
 
@@ -1014,7 +1082,7 @@ Sem "game over" caricatural.
 
 ---
 
-# 38. CENA 29 — EPÍLOGO
+# 41. CENA 32 — EPÍLOGO
 
 ID: `epilogue`
 
@@ -1047,7 +1115,7 @@ Opções:
 
 ---
 
-# 39. CONTROLE DE DESBLOQUEIOS
+# 42. CONTROLE DE DESBLOQUEIOS
 
 ## Apps/telas iniciais
 
@@ -1092,6 +1160,13 @@ Desbloquear:
 - financeiro
 - Téo
 
+## Antes da confissão final
+
+Quando as admissões de Téo permitirem formar a hipótese de papéis:
+- reabrir Lívia com confronto sobre preparação;
+- reabrir Caio com confronto sobre entrada/código;
+- permitir retorno a Téo para confirmação final.
+
 ## Após confissão
 
 Desbloquear:
@@ -1100,7 +1175,7 @@ Desbloquear:
 
 ---
 
-# 40. REGRAS DE RETORNO A PERSONAGENS
+# 43. REGRAS DE RETORNO A PERSONAGENS
 
 Um personagem deve poder ser interrogado novamente quando uma nova pista relevante surgir.
 
@@ -1143,7 +1218,7 @@ Nunca substituir um interrogatório anterior; adicionar nova camada.
 
 ---
 
-# 41. NOTIFICAÇÕES E EVENTOS ASSÍNCRONOS SIMULADOS
+# 44. NOTIFICAÇÕES E EVENTOS ASSÍNCRONOS SIMULADOS
 
 O jogo pode usar notificações para parecer vivo.
 
@@ -1162,7 +1237,7 @@ O jogador não deve precisar esperar minutos de verdade.
 
 ---
 
-# 42. CHAMADAS DURANTE O CASO
+# 45. CHAMADAS DURANTE O CASO
 
 Além da abertura, usar chamadas em pontos de virada.
 
@@ -1194,7 +1269,7 @@ Essas chamadas podem reutilizar a mecânica de diálogo/ações já criada.
 
 ---
 
-# 43. FUNÇÃO DE CADA SISTEMA
+# 46. FUNÇÃO DE CADA SISTEMA
 
 ## Equipe
 receber atualizações e consequências de ordens.
@@ -1225,7 +1300,7 @@ apenas no fim.
 
 ---
 
-# 44. O QUE NÃO FAZER
+# 47. O QUE NÃO FAZER
 
 - Não liberar todos os apps desde o primeiro minuto.
 - Não transformar cada capítulo em lista de tarefas seca.
@@ -1240,7 +1315,7 @@ apenas no fim.
 
 ---
 
-# 45. RITMO
+# 48. RITMO
 
 ## Primeiro terço
 descoberta rápida.
@@ -1265,7 +1340,7 @@ fim = convergência
 
 ---
 
-# 46. DURAÇÃO RELATIVA
+# 49. DURAÇÃO RELATIVA
 
 Não fixar minutos rígidos, mas proporção aproximada:
 
@@ -1277,7 +1352,7 @@ O meio deve ser a parte mais rica.
 
 ---
 
-# 47. MODELO DE CENA PARA IMPLEMENTAÇÃO
+# 50. MODELO DE CENA PARA IMPLEMENTAÇÃO
 
 Cada cena futura deve ter:
 
@@ -1302,7 +1377,7 @@ Isso evita lógica narrativa espalhada pelo JSX.
 
 ---
 
-# 48. FLUXO RESUMIDO
+# 51. FLUXO RESUMIDO
 
 ```
 CHAMADA 04:27
@@ -1333,9 +1408,13 @@ TÉO
 ↓
 CINTA BANCÁRIA
 ↓
-CONFRONTO FINAL DE TÉO
+ADMISSÕES PARCIAIS DE TÉO
 ↓
-CONFISSÃO
+HIPÓTESE: CAIO + TÉO EXECUTAM / LÍVIA PREPARA
+↓
+CONFRONTAR CAIO E LÍVIA
+↓
+TÉO CONFIRMA
 ↓
 QUADRO FINAL
 ↓
@@ -1348,7 +1427,7 @@ EPÍLOGO
 
 ---
 
-# 49. CRITÉRIO DE PRONTO DO CASO 01
+# 52. CRITÉRIO DE PRONTO DO CASO 01
 
 O Caso 01 só deve ser considerado completo quando:
 
@@ -1374,7 +1453,7 @@ O Caso 01 só deve ser considerado completo quando:
 
 ---
 
-# 50. FONTE DE VERDADE DE GAMEPLAY
+# 53. FONTE DE VERDADE DE GAMEPLAY
 
 Para conteúdo narrativo:
 `docs/CASE01_STORY_BIBLE.md`
@@ -1388,7 +1467,7 @@ Para ordem, gatilhos e progressão:
 Quando houver conflito entre o fluxo atual no código e este documento, o código deve ser ajustado gradualmente para refletir este game flow, sem apagar mecânicas já boas.
 
 
-# 51. SOLICITAÇÃO DE MATERIAIS À EQUIPE
+# 54. SOLICITAÇÃO DE MATERIAIS À EQUIPE
 
 O app Equipe possui uma mecânica ativa de solicitação de materiais.
 
@@ -1410,7 +1489,7 @@ Exemplos:
 O jogador nunca deve conseguir pedir uma prova futura sem ter fundamento narrativo para saber que ela existe.
 
 
-# 52. INVESTIGAÇÃO SEM "TAREFAS"
+# 55. INVESTIGAÇÃO SEM "TAREFAS"
 
 A camada de `task` pode continuar existindo internamente como estado técnico de compatibilidade, mas **não é um conceito apresentado ao jogador**.
 
@@ -1460,7 +1539,7 @@ Não existe botão genérico de "concluir etapa".
 Se `game.task` continuar sendo usado no código, ele deve funcionar apenas como marcador interno de fase. Interface, textos e navegação devem usar linguagem de ocorrência, evidência, retorno de equipe, pessoa, documento ou relatório.
 
 
-# 53. EQUIPE COMO CONVERSA PROGRESSIVA
+# 56. EQUIPE COMO CONVERSA PROGRESSIVA
 
 A equipe não funciona como menu de serviços.
 
@@ -1483,7 +1562,7 @@ Fonte:
 `docs/TEAM_MATERIAL_REQUESTS.md`
 
 
-# 54. REDE DE PESSOAS DO CASO
+# 57. REDE DE PESSOAS DO CASO
 
 O Caso 01 não apresenta todo o elenco ao jogador no começo.
 
