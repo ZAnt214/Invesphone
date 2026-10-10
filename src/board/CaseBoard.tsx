@@ -12,6 +12,7 @@ import { nextSteps, type GuideStepData } from '../case/nextSteps'
 import { chapters } from '../case01'
 import { BOARD_PEOPLE, CARDS, CHAPTERS, CONFRONT, boardOf, clueOf, cluesOf, discoveredOf, heardOf, personOf, portrait, sourcesOf, stageOfTask, titleOf,
   type BoardSave, type Section } from './boardData'
+import { playCine } from './cineAudio'
 import './case-board.css'
 
 type Props = {
@@ -39,7 +40,7 @@ const ENDINGS={A:['Caso Encerrado','O relatório separa quem entrou na casa de q
 const ROT=[-2,1.5,-1,2,-1.5,1,-.5,1.2]
 /** Arte oficial do Lemos de costas (creative-requests/completed/2026-10-10-lemos-de-costas-quadro.md). */
 const LEMOS_BACK:string|null='/characters/lemos/back.png'
-const CINE_FULL=3600, CINE_SHORT=900
+const CINE_FULL=4600, CINE_SHORT=900
 /* a parede inteira do caso, em volta da parte do capítulo: papéis, fotos e fios fora de foco, para dar o tamanho do caso.
    Só usa material que não adianta nada da investigação (fotos da casa, croquis e papéis em branco) e fica desfocado. */
 const WALL={x:-720,y:-380,w:2002,h:1150}
@@ -74,6 +75,29 @@ function drawWall(cv:HTMLCanvasElement,imgs:HTMLImageElement[]){
   // moldura de madeira e luz caindo nas bordas
   c.lineWidth=26;c.strokeStyle='#2d1d10';c.strokeRect(WALL.x+13,WALL.y+13,WALL.w-26,WALL.h-26)
   const gr=c.createRadialGradient(281,195,200,281,195,1100);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.6)');c.fillStyle=gr;c.fillRect(WALL.x,WALL.y,WALL.w,WALL.h)
+}
+/** Poeira no facho da luminária durante a entrada: brilha só dentro da luz. */
+function DustMotes(){
+  const ref=useRef<HTMLCanvasElement>(null)
+  useEffect(()=>{
+    const cv=ref.current;if(!cv)return
+    const dpr=Math.min(1.5,window.devicePixelRatio||1),W=cv.clientWidth,H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr
+    const c=cv.getContext('2d');if(!c)return
+    const cx=parseFloat(getComputedStyle(cv).getPropertyValue('--ox'))||W/2
+    const motes=Array.from({length:90},()=>({x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*.012,vy:-.004-Math.random()*.01,r:.5+Math.random()*1.6,ph:Math.random()*6}))
+    let raf=0,last=performance.now();const t0=last
+    const frame=(now:number)=>{const dt=Math.min(.05,(now-last)/1000);last=now;const T=(now-t0)/1000
+      c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);c.globalCompositeOperation='lighter'
+      const lit=T<.55?0:T<.66?.8:T<.74?.2:T<1?.9:1
+      for(const m of motes){m.ph+=dt;m.x+=(m.vx+Math.sin(m.ph)*.004)*dt;m.y+=m.vy*dt;if(m.y<-.02)m.y=1.02;if(m.x<0)m.x=1;if(m.x>1)m.x=0
+        const x=m.x*W,y=m.y*H,half=40+y*.55,d=Math.abs(x-cx)/half;if(d>=1)continue
+        const a=(1-d)*(1-y/H*.6)*lit*(.5+.5*Math.sin(m.ph*3));if(a<.03)continue
+        c.globalAlpha=a*.8;c.fillStyle='#ffe2b0';c.beginPath();c.arc(x,y,m.r,0,7);c.fill()}
+      c.globalAlpha=1;raf=requestAnimationFrame(frame)}
+    raf=requestAnimationFrame(frame)
+    return ()=>cancelAnimationFrame(raf)
+  },[])
+  return <canvas ref={ref} className="cb-dust" aria-hidden="true"/>
 }
 /** Silhueta temporária do Lemos de costas, só sombra contra a luz do quadro (sem desenhar o personagem). */
 function LemosSilhouette(){
@@ -118,6 +142,9 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}
     return off?'short':'full'})
   const cineOff=()=>{try{localStorage.setItem('board.cine.off','1')}catch{/* sem armazenamento */}setCine(null)}
   useEffect(()=>{if(!cine)return;const t=window.setTimeout(()=>setCine(null),cine==='full'?CINE_FULL:CINE_SHORT);return ()=>window.clearTimeout(t)},[cine])
+  // som da cena: quando o jogador pula, sai rápido; no fim natural, o resto do ambiente some sozinho
+  useEffect(()=>{if(cine!=='full')return;const t0=performance.now(),stop=playCine()
+    return ()=>{if(performance.now()-t0<CINE_FULL-200)stop()}},[cine])
   useEffect(()=>{if(current>(b.stage??0))saveBoard(()=>({stage:current}))},[])
   useEffect(()=>{if(!intro||cine)return;const t=window.setTimeout(()=>setIntro(0),3000);return ()=>window.clearTimeout(t)},[cine])
 
@@ -372,8 +399,13 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}
     </div>
     {toast&&<div className="cb-toast">{toast}</div>}
     {cine==='full'&&<button className="cb-cine" aria-label="Pular" onClick={()=>setCine(null)}>
+      <span className="cb-window"/>
+      <span className="cb-beam"/>
       <span className="cb-lamp"/>
+      <DustMotes/>
       <span className="cb-lemos">{LEMOS_BACK?<img src={LEMOS_BACK} alt=""/>:<LemosSilhouette/>}</span>
+      <span className="cb-grain"/>
+      <span className="cb-vig"/>
       <i className="cb-bar t"/><i className="cb-bar b"/>
     </button>}
     {cine==='full'&&<button className="cb-cine-off" onClick={cineOff}>Não mostrar de novo</button>}
