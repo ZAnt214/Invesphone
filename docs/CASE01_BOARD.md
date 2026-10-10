@@ -4,7 +4,7 @@ O quadro da sala da equipe (base do DHPP) é onde o jogador organiza o caso. Có
 
 ## Regras
 
-- **Navegação**: abas no topo levam direto a cada área (ponto amarelo onde chegou coisa nova) e "Tudo" mostra a parede inteira; arrastar move, pinça e roda do mouse aproximam. Tocar numa pista traz ela para perto, ao lado da ficha.
+- **Etapas = capítulos**: o quadro abre sempre no capítulo atual do caso (o mesmo do aparelho) e mostra só as áreas dele: 1 O Silêncio da Casa (cena), 2 Versões (pessoas e acesso), 3 A Janela (noite e motivo), 4 Siga o Dinheiro (dinheiro e motivo), 5 A Última Versão (pessoas, motivo e relatório). Capítulo novo abre com o cartão do capítulo. Os anteriores ficam no topo para rever (ponto amarelo quando algo novo entrou neles); os seguintes não aparecem. Dentro da etapa, arrastar e pinçar olham de perto; tocar numa pista traz ela para o lado da ficha. Fios para pessoas fora da etapa aparecem como rostinhos no papel.
 - **Cada área é uma pergunta**: A cena (Foi um roubo?), Pessoas (Quem estava onde?), A noite (O que houve entre 23:52 e 00:56?), Acesso, Motivo e Dinheiro. Uma área só aparece quando chega a primeira pista dela; a cena e as pessoas existem desde o começo.
 - **Só entra o que o jogador já tem**: pistas do save (`clues`) e as fotos da varredura (`varredura.fim`). Pessoas só depois de descobertas (`discoveredPeople`), com carimbo de chamada/ouvida.
 - **Toda pista mostra a origem**: varredura, material ou conversa da equipe (de `teamData`) e a frase exata dos depoimentos, só quando aquela pergunta foi feita.

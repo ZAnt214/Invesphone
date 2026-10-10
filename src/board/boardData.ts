@@ -19,6 +19,18 @@ export const ZONES:Record<ZoneId,{x:number;y:number;label:string;tab:string;q:st
 }
 export const ZONE_W=562, ZONE_H=390, WORLD_W=1688, WORLD_H=780
 
+/** Etapas do quadro = capítulos do caso (src/case01.ts). O quadro abre na etapa atual e só mostra as áreas dela;
+    as anteriores ficam para rever, as seguintes não existem ainda. */
+export const STAGES:{short:string;q:string;zones:ZoneId[]}[] = [
+  {short:'A casa',q:'Foi um roubo?',zones:['cena']},
+  {short:'Versões',q:'Quem estava onde, e quem podia entrar sem forçar?',zones:['pessoas','acesso']},
+  {short:'A janela',q:'O que houve entre 23:52 e 00:56, e por quê?',zones:['noite','motivo']},
+  {short:'O dinheiro',q:'De onde vem o dinheiro?',zones:['dinheiro','motivo']},
+  {short:'A última versão',q:'Quem fez o quê?',zones:['pessoas','motivo']},
+]
+/** Etapa do caso pelo marcador interno (o mesmo dos capítulos do aparelho). */
+export const stageOfTask=(t:number)=>t<=1?1:t===2?2:t<=4?3:t<=6?4:5
+
 /** ph = foto da varredura, doc = documento, nt = nota (fala ou registro da equipe). */
 export type Card = {
   zone:ZoneId; kind:'ph'|'doc'|'nt'
@@ -67,10 +79,10 @@ export const CARDS:Record<string,Card> = {
   jorge_so_o_carro:{zone:'pessoas',kind:'nt',col:'jorge',row:1},
   confissao_teo:{zone:'pessoas',kind:'nt',col:'teo',row:0},
   agenda_helena:{zone:'motivo',kind:'doc',img:DOC+'agenda-helena.svg',x:24,y:118,r:-3,src:'Telefone de Helena · Agenda'},
-  brigas_namoro:{zone:'motivo',kind:'nt',x:130,y:110,r:1.5},
-  ameaca_heranca:{zone:'motivo',kind:'nt',x:130,y:170,r:-1.5},
-  pergunta_inventario:{zone:'motivo',kind:'nt',x:296,y:110,r:-1},
-  livia_sabia_heranca:{zone:'motivo',kind:'nt',x:296,y:170,r:1.2},
+  brigas_namoro:{zone:'pessoas',kind:'nt',col:'livia',row:0},
+  ameaca_heranca:{zone:'motivo',kind:'nt',x:140,y:112,r:-1.5},
+  pergunta_inventario:{zone:'pessoas',kind:'nt',col:'livia',row:1},
+  livia_sabia_heranca:{zone:'motivo',kind:'nt',x:310,y:118,r:1.2},
   extrato_ricardo:{zone:'dinheiro',kind:'doc',img:DOC+'extrato-ricardo.svg',x:24,y:110,r:-3},
   carta_cobranca:{zone:'dinheiro',kind:'doc',img:DOC+'carta-cobranca.svg',x:120,y:122,r:3},
   moto_dolares:{zone:'dinheiro',kind:'doc',img:DOC+'apreensao-dolares.svg',x:262,y:108,r:-2},
@@ -126,5 +138,5 @@ export function sourcesOf(g:CaseSave,id:string,found:string[]){
 export const discoveredOf=(g:CaseSave)=>g.discoveredPeople??DEFAULT_DISCOVERED
 
 /** Estado do quadro guardado no save (fios do jogador, falas postas na linha, o que ele já viu e o relatório em montagem). */
-export type BoardSave = {links:Record<string,string[]>;placed:string[];seen:string[];roles:Record<string,'exec'|'mentor'|'fora'>;motive?:'heranca'|'roubo';proofs:string[]}
+export type BoardSave = {stage?:number;links:Record<string,string[]>;placed:string[];seen:string[];roles:Record<string,'exec'|'mentor'|'fora'>;motive?:'heranca'|'roubo';proofs:string[]}
 export const boardOf=(g:CaseSave):BoardSave=>({links:{},placed:[],seen:[],roles:{},proofs:[],...(g.board as Partial<BoardSave>|undefined)})
