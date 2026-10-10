@@ -57,6 +57,10 @@
       "targetState": "case_resolved",
       "scenes": [
         "teo_pressure_setup",
+        "teo_partial_admissions",
+        "role_hypothesis",
+        "livia_preconfession_confront",
+        "caio_preconfession_confront",
         "teo_break",
         "post_confession",
         "final_board",
@@ -79,8 +83,8 @@
     },
     {
       "id": "turn3",
-      "label": "Lívia preparou e facilitou o plano",
-      "after": "teo_break"
+      "label": "Caio e Téo executaram; Lívia preparou o acesso",
+      "after": "role_hypothesis"
     }
   ],
   "keyUnlocks": {
@@ -106,6 +110,9 @@
     "teo_break": [
       "final_board",
       "accusation_report"
+    ],
+    "role_hypothesis": [
+      "teo_break"
     ]
   },
   "finalReport": {
@@ -149,7 +156,8 @@
     "contradiction_registered",
     "material_returned",
     "character_unlocked",
-    "confession_obtained"
+    "confession_obtained",
+    "role_hypothesis_formed"
   ],
   "uiRules": [
     "Do not show task counters or completion percentages.",
