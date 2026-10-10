@@ -46,6 +46,40 @@ As provas aceitas para o encerramento são:
 
 Nada no jogo deve alterar essa verdade.
 
+## Regra canônica — o jogador precisa descobrir os papéis antes da confissão final
+
+A divisão entre **mentora/facilitadora** e **executores** não pode ser entregue pronta por Téo, Sônia ou qualquer outro personagem.
+
+Antes da confissão final de Téo, o jogador precisa já possuir informação suficiente para formular, por conta própria, a hipótese correta:
+
+- **Lívia = mentora/facilitadora**: motivo de herança/conflito + acesso doméstico + conhecimento do alarme e de Thor + mudança de versão sobre o código + ligação com a construção do álibi posterior;
+- **Caio = executor**: Gol na região + janela 23:52 → 00:56 sem cobertura + conhecimento do código/acesso + contradições de horário + vínculo operacional revelado progressivamente;
+- **Téo = executor**: trilha dos US$ 5.000/cinta + contradições financeiras + conhecimento operacional + admissões progressivas que o colocam dentro da ação, antes de ele explicar o plano completo.
+
+A investigação deve funcionar em três camadas:
+
+1. **provas independentes criam a hipótese**;
+2. **confrontos separados enfraquecem as versões e definem os papéis**;
+3. **a confissão final confirma a arquitetura do crime**.
+
+Regra obrigatória:
+a fala final de Téo **não pode ser a primeira fonte que informa ao jogador quem mandou e quem executou**.
+
+Ela deve produzir a sensação:
+**"as provas já apontavam isso; agora ele confirmou."**
+
+Nenhum agente deve dizer antes da hora:
+- "Lívia é a mandante";
+- "Caio e Téo são os executores";
+- ou qualquer equivalente que resolva a divisão dos papéis pelo jogador.
+
+A equipe pode fazer perguntas e destacar lacunas:
+- "Quem tinha como preparar a casa sem estar lá?"
+- "Quem o horário coloca fisicamente na janela?"
+- "Quem recebeu o dinheiro e sabia detalhes que um terceiro não saberia?"
+
+O relatório final continua sendo o momento em que **o jogador assume formalmente essa conclusão**.
+
 ---
 
 # 2. O QUE ACONTECEU DE VERDADE
@@ -438,11 +472,21 @@ Quebra narrativa:
 
 a trilha financeira o torna o elo mais fraco.
 
-A confissão de Téo deve ser o momento em que a investigação finalmente deixa de depender apenas de inferência.
+A pressão sobre Téo deve acontecer em etapas. Antes da confissão final, ele já pode ser forçado a admitir peças isoladas — dinheiro, presença, contato com Caio e conhecimento operacional — sem organizar para Lemos toda a solução do caso.
+
+A confissão final de Téo **não cria a teoria correta**. Ela confirma uma teoria que o jogador já consegue sustentar pelas provas e pelas admissões anteriores.
+
+O jogador deve conseguir chegar, antes da frase-chave, à leitura:
+- Téo esteve envolvido fisicamente;
+- Caio foi a ponte operacional;
+- alguém de dentro preparou acesso, alarme e cachorro;
+- Lívia é a única pessoa em quem motivo, conhecimento doméstico e construção do álibi convergem.
 
 Frase-chave já estabelecida:
 
 "A Lívia deixou tudo pronto. O código, o cachorro…"
+
+Essa frase confirma a facilitação de Lívia; não deve funcionar como uma exposição completa que explique sozinha quem fez o quê.
 
 ---
 
@@ -1226,29 +1270,42 @@ Téo é chamado para novo confronto.
 ## CAPÍTULO 5 — A ÚLTIMA VERSÃO
 
 Objetivo:
-separar papéis.
+fazer o jogador **separar os papéis** e depois testar essa leitura contra Téo.
 
-Téo quebra.
+O capítulo não começa com Téo explicando a solução. Ele começa com o jogador já tendo elementos suficientes para montar uma hipótese de papéis.
 
-Ele não deve entregar tudo em uma frase.
+Antes da confissão final, a investigação deve permitir sustentar:
+
+- **Lívia preparou/facilitou**: motivo, conhecimento doméstico, código, Thor, chave/acesso, mudança de versão e álibi construído depois da janela crítica;
+- **Caio executou**: carro na região, janela sem álibi, conhecimento do código, contradições de horário e ligação operacional com Téo;
+- **Téo executou**: dinheiro rastreado até ele, vínculo com a quantia retirada da casa e admissões operacionais progressivas.
+
+Téo então quebra em partes.
+
+Ele não deve entregar tudo em uma frase e nunca deve falar como se estivesse preenchendo o relatório do jogador.
 
 Progressão ideal:
 
 1. nega;
-2. admite que Caio o chamou;
-3. admite presença;
-4. admite dinheiro;
-5. admite que a entrada foi facilitada;
-6. menciona Lívia;
-7. descreve código/cachorro.
+2. é confrontado com a trilha financeira;
+3. admite que Caio o chamou;
+4. admite que esteve envolvido presencialmente;
+5. admite dinheiro e conhecimento de detalhes operacionais;
+6. confirma que a entrada não foi improvisada;
+7. admite que Caio tinha o código;
+8. sob nova pressão, confirma que a informação veio de Lívia;
+9. descreve código/cachorro e confirma a preparação.
 
-A investigação finalmente entende:
+Nesse ponto, a fala de Téo **confirma**, em vez de revelar do zero, a leitura que o jogador já podia construir:
 
 - Caio e Téo executaram;
 - Lívia preparou e facilitou;
 - o motel fazia parte do álibi posterior;
 - o roubo era encenação;
 - o dinheiro serviu como pagamento e distração.
+
+Sensação desejada:
+**"Eu montei isso pelas provas; Téo acabou de confirmar."**
 
 Fim:
 
@@ -1474,9 +1531,23 @@ Lívia ganha motivo.
 
 Téo entra na estrutura.
 
+A partir daqui, o jogo precisa fornecer condições para o jogador separar participação financeira de participação operacional.
+
+## Antes da confissão final
+
+O jogador já deve conseguir formular uma hipótese completa de papéis:
+
+- Lívia preparou/facilitou;
+- Caio participou da execução;
+- Téo participou da execução.
+
+Ainda pode faltar a confirmação direta de uma ou mais conexões, mas não pode faltar a lógica necessária para chegar à conclusão.
+
 ## Depois da confissão
 
-Papéis se definem.
+Os papéis **se confirmam**.
+
+A confissão fecha lacunas e transforma a hipótese em acusação sustentada; ela não deve introduzir pela primeira vez a solução correta.
 
 ---
 
@@ -1648,13 +1719,17 @@ depois:
 
 depois:
 
-"Caio e Téo fizeram isso."
+"Consigo separar os papéis: Caio e Téo estiveram na execução."
+
+depois:
+
+"Lívia não estava apenas encobrindo Caio. Ela preparou o acesso e o álibi."
 
 e por último:
 
-"Lívia não estava apenas encobrindo Caio. Ela preparou o crime."
+"Téo confirmou uma estrutura que as provas já permitiam montar."
 
-Esse último passo é a identidade narrativa do Caso 01.
+A identidade narrativa do Caso 01 é o jogador perceber **a arquitetura do crime antes de receber a confirmação final**. A satisfação deve vir de reconhecer que cada evidência já estava apontando para um papel diferente.
 
 ---
 
@@ -1694,6 +1769,8 @@ Antes de aprovar uma cena, verificar:
 - Ela contradiz algum horário?
 - Ela respeita 2002?
 - Ela aproxima o jogador da solução sem entregar tudo?
+- Esta cena permite ao jogador **deduzir um papel** ou apenas diz a resposta?
+- Se houver confissão, ela está confirmando algo que já podia ser inferido ou revelando a solução do nada?
 - A informação pode ser provada?
 - Se for falsa pista, existe forma justa de descartá-la?
 
