@@ -3,10 +3,11 @@
    a pessoas (o fio fica vermelho quando sustenta um confronto previsto no depoimento), põe as falas na linha da noite
    e, depois da confissão, protocola o relatório pelo próprio quadro. Nada aqui libera ou trava a progressão. */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { readCase, writeCase, type CaseSave } from '../case/caseSave'
+import { advanceTask, readCase, writeCase, type CaseSave } from '../case/caseSave'
 import { depoPeople, summon } from '../case/depositions'
 import { fileReport, reportEnding } from '../case/report'
-import { BOARD_PEOPLE, CARDS, CONFRONT, VICTIMS, WORLD_H, WORLD_W, ZONES, ZONE_H, ZONE_W, boardOf, clueOf, cluesOf, discoveredOf, heardOf,
+import { chapters } from '../case01'
+import { BOARD_PEOPLE, CARDS, CONFRONT, STAGES, VICTIMS, WORLD_H, WORLD_W, ZONES, ZONE_H, ZONE_W, boardOf, stageOfTask, clueOf, cluesOf, discoveredOf, heardOf,
   personOf, portrait, sourcesOf, titleOf, type BoardSave, type ZoneId } from './boardData'
 import './case-board.css'
 
@@ -20,7 +21,6 @@ type Props = {
   onSummoned?:(id:string)=>void
 }
 type Sel = {kind:'clue'|'person';id:string}|null
-const ZIDS=Object.keys(ZONES) as ZoneId[]
 const START=22*60, SPAN=195                       // linha da noite: 22:00 → 01:15
 const lineX=(tm:number)=>30+tm*502/SPAN
 const CROQUI={x:150,y:100,w:276,h:184}
@@ -31,7 +31,7 @@ const ENDINGS={A:['Caso Encerrado','O relatório separa quem entrou na casa de q
   C:['Arquivado','O relatório não sustenta a acusação contra quem foi apontado.','Sem uma cadeia coerente de provas, o caso perde força.']} as const
 
 export default function CaseBoard({found,onClose,onDeposition,onSummoned}:Props){
-  const [g,setG]=useState<CaseSave>(()=>readCase())
+  const [g,setG]=useState<CaseSave>(()=>advanceTask(readCase()))
   const b=boardOf(g)
   const save=(fn:(x:CaseSave)=>CaseSave)=>setG(writeCase(fn))
   const saveBoard=(fn:(x:BoardSave)=>Partial<BoardSave>)=>save(x=>({...x,board:{...boardOf(x),...fn(boardOf(x))}}))
@@ -39,7 +39,6 @@ export default function CaseBoard({found,onClose,onDeposition,onSummoned}:Props)
   const has=(id:string)=>have.includes(id)
   const people=discoveredOf(g).filter(p=>BOARD_PEOPLE.includes(p))
   const depo=useMemo(()=>depoPeople(g),[g])
-  const zoneOpen=(z:ZoneId)=>z==='cena'||z==='pessoas'||have.some(id=>CARDS[id].zone===z)
   const reportReady=g.task>=8&&!g.ending
 
   // o que chegou desde a última visita entra com animação; depois fica marcado como visto
@@ -62,9 +61,16 @@ export default function CaseBoard({found,onClose,onDeposition,onSummoned}:Props)
   const drawerOpen=!!sel
   /* câmera livre: arrastar move, pinça e roda aproximam; as abas levam direto a cada área */
   const HUD=46
-  const openZones=ZIDS.filter(zoneOpen)
-  const box=useMemo(()=>({x0:Math.min(...openZones.map(z=>ZONES[z].x)),y0:Math.min(...openZones.map(z=>ZONES[z].y)),
-    x1:Math.max(...openZones.map(z=>ZONES[z].x+ZONE_W)),y1:Math.max(...openZones.map(z=>ZONES[z].y+ZONE_H))}),[openZones.join()])
+  /* etapa: o quadro abre na etapa atual do caso e mostra só as áreas dela, lado a lado */
+  const current=stageOfTask(g.task)
+  const [stage,setStage]=useState(current)
+  const zs=STAGES[stage-1].zones
+  const zx=(z:ZoneId)=>Math.max(0,zs.indexOf(z))*(ZONE_W+1)
+  const shown=(z:ZoneId)=>zs.includes(z)
+  const box=useMemo(()=>({x0:0,y0:0,x1:zs.length*(ZONE_W+1)-1,y1:ZONE_H}),[stage])
+  // capítulo novo desde a última visita: abre com o cartão do capítulo
+  const [intro,setIntro]=useState(()=>current>(boardOf(g).stage??0)?current:0)
+  useEffect(()=>{if(current>(b.stage??0))saveBoard(()=>({stage:current}));if(intro){const t=window.setTimeout(()=>setIntro(0),3200);return ()=>window.clearTimeout(t)}},[])
   // espaço livre para o quadro (fora do topo e da ficha aberta)
   const view=(withDrawer:boolean)=>{const {w,h}=size;return {x:0,y:HUD,w:withDrawer&&!vert?w-312:w,h:(withDrawer&&vert?h*.46:h)-HUD}}
   const fitS=()=>{const v=view(false);return Math.min((v.w-12)/(box.x1-box.x0),(v.h-6)/(box.y1-box.y0))}
@@ -82,16 +88,15 @@ export default function CaseBoard({found,onClose,onDeposition,onSummoned}:Props)
   const [cam,setCam]=useState<Cam>({x:0,y:0,s:.5})
   const [glide,setGlide]=useState(true)
   const go=(c:Cam)=>{setGlide(true);setCam(c)}
-  const goZone=(z:ZoneId|null)=>{if(!z){setSel(null);go(overview());return}const Z=ZONES[z];go(centerOn(Z.x+ZONE_W/2,Z.y+ZONE_H/2,zoneScale()))}
+  const goStage=(n:number)=>{setSel(null);setStage(n)}
   // abre na visão geral; quando a tela muda de tamanho, a câmera se ajusta sem pular
   const first=useRef(true)
-  useLayoutEffect(()=>{if(first.current){first.current=false;setGlide(false);setCam(overview());requestAnimationFrame(()=>setGlide(true));return}setCam(c=>clamp(c))},[size.w,size.h,box])
-  /** área no meio da tela, para a aba acesa */
-  const v0=view(drawerOpen),mid=[(v0.x+v0.w/2-cam.x)/cam.s,(v0.y+v0.h/2-cam.y)/cam.s]
-  const far=cam.s<fitS()*1.25
-  const here=far?null:openZones.find(z=>mid[0]>=ZONES[z].x&&mid[0]<ZONES[z].x+ZONE_W+1&&mid[1]>=ZONES[z].y&&mid[1]<ZONES[z].y+ZONE_H+1)??null
+  useLayoutEffect(()=>{if(first.current){first.current=false;setGlide(false);setCam(overview());requestAnimationFrame(()=>setGlide(true));return}setCam(c=>clamp(c))},[size.w,size.h])
+  // trocar de etapa mostra a etapa inteira
+  const lastStage=useRef(stage)
+  useLayoutEffect(()=>{if(lastStage.current===stage)return;lastStage.current=stage;setGlide(false);setCam(overview());requestAnimationFrame(()=>setGlide(true))},[stage])
   // na primeira visita, diz como andar pelo quadro
-  useEffect(()=>{if(!b.seen.length)window.setTimeout(()=>say('Arraste para andar pelo quadro e use as abas para ir direto a cada área. Toque numa pista para ver de onde ela veio.'),900)},[])
+  useEffect(()=>{if(!b.seen.length)window.setTimeout(()=>say('Toque numa pista para ver de onde ela veio. Arraste ou use dois dedos para olhar de perto.'),900)},[])
   /* gestos */
   const ptr=useRef(new Map<number,{x:number;y:number}>())
   const gest=useRef<{moved:boolean;sx:number;sy:number;cam:Cam;d0?:number;m0?:[number,number]}|null>(null)
@@ -152,8 +157,8 @@ export default function CaseBoard({found,onClose,onDeposition,onSummoned}:Props)
     }
     return {x:c.x??0,y:c.y??0,r:c.r??0,w:c.kind==='ph'?92:c.kind==='doc'?78:150}
   }
-  const anchor=(id:string)=>{const c=CARDS[id],Z=ZONES[c.zone],p=pos(id);return [Z.x+p.x+p.w/2,Z.y+p.y+3] as const}
-  const personAnchor=(p:string)=>{const i=BOARD_PEOPLE.indexOf(p),Z=ZONES.pessoas;return [Z.x+10+i*91+42,Z.y+137] as const}
+  const anchor=(id:string)=>{const c=CARDS[id],p=pos(id);return [zx(c.zone)+p.x+p.w/2,p.y+3] as const}
+  const personAnchor=(p:string)=>{const i=BOARD_PEOPLE.indexOf(p);return [zx('pessoas')+10+i*91+42,137] as const}
   const firm=(id:string,p:string)=>(CONFRONT[p]??[]).includes(id)
 
   /* ações */
@@ -172,21 +177,22 @@ export default function CaseBoard({found,onClose,onDeposition,onSummoned}:Props)
   const yarn=(key:string,d:string,draw?:boolean)=>[<path key={key+'s'} className="cb-sh" d={d} transform="translate(1.5 4)"/>,<path key={key+'a'} className={'cb-y1'+(draw?' draw':'')} d={d} pathLength={1}/>,<path key={key+'b'} className="cb-y2" d={d}/>]
   const curve=(a:readonly number[],c:readonly number[],sag?:number)=>{const mx=(a[0]+c[0])/2,my=(a[1]+c[1])/2+(sag??Math.hypot(c[0]-a[0],c[1]-a[1])*.09+4);return `M${a[0].toFixed(1)} ${a[1].toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${c[0].toFixed(1)} ${c[1].toFixed(1)}`}
   have.forEach(id=>{
-    const c=CARDS[id],a=anchor(id)
-    if(c.zone==='cena'&&c.kind==='ph'){const t=[CROQUI.x+(c.u??0)*CROQUI.w,CROQUI.y+(c.v??0)*CROQUI.h] as const
+    const c=CARDS[id];if(!shown(c.zone))return;const a=anchor(id)
+    if(c.zone==='cena'&&c.kind==='ph'){const t=[zx('cena')+CROQUI.x+(c.u??0)*CROQUI.w,CROQUI.y+(c.v??0)*CROQUI.h] as const
       strings.push(...yarn(id,curve(a,t),fresh.has(id)),<circle key={id+'r'} className="cb-ring" cx={t[0]} cy={t[1]} r={6.5}/>);pins.push(<i key={id+'pt'} className="cb-pin" style={{left:t[0],top:t[1]}}/>)}
-    if(c.reg&&c.tm!=null){const x=ZONES.noite.x+lineX(c.tm),y0=ZONES.noite.y+160,y1=ZONES.noite.y+181;strings.push(...yarn(id+'l',`M${x} ${y0} L${x} ${y1}`));pins.push(<i key={id+'pl'} className="cb-pin cb-k" style={{left:x,top:y1}}/>)}
+    if(c.reg&&c.tm!=null){const x=zx('noite')+lineX(c.tm),y0=160,y1=181;strings.push(...yarn(id+'l',`M${x} ${y0} L${x} ${y1}`));pins.push(<i key={id+'pl'} className="cb-pin cb-k" style={{left:x,top:y1}}/>)}
     pins.push(<i key={id+'p'} className={'cb-pin'+(c.kind==='doc'?' y':'')} style={{left:a[0],top:a[1]}}/>)
   })
-  people.forEach(p=>{const a=personAnchor(p);pins.push(<i key={'pp'+p} className="cb-pin y" style={{left:a[0],top:a[1]}}/>)})
-  Object.entries(b.links).forEach(([id,ps])=>{if(!has(id))return;ps.forEach(p=>{if(!people.includes(p))return;const d=curve(anchor(id),personAnchor(p),24)
+  if(shown('pessoas'))people.forEach(p=>{const a=personAnchor(p);pins.push(<i key={'pp'+p} className="cb-pin y" style={{left:a[0],top:a[1]}}/>)})
+  Object.entries(b.links).forEach(([id,ps])=>{if(!has(id)||!shown(CARDS[id].zone)||!shown('pessoas'))return;ps.forEach(p=>{if(!people.includes(p))return;const d=curve(anchor(id),personAnchor(p),24)
     if(firm(id,p))strings.push(...yarn('L'+id+p,d));else strings.push(<path key={'L'+id+p} className="cb-pen" d={d}/>)})})
 
   /* papéis de cada área */
   const cardEl=(id:string)=>{
     const c=CARDS[id],p=pos(id),cls=['cb-c','k-'+c.kind,sel?.kind==='clue'&&sel.id===id?'sel':'',fresh.has(id)?'new':'',c.col?'cb-col':'',c.zone==='noite'&&c.kind==='doc'?'sm':'',id==='confissao_teo'?'yl':''].join(' ')
     const st={left:p.x,top:p.y,'--r':p.r+'deg',width:c.kind==='nt'?p.w:undefined} as React.CSSProperties
-    const proof=reportOn&&b.proofs.includes(id)?<span className="cb-proof"/>:null
+    const lk=(b.links[id]??[]).filter(x=>people.includes(x))
+    const proof=<>{reportOn&&b.proofs.includes(id)&&<span className="cb-proof"/>}{lk.length>0&&<span className="cb-lk">{lk.map(x=><img key={x} className={firm(id,x)?'firm':''} src={portrait(x)} alt={firstName(x)}/>)}</span>}</>
     if(c.kind!=='nt')return <button key={id} className={cls} style={st} onClick={()=>openClue(id)}><img src={c.img} alt=""/><i>{titleOf(id)}</i>{proof}</button>
     const heard=heardOf(g,id)[0]
     return <button key={id} className={cls+(heard&&!c.col?'':' blank')} style={st} onClick={()=>openClue(id)}>
@@ -195,8 +201,8 @@ export default function CaseBoard({found,onClose,onDeposition,onSummoned}:Props)
   }
   const zoneEl=(z:ZoneId)=>{
     const Z=ZONES[z],ids=have.filter(id=>CARDS[id].zone===z)
-    return <div key={z} className={'cb-zone'+(zoneOpen(z)?'':' off')} style={{left:Z.x,top:Z.y}}>
-      {zoneOpen(z)&&<>
+    return <div key={z} className="cb-zone" style={{left:zx(z),top:0}}>
+      {<>
         <div className="cb-q"><small>{Z.label}</small><b>{Z.q}</b></div>
         {z==='cena'&&<><div className="cb-croqui" style={{left:CROQUI.x,top:CROQUI.y,width:CROQUI.w,height:CROQUI.h}}><img src="/evidence/case01/new/croqui_residencia.jpg" alt="Croqui da residência"/></div>
           <span className="cb-tape" style={{left:136,top:96,transform:'rotate(-38deg)'}}/><span className="cb-tape" style={{left:398,top:94,transform:'rotate(36deg)'}}/></>}
@@ -215,6 +221,7 @@ export default function CaseBoard({found,onClose,onDeposition,onSummoned}:Props)
           {ids.some(id=>!CARDS[id].reg&&!b.placed.includes(id))&&<div className="cb-tray">Falas sobre horário · toque e ponha na linha</div>}
         </>}
         {ids.map(cardEl)}
+        {!ids.length&&z!=='cena'&&z!=='pessoas'&&z!=='noite'&&<p className="cb-empty">Nada preso aqui ainda.</p>}
         {z==='motivo'&&reportOn&&([['heranca','Herança + proibição do namoro','O que estava em jogo para quem ficava.',150,262,-1.5],['roubo','Roubo oportunista','Alguém de fora atrás de valores.',372,264,1.5]] as const).map(([k,t,s,x,y,r])=>
           <button key={k} className={'cb-opt'+(b.motive===k?' on':'')} style={{left:x,top:y,'--r':r+'deg'} as React.CSSProperties} onClick={()=>saveBoard(()=>({motive:k}))}><b>{t}</b><small>{s}</small></button>)}
       </>}
@@ -268,21 +275,23 @@ export default function CaseBoard({found,onClose,onDeposition,onSummoned}:Props)
       </div></>
   }
 
-  const tabs=([null,...openZones] as (ZoneId|null)[])
+  const staleStage=(n:number)=>n!==stage&&have.some(id=>fresh.has(id)&&STAGES[n-1].zones.includes(CARDS[id].zone))
   return <div ref={root} className={'cb'+(vert?' vert':'')+(drawerOpen?' drawer':'')}>
     <div className="cb-pan" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onWheel={onWheel} onClickCapture={onClickCapture}>
     <div className={'cb-world'+(glide?' glide':'')} style={{transform:`translate(${cam.x}px,${cam.y}px) scale(${cam.s})`}}>
       <canvas ref={cork} className="cb-cork"/>
-      {ZIDS.map(zoneEl)}
+      {zs.map(zoneEl)}
       <svg className="cb-str" viewBox={`0 0 ${WORLD_W} ${WORLD_H}`}>{strings}</svg>
       <div className="cb-pins">{pins}</div>
     </div></div>
     <div className="cb-light"/>
     <div className="cb-hud">
-      <nav className="cb-tabs" aria-label="Áreas do quadro">{tabs.map(z=>{const novo=z&&have.some(id=>fresh.has(id)&&CARDS[id].zone===z)
-        return <button key={z??'all'} className={'cb-tab'+((z===null?far:here===z)?' on':'')} onClick={()=>goZone(z)}>{z?ZONES[z].tab:'Tudo'}{novo&&<i aria-label="novidade"/>}</button>})}</nav>
+      <nav className="cb-tabs" aria-label="Capítulos do caso">{STAGES.slice(0,current).map((S,i)=>{const n=i+1
+        return <button key={n} className={'cb-tab'+(n===stage?' on':'')+(n===current?' now':'')} onClick={()=>goStage(n)} aria-current={n===stage}>
+          <span className="n">{n}</span>{n===stage||n===current?S.short:''}{staleStage(n)&&<i aria-label="novidade"/>}</button>})}</nav>
+      {stage!==current&&<button className="cb-chip cb-gold" onClick={()=>goStage(current)}>Voltar ao capítulo atual</button>}
       <span className="cb-sp"/>
-      {reportReady&&<button className="cb-chip cb-gold" onClick={()=>{const on=!reportOn;setReportOn(on);if(on){setSel(null);goZone('pessoas');say('Marque executores e mentor nas fotos, escolha o motivo e circule pelo menos 3 provas.')}}}>{reportOn?'Sair do relatório':'Montar relatório'}</button>}
+      {reportReady&&stage===5&&<button className="cb-chip cb-gold" onClick={()=>{const on=!reportOn;setReportOn(on);if(on){setSel(null);say('Marque executores e mentor nas fotos, escolha o motivo e circule pelo menos 3 provas.')}}}>{reportOn?'Sair do relatório':'Montar relatório'}</button>}
       {!!g.ending&&<span className="cb-chip">Relatório protocolado</span>}
       <button className="cb-chip cb-x" aria-label="Fechar o quadro" onClick={onClose}>×</button>
     </div>
@@ -290,6 +299,8 @@ export default function CaseBoard({found,onClose,onDeposition,onSummoned}:Props)
     {reportOn&&<div className="cb-rep"><div><b>Executores</b>{executors.map(firstName).join(', ')||'—'} <b>Mentor</b>{mentor?firstName(mentor):'—'} <b>Motivo</b>{b.motive==='heranca'?'herança e namoro':b.motive==='roubo'?'roubo':'—'} <b>Provas</b>{b.proofs.length}</div>
       <button disabled={!canFile} onClick={()=>setConfirm(true)}>Protocolar</button></div>}
     {toast&&<div className="cb-toast">{toast}</div>}
+    {intro>0&&<button className="cb-chapter" onClick={()=>setIntro(0)}><small>Capítulo {intro}</small><b>{chapters[intro-1].title}</b><p>{chapters[intro-1].summary}</p><em>{STAGES[intro-1].q}</em></button>}
+    {intro===0&&<div className="cb-stagebar"><small>Capítulo {stage} · {chapters[stage-1].title}</small><b>{STAGES[stage-1].q}</b></div>}
     {viewer&&<div className="cb-viewer" onClick={()=>setViewer(null)}><img src={viewer.img} alt=""/><div><b>{viewer.t}</b><p>{viewer.d}</p></div></div>}
     {confirm&&<div className="cb-end"><div className="cb-card"><small>Relatório de acusação</small><h3>Protocolar agora?</h3><p>Depois de protocolado, o relatório encerra sua participação operacional no caso.</p>
       <div className="cb-row"><button onClick={()=>setConfirm(false)}>Revisar</button><button className="cb-gold" onClick={protocol}>Protocolar relatório</button></div></div></div>}
