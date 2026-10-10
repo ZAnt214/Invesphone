@@ -22,7 +22,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,webp,woff2}'],
         // sem isto o service worker entregaria a página inicial ao abrir /invesphone
         navigateFallbackDenylist: [/^\/invesphone/, /^\/base/]
       },
