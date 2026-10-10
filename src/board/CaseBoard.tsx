@@ -39,7 +39,42 @@ const ENDINGS={A:['Caso Encerrado','O relatório separa quem entrou na casa de q
 const ROT=[-2,1.5,-1,2,-1.5,1,-.5,1.2]
 /** Arte oficial do Lemos de costas (creative-requests/completed/2026-10-10-lemos-de-costas-quadro.md). */
 const LEMOS_BACK:string|null='/characters/lemos/back.png'
-const CINE_FULL=2900, CINE_SHORT=900
+const CINE_FULL=3600, CINE_SHORT=900
+/* a parede inteira do caso, em volta da parte do capítulo: papéis, fotos e fios fora de foco, para dar o tamanho do caso.
+   Só usa material que não adianta nada da investigação (fotos da casa, croquis e papéis em branco) e fica desfocado. */
+const WALL={x:-720,y:-380,w:2002,h:1150}
+const WALL_IMGS=['/evidence/case01/new/croqui_rua.jpg','/evidence/case01/new/capa_inquerito.jpg','/evidence/case01/new/termo_depoimento_modelo.jpg',
+  '/evidence/case01/new/comodos/comodo_02_sala.jpg','/evidence/case01/new/comodos/comodo_05_corredor.jpg','/evidence/case01/new/comodos/comodo_03_cozinha.jpg',
+  '/evidence/case01/new/comodos/comodo_01_entrada.jpg','/evidence/case01/new/croqui_residencia.jpg']
+function drawWall(cv:HTMLCanvasElement,imgs:HTMLImageElement[]){
+  const K=.6,c=cv.getContext('2d');if(!c)return
+  cv.width=Math.round(WALL.w*K);cv.height=Math.round(WALL.h*K);c.scale(K,K);c.translate(-WALL.x,-WALL.y)
+  let sd=11;const R=()=>(sd=sd*16807%2147483647)/2147483647
+  c.fillStyle='#7d5330';c.fillRect(WALL.x,WALL.y,WALL.w,WALL.h)
+  for(let i=0;i<9000;i++){c.fillStyle=R()<.5?'rgba(50,28,10,.35)':'rgba(190,140,90,.25)';const z=1+R()*3;c.fillRect(WALL.x+R()*WALL.w,WALL.y+R()*WALL.h,z,z)}
+  const centers:[number,number][]=[]
+  const free=(x:number,y:number,w:number,h:number)=>x+w<-14||x>576||y+h<-14||y>404
+  for(let i=0;i<150&&centers.length<74;i++){
+    const kind=R(),w=kind<.35?96:kind<.6?120:kind<.8?70:150,h=kind<.35?86:kind<.6?150:kind<.8?62:110
+    const x=WALL.x+30+R()*(WALL.w-60-w),y=WALL.y+30+R()*(WALL.h-60-h);if(!free(x,y,w,h))continue
+    c.save();c.translate(x+w/2,y+h/2);c.rotate((R()-.5)*.12)
+    c.shadowColor='rgba(0,0,0,.5)';c.shadowBlur=8;c.shadowOffsetY=5
+    if(kind<.35){c.fillStyle='#ece6da';c.fillRect(-w/2,-h/2,w,h);c.shadowColor='transparent';const im=imgs[(R()*imgs.length)|0];if(im?.width)c.drawImage(im,-w/2+5,-h/2+5,w-10,h-22)}
+    else if(kind<.6){c.fillStyle='#f1ece0';c.fillRect(-w/2,-h/2,w,h);c.shadowColor='transparent';c.fillStyle='rgba(30,30,30,.35)';for(let l=0;l<9;l++)c.fillRect(-w/2+10,-h/2+16+l*14,(w-20)*(.5+R()*.5),3)}
+    else if(kind<.8){c.fillStyle=R()<.5?'#f0d551':'#f6f0de';c.fillRect(-w/2,-h/2,w,h);c.shadowColor='transparent';c.fillStyle='rgba(40,30,20,.55)';c.font='700 30px Caveat, cursive';c.textAlign='center';c.fillText(['?','16/10','00:56?','quem?','?','23h?'][(R()*6)|0],0,10)}
+    else{c.fillStyle='#e8e1d1';c.fillRect(-w/2,-h/2,w,h);c.shadowColor='transparent';const im=imgs[(R()*2)|0];if(im?.width)c.drawImage(im,-w/2+4,-h/2+4,w-8,h-8)}
+    c.restore();centers.push([x+w/2,y+6])
+  }
+  // fios vermelhos ligando os papéis
+  c.lineWidth=2;c.strokeStyle='rgba(150,24,18,.85)'
+  for(let i=0;i<46;i++){const a=centers[(R()*centers.length)|0],b=centers[(R()*centers.length)|0];if(!a||!b||a===b)continue
+    const d=Math.hypot(b[0]-a[0],b[1]-a[1]);if(d>620)continue
+    c.beginPath();c.moveTo(a[0],a[1]);c.quadraticCurveTo((a[0]+b[0])/2,(a[1]+b[1])/2+d*.1,b[0],b[1]);c.stroke()}
+  for(const [x,y] of centers){c.fillStyle='#b8241b';c.beginPath();c.arc(x,y,4,0,7);c.fill()}
+  // moldura de madeira e luz caindo nas bordas
+  c.lineWidth=26;c.strokeStyle='#2d1d10';c.strokeRect(WALL.x+13,WALL.y+13,WALL.w-26,WALL.h-26)
+  const gr=c.createRadialGradient(281,195,200,281,195,1100);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.6)');c.fillStyle=gr;c.fillRect(WALL.x,WALL.y,WALL.w,WALL.h)
+}
 /** Silhueta temporária do Lemos de costas, só sombra contra a luz do quadro (sem desenhar o personagem). */
 function LemosSilhouette(){
   return <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
@@ -79,8 +114,9 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}
      Inteira na primeira vez da sessão; nas outras, só a aproximação. Um toque pula. */
   const [cine,setCine]=useState<'full'|'short'|null>(()=>{
     if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return null
-    let seen=false;try{seen=sessionStorage.getItem('board.cine')==='1';sessionStorage.setItem('board.cine','1')}catch{/* sem armazenamento */}
-    return seen?'short':'full'})
+    let off=false;try{off=localStorage.getItem('board.cine.off')==='1'}catch{/* sem armazenamento */}
+    return off?'short':'full'})
+  const cineOff=()=>{try{localStorage.setItem('board.cine.off','1')}catch{/* sem armazenamento */}setCine(null)}
   useEffect(()=>{if(!cine)return;const t=window.setTimeout(()=>setCine(null),cine==='full'?CINE_FULL:CINE_SHORT);return ()=>window.clearTimeout(t)},[cine])
   useEffect(()=>{if(current>(b.stage??0))saveBoard(()=>({stage:current}))},[])
   useEffect(()=>{if(!intro||cine)return;const t=window.setTimeout(()=>setIntro(0),3000);return ()=>window.clearTimeout(t)},[cine])
@@ -165,6 +201,11 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}
   const zoomed=cam.s>fitS*1.04
 
   /* cortiça desenhada uma vez */
+  const wall=useRef<HTMLCanvasElement>(null)
+  useEffect(()=>{let alive=true
+    Promise.all(WALL_IMGS.map(src=>new Promise<HTMLImageElement>(res=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>res(i);i.src=src})))
+      .then(imgs=>{if(alive&&wall.current)drawWall(wall.current,imgs)})
+    return ()=>{alive=false;if(wall.current)wall.current.width=wall.current.height=1}},[])
   const cork=useRef<HTMLCanvasElement>(null)
   useEffect(()=>{
     const cv=cork.current;if(!cv)return
@@ -312,6 +353,7 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}
     {cine==='full'&&<div className="cb-room" aria-hidden="true"/>}
     <div className="cb-pan" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onWheel={onWheel} onClickCapture={onClickCapture}>
       <div className={'cb-world'+(glide?' glide':'')} style={{width:W,height:H,transform:`translate(${cam.x}px,${cam.y}px) scale(${cam.s})`}}>
+        <canvas ref={wall} className="cb-wall" style={{left:WALL.x,top:WALL.y,width:WALL.w,height:WALL.h}} aria-hidden="true"/>
         <canvas ref={cork} className="cb-cork" style={{width:W,height:H}}/>
         {CH.sections.map(sectionEl)}
         {[...layout.pos.keys()].map(cardEl)}
@@ -334,6 +376,7 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned}
       <span className="cb-lemos">{LEMOS_BACK?<img src={LEMOS_BACK} alt=""/>:<LemosSilhouette/>}</span>
       <i className="cb-bar t"/><i className="cb-bar b"/>
     </button>}
+    {cine==='full'&&<button className="cb-cine-off" onClick={cineOff}>Não mostrar de novo</button>}
     {intro>0&&!cine&&<button className="cb-chapter" onClick={()=>setIntro(0)}><small>Capítulo {intro}</small><b>{chapters[intro-1].title}</b><p>{chapters[intro-1].summary}</p><em>{CHAPTERS[intro-1].q}</em></button>}
     {viewer&&<div className="cb-viewer" onClick={()=>setViewer(null)}><img src={viewer.img} alt=""/><div><b>{viewer.t}</b><p>{viewer.d}</p></div></div>}
     {confirm&&<div className="cb-end"><div className="cb-card"><small>Relatório de acusação</small><h3>Protocolar agora?</h3><p>Depois de protocolado, o relatório encerra sua participação operacional no caso.</p>
