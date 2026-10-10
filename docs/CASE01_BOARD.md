@@ -4,6 +4,7 @@ O quadro da sala da equipe (base do DHPP) é onde o jogador organiza o caso. Có
 
 ## Regras
 
+- **Navegação**: abas no topo levam direto a cada área (ponto amarelo onde chegou coisa nova) e "Tudo" mostra a parede inteira; arrastar move, pinça e roda do mouse aproximam. Tocar numa pista traz ela para perto, ao lado da ficha.
 - **Cada área é uma pergunta**: A cena (Foi um roubo?), Pessoas (Quem estava onde?), A noite (O que houve entre 23:52 e 00:56?), Acesso, Motivo e Dinheiro. Uma área só aparece quando chega a primeira pista dela; a cena e as pessoas existem desde o começo.
 - **Só entra o que o jogador já tem**: pistas do save (`clues`) e as fotos da varredura (`varredura.fim`). Pessoas só depois de descobertas (`discoveredPeople`), com carimbo de chamada/ouvida.
 - **Toda pista mostra a origem**: varredura, material ou conversa da equipe (de `teamData`) e a frase exata dos depoimentos, só quando aquela pergunta foi feita.

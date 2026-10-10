@@ -46,7 +46,6 @@ export default function CaseBoard({found,onClose,onDeposition,onSummoned}:Props)
   const [fresh]=useState(()=>new Set(have.filter(id=>!b.seen.includes(id))))
   useEffect(()=>{const t=window.setTimeout(()=>saveBoard(x=>({seen:[...new Set([...x.seen,...have])]})),1600);return ()=>window.clearTimeout(t)},[have.join()])
 
-  const [zoom,setZoom]=useState<ZoneId|null>(null)
   const [sel,setSel]=useState<Sel>(null)
   const [reportOn,setReportOn]=useState(false)
   const [viewer,setViewer]=useState<{img:string;t:string;d:string}|null>(null)
@@ -61,22 +60,68 @@ export default function CaseBoard({found,onClose,onDeposition,onSummoned}:Props)
   useLayoutEffect(()=>{const el=root.current!;const fit=()=>setSize({w:el.clientWidth||844,h:el.clientHeight||390});fit();const ro=new ResizeObserver(fit);ro.observe(el);return ()=>ro.disconnect()},[])
   const vert=size.h>size.w
   const drawerOpen=!!sel
-  const cam=useMemo(()=>{
-    const {w,h}=size,top=44
-    if(zoom){
-      const Z=ZONES[zoom],availW=drawerOpen&&!vert?w-312:w,availH=drawerOpen&&vert?h*.45:h-top
-      const s=Math.min(w/ZONE_W,h/ZONE_H,1.6)
-      const cx=availW/2,cy=(drawerOpen&&vert?top+availH/2:top+(h-top)/2)-10
-      // a parede cobre a tela inteira: nas bordas do quadro a câmera para em vez de mostrar o vazio
-      const clampX=(x:number)=>Math.min(0,Math.max(w-WORLD_W*s,x)),clampY=(y:number)=>Math.min(0,Math.max(h-WORLD_H*s,y))
-      return {s,x:clampX(cx-(Z.x+ZONE_W/2)*s),y:clampY(cy-(Z.y+ZONE_H/2)*s)}
-    }
-    const open=ZIDS.filter(zoneOpen)
-    const x0=Math.min(...open.map(z=>ZONES[z].x)),y0=Math.min(...open.map(z=>ZONES[z].y))
-    const x1=Math.max(...open.map(z=>ZONES[z].x+ZONE_W)),y1=Math.max(...open.map(z=>ZONES[z].y+ZONE_H))
-    const s=Math.min((w-12)/(x1-x0),(h-top-6)/(y1-y0))
-    return {s,x:w/2-(x0+x1)/2*s,y:top+(h-top)/2-(y0+y1)/2*s}
-  },[size,zoom,drawerOpen,have.join()])
+  /* câmera livre: arrastar move, pinça e roda aproximam; as abas levam direto a cada área */
+  const HUD=46
+  const openZones=ZIDS.filter(zoneOpen)
+  const box=useMemo(()=>({x0:Math.min(...openZones.map(z=>ZONES[z].x)),y0:Math.min(...openZones.map(z=>ZONES[z].y)),
+    x1:Math.max(...openZones.map(z=>ZONES[z].x+ZONE_W)),y1:Math.max(...openZones.map(z=>ZONES[z].y+ZONE_H))}),[openZones.join()])
+  // espaço livre para o quadro (fora do topo e da ficha aberta)
+  const view=(withDrawer:boolean)=>{const {w,h}=size;return {x:0,y:HUD,w:withDrawer&&!vert?w-312:w,h:(withDrawer&&vert?h*.46:h)-HUD}}
+  const fitS=()=>{const v=view(false);return Math.min((v.w-12)/(box.x1-box.x0),(v.h-6)/(box.y1-box.y0))}
+  const minS=()=>fitS()*.92, maxS=2.4
+  type Cam={x:number;y:number;s:number}
+  const clamp=(c:Cam,withDrawer=drawerOpen):Cam=>{
+    const v=view(withDrawer),s=Math.max(minS(),Math.min(maxS,c.s)),m=40
+    const lim=(p:number,lo:number,hi:number)=>lo>hi?(lo+hi)/2:Math.min(hi,Math.max(lo,p))
+    return {s,x:lim(c.x,v.x+v.w-box.x1*s-m,v.x-box.x0*s+m),y:lim(c.y,v.y+v.h-box.y1*s-m,v.y-box.y0*s+m)}
+  }
+  /** câmera que mostra um ponto do mundo no meio do espaço livre, numa escala */
+  const centerOn=(wx:number,wy:number,s:number,withDrawer=drawerOpen)=>{const v=view(withDrawer);return clamp({s,x:v.x+v.w/2-wx*s,y:v.y+v.h/2-wy*s},withDrawer)}
+  const overview=()=>centerOn((box.x0+box.x1)/2,(box.y0+box.y1)/2,fitS(),false)
+  const zoneScale=(withDrawer=drawerOpen)=>{const v=view(withDrawer);return Math.min(maxS,Math.max(.9,Math.min(size.w/ZONE_W,(size.h-HUD+20)/ZONE_H)),v.w/(ZONE_W*.62))}
+  const [cam,setCam]=useState<Cam>({x:0,y:0,s:.5})
+  const [glide,setGlide]=useState(true)
+  const go=(c:Cam)=>{setGlide(true);setCam(c)}
+  const goZone=(z:ZoneId|null)=>{if(!z){setSel(null);go(overview());return}const Z=ZONES[z];go(centerOn(Z.x+ZONE_W/2,Z.y+ZONE_H/2,zoneScale()))}
+  // abre na visão geral; quando a tela muda de tamanho, a câmera se ajusta sem pular
+  const first=useRef(true)
+  useLayoutEffect(()=>{if(first.current){first.current=false;setGlide(false);setCam(overview());requestAnimationFrame(()=>setGlide(true));return}setCam(c=>clamp(c))},[size.w,size.h,box])
+  /** área no meio da tela, para a aba acesa */
+  const v0=view(drawerOpen),mid=[(v0.x+v0.w/2-cam.x)/cam.s,(v0.y+v0.h/2-cam.y)/cam.s]
+  const far=cam.s<fitS()*1.25
+  const here=far?null:openZones.find(z=>mid[0]>=ZONES[z].x&&mid[0]<ZONES[z].x+ZONE_W+1&&mid[1]>=ZONES[z].y&&mid[1]<ZONES[z].y+ZONE_H+1)??null
+  // na primeira visita, diz como andar pelo quadro
+  useEffect(()=>{if(!b.seen.length)window.setTimeout(()=>say('Arraste para andar pelo quadro e use as abas para ir direto a cada área. Toque numa pista para ver de onde ela veio.'),900)},[])
+  /* gestos */
+  const ptr=useRef(new Map<number,{x:number;y:number}>())
+  const gest=useRef<{moved:boolean;sx:number;sy:number;cam:Cam;d0?:number;m0?:[number,number]}|null>(null)
+  const local=(e:{clientX:number;clientY:number})=>{const r=root.current!.getBoundingClientRect(),k=r.width/size.w||1
+    // a base gira a tela no celular em pé: converte o toque para as coordenadas do quadro
+    const rot=getComputedStyle(document.getElementById('app')??document.body).transform
+    if(rot&&rot!=='none'&&Math.abs(r.width-size.w)>2&&Math.abs(r.width-size.h)<2){const m=new DOMMatrix(rot);const p=new DOMPoint(e.clientX,e.clientY).matrixTransform(m.inverse());return {x:p.x,y:p.y}}
+    return {x:(e.clientX-r.left)/k,y:(e.clientY-r.top)/k}}
+  const onDown=(e:React.PointerEvent)=>{
+    const p=local(e);ptr.current.set(e.pointerId,p)
+    const pts=[...ptr.current.values()]
+    if(pts.length===1)gest.current={moved:false,sx:p.x,sy:p.y,cam}
+    else if(pts.length===2&&gest.current){const [a,c]=pts;gest.current={...gest.current,cam,d0:Math.hypot(a.x-c.x,a.y-c.y),m0:[(a.x+c.x)/2,(a.y+c.y)/2],moved:true};setGlide(false)}
+  }
+  const onMove=(e:React.PointerEvent)=>{
+    if(!ptr.current.has(e.pointerId)||!gest.current)return
+    const p=local(e);ptr.current.set(e.pointerId,p);const G=gest.current,pts=[...ptr.current.values()]
+    if(pts.length>=2&&G.d0&&G.m0){const [a,c]=pts,d=Math.hypot(a.x-c.x,a.y-c.y),m=[(a.x+c.x)/2,(a.y+c.y)/2]
+      const s=Math.max(minS(),Math.min(maxS,G.cam.s*d/G.d0)),wx=(G.m0[0]-G.cam.x)/G.cam.s,wy=(G.m0[1]-G.cam.y)/G.cam.s
+      setCam(clamp({s,x:m[0]-wx*s,y:m[1]-wy*s}));return}
+    if(!G.moved&&Math.hypot(p.x-G.sx,p.y-G.sy)<7)return
+    if(!G.moved){G.moved=true;setGlide(false)}
+    setCam(clamp({s:G.cam.s,x:G.cam.x+p.x-G.sx,y:G.cam.y+p.y-G.sy}))
+  }
+  const onUp=(e:React.PointerEvent)=>{ptr.current.delete(e.pointerId);if(ptr.current.size===0){window.setTimeout(()=>{gest.current=null},0);setGlide(true)}}
+  const onWheel=(e:React.WheelEvent)=>{const p=local(e),s=Math.max(minS(),Math.min(maxS,cam.s*Math.pow(1.0018,-e.deltaY))),wx=(p.x-cam.x)/cam.s,wy=(p.y-cam.y)/cam.s;setGlide(false);setCam(clamp({s,x:p.x-wx*s,y:p.y-wy*s}))}
+  // um arrasto não vira toque no papel que estava embaixo do dedo
+  const onClickCapture=(e:React.MouseEvent)=>{if(gest.current?.moved){e.stopPropagation();e.preventDefault()}}
+  /** traz um papel para perto, ao lado da ficha */
+  const focusOn=(wx:number,wy:number)=>go(centerOn(wx,wy,Math.max(cam.s,zoneScale(true)),true))
 
   /* cortiça desenhada uma vez */
   const cork=useRef<HTMLCanvasElement>(null)
@@ -112,8 +157,8 @@ export default function CaseBoard({found,onClose,onDeposition,onSummoned}:Props)
   const firm=(id:string,p:string)=>(CONFRONT[p]??[]).includes(id)
 
   /* ações */
-  const openClue=(id:string)=>{setZoom(CARDS[id].zone);setSel({kind:'clue',id})}
-  const openPerson=(id:string)=>{if(!zoom)setZoom('pessoas');setSel({kind:'person',id})}
+  const openClue=(id:string)=>{const a=anchor(id);setSel({kind:'clue',id});focusOn(a[0],a[1]+40)}
+  const openPerson=(id:string)=>{const a=personAnchor(id);setSel({kind:'person',id});focusOn(a[0],a[1]+60)}
   const toggleLink=(id:string,p:string)=>saveBoard(x=>{const l=x.links[id]??[];return {links:{...x.links,[id]:l.includes(p)?l.filter(y=>y!==p):[...l,p]}}})
   const callIn=(p:string)=>{save(x=>summon(x,p));onSummoned?.(p);say(`${firstName(p)} foi chamad${art(p)} e espera na recepção.`)}
   const roles=b.roles
@@ -152,7 +197,6 @@ export default function CaseBoard({found,onClose,onDeposition,onSummoned}:Props)
     const Z=ZONES[z],ids=have.filter(id=>CARDS[id].zone===z)
     return <div key={z} className={'cb-zone'+(zoneOpen(z)?'':' off')} style={{left:Z.x,top:Z.y}}>
       {zoneOpen(z)&&<>
-        {!zoom&&<button className="cb-hit" aria-label={Z.label} onClick={()=>setZoom(z)}/>}
         <div className="cb-q"><small>{Z.label}</small><b>{Z.q}</b></div>
         {z==='cena'&&<><div className="cb-croqui" style={{left:CROQUI.x,top:CROQUI.y,width:CROQUI.w,height:CROQUI.h}}><img src="/evidence/case01/new/croqui_residencia.jpg" alt="Croqui da residência"/></div>
           <span className="cb-tape" style={{left:136,top:96,transform:'rotate(-38deg)'}}/><span className="cb-tape" style={{left:398,top:94,transform:'rotate(36deg)'}}/></>}
@@ -224,19 +268,21 @@ export default function CaseBoard({found,onClose,onDeposition,onSummoned}:Props)
       </div></>
   }
 
-  return <div ref={root} className={'cb'+(vert?' vert':'')+(zoom?' zoomed':'')+(drawerOpen?' drawer':'')}>
-    <div className="cb-world" style={{transform:`translate(${cam.x}px,${cam.y}px) scale(${cam.s})`}}>
+  const tabs=([null,...openZones] as (ZoneId|null)[])
+  return <div ref={root} className={'cb'+(vert?' vert':'')+(drawerOpen?' drawer':'')}>
+    <div className="cb-pan" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp} onWheel={onWheel} onClickCapture={onClickCapture}>
+    <div className={'cb-world'+(glide?' glide':'')} style={{transform:`translate(${cam.x}px,${cam.y}px) scale(${cam.s})`}}>
       <canvas ref={cork} className="cb-cork"/>
       {ZIDS.map(zoneEl)}
       <svg className="cb-str" viewBox={`0 0 ${WORLD_W} ${WORLD_H}`}>{strings}</svg>
       <div className="cb-pins">{pins}</div>
-    </div>
+    </div></div>
     <div className="cb-light"/>
     <div className="cb-hud">
-      {zoom&&<button className="cb-chip" onClick={()=>{setZoom(null);setSel(null)}}>‹ Quadro</button>}
-      <span className="cb-chip">{zoom?ZONES[zoom].label:<>Quadro do caso <em>Caso 01</em></>}</span>
+      <nav className="cb-tabs" aria-label="Áreas do quadro">{tabs.map(z=>{const novo=z&&have.some(id=>fresh.has(id)&&CARDS[id].zone===z)
+        return <button key={z??'all'} className={'cb-tab'+((z===null?far:here===z)?' on':'')} onClick={()=>goZone(z)}>{z?ZONES[z].tab:'Tudo'}{novo&&<i aria-label="novidade"/>}</button>})}</nav>
       <span className="cb-sp"/>
-      {reportReady&&<button className="cb-chip cb-gold" onClick={()=>{const on=!reportOn;setReportOn(on);if(on){setZoom('pessoas');setSel(null);say('Marque executores e mentor nas fotos, escolha o motivo e circule pelo menos 3 provas.')}}}>{reportOn?'Sair do relatório':'Montar relatório'}</button>}
+      {reportReady&&<button className="cb-chip cb-gold" onClick={()=>{const on=!reportOn;setReportOn(on);if(on){setSel(null);goZone('pessoas');say('Marque executores e mentor nas fotos, escolha o motivo e circule pelo menos 3 provas.')}}}>{reportOn?'Sair do relatório':'Montar relatório'}</button>}
       {!!g.ending&&<span className="cb-chip">Relatório protocolado</span>}
       <button className="cb-chip cb-x" aria-label="Fechar o quadro" onClick={onClose}>×</button>
     </div>
