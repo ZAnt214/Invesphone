@@ -200,11 +200,12 @@
 .cb-room{position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 60% 70% at var(--ox) 40%,#2a1d12,#0b0806 70%);animation:cb-room 4.6s ease both}
 @keyframes cb-room{0%{opacity:1}80%{opacity:1}100%{opacity:0}}
 .cb.cine .cb-pan{transform-origin:var(--ox) var(--oy)}
-.cb.cine-full .cb-pan{animation:cb-dolly 4.6s cubic-bezier(.5,.02,.18,1) both}
+.cb.cine-full .cb-pan{animation:cb-dolly 4.6s linear both}
 .cb.cine-short .cb-pan{animation:cb-dolly-s .9s cubic-bezier(.3,.7,.2,1) both}
-@keyframes cb-dolly{0%{transform:translate(2%,4%) scale(.3);filter:blur(1.6px) brightness(.15)}
-  12%{filter:blur(1.6px) brightness(.75)}16%{filter:blur(1.6px) brightness(.3)}22%{filter:blur(1.5px) brightness(.85)}
-  45%{transform:translate(1%,2%) scale(.38);filter:blur(1.2px) brightness(.85)}100%{transform:none;filter:none}}
+@keyframes cb-dolly{0%{transform:scale(.3);filter:blur(1.4px) brightness(.15)}
+  12%{transform:scale(.3);filter:blur(1.4px) brightness(.75)}14%{filter:blur(1.4px) brightness(.3)}16%{filter:blur(1.4px) brightness(.8)}
+  24%{transform:scale(.3);filter:blur(1.4px) brightness(.9);animation-timing-function:cubic-bezier(.45,0,.2,1)}
+  100%{transform:none;filter:none}}
 @keyframes cb-dolly-s{0%{transform:scale(.88);filter:blur(1.5px) brightness(.6)}100%{transform:none;filter:none}}
 .cb.cine .cb-panel,.cb.cine .cb-hud,.cb.cine .cb-light{opacity:0}
 .cb-panel,.cb-hud{transition:opacity .5s ease}
@@ -213,10 +214,11 @@
 .cb-cine{position:absolute;inset:0;z-index:66;border:0;padding:0;background:none;cursor:pointer;overflow:hidden}
 .cb-lamp{position:absolute;left:calc(var(--ox) - 30%);width:60%;top:-10%;height:90%;background:radial-gradient(ellipse 50% 60% at 50% 30%,rgba(255,214,150,.22),rgba(255,214,150,0) 70%);animation:cb-lamp 4.6s ease both;pointer-events:none}
 @keyframes cb-lamp{0%{opacity:0}10%{opacity:1}14%{opacity:.25}20%{opacity:1}75%{opacity:.7}100%{opacity:0}}
-.cb-lemos{position:absolute;left:var(--ox);bottom:-14%;height:96%;aspect-ratio:4/5;transform:translateX(-50%);animation:cb-pass 4.6s cubic-bezier(.55,.05,.3,1) both;filter:blur(.6px)}
+.cb-lemos{position:absolute;left:var(--ox);bottom:-14%;height:96%;aspect-ratio:4/5;transform:translateX(-50%);animation:cb-pass 4.6s linear both;filter:blur(.6px)}
 .cb-lemos svg,.cb-lemos img{display:block;width:100%;height:100%;object-fit:contain;object-position:bottom}
-@keyframes cb-pass{0%{transform:translateX(-50%) scale(1);filter:blur(.6px)}30%{transform:translateX(-56%) scale(1.04);filter:blur(.8px)}
-  65%{transform:translateX(-115%) translateY(12%) scale(1.5);filter:blur(4px)}88%,100%{transform:translateX(-260%) translateY(45%) scale(2.2);filter:blur(8px)}}
+@keyframes cb-pass{0%{transform:translateX(-50%) scale(1);filter:blur(.6px)}
+  24%{transform:translateX(-50%) scale(1.01);filter:blur(.6px);animation-timing-function:cubic-bezier(.45,0,.2,1)}
+  86%,100%{transform:translateX(-250%) translateY(40%) scale(2.2);filter:blur(8px)}}
 .cb-bar{position:absolute;left:0;right:0;height:11%;background:#000;animation:cb-bars 4.6s ease both}
 .cb-bar.t{top:0}.cb-bar.b{bottom:0}
 @keyframes cb-bars{0%,70%{transform:none}100%{transform:scaleY(0)}}
@@ -231,15 +233,12 @@
 @keyframes cb-off-in{from{opacity:0}to{opacity:1}}
 
 /* atmosfera da entrada: janela com chuva, facho de luz com poeira, granulado de filme, câmera na mão */
-.cb.cine-full .cb-pan{translate:0 0;animation-name:cb-dolly,cb-hand;animation-duration:4.6s,4.6s;animation-timing-function:cubic-bezier(.5,.02,.18,1),linear;animation-fill-mode:both,both}
-.cb.cine-full .cb-cine{animation:cb-hand 4.6s linear both}
-@keyframes cb-hand{0%{translate:0 0}8%{translate:-1.2px .8px}17%{translate:.9px -.6px}26%{translate:-.6px 1.1px}35%{translate:1.3px .2px}44%{translate:-.9px -.9px}53%{translate:.4px 1px}62%{translate:-1.1px .3px}71%{translate:.8px -.7px}80%{translate:-.3px .6px}90%{translate:.4px -.2px}100%{translate:0 0}}
 .cb-window{position:absolute;left:0;top:0;bottom:0;width:30%;pointer-events:none;opacity:.3;
   background:linear-gradient(90deg,rgba(70,100,150,.4),rgba(70,100,150,0));animation:cb-room 4.6s ease both}
 .cb-beam{position:absolute;left:calc(var(--ox) - 34%);width:68%;top:-6%;height:96%;pointer-events:none;
   background:linear-gradient(180deg,rgba(255,214,150,.20),rgba(255,214,150,.05) 70%,rgba(255,214,150,0));clip-path:polygon(42% 0,58% 0,100% 100%,0 100%);
   animation:cb-lamp 4.6s ease both,cb-sway 4.6s ease-in-out both;transform-origin:50% 0}
-@keyframes cb-sway{0%{transform:rotate(0)}30%{transform:rotate(1.4deg)}60%{transform:rotate(-1deg)}100%{transform:rotate(.4deg)}}
+@keyframes cb-sway{0%{transform:rotate(-.4deg)}100%{transform:rotate(.4deg)}}
 .cb-dust{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;animation:cb-room 4.6s ease both}
 .cb-grain{position:absolute;inset:-50%;pointer-events:none;opacity:.16;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.6 0 0 0 -.75'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
