@@ -1,5 +1,7 @@
 # Rua americana do DHPP — especificação técnica (para os assets e o jogo)
 
+> **Substituído (11/10/2026):** a rua do jogo segue `docs/RUA_BEATCOP_BASE.md`. Desta especificação continuam valendo os carros e o mobiliário oficiais (`veiculos/`, `props/`, efeitos).
+
 Direção aprovada: `docs/DIRECAO_RUA_AMERICANA_DHPP.md`. Referência oficial: `creative-requests/refs/2026-10-11-rua-americana-dhpp/referencia-aprovada.png` (1672×941).
 
 Este documento fixa **escala, composição, camadas, âncoras e nomes** para que cada peça encomendada ao ChatGPT encaixe sem retrabalho. A lista de nomes que o jogo procura está em `src/base/ruaAssets.js` (fonte única); os pedidos estão em `creative-requests/inbox/2026-10-11-rua-us-*.md`.

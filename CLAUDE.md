@@ -206,6 +206,6 @@ Obrigatório:
 Os SVGs em `public/evidence/case01/` são assets oficiais, não placeholders.
 
 
-## Nova direção visual da rua — aprovada em 11/10/2026
+## Direção visual da rua: Beat Cop com o visual da base (aprovada em 11/10/2026)
 
-**Pedido expresso do usuário ao Claude:** aplicar a ambientação americana aprovada, mantendo **DHPP**, profundidade e simetria, e solicitar ao ChatGPT todos os assets necessários — inclusive lixeiras, veículos, estilos e animações de NPCs. Antes de trabalhar na rua, ler `docs/DIRECAO_RUA_AMERICANA_DHPP.md` e abrir a referência nele indicada. Esta direção substitui o visual anterior da rua (inclusive PIX/3D). Situação: a rua está no layout e na escala aprovados (`docs/RUA_AMERICANA_ESPEC.md`, nomes em `src/base/ruaAssets.js`) com as 91 peças oficiais do ChatGPT integradas (`public/base/rua/`, pedidos concluídos em `creative-requests/completed/2026-10-11-rua-us-*`); peças novas entram pelo mesmo caminho e substituem o provisório sozinhas. Criar pedidos específicos em `creative-requests/inbox/`, sem depender de cópia manual pelo usuário.
+A rua do DHPP usa a perspectiva de Beat Cop (fachadas de frente até o topo da tela, calçada vista de cima, rua horizontal com carros de lado), com o visual da planta da base e da casa: fachadas e janelas no estilo da base, o letreiro, a porta e as bandeiras reais do DHPP, os bonecos da planta, e os carros e o mobiliário oficiais do ChatGPT (`public/base/rua/veiculos`, `props`). Antes de mexer, ler `docs/RUA_BEATCOP_BASE.md`. O usuário pediu: nada de gerador externo de imagem (o que não for PNG oficial é desenhado em código) e nada de nomes de negócios brasileiros. As direções anteriores (PIX/3D e a rua americana em `docs/DIRECAO_RUA_AMERICANA_DHPP.md`) ficam só como histórico.
