@@ -82,7 +82,9 @@ function geos(){G.box=new THREE.BoxGeometry(1,1,1);G.plane=new THREE.PlaneGeomet
 function quad(bin,w,h,m,color,tile=[1.2,1.2]){return bin.add(G.plane,new THREE.Matrix4().multiplyMatrices(m,new THREE.Matrix4().makeScale(w,h,1)),color,[w/tile[0],h/tile[1]]);}
 
 /* ---------- o mundo ---------- */
-export function createStreet3D(sim){
+export function createStreet3D(sim,{mode='3d'}={}){
+  // px: o mundo 3D desenhado no tamanho de pixel da planta (ampliado sem suavizar); px e hd2d: os bonecos são os da planta (pixel art)
+  const PIXEL=mode==='px',SPRITES=mode==='px'||mode==='hd2d';
   textures();geos();
   const scene=new THREE.Scene();
   const B={col:new Bin(false),glass:new Bin(false),lit:new Bin(false),brick:new Bin(true),plaster:new Bin(true),siding:new Bin(true),stone:new Bin(true),
@@ -336,7 +338,17 @@ export function createStreet3D(sim){
     const arms=[limb(.58,.12,top,look.skin,1.4,-.3,false),limb(.58,.12,top,look.skin,1.4,.3,false)];
     root.userData={legs,arms};root.scale.setScalar(.95);scene.add(root);return root;
   }
-  function poseP(p,suit){let m=people.get(p);if(!m){m=personModel(p.look||{skin:'#d9a273',top:'#3b5a7a',pants:'#2b2f36'},suit);people.set(p,m);}
+  // bonecos de pixel art (os quadros de passo da planta) em pé no cenário, com a sombra redonda no pé, como lá dentro
+  const SPW=26/46*1.78,SPH=1.78,spGeo=new THREE.PlaneGeometry(SPW,SPH);spGeo.translate(SPW*(1/26),SPH/2,0);
+  const blobGeo=new THREE.CircleGeometry(.42,16),blobMat=new THREE.MeshBasicMaterial({color:'#000',transparent:true,opacity:.26,depthWrite:false});
+  const sprites=new Map();
+  function frameTex(img){const t=new THREE.CanvasTexture(img);t.colorSpace=THREE.SRGBColorSpace;t.magFilter=t.minFilter=THREE.NearestFilter;t.generateMipmaps=false;return t;}
+  function poseSprite(p){let o=sprites.get(p);
+    if(!o){const texs=[0,1,2,3].map(i=>frameTex(p.frames[i]));const mat=new THREE.MeshBasicMaterial({map:texs[0],alphaTest:.5,side:THREE.DoubleSide});
+      const m=new THREE.Mesh(spGeo,mat),sh=new THREE.Mesh(blobGeo,blobMat);sh.rotation.x=-Math.PI/2;sh.scale.set(1,.42,1);scene.add(m,sh);o={m,sh,texs};sprites.set(p,o);}
+    const f=p.moving?Math.floor(p.walk*3.2)%4:0;if(o.m.material.map!==o.texs[f]){o.m.material.map=o.texs[f];}
+    o.m.position.set(X(p.x),SWH,Z(p.y));o.m.rotation.x=-PITCH*.6;o.m.scale.x=p.dir<0?-1:1;o.sh.position.set(X(p.x)+.12,SWH+.006,Z(p.y)+.02);}
+  function poseP(p,suit){if(SPRITES){poseSprite(p);return;}let m=people.get(p);if(!m){m=personModel(p.look||{skin:'#d9a273',top:'#3b5a7a',pants:'#2b2f36'},suit);people.set(p,m);}
     m.position.set(X(p.x),SWH,Z(p.y));const tgt=p.moving?(p.dir>0?Math.PI/2:-Math.PI/2):(p.dir>0?.6:-.6);m.rotation.y+=(tgt-m.rotation.y)*.25;
     const sw=p.moving?Math.sin(p.walk*Math.PI*2/1.25)*.6:0,{legs,arms}=m.userData;legs[0].rotation.x=sw;legs[1].rotation.x=-sw;arms[0].rotation.x=-sw*.8;arms[1].rotation.x=sw*.8;}
   // carros de brinquedo: carroceria arredondada, cabine de vidro, rodas; viatura com giroflex, táxi com luminoso
@@ -372,7 +384,7 @@ export function createStreet3D(sim){
   for(const f of flags)flagMesh(f);
 
   /* ---------- luz, céu, câmera ---------- */
-  const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+  const renderer=new THREE.WebGLRenderer({antialias:!PIXEL,powerPreference:'high-performance'});
   renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.0;
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.setPixelRatio(1);
   const pmrem=new THREE.PMREMGenerator(renderer);scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;scene.environmentIntensity=.45;
@@ -393,7 +405,7 @@ export function createStreet3D(sim){
   let out=null,lastT=0;
   function draw(ctx,cw,ch,rs,showMarker){
     // resolução interna limitada (o iPhone tem tela de 3x): desenha menor e amplia
-    const sc=Math.min(1,1600/cw),w=Math.max(2,Math.round(cw*sc)),h=Math.max(2,Math.round(ch*sc)),key=w+'x'+h;
+    const ps=PIXEL?Math.max(1,rs*(sim.zoom?sim.zoom():1)):0,sc=PIXEL?1/ps:Math.min(1,1600/cw),w=Math.max(2,Math.round(cw*sc)),h=Math.max(2,Math.round(ch*sc)),key=w+'x'+h;
     if(key!==lastSize){lastSize=key;renderer.setSize(w,h,false);}
     frameCam(cw,ch);
     const t=sim.t,dt=Math.max(0,t-lastT);lastT=t;
@@ -405,7 +417,7 @@ export function createStreet3D(sim){
     for(const s of steam){const u=((t*.35+s.i/7)%1);s.s.position.set(X(s.m.x)+Math.sin(t*1.3+s.i*2)*.2+u*.6,.3+u*2.6,Z(s.m.y)-.6);const r=.5+u*1.4;s.s.scale.set(r,r,r);s.s.material.opacity=.35*(1-u);}
     marker.visible=!!showMarker;marker.position.set(X(DOOR.x),4.6+Math.sin(t*4)*.12,.6);marker.rotation.y=t*1.5;
     renderer.render(scene,cam);
-    ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=true;ctx.drawImage(renderer.domElement,0,0,cw,ch);ctx.restore();
+    ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=!PIXEL;ctx.drawImage(renderer.domElement,0,0,cw,ch);ctx.restore();
     out={cw,ch};
   }
   /** toque: no prédio do DHPP (ou na porta) entra; na calçada, Lemos anda até lá */
@@ -415,6 +427,6 @@ export function createStreet3D(sim){
     if(ray.ray.intersectPlane(facade,hitP)&&hitP.y>SWH&&hitP.y<10&&hitP.x>x0&&hitP.x<x1){L.tx=DOOR.x;L.ty=DOOR.y;L.enter=true;return;}
     if(!ray.ray.intersectPlane(ground,hitP))return;
     const wx=hitP.x/M,wy=hitP.z/M+GY;L.tx=Math.min(Math.max(wx,20),STREET_W-20);L.ty=Math.min(Math.max(wy,WALK[0]),WALK[1]);L.enter=false;}
-  function dispose(){renderer.dispose();}
-  return {draw,tap,dispose,renderer,scene,cam};
+  function dispose(){renderer.dispose();renderer.forceContextLoss();}
+  return {mode,draw,tap,dispose,renderer,scene,cam};
 }
