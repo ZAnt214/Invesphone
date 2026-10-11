@@ -204,3 +204,8 @@ Obrigatório:
 - para gravações, usar as falas existentes em `src/interrogation/` como fonte de verdade.
 
 Os SVGs em `public/evidence/case01/` são assets oficiais, não placeholders.
+
+
+## Nova direção visual da rua — aprovada em 11/10/2026
+
+**Pedido expresso do usuário ao Claude:** aplicar a ambientação americana aprovada, mantendo **DHPP**, profundidade e simetria, e solicitar ao ChatGPT todos os assets necessários — inclusive lixeiras, veículos, estilos e animações de NPCs. Antes de trabalhar na rua, ler `docs/DIRECAO_RUA_AMERICANA_DHPP.md` e abrir a referência nele indicada. Esta direção substitui o visual anterior da rua (inclusive PIX/3D); a implementação e o levantamento de peças estão pendentes. Criar pedidos específicos em `creative-requests/inbox/`, sem depender de cópia manual pelo usuário.
