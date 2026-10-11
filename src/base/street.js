@@ -43,23 +43,23 @@ for(const b of BUILDINGS)if(b.gap){const L=BUILDINGS[b.i-1],Rr=BUILDINGS[b.i+1],
 export const STREET_W=acc;
 export const DHPP=BUILDINGS.find(b=>b.k==='dhpp');
 export const DOOR={x:DHPP.X+DHPP.w/2,y:WALK[0]+6};  // onde Lemos entra
-const CROSS=BUILDINGS.filter(b=>b.k==='cross');
-const CSW=26; // calçada das ruas transversais
+export const CROSS=BUILDINGS.filter(b=>b.k==='cross');
+export const CSW=26; // calçada das ruas transversais
 const inCross=(x,m=0)=>CROSS.some(c=>x>c.X-m&&x<c.X+c.w+m);
 
 /* ---------- o que fica na beira da calçada, sem uma peça em cima da outra ---------- */
 const taken=[];const free=(x,r)=>!inCross(x,r)&&taken.every(([a,b])=>x+r<=a||x-r>=b);const take=(x,r)=>taken.push([x-r,x+r]);
-const SIGNALS=[];for(const c of CROSS){SIGNALS.push({x:c.X+12,name:c.name},{x:c.X+c.w-12,name:c.name});}
+export const SIGNALS=[];for(const c of CROSS){SIGNALS.push({x:c.X+12,name:c.name},{x:c.X+c.w-12,name:c.name});}
 for(const s of SIGNALS)take(s.x,12);
 take(DHPP.X+40+56,70); // a vaga da viatura
 take(DOOR.x,80);       // nada na frente do letreiro e da porta do DHPP
-const LAMPS=[];for(let x=60;x<STREET_W;x+=360)for(let d=0;d<120;d+=10){if(free(x+d,14)){LAMPS.push(x+d);take(x+d,14);break;}}
-const POLES=[];for(let x=230;x<STREET_W;x+=340)for(let d=0;d<120;d+=10){if(free(x+d,16)){POLES.push(x+d);take(x+d,16);break;}}
-const TREES=[];{const R=rnd(31);for(const b of BUILDINGS){if(b.gap||b.k==='dhpp'||b.k==='loft')continue;const x=Math.round(b.X+b.w*(.45+R()*.2));
+export const LAMPS=[];for(let x=60;x<STREET_W;x+=360)for(let d=0;d<120;d+=10){if(free(x+d,14)){LAMPS.push(x+d);take(x+d,14);break;}}
+export const POLES=[];for(let x=230;x<STREET_W;x+=340)for(let d=0;d<120;d+=10){if(free(x+d,16)){POLES.push(x+d);take(x+d,16);break;}}
+export const TREES=[];{const R=rnd(31);for(const b of BUILDINGS){if(b.gap||b.k==='dhpp'||b.k==='loft')continue;const x=Math.round(b.X+b.w*(.45+R()*.2));
   if(R()<.75&&free(x,24)){TREES.push({x,kind:['big','mid','young'][Math.floor(R()*3)],guard:R()<.4});take(x,24);}}}
 // na frente do DHPP, duas árvores grandes
 for(const x of [DHPP.X+70,DHPP.X+DHPP.w-70])if(free(x,24)){TREES.push({x,kind:'big',guard:false});take(x,24);}
-const PROPS=[];const curb=(k,x,r=8,y=CURB-10,o)=>{if(free(x,r)){PROPS.push({k,x,y,opt:o});take(x,r);return true;}return false;};
+export const PROPS=[];const curb=(k,x,r=8,y=CURB-10,o)=>{if(free(x,r)){PROPS.push({k,x,y,opt:o});take(x,r);return true;}return false;};
 const ofK=k=>BUILDINGS.find(b=>b.shop===k||b.k===k);
 {const deli=ofK('deli'),laundry=ofK('laundry'),tavern=ofK('tavern'),church=ofK('church'),loft=ofK('loft'),barber=ofK('barber');
   curb('hydrant',CROSS[0].X+CROSS[0].w+40);curb('mailbox',CROSS[0].X+CROSS[0].w+64,10);
@@ -73,7 +73,7 @@ const ofK=k=>BUILDINGS.find(b=>b.shop===k||b.k===k);
   // parquímetros ao longo da faixa de estacionamento
   {const Rm=rnd(41);for(let x=40;x<STREET_W;x+=118+Math.floor(Rm()*40))if(Rm()<.75)curb('meter',x,5);}}
 // bueiros na rua (um solta vapor)
-const MANHOLES=[{x:Math.round(STREET_W*.32),y:ROAD+96,steam:true},{x:Math.round(STREET_W*.7),y:ROAD+168,steam:false},{x:DHPP.X+300,y:ROAD+40,steam:false}];
+export const MANHOLES=[{x:Math.round(STREET_W*.32),y:ROAD+96,steam:true},{x:Math.round(STREET_W*.7),y:ROAD+168,steam:false},{x:DHPP.X+300,y:ROAD+40,steam:false}];
 
 /* ---------- a rua viva ---------- */
 const PED_LOOKS=[
@@ -182,7 +182,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art}){
   }
 
   // gente: o MESMO boneco da base (46 px, quadros de andar), com as cores de cada um
-  const lemos={x:DHPP.X-70,y:WALK[0]+30,dir:1,walk:0,moving:false,frames:personFrames(lemosLook),tx:null,ty:null,enter:false};
+  const lemos={x:DHPP.X-70,y:WALK[0]+30,dir:1,walk:0,moving:false,look:lemosLook,frames:personFrames(lemosLook),tx:null,ty:null,enter:false};
   const sprCache={};const carOf=k=>sprCache[k.id]||(sprCache[k.id]=carSprite(art,k));
   // carros estacionados: a viatura na frente do DHPP; os outros nas vagas livres (nunca na esquina nem em frente a hidrante)
   const parked=[{kind:CARS[0],x:DHPP.X+40,y:PARK,spr:carOf(CARS[0])}];
@@ -190,7 +190,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art}){
     if(Rp()<.5&&!CROSS.some(c=>x+w>c.X-10&&x<c.X+c.w+10)&&!parked.some(p=>x+w>p.x-14&&x<p.x+p.spr.width+14)&&!hyd.some(h=>h>x-14&&h<x+w+14))parked.push({kind:k,x,y:PARK,spr:carOf(k)});}}
   const viatura=parked[0];
   const R=rnd(17);
-  const peds=Array.from({length:20},(_,i)=>({x:R()*STREET_W,y:WALK[0]+6+R()*(WALK[1]-WALK[0]-6),dir:R()<.5?-1:1,v:(16+R()*14),walk:R()*10,frames:personFrames(i<PED_LOOKS.length?PED_LOOKS[i]:randomLook(R)),pause:0,id:i}));
+  const peds=Array.from({length:20},(_,i)=>{const look=i<PED_LOOKS.length?PED_LOOKS[i]:randomLook(R);return {x:R()*STREET_W,y:WALK[0]+6+R()*(WALK[1]-WALK[0]-6),dir:R()<.5?-1:1,v:(16+R()*14),walk:R()*10,look,frames:personFrames(look),pause:0,id:i};});
   const cars=[];const moving=CARS.slice(1);
   for(let l=0;l<LANES.length;l++)for(let i=0;i<3;i++){const kind=moving[(l*4+i)%moving.length],v=LANES[l].v*(0.85+R()*0.3);cars.push({kind,spr:carOf(kind),lane:l,x:i*STREET_W/3+R()*260,v,v0:v});}
   // pombos: ciscam na calçada e levantam voo quando alguém chega perto
@@ -319,5 +319,5 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art}){
     else{lemos.x=viatura.x+W(viatura)/2;lemos.y=WALK[1];lemos.dir=1;}
     camX=lemos.x;camY=null;
   }
-  return {update,draw,tap,place,lemos,door:DOOR,get view(){return lastView;},get cars(){return cars;},parked};
+  return {update,draw,tap,place,lemos,door:DOOR,get view(){return lastView;},get cars(){return cars;},parked,peds,birds,get t(){return t;}};
 }
