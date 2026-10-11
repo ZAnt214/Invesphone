@@ -2,6 +2,7 @@
 import { applyQuality, getQuality, onQualityChange } from '../characters/quality';
 import { perfHud } from '../perfHud';
 import { choose as chooseLife } from '../world/life';
+import { CAMERA_PRIORITY, createCameraControl, damp, deadZoneTarget, drawCameraDebug } from '../camera/cameraDirector';
 (() => {
 'use strict';
 const T=32,W=36,H=26,N=W*H;
@@ -951,6 +952,9 @@ function buildGround(){
 /* ---------- Render setup ---------- */
 const cam={x:8*T,y:9*T,z:1};
 const ZMIN=0.5,ZMAX=5;let FITZ=1;
+const CAMERA_DEBUG=/[?&]cameraDebug=1(?:&|$)/.test(location.search);
+const CAMCTRL=createCameraControl({manualHold:2800,reducedMotion:!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)});
+let CAMDBG=null,camIdle=0;
 let frame=0,sel=null,selTile=null,follow=false,tool=null,drag=null,pinch=null;
 let BG=null,WALLROWS=null,DOG=null,SHADOW=null;
 function ez(){return cam.z;}
@@ -1803,7 +1807,7 @@ function tapeHD(X,B,fl){
 }
 /* zoom controls: buttons, double tap, level notice */
 let ZA=null,lastLodShown=-1,lodTimer=0;
-function zoomTo(z,sx,sy,dur){const w=s2w(sx,sy);ZA={z0:cam.z,z1:snapZ(z),t0:performance.now(),dur:dur||280,sx,sy,w};follow=false;}
+function zoomTo(z,sx,sy,dur){const w=s2w(sx,sy);ZA={z0:cam.z,z1:snapZ(z),t0:performance.now(),dur:dur||280,sx,sy,w};CAMCTRL.beginManual();follow=false;}
 function stepZoom(){
   if(!ZA){
     // after a pinch or wheel gesture stops, glide to the nearest crisp scale
@@ -2171,7 +2175,7 @@ cv.addEventListener('contextmenu',e=>e.preventDefault());
 cv.addEventListener('pointerdown',e=>{
   try{cv.setPointerCapture(e.pointerId);}catch(_){}
   ptrs.set(e.pointerId,{x:PX(e),y:PY(e)});
-  if(ptrs.size===2){drag=null;ZA=null;const [a,b]=[...ptrs.values()];pinch={d:Math.max(10,Math.hypot(a.x-b.x,a.y-b.y)),z:cam.z,w:s2w((a.x+b.x)/2,(a.y+b.y)/2)};return;}
+  if(ptrs.size===2){drag=null;ZA=null;CAMCTRL.beginManual();const [a,b]=[...ptrs.values()];pinch={d:Math.max(10,Math.hypot(a.x-b.x,a.y-b.y)),z:cam.z,w:s2w((a.x+b.x)/2,(a.y+b.y)/2)};return;}
   if(ptrs.size>2)return;
   const t=tileAt(PX(e),PY(e));
   const forcePan=e.button===1||e.button===2;
@@ -2182,11 +2186,11 @@ function startPaint(){if(!drag||!tool)return;drag.mode='paint';drag.moved=true;m
 function holdCheck(){if(drag&&drag.mode==='pending'&&tool&&performance.now()-drag.t0>=HOLD)startPaint();}
 cv.addEventListener('pointermove',e=>{
   const p=ptrs.get(e.pointerId);if(!p)return;p.x=PX(e);p.y=PY(e);
-  if(pinch&&ptrs.size>=2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;ZA=null;cam.z=clamp(pinch.z*d/pinch.d,ZMIN*0.85,ZMAX*1.08);const e2=cam.z;cam.x=pinch.w.x-(mx-VW()/2)/e2;cam.y=pinch.w.ys-(my-VH()/2)/e2;clampCam();follow=false;zoomActivity(mx,my);return;}
+  if(pinch&&ptrs.size>=2){CAMCTRL.beginManual();const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;ZA=null;cam.z=clamp(pinch.z*d/pinch.d,ZMIN*0.85,ZMAX*1.08);const e2=cam.z;cam.x=pinch.w.x-(mx-VW()/2)/e2;cam.y=pinch.w.ys-(my-VH()/2)/e2;clampCam();follow=false;zoomActivity(mx,my);return;}
   if(!drag)return;
   const dx=PX(e)-drag.sx,dy=PY(e)-drag.sy,far=Math.hypot(dx,dy)>8;
   if(drag.mode==='pending'){holdCheck();if(drag.mode==='pending'&&far)drag.mode='pan';}
-  if(drag.mode==='pan'){if(far)drag.moved=true;cam.x=drag.cx-dx/drag.ez;cam.y=drag.cy-dy/drag.ez;clampCam();if(drag.moved)follow=false;}
+  if(drag.mode==='pan'){if(far)drag.moved=true;cam.x=drag.cx-dx/drag.ez;cam.y=drag.cy-dy/drag.ez;clampCam();if(drag.moved){CAMCTRL.beginManual();follow=false;}}
   else if(drag.mode==='paint'){drag.b=tileAt(PX(e),PY(e));updateMode();}
 });
 let lastTap=null;
@@ -2203,7 +2207,7 @@ function up(e){
   drag=null;modeSig='';updateMode();
 }
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
-cv.addEventListener('wheel',e=>{e.preventDefault();ZA=null;const dy=e.deltaMode===1?e.deltaY*16:e.deltaY;const w=s2w(PX(e),PY(e));cam.z=clamp(cam.z*Math.pow(1.0018,-clamp(dy,-120,120)),zMin(),ZMAX);const e2=cam.z;cam.x=w.x-(PX(e)-VW()/2)/e2;cam.y=w.ys-(PY(e)-VH()/2)/e2;clampCam();follow=false;zoomActivity(PX(e),PY(e));},{passive:false});
+cv.addEventListener('wheel',e=>{e.preventDefault();CAMCTRL.beginManual();ZA=null;const dy=e.deltaMode===1?e.deltaY*16:e.deltaY;const w=s2w(PX(e),PY(e));cam.z=clamp(cam.z*Math.pow(1.0018,-clamp(dy,-120,120)),zMin(),ZMAX);const e2=cam.z;cam.x=w.x-(PX(e)-VW()/2)/e2;cam.y=w.ys-(PY(e)-VH()/2)/e2;clampCam();follow=false;zoomActivity(PX(e),PY(e));},{passive:false});
 function tap(sx,sy){
   const w=s2w(sx,sy);let best=null,bd=22;
   for(const a of S.crew){const d=Math.hypot(a.x*T+16-w.x,a.y*TH+TH-22-w.ys);if(d<bd){bd=d;best=a;}}
@@ -2264,7 +2268,7 @@ function buildCrew0(){
     b.style.setProperty('--c',a.accent);b.title=nm+' · toque para ver · arraste até o mapa para dar uma ordem';b.setAttribute('aria-label',nm);
     b.innerHTML=`<span class="pf"><svg class="ring" viewBox="0 0 46 46" aria-hidden="true"><circle class="rt" cx="23" cy="23" r="20"/><circle class="rv" cx="23" cy="23" r="20"/></svg><span class="disc"><canvas width="48" height="48"></canvas></span><i class="tk"></i><i class="fl"></i><span class="act"><img alt="" draggable="false"></span></span><span class="nm">${nm}</span>`;
     drawHead(b.querySelector('canvas'),a);
-    b.addEventListener('click',()=>{if(performance.now()-suppressClickT<450)return;SND.click();if(sel===a.id&&follow){sel=null;follow=false;}else{sel=a.id;selTile=null;follow=true;}updateInfo();updateCrew();});
+    b.addEventListener('click',()=>{if(performance.now()-suppressClickT<450)return;SND.click();if(sel===a.id&&follow){sel=null;follow=false;}else{sel=a.id;selTile=null;CAMCTRL.clearManual();follow=true;}updateInfo();updateCrew();});
     crewEl.appendChild(b);
   }
 }
@@ -2720,7 +2724,7 @@ function showDelivNow(d,loc){
 }
 $('#dv-go').addEventListener('click',()=>{SND.click();if(dvLoc)panTo(dvLoc);});
 function hudPop(el,txt){const r=el.getBoundingClientRect(),p=clientToApp(r.left+r.width/2,r.top+r.height);const s=document.createElement('span');s.className='hudpop';s.textContent=txt;s.style.left=p.x+'px';s.style.top=(p.y+4)+'px';appEl.appendChild(s);setTimeout(()=>s.remove(),1700);}
-function panTo(loc){PAN=[loc[0]*T+16,loc[1]*TH+TH/2];follow=false;}
+function panTo(loc){PAN=[loc[0]*T+16,loc[1]*TH+TH/2];CAMCTRL.focus({id:'event-pan',mode:'context',priority:CAMERA_PRIORITY.context,x:PAN[0],y:PAN[1],duration:650,hold:800,interruptible:true});follow=false;}
 function stepPan(){if(!PAN)return;const ox=cam.x,oy=cam.y;cam.x+=(PAN[0]-cam.x)*0.14;cam.y+=(PAN[1]-cam.y)*0.14;clampCam();if(Math.hypot(PAN[0]-cam.x,PAN[1]-cam.y)<1.5||Math.hypot(cam.x-ox,cam.y-oy)<0.05)PAN=null;}
 for(const ev of ['pointerdown','wheel'])cv.addEventListener(ev,()=>{PAN=null;},{passive:true});
 $('#sup').addEventListener('click',e=>{const b=e.target.closest('.sp');if(!b)return;SND.click();const f=CLOC[b.dataset.k],loc=f&&f();if(loc)panTo(loc);else{openRadio();tune(CALLS.findIndex(c=>c.k===b.dataset.k));}});
@@ -2776,8 +2780,22 @@ function lerpOn(){const al=paused?1:Math.min(1,Math.max(0,acc));LERPED=[];
   for(const L of [S.crew,S.civs,IML.agents])for(const p of L){if(p.px==null)continue;const dx=p.x-p.px,dy=p.y-p.py;if(Math.abs(dx)>1.5||Math.abs(dy)>1.5)continue;p._x=p.x;p._y=p.y;p.x=p.px+dx*al;p.y=p.py+dy*al;LERPED.push(p);}}
 function lerpOff(){for(const p of LERPED){p.x=p._x;p.y=p._y;}LERPED=[];}
 
-/* camera follow reads the smoothed position, with a frame-rate independent ease */
-function followCam(dt){if(!(follow&&sel!=null))return;const a=S.crew.find(k=>k.id===sel);if(!a)return;const k=1-Math.pow(0.88,Math.max(0,dt)*60);cam.x+=(a.x*T+8-cam.x)*k;cam.y+=(a.y*TH+8-cam.y)*k;clampCam();}
+/* Camera da casa: preserva a leitura da planta, mas enquadra o cômodo e mostra
+   caminho à frente. O controle manual recebe uma janela antes do retorno. */
+function followCam(dt){
+  if(sel==null)return;const a=S.crew.find(k=>k.id===sel);if(!a)return;
+  const ctl=CAMCTRL.resolve();if(ctl.mode==='manual'){CAMDBG={mode:'manual',priority:ctl.priority,room:room[ti(a)]};return;}
+  if(!follow){if(a.path&&a.path.length)follow=true;else return;}
+  const next=a.path&&a.path[0],nx=next==null?a.x:next%W,ny=next==null?a.y:(next/W)|0,dx=Math.abs(nx-a.x)>.03?Math.sign(nx-a.x):0,dy=Math.abs(ny-a.y)>.03?Math.sign(ny-a.y):0;
+  const rm=room[idx(clamp(Math.round(a.x),0,W-1),clamp(Math.round(a.y),0,H-1))],rr=ROOM_RECT[rm];
+  let sx=a.x*T+16,sy=a.y*TH+TH/2;if(rr){const cx=(rr[0]+rr[2]+1)*T/2,cy=(rr[1]+rr[3]+1)*TH/2,pull=cam.z>FITZ*1.16 ? .22 : .1;sx+=(cx-sx)*pull;sy+=(cy-sy)*pull;}
+  if(ctl.focus){sx=ctl.focus.x??sx;sy=ctl.focus.y??sy;}
+  const vw=VW()/cam.z,vh=VH()/cam.z,calm=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const dz=deadZoneTarget(cam,{x:sx,y:sy},{viewportW:vw,viewportH:vh,zoneX:vw*(calm ? .22 : .14),zoneY:vh*(calm ? .2 : .13),dirX:dx,dirY:dy,lookAheadX:calm?0:Math.min(68,vw*.1),lookAheadY:calm?0:Math.min(34,vh*.08),biasY:-8});
+  camIdle=a.path&&a.path.length?0:camIdle+dt;let tx=dz.x,ty=dz.y;if(camIdle>.7&&!ctl.focus){tx+=(sx-tx)*.2;ty+=(sy-8-ty)*.2;}
+  const rate=ctl.focus?(calm?18:4.4):(a.path&&a.path.length?6.5:2);cam.x=damp(cam.x,tx,rate,dt);cam.y=damp(cam.y,ty,rate,dt);clampCam();
+  CAMDBG={mode:ctl.mode,priority:ctl.priority,room:rm||'externo',zoneX:dz.zoneX*cam.z,zoneY:dz.zoneY*cam.z,target:{x:(dz.desiredX-cam.x)*cam.z+VW()/2,y:(dz.desiredY-cam.y)*cam.z+VH()/2}};
+}
 
 /* crew dock split: perícia and campo stay on the dock; the PMs live in a tray the "Apoio" key opens */
 const crew2El=$('#crew2');let TRAY=false;
@@ -2975,7 +2993,9 @@ function loop(now){
   const dt=Math.min(0.1,(now-last)/1000);last=now;updFly(dt);
   if(!paused){acc+=dt*20*speed;let n=0;while(acc>=1&&n<100){stepWorld();acc-=1;n++;}if(n>=100)acc=0;}
   updWeather();updParticles();{const dt=paused?0:speed;updCars(dt);updLife(dt);}
-  cmdEdgePan();stepPan();stepZoom();frame++;lerpOn();followCam(dt);render();placeBub();lerpOff();if(frame%6===0){updateUI();pumpEvents();lodNotice();}if(frame%3===0)SND.tick();
+  cmdEdgePan();stepPan();stepZoom();frame++;lerpOn();followCam(dt);render();
+  if(CAMERA_DEBUG&&CAMDBG)drawCameraDebug(ctx,{width:cv.width,height:cv.height,dpr,deadZone:{x:VW()/2-CAMDBG.zoneX,y:VH()/2-CAMDBG.zoneY,w:CAMDBG.zoneX*2,h:CAMDBG.zoneY*2},target:CAMDBG.target,lines:[`CASA · ${CAMDBG.room}`,`modo ${CAMDBG.mode} · prioridade ${CAMDBG.priority}`,`cam ${cam.x.toFixed(1)}, ${cam.y.toFixed(1)} · zoom ${cam.z.toFixed(2)}`]});
+  placeBub();lerpOff();if(frame%6===0){updateUI();pumpEvents();lodNotice();}if(frame%3===0)SND.tick();
   requestAnimationFrame(loop);
 }
 let lastL=null;

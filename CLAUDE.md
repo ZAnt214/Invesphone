@@ -210,6 +210,10 @@ Os SVGs em `public/evidence/case01/` são assets oficiais, não placeholders.
 
 A rua do DHPP usa a perspectiva de Beat Cop (fachadas de frente até o topo da tela, calçada vista de cima, rua horizontal com carros de lado), com o visual da planta da base e da casa: fachadas e janelas no estilo da base, o letreiro, a porta e as bandeiras reais do DHPP, os bonecos da planta, e os carros e o mobiliário oficiais do ChatGPT (`public/base/rua/veiculos`, `props`). Antes de mexer, ler `docs/RUA_BEATCOP_BASE.md`. O usuário pediu: nada de gerador externo de imagem (o que não for PNG oficial é desenhado em código) e nada de nomes de negócios brasileiros. As direções anteriores (PIX/3D e a rua americana em `docs/DIRECAO_RUA_AMERICANA_DHPP.md`) ficam só como histórico.
 
+## Sistema de câmera
+
+Antes de alterar enquadramento, zoom, follow, gestos, transições ou prioridades de foco, ler `docs/CAMERA_DIRECTION_SYSTEM.md`. A política compartilhada fica em `src/camera/cameraDirector.js`, mas cada cena continua dona da projeção e dos limites. Preservar a perspectiva Beat Cop da rua, a câmera oblíqua da base/casa, a escala inteira da pixel art, a carência após controle manual e `prefers-reduced-motion`. Usar `?cameraDebug=1` para inspecionar modo, prioridade, alvo e dead zone.
+
 
 ## Mundo vivo
 

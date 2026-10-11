@@ -9,6 +9,7 @@ import { applyQuality, getQuality, onQualityChange } from '../characters/quality
 import { perfHud } from '../perfHud';
 import * as AMB from '../world/ambientAudio';
 import { choose, eventLog, jitter, lifeDebug, lineBank } from '../world/life';
+import { CAMERA_PRIORITY, createCameraControl, damp, deadZoneTarget, drawCameraDebug } from '../camera/cameraDirector';
 (() => {
 'use strict';
 const T=32,TH=22,K=TH/T,RISE=16,CAPH=8,W=34,H=26,N=W*H;
@@ -702,6 +703,9 @@ let BG=null,WALLROWS=null,SIGN=null,DOORSPR=null,SHADOW=null,LAMP=null;
 let P1,NPCS=[],frame=0,started=false,follow=true,talkOpen=false;
 let SEEN=safe(()=>JSON.parse(localStorage.getItem('base.seen')||'{}'),{});
 const cam={x:16*T,y:15*TH,z:1};
+const CAMERA_DEBUG=/[?&]cameraDebug=1(?:&|$)/.test(location.search);
+const CAMCTRL=createCameraControl({manualHold:2600,reducedMotion:!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)});
+let CAMDBG=null,camIdle=0;
 let gameMin=8*60+10,lastClock=0;
 function newGame(){
   buildMap();
@@ -904,7 +908,7 @@ function openTalk(id){
   talkStopAnims();
   talk={id};talkSet(def());
   $('#talk').hidden=false;$('#tk-link').removeAttribute('hidden');updLink();talkBirth();
-  talkPrevZ=cam.z;follow=true;zoomTo(Math.max(cam.z,TALKZ()));
+  talkPrevZ=cam.z;follow=true;const cf=talkFocus();if(cf)CAMCTRL.focus({id:'talk',mode:'context',priority:CAMERA_PRIORITY.context,x:cf[0]*T+16,y:cf[1]*TH+TH/2-14,duration:520,hold:1200,interruptible:true});zoomTo(Math.max(cam.z,TALKZ()));
 }
 /* quem fala, na tela: o anel fica sobre a cabeça (ou sobre o objeto) e o rastro desce até o ponto mais perto do cartão */
 const CALM=()=>!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -992,6 +996,7 @@ function closeTalk(){
     an.onfinish=()=>{if(talk)return;el.hidden=true;el.classList.remove('me');an.cancel();el.style.pointerEvents='';};
   }else{el.hidden=true;el.classList.remove('me');}
   talk=null;talkOpen=false;document.body.classList.remove('talking');follow=true;
+  CAMCTRL.cancelFocus('talk');
   if(talkPrevZ!=null){zoomTo(talkPrevZ);talkPrevZ=null;}
 }
 $('#tk-x').addEventListener('click',e=>{e.stopPropagation();closeTalk();});
@@ -1053,20 +1058,25 @@ cv.addEventListener('contextmenu',e=>e.preventDefault());
 cv.addEventListener('pointerdown',e=>{
   if(!started||talkOpen)return;try{cv.setPointerCapture(e.pointerId);}catch(_){}
   ptrs.set(e.pointerId,{x:PX(e),y:PY(e)});
-  if(ptrs.size===2&&SCENE!=='rua'){drag=null;ZA=null;const [a,b]=[...ptrs.values()];pinch={d:Math.max(10,Math.hypot(a.x-b.x,a.y-b.y)),z:cam.z,w:s2w((a.x+b.x)/2,(a.y+b.y)/2)};return;}
+  if(SCENE==='rua'){
+    const pts=[...ptrs.values()].map(p=>({x:p.x*RS,y:p.y*RS}));
+    if(ptrs.size===1)streetView().gestureStart(pts);else if(ptrs.size===2)streetView().gestureStart(pts);
+    drag={sx:PX(e),sy:PY(e),cx:0,cy:0,moved:false,street:true,multi:ptrs.size>1};return;
+  }
+  if(ptrs.size===2){drag=null;ZA=null;CAMCTRL.beginManual();const [a,b]=[...ptrs.values()];pinch={d:Math.max(10,Math.hypot(a.x-b.x,a.y-b.y)),z:cam.z,w:s2w((a.x+b.x)/2,(a.y+b.y)/2)};return;}
   drag={sx:PX(e),sy:PY(e),cx:cam.x,cy:cam.y,moved:false};
 });
 cv.addEventListener('pointermove',e=>{
   const p=ptrs.get(e.pointerId);if(!p)return;p.x=PX(e);p.y=PY(e);
-  if(SCENE==='rua'){if(drag&&Math.hypot(PX(e)-drag.sx,PY(e)-drag.sy)>8)drag.moved=true;return;}
-  if(pinch&&ptrs.size>=2){const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;cam.z=clamp(pinch.z*d/pinch.d,ZMIN,ZMAX);cam.x=pinch.w.x-(mx-VW()/2)/cam.z;cam.y=pinch.w.ys-(my-VH()/2)/cam.z;clampCam();follow=false;zoomAnchor=[mx,my];lastZoomIn=performance.now();return;}
+  if(SCENE==='rua'){if(drag&&Math.hypot(PX(e)-drag.sx,PY(e)-drag.sy)>8)drag.moved=true;if(drag&&ptrs.size>1)drag.multi=true;streetView().gestureMove([...ptrs.values()].map(q=>({x:q.x*RS,y:q.y*RS})));return;}
+  if(pinch&&ptrs.size>=2){CAMCTRL.beginManual();const [a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y),mx=(a.x+b.x)/2,my=(a.y+b.y)/2;cam.z=clamp(pinch.z*d/pinch.d,ZMIN,ZMAX);cam.x=pinch.w.x-(mx-VW()/2)/cam.z;cam.y=pinch.w.ys-(my-VH()/2)/cam.z;clampCam();follow=false;zoomAnchor=[mx,my];lastZoomIn=performance.now();return;}
   if(!drag)return;const dx=PX(e)-drag.sx,dy=PY(e)-drag.sy;
   if(!drag.moved&&Math.hypot(dx,dy)>8)drag.moved=true;
-  if(drag.moved){follow=false;cam.x=drag.cx-dx/cam.z;cam.y=drag.cy-dy/cam.z;clampCam();}
+  if(drag.moved){CAMCTRL.beginManual();follow=false;cam.x=drag.cx-dx/cam.z;cam.y=drag.cy-dy/cam.z;clampCam();}
 });
 function up(e){
   const had=ptrs.delete(e.pointerId);
-  if(SCENE==='rua'){if(drag&&had&&e.type==='pointerup'&&!drag.moved)streetView().tap(PX(e)*RS,PY(e)*RS);drag=null;pinch=null;return;}
+  if(SCENE==='rua'){const st=streetView();st.gestureEnd([...ptrs.values()].map(q=>({x:q.x*RS,y:q.y*RS})));if(drag&&had&&e.type==='pointerup'&&!drag.moved&&!drag.multi)st.tap(PX(e)*RS,PY(e)*RS);drag=null;pinch=null;return;}
   if(pinch){if(ptrs.size<2)pinch=null;drag=null;return;}
   if(drag&&had&&e.type==='pointerup'&&!drag.moved){const sx=PX(e),sy=PY(e),now=performance.now();
     if(lastTap&&now-lastTap.t<320&&Math.hypot(sx-lastTap.x,sy-lastTap.y)<30){lastTap=null;zoomTo(cam.z>=ZMAX*0.6?FITZ:Math.min(ZMAX,cam.z*2),sx,sy);}
@@ -1074,7 +1084,7 @@ function up(e){
   drag=null;
 }
 cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
-cv.addEventListener('wheel',e=>{e.preventDefault();if(!started||talkOpen||SCENE==='rua')return;ZA=null;const dy=e.deltaMode===1?e.deltaY*16:e.deltaY;const w=s2w(PX(e),PY(e));cam.z=clamp(cam.z*Math.pow(1.0018,-clamp(dy,-120,120)),ZMIN,ZMAX);cam.x=w.x-(PX(e)-VW()/2)/cam.z;cam.y=w.ys-(PY(e)-VH()/2)/cam.z;clampCam();follow=false;zoomAnchor=[PX(e),PY(e)];lastZoomIn=performance.now();},{passive:false});
+cv.addEventListener('wheel',e=>{e.preventDefault();if(!started||talkOpen)return;if(SCENE==='rua'){streetView().zoomAt(Math.pow(1.0018,-clamp(e.deltaY,-120,120)),PX(e)*RS,PY(e)*RS);return;}CAMCTRL.beginManual();ZA=null;const dy=e.deltaMode===1?e.deltaY*16:e.deltaY;const w=s2w(PX(e),PY(e));cam.z=clamp(cam.z*Math.pow(1.0018,-clamp(dy,-120,120)),ZMIN,ZMAX);cam.x=w.x-(PX(e)-VW()/2)/cam.z;cam.y=w.ys-(PY(e)-VH()/2)/cam.z;clampCam();follow=false;zoomAnchor=[PX(e),PY(e)];lastZoomIn=performance.now();},{passive:false});
 
 function stepAgent(a,sp,pass){
   a.moving=false;if(!a.path.length)return;
@@ -1283,12 +1293,36 @@ function fitView(){
   else cam.z=snapZ(VW()/(11*T));
   FITZ=cam.z;clampCam();
 }
+const CAMERA_ROOMS={
+  sonia:{zoneX:.10,zoneY:.11,biasX:-12,biasY:-7,roomPull:.18},
+  equipe:{zoneX:.15,zoneY:.12,biasX:12,biasY:-7,roomPull:.07},
+  pericia:{zoneX:.11,zoneY:.10,biasX:8,biasY:-8,roomPull:.15},
+  interro:{zoneX:.09,zoneY:.09,biasX:8,biasY:-9,roomPull:.2},
+  hall:{zoneX:.14,zoneY:.12,biasX:4,biasY:-6,roomPull:.08},
+  arquivo:{zoneX:.10,zoneY:.10,biasX:7,biasY:-6,roomPull:.18},
+  fora:{zoneX:.17,zoneY:.14,biasX:0,biasY:-4,roomPull:0},wall:{zoneX:.11,zoneY:.16,biasX:0,biasY:-5,roomPull:0}
+};
 function followCam(dt){
-  if(!follow)return;
-  const L=VW()>VH(),f=talkFocus()||[P1.x,P1.y];
-  let tx=f[0]*T+16,ty=f[1]*TH+TH/2-14;
-  if(talkOpen){if(L)tx+=VW()*0.24/cam.z;else ty+=VH()*0.2/cam.z;}
-  const k=1-Math.exp(-dt*7.5);cam.x+=(tx-cam.x)*k;cam.y+=(ty-cam.y)*k;clampCam();
+  const now=performance.now(),ctl=CAMCTRL.resolve(now);
+  if(ctl.mode==='manual'){CAMDBG={mode:'manual',priority:ctl.priority};return;}
+  if(!follow)follow=true;
+  const L=VW()>VH(),tf=talkFocus(),rm=roomOf(P1),pr=CAMERA_ROOMS[rm]||CAMERA_ROOMS.hall;
+  const next=P1.path&&P1.path[0],nx=next==null?P1.x:next%W,ny=next==null?P1.y:(next/W)|0;
+  const dx=Math.abs(nx-P1.x)>.02?Math.sign(nx-P1.x):(P1.moving?P1.dir:0),dy=Math.abs(ny-P1.y)>.02?Math.sign(ny-P1.y):0;
+  let sx=(tf?tf[0]:P1.x)*T+16,sy=(tf?tf[1]:P1.y)*TH+TH/2-14;
+  if(ctl.focus){sx=ctl.focus.x??sx;sy=ctl.focus.y??sy;}
+  if(talkOpen){if(L)sx+=VW()*0.24/cam.z;else sy+=VH()*0.2/cam.z;}
+  let biasX=pr.biasX,biasY=pr.biasY;
+  const rr=ROOM_RECT[rm];if(rr&&pr.roomPull&&!talkOpen){const rcx=(rr[0]+rr[2]+1)*T/2,rcy=(rr[1]+rr[3]+1)*TH/2;sx+=(rcx-sx)*pr.roomPull;sy+=(rcy-sy)*pr.roomPull;}
+  const vw=VW()/cam.z,vh=VH()/cam.z,calm=CALM();
+  const dz=deadZoneTarget(cam,{x:sx,y:sy},{viewportW:vw,viewportH:vh,zoneX:vw*(calm ? .22 : pr.zoneX),zoneY:vh*(calm ? .18 : pr.zoneY),dirX:dx,dirY:dy,lookAheadX:talkOpen||calm?0:Math.min(72,vw*.11),lookAheadY:talkOpen||calm?0:Math.min(24,vh*.06),biasX,biasY});
+  camIdle=P1.moving||talkOpen?0:camIdle+dt;
+  let tx=dz.x,ty=dz.y,rate=talkOpen?5.2:7.5;
+  if(camIdle>.55&&!ctl.focus){const idleX=sx+biasX,idleY=sy+biasY,ik=Math.min(1,(camIdle-.55)/1.4);tx=tx+(idleX-tx)*ik*.38;ty=ty+(idleY-ty)*ik*.38;rate=calm?1.2:2.1;}
+  if(calm&&ctl.focus)rate=18;
+  cam.x=damp(cam.x,tx,rate,dt);cam.y=damp(cam.y,ty,rate,dt);clampCam();
+  const px=(dz.desiredX-cam.x)*cam.z+VW()/2,py=(dz.desiredY-cam.y)*cam.z+VH()/2;
+  CAMDBG={mode:ctl.mode,priority:ctl.priority,room:rm,target:{x:px,y:py},zoneX:dz.zoneX*cam.z,zoneY:dz.zoneY*cam.z};
 }
 
 /* ---------- Luz (mesmo método da casa: ambiente × luzes por cômodo) ---------- */
@@ -1666,7 +1700,7 @@ function setWhere(t){lastRoom=null;$('#where-n').textContent=t;}
 function enterBase(instant){
   const go=()=>{SCENE='base';AMB.setScene('base');streetLeft=performance.now();resumeBase();P1.x=16;P1.y=17;P1.path=[];P1.pend=null;P1.dir=1;
     const e=bfs(ti(P1),i=>i===idx(16,15),walkPass);if(e>=0)P1.path=pathTo(e);
-    cam.x=P1.x*T+16;cam.y=P1.y*TH;clampCam();follow=true;last=performance.now();updateUI();};
+    cam.x=P1.x*T+16;cam.y=P1.y*TH;clampCam();CAMCTRL.focus({id:'enter-base',mode:'transition',priority:CAMERA_PRIORITY.critical,x:16*T+16,y:14.5*TH,duration:420,hold:220,interruptible:true});follow=true;last=performance.now();updateUI();};
   if(instant)go();else fadeTo(go);
 }
 // saiu pela porta da frente: volta para a calçada, na porta do DHPP
@@ -1702,7 +1736,9 @@ function loop(now){
   const raw=Math.max(0,now-last),dt=Math.min(0.1,raw/1000);last=now;adaptRS(raw);
   if(SCENE==='rua'){if(FX.vigS!==0.5){FX.vigS=0.5;VIG.style.opacity=0.5;}const st=street();st.update(dt);streetAmbience(st,dt);streetView().draw(ctx,cv.width,cv.height,RS,started);frame++;if(frame%6===0){const c=clockStr();if(c!==lastClk){lastClk=c;$('#clk').textContent=c;}}
     lastClock+=dt;if(lastClock>3){lastClock=0;gameMin++;}requestAnimationFrame(loop);return;}
-  update(dt);updFX();updAtmo();stepZoom();followCam(dt);if(started)primeBlur();frame++;const r0=performance.now();render();PROF.r2d+=(performance.now()-r0-PROF.r2d)*0.05;postFX(dt);if(talk)updLink();if(frame%6===0)updateUI();
+  update(dt);updFX();updAtmo();stepZoom();followCam(dt);if(started)primeBlur();frame++;const r0=performance.now();render();PROF.r2d+=(performance.now()-r0-PROF.r2d)*0.05;postFX(dt);
+  if(CAMERA_DEBUG&&CAMDBG)drawCameraDebug(ctx,{width:cv.width,height:cv.height,dpr:RS,deadZone:{x:VW()/2-CAMDBG.zoneX,y:VH()/2-CAMDBG.zoneY,w:CAMDBG.zoneX*2,h:CAMDBG.zoneY*2},target:CAMDBG.target,lines:[`BASE · ${CAMDBG.room||roomOf(P1)}`,`modo ${CAMDBG.mode} · prioridade ${CAMDBG.priority}`,`cam ${cam.x.toFixed(1)}, ${cam.y.toFixed(1)} · zoom ${cam.z.toFixed(2)}`]});
+  if(talk)updLink();if(frame%6===0)updateUI();
   requestAnimationFrame(loop);
 }
 

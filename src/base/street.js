@@ -12,6 +12,7 @@
 import {GY,CURB,ROAD,NEAR,STREET_H,WALK,PARK,LANES,SUN,TREES,MANHOLES,rnd,paintFacades,paintGround} from './streetArt';
 import {RUA_DIR,VEICULOS,PATH} from './ruaAssets';
 import {choose,eventLog,jitter} from '../world/life';
+import {CAMERA_PRIORITY,createCameraControl,damp,deadZoneTarget,drawCameraDebug} from '../camera/cameraDirector';
 export {STREET_H};
 
 /* ---------- o quarteirão, da esquerda para a direita ---------- */
@@ -139,7 +140,9 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   const birds=Array.from({length:6},()=>({x:300+R()*(STREET_W-600),y:WALK[0]+10+R()*(WALK[1]-WALK[0]-20),z:0,dir:R()<.5?-1:1,st:'g',t:R()*40,vx:0,vz:0}));
   // poeira no ar, só visível contra a luz (qualidade alta): poucas partículas, recicladas
   const motes=Array.from({length:28},()=>({x:R(),y:R(),v:.3+R()*.7,p:R()*6.28}));
-  let camX=lemos.x,camY=null,t=0,doorT=0,tapFx=null,busT=25+R()*30,bus=null,taxiJob=null;
+  const camera=createCameraControl({manualHold:2600,reducedMotion:RM});
+  const cameraDebug=/[?&]cameraDebug=1(?:&|$)/.test(location.search);
+  let camX=lemos.x,camY=null,camZoom=1,cameraDt=1/60,cameraInfo=null,gesture=null,lastTap=null,doorFocus=false,t=0,doorT=0,tapFx=null,busT=25+R()*30,bus=null,taxiJob=null;
   const sound=(k,x,a)=>{if(onSound)onSound(k,x,a);};
 
   // lista de desenho reaproveitada entre quadros (sem criar funções por quadro); ordenada pelo pé (y)
@@ -267,13 +270,17 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   }
 
   function update(dt){
+    cameraDt=dt;
     t+=dt;
     // Lemos: anda até o toque; na porta do DHPP sobe os degraus, a porta acende e ele entra
-    if(lemos.climb>0){lemos.climb+=dt;lemos.moving=true;lemos.walk+=dt*2.5;doorT=Math.min(1,doorT+dt*2.5);lemos.y=Math.max(GY-2,lemos.y-dt*30);
+    lemos.vx=0;lemos.vy=0;
+    if(lemos.climb>0){lemos.climb+=dt;lemos.moving=true;lemos.walk+=dt*2.5;doorT=Math.min(1,doorT+dt*2.5);lemos.vy=-30;lemos.y=Math.max(GY-2,lemos.y-dt*30);
       if(lemos.climb>.6){lemos.climb=0;lemos.moving=false;onEnter();setTimeout(()=>{doorT=0;},400);}}
     else if(lemos.tx!=null){const dx=lemos.tx-lemos.x,dy=lemos.ty-lemos.y,d=Math.hypot(dx,dy),sp=96*dt;
       if(d<=sp){lemos.x=lemos.tx;lemos.y=lemos.ty;lemos.tx=null;lemos.moving=false;if(lemos.enter){lemos.enter=false;lemos.climb=.001;lemos.dir=1;}}
-      else{lemos.x+=dx/d*sp;lemos.y+=dy/d*sp;lemos.walk+=sp/32;lemos.moving=true;if(Math.abs(dx)>0.5)lemos.dir=dx>0?1:-1;}}
+      else{lemos.vx=dx/d*96;lemos.vy=dy/d*96;lemos.x+=dx/d*sp;lemos.y+=dy/d*sp;lemos.walk+=sp/32;lemos.moving=true;if(Math.abs(dx)>0.5)lemos.dir=dx>0?1:-1;}}
+    if(lemos.enter&&Math.abs(lemos.x-DOOR.x)<260&&!doorFocus){doorFocus=true;camera.focus({id:'dhpp-arrival',mode:'context',priority:CAMERA_PRIORITY.context,x:(lemos.x+DOOR.x)/2,y:GY-120,duration:700,hold:400,interruptible:true});}
+    if(!lemos.enter&&Math.abs(lemos.x-DOOR.x)>340)doorFocus=false;
     for(const p of peds){if(p.chatCD>0)p.chatCD-=dt;updPed(p,dt);}
     if((t*2|0)!==((t-dt)*2|0))chats();
     for(const d of DOORS)if(d.open>0)d.open-=dt;
@@ -315,11 +322,24 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   // No retrato a rua inteira cabe na altura. A câmera segue o Lemos.
   const VIEWH=760;
   function view(cw,ch,rs){
-    let s=Math.max(1,Math.round(Math.min(ch/VIEWH,cw/760)));if(ch/s>STREET_H)s=Math.ceil(ch/STREET_H);
+    let baseS=Math.max(1,Math.round(Math.min(ch/VIEWH,cw/760)));if(ch/baseS>STREET_H)baseS=Math.ceil(ch/STREET_H);
+    let s=Math.max(1,Math.round(baseS*camZoom));
     const vw=cw/s,vh=ch/s;
-    camX+=(clamp(lemos.x,vw/2,STREET_W-vw/2)-camX)*0.12;camX=clamp(camX,vw/2,STREET_W-vw/2);
-    let top;if(vh>=STREET_H)top=STREET_H-vh;else{/* tela de 3x mostra menos altura: sobe, para o letreiro e as bandeiras não ficarem sob o cabeçalho */const want=clamp(lemos.y-vh*(vh<700?0.74:0.6),0,STREET_H-vh);camY=camY==null?want:camY+(want-camY)*0.12;top=clamp(camY,0,STREET_H-vh);}
-    return {s,left:camX-vw/2,top,rs,vw,vh};
+    const ctl=camera.resolve(),manual=ctl.mode==='manual';
+    if(!manual){
+      const focus=ctl.focus,dir=lemos.moving&&Math.abs(lemos.vx)>2?Math.sign(lemos.vx):lemos.dir;
+      const near=Math.abs(lemos.x-DOOR.x)<330,biasX=near?(DOOR.x-lemos.x)*.22:0;
+      const subject={x:focus?.x??lemos.x,y:focus?.y??lemos.y};
+      const dz=deadZoneTarget({x:camX,y:camY==null?lemos.y:camY},subject,{viewportW:vw,viewportH:vh,zoneX:vw*(RM ? .22 : .13),zoneY:vh*(RM ? .2 : .12),dirX:dir,dirY:Math.sign(lemos.vy||0),lookAheadX:RM?0:Math.min(125,vw*.16),lookAheadY:RM?0:Math.min(32,vh*.05),biasX});
+      let tx=dz.x,ty=dz.y-vh*(near ? 0.06 : 0);
+      if(!lemos.moving&&!focus){tx+=(lemos.x+biasX-tx)*.12;ty+=(lemos.y-vh*.04-ty)*.12;}
+      const rate=focus?(RM?18:4.8):(lemos.moving?6.8:2.1);
+      camX=damp(camX,tx,rate,cameraDt);camY=camY==null?ty:damp(camY,ty,rate,cameraDt);
+      cameraInfo={mode:ctl.mode,priority:ctl.priority,zoneX:dz.zoneX*s/rs,zoneY:dz.zoneY*s/rs,targetX:(dz.desiredX-(camX-vw/2))*s/rs,targetY:(dz.desiredY-(camY-vh/2))*s/rs};
+    }
+    camX=clamp(camX,vw/2,STREET_W-vw/2);
+    let top;if(vh>=STREET_H){top=STREET_H-vh;camY=top+vh/2;}else{const want=clamp((camY==null?lemos.y:camY)-vh/2,0,STREET_H-vh);top=want;camY=top+vh/2;}
+    return {s,baseS,left:camX-vw/2,top,rs,vw,vh};
   }
   const clamp=(v,a,b)=>a>b?(a+b)/2:v<a?a:v>b?b:v;
 
@@ -402,6 +422,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     ctx.globalCompositeOperation='soft-light';ctx.fillStyle=gradeSun;ctx.fillRect(0,0,cw,ch);ctx.globalCompositeOperation='source-over';
     ctx.restore();
     lastView={...V,oy:oyr,ox,cw,ch};
+    if(cameraDebug&&cameraInfo)drawCameraDebug(ctx,{width:cw,height:ch,dpr:rs,deadZone:{x:cw/rs/2-cameraInfo.zoneX,y:ch/rs/2-cameraInfo.zoneY,w:cameraInfo.zoneX*2,h:cameraInfo.zoneY*2},target:{x:cameraInfo.targetX,y:cameraInfo.targetY},lines:[`RUA · ${cameraInfo.mode}`,`prioridade ${cameraInfo.priority} · zoom ${camZoom.toFixed(2)} (${V.s}x)`,`cam ${camX.toFixed(1)}, ${camY.toFixed(1)}`]});
   }
   let lastView=null;
   const contact=(ctx,x,y,rx,ry,a)=>{ctx.fillStyle=`rgba(16,12,20,${a})`;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,7);ctx.fill();};
@@ -455,9 +476,36 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     const hx=d>0?X+4:X-6,hy=peck?y+3:y-3;F(hx-1,hy-1,5,5,'#1e1611');F(hx,hy,3,3,'#4f5a62');F(hx,hy+2,3,1,'#5fa08a');F(d>0?hx+2:hx,hy,1,1,'#e8e2d0');F(d>0?hx+3:hx-1,hy+1,1,1,'#c97a3a');
   }
 
+  function worldAt(px,py,V=lastView){return V?{x:V.left+px/V.s,y:V.top+py/V.s}:null;}
+  function gestureStart(points){
+    if(!lastView||!points.length)return;
+    if(points.length>1){const a=points[0],b=points[1],mx=(a.x+b.x)/2,my=(a.y+b.y)/2;gesture={type:'pinch',d:Math.max(10,Math.hypot(a.x-b.x,a.y-b.y)),zoom:camZoom,world:worldAt(mx,my),mx,my};camera.beginManual();}
+    else gesture={type:'pan',x:points[0].x,y:points[0].y,cx:camX,cy:camY};
+  }
+  function gestureMove(points){
+    if(!lastView||!points.length)return;
+    if(points.length>1){
+      const a=points[0],b=points[1],mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
+      if(!gesture||gesture.type!=='pinch')gestureStart(points);
+      camera.beginManual();camZoom=clamp(gesture.zoom*Math.hypot(a.x-b.x,a.y-b.y)/gesture.d,1,2.75);
+      const ns=Math.max(1,Math.round(lastView.baseS*camZoom)),vw=lastView.cw/ns,vh=lastView.ch/ns;
+      camX=gesture.world.x-mx/ns+vw/2;camY=gesture.world.y-my/ns+vh/2;return;
+    }
+    if(!gesture||gesture.type!=='pan')gestureStart(points);
+    const dx=points[0].x-gesture.x,dy=points[0].y-gesture.y;if(Math.hypot(dx,dy)<5)return;
+    camera.beginManual();camX=gesture.cx-dx/lastView.s;camY=gesture.cy-dy/lastView.s;
+  }
+  function gestureEnd(points){camera.endManual();if(points&&points.length===1)gestureStart(points);else gesture=null;}
+  function zoomAt(factor,px,py){
+    if(!lastView)return;const w=worldAt(px,py),z0=camZoom;camZoom=clamp(camZoom*factor,1,2.75);if(Math.abs(z0-camZoom)<.001)return;
+    camera.beginManual();const ns=Math.max(1,Math.round(lastView.baseS*camZoom)),vw=lastView.cw/ns,vh=lastView.ch/ns;camX=w.x-px/ns+vw/2;camY=w.y-py/ns+vh/2;
+  }
+
   /** toque na tela (px do canvas): no prédio do DHPP vai até a porta e entra; na calçada anda até lá */
   function tap(px,py){
     if(!lastView||lemos.climb)return;const {s,ox,oy}=lastView,wx=(px-ox)/s,wy=(py-oy)/s;
+    const now=performance.now();if(lastTap&&now-lastTap.t<320&&Math.hypot(px-lastTap.x,py-lastTap.y)<36*(lastView.rs||1)){lastTap=null;zoomAt(camZoom>1.55 ? .62 : 1.65,px,py);return;}lastTap={t:now,x:px,y:py};
+    camera.clearManual();
     if(wx>=DHPP.X&&wx<=DHPP.X+DHPP.w&&wy<GY+8){lemos.tx=DOOR.x;lemos.ty=DOOR.y;lemos.enter=true;tapFx={x:DOOR.x,y:DOOR.y,t:0};return;}
     lemos.tx=clamp(wx,12,STREET_W-12);lemos.ty=clamp(wy,WALK[0],WALK[1]);lemos.enter=false;tapFx={x:lemos.tx,y:lemos.ty,t:0};
   }
@@ -466,7 +514,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     lemos.tx=null;lemos.enter=false;lemos.moving=false;lemos.climb=0;doorT=0;
     if(where==='porta'){lemos.x=DOOR.x;lemos.y=DOOR.y+10;lemos.dir=1;}
     else{lemos.x=viatura.x+W(viatura)/2;lemos.y=WALK[1];lemos.dir=1;}
-    camX=lemos.x;camY=null;
+    camX=lemos.x;camY=null;camZoom=1;camera.clearManual();camera.focus({id:'street-entry',mode:'transition',priority:CAMERA_PRIORITY.critical,x:where==='porta'?(lemos.x+DOOR.x)/2:lemos.x,y:where==='porta'?GY-90:lemos.y,duration:480,hold:180,interruptible:true});
   }
-  return {update,resume,debugRows,draw,tap,place,lemos,door:DOOR,ready,stats,shadowLayer:shc,get view(){return lastView;},get cars(){return cars;},parked,peds,birds,trees,get t(){return t;},zoom:()=>getZoom?getZoom():1};
+  return {update,resume,debugRows,draw,tap,place,gestureStart,gestureMove,gestureEnd,zoomAt,lemos,door:DOOR,ready,stats,shadowLayer:shc,get view(){return lastView;},get cars(){return cars;},parked,peds,birds,trees,get t(){return t;},zoom:()=>camZoom};
 }
