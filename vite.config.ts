@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath } from 'node:url'
 import { createHash } from 'node:crypto'
-import { readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
 // Três páginas: a raiz é a Varredura das Acácias (cena 2D do Caso 01), /base é a base do
@@ -19,9 +19,14 @@ const artHash = (() => {
   return h.digest('hex').slice(0, 10)
 })()
 const ART_CACHE = 'case-art-' + artHash
+// arte oficial da rua americana que já chegou (public/base/rua/**.png): o jogo usa o que existe e desenha provisório no resto
+const ruaDir = page('./public/base/rua')
+const RUA_ART: string[] = []
+if (existsSync(ruaDir)) { const walk = (d: string, rel: string) => { for (const e of readdirSync(d, { withFileTypes: true })) {
+  if (e.isDirectory()) walk(join(d, e.name), rel + e.name + '/'); else if (e.name.endsWith('.png')) RUA_ART.push(rel + e.name) } }; walk(ruaDir, '') }
 
 export default defineConfig({
-  define: { __ART_CACHE__: JSON.stringify(ART_CACHE) },
+  define: { __ART_CACHE__: JSON.stringify(ART_CACHE), __RUA_ART__: JSON.stringify(RUA_ART.sort()) },
   build: {
     rollupOptions: {
       input: {
@@ -38,7 +43,7 @@ export default defineConfig({
       workbox: {
         // instala só o app (código, fontes, ícones e as versões leves do quadro); as ilustrações e evidências
         // grandes vêm pelo carregador do jogo (src/preload) e ficam no cache ART_CACHE, que o worker serve sem rede
-        globPatterns: ['**/*.{js,css,html,ico,woff2,svg}', 'thumbs/**/*.{jpg,webp}', 'sonia.jpg'],
+        globPatterns: ['**/*.{js,css,html,ico,woff2,svg}', 'thumbs/**/*.{jpg,webp}', 'base/rua/**/*.png', 'sonia.jpg'],
         runtimeCaching: [{
           urlPattern: ({ url }) => url.pathname.startsWith('/characters/') || url.pathname.startsWith('/evidence/'),
           handler: 'CacheFirst',
