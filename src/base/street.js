@@ -1,9 +1,15 @@
-/* Rua do DHPP — direção aprovada em 11/10/2026 (docs/DIRECAO_RUA_AMERICANA_DHPP.md): perspectiva de Beat Cop (fachadas de
+/* Rua do DHPP — direção aprovada em 11/10/2026 (docs/RUA_BEATCOP_BASE.md): perspectiva de Beat Cop (fachadas de
    frente até o topo da tela, calçada vista de cima, rua horizontal com os carros de lado) no VISUAL DA PLANTA DA BASE:
    a mesma paleta, as janelas brancas com ar-condicionado, a fachada bege do DHPP com o letreiro, a porta e as bandeiras da
-   própria base, e os mesmos bonecos de dentro (46 px). Carros e mobiliário são os PNGs oficiais de public/base/rua/.
-   Lemos anda pela calçada; tocando no DHPP ele vai até a porta e entra (a planta da base, em base.js). */
-import {GY,CURB,ROAD,NEAR,STREET_H,WALK,PARK,LANES,rnd,paintFacades,paintGround} from './streetArt';
+   própria base, e os mesmos bonecos de dentro (46 px). Carros, mobiliário e efeitos são os PNGs oficiais de public/base/rua/.
+   Lemos anda pela calçada; tocando no DHPP ele vai até a porta e entra (a planta da base, em base.js).
+
+   Render (docs/GRAPHICS_UPGRADE.md): camada estática pintada uma vez (fachadas e chão, com relevo e sombras próprias);
+   por quadro, sombras projetadas de tudo que está em pé numa camada de meia resolução (suave e barata), luzes que emitem
+   (neon, arandelas, giroflex) somadas por cima, e a luz da manhã. Escala inteira de pixel e corte do que está fora da tela.
+   A qualidade escolhida pelo jogador (src/characters/quality.ts) decide o que entra: baixa = só o essencial (sem sombras
+   projetadas, brilhos nem vapor); média = sombras, luzes que emitem e vapor; alta = mais os fachos de luz e a poeira no ar. */
+import {GY,CURB,ROAD,NEAR,STREET_H,WALK,PARK,LANES,SUN,TREES,MANHOLES,rnd,paintFacades,paintGround} from './streetArt';
 import {RUA_DIR,VEICULOS,PATH} from './ruaAssets';
 export {STREET_H};
 
@@ -25,25 +31,29 @@ export const STREET_W=acc;
 export const DHPP=BUILDINGS.find(b=>b.k==='dhpp');
 export const DOOR={x:DHPP.X+DHPP.w/2,y:GY+14};          // a porta do DHPP (o pé dos degraus)
 
-/* ---------- mobiliário oficial (pé no centro da última linha), na beira da calçada ou encostado nas fachadas ---------- */
+/* ---------- mobiliário oficial (pé no centro da última linha), na beira da calçada, encostado nas fachadas ou nos becos ---------- */
 const cy=CURB-6,fy=GY+22,ny=STREET_H-14;
+const ALLEYS=BUILDINGS.filter(b=>b.k==='alley');
 const PROPS=[
   {k:'poste-luz',x:200,y:cy},{k:'poste-luz',x:780,y:cy},{k:'poste-luz',x:1560,y:cy},{k:'poste-luz',x:2140,y:cy},
   {k:'parquimetro',x:90,y:cy},{k:'parquimetro',x:470,y:cy},{k:'parquimetro',x:640,y:cy},{k:'parquimetro',x:1430,y:cy},{k:'parquimetro',x:1700,y:cy},{k:'parquimetro',x:1980,y:cy},{k:'parquimetro',x:2380,y:cy},
   {k:'hidrante',x:1240,y:cy},{k:'caixa-correio',x:330,y:cy-2},{k:'lixeira',x:560,y:cy-4},{k:'placa-proibido',x:930,y:cy},{k:'placa-proibido',x:1500,y:cy},
   {k:'sacos-lixo',x:820,y:fy},{k:'lixeira-cheia',x:868,y:fy},{k:'sacos-lixo',x:1540,y:fy},{k:'telefone-publico',x:1810,y:fy+2},
   {k:'jornal-azul',x:1592,y:fy+8},{k:'jornal-vermelho',x:1614,y:fy+8},{k:'banco',x:1010,y:fy+4},{k:'caixa-papelao',x:236,y:fy+6},
+  // dentro dos becos
+  {k:'cacamba',x:ALLEYS[0].X+ALLEYS[0].w/2+6,y:GY-16,dark:.35},{k:'pallet',x:ALLEYS[1].X+ALLEYS[1].w/2,y:GY-24,dark:.45},{k:'alarme-incendio',x:ALLEYS[0].X+14,y:GY-4,dark:.2},
   // calçada de cá (embaixo)
   {k:'placa-onibus',x:300,y:ny},{k:'banco',x:370,y:ny-4},{k:'poste-luz',x:1100,y:ny+8},{k:'lixeira-cheia',x:1460,y:ny-2},{k:'jornal-vermelho',x:1800,y:ny-2}
 ];
 const PROP_S=1.3,CAR_S=1.2;
 
-/* ---------- arte oficial (carros e mobiliário) ---------- */
+/* ---------- arte oficial (carros, mobiliário, chão e efeitos) ---------- */
 // eslint-disable-next-line no-undef
 const HAS=new Set(typeof __RUA_ART__!=='undefined'?__RUA_ART__:[]);
 const IMG=new Map();
 function art(path){if(!HAS.has(path))return null;let im=IMG.get(path);if(!im){im=new Image();im.decoding='async';im.src=RUA_DIR+path;IMG.set(path,im);}return im.complete&&im.naturalWidth?im:null;}
-const NEED=[...PROPS.map(p=>PATH.prop(p.k)),...Object.keys(VEICULOS).map(PATH.veiculo),PATH.efeito('vapor-bueiro'),PATH.efeito('fumaca-escape'),PATH.efeito('pombo')];
+const NEED=[...PROPS.map(p=>PATH.prop(p.k)),...Object.keys(VEICULOS).map(PATH.veiculo),PATH.efeito('vapor-bueiro'),PATH.efeito('fumaca-escape'),PATH.efeito('pombo'),
+  'chao/manchas.png','chao/lixo-chao.png','chao/bueiro.png','chao/boca-de-lobo.png'];
 export function preloadRua(){return Promise.all([...new Set(NEED)].filter(p=>HAS.has(p)).map(p=>new Promise(r=>{art(p);const im=IMG.get(p);if(!im||im.complete)return r();im.onload=im.onerror=()=>r();})));}
 
 /* ---------- gente: os bonecos da planta, com as cores de cada um ---------- */
@@ -63,18 +73,39 @@ const PED_LOOKS=[
 ];
 const NEAR_WALK=[NEAR+40,STREET_H-12];
 
-/** art: as funções de desenho da base (S2, txt…) e o letreiro e a porta dela */
-export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A}){
+/* ---------- caches de luz e sombra (feitos uma vez por imagem) ---------- */
+const SIL=new WeakMap();      // silhueta escura de um sprite (para a sombra projetada)
+function silhouette(im){let c=SIL.get(im);if(c)return c;c=document.createElement('canvas');c.width=im.width;c.height=im.height;const g=c.getContext('2d');g.drawImage(im,0,0);g.globalCompositeOperation='source-in';g.fillStyle='#000';g.fillRect(0,0,c.width,c.height);SIL.set(im,c);return c;}
+const SHADED=new WeakMap();   // carro oficial com volume: o teto pega o céu, a parte de baixo escurece (sem mudar o desenho)
+function shaded(im){let c=SHADED.get(im);if(c)return c;c=document.createElement('canvas');c.width=im.width;c.height=im.height;const g=c.getContext('2d');g.drawImage(im,0,0);g.globalCompositeOperation='source-atop';
+  const gr=g.createLinearGradient(0,0,0,c.height);gr.addColorStop(0,'rgba(255,250,240,.16)');gr.addColorStop(.35,'rgba(255,250,240,0)');gr.addColorStop(.7,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(10,10,20,.26)');g.fillStyle=gr;g.fillRect(0,0,c.width,c.height);SHADED.set(im,c);return c;}
+const DIMMED=new Map();       // objeto dentro do beco: mais escuro
+function dimmed(im,a){const k=im.src+a;let c=DIMMED.get(k);if(c)return c;c=document.createElement('canvas');c.width=im.width;c.height=im.height;const g=c.getContext('2d');g.drawImage(im,0,0);g.globalCompositeOperation='source-atop';g.fillStyle=`rgba(16,12,12,${a})`;g.fillRect(0,0,c.width,c.height);DIMMED.set(k,c);return c;}
+const GLOW={};                // brilho radial de uma cor (somado com 'lighter')
+function glowSprite(col){if(GLOW[col])return GLOW[col];const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,col);gr.addColorStop(.35,col.replace(/[\d.]+\)$/,m=>(parseFloat(m)*.45)+')'));gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);return GLOW[col]=c;}
+const rgba=(hex,a)=>{const h=hex.replace('#','');return `rgba(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)},${a})`;};
+const RM=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** art: as funções de desenho da base (S2, bush…) e o letreiro e a porta dela; quality(): 'low'|'medium'|'high' */
+export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quality}){
+  const Q=()=>{const q=quality?quality():'high';return q==='low'?0:q==='medium'?1:2;};
   let layer=buildStatic();
-  const ready=preloadRua();
+  const ready=preloadRua().then(()=>{layer=buildStatic();});
 
   function buildStatic(){
     const cv=document.createElement('canvas');cv.width=STREET_W;cv.height=STREET_H;const g=cv.getContext('2d');g.imageSmoothingEnabled=false;
     const sky=g.createLinearGradient(0,0,0,200);sky.addColorStop(0,'#8fa9c4');sky.addColorStop(1,'#d8d4cc');g.fillStyle=sky;g.fillRect(0,0,STREET_W,GY);
     paintFacades(g,BUILDINGS,A,{sign:A.sign(),door:A.door()});
-    paintGround(g,STREET_W);
+    paintGround(g,STREET_W,art);
     return cv;
   }
+
+  /* ---------- árvores da calçada: tronco e copa da planta (mesmo `bush`), a copa balança com o vento ---------- */
+  const trees=TREES.map((t,i)=>{const r=A.mulberry32?A.mulberry32(91+i*17):Math.random;
+    const trunk=A.S2(20,80,(P)=>{P(6,0,8,80,'#4a3020');P(6,0,3,80,'#6a4a2c');P(13,0,1,80,'#2e1e14');for(let k=8;k<80;k+=11)P(7,k,6,1,'#3a2618');P(3,74,14,6,'#3a2618');P(4,30,3,2,'#3a2618');P(13,46,3,2,'#3a2618');});
+    const crown0=A.S2(124,104,(P,E)=>{const pal=['#1f3f1c','#2f5f2a','#3f7d37','#5aa04a','#7fc363'];A.bush(P,E,36,64,32,r,pal);A.bush(P,E,88,62,32,r,pal);A.bush(P,E,62,44,40,r,pal);A.bush(P,E,62,72,30,r,pal);});
+    return {...t,trunk,crown:A.outlined?A.outlined(crown0):crown0,ph:i*1.7};});
 
   /* ---------- gente, carros e bichos ---------- */
   const R=rnd(17);
@@ -89,7 +120,20 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A}){
   for(let l=0;l<LANES.length;l++)for(let i=0;i<3;i++){const id=moving[(l*3+i)%moving.length],v=LANES[l].v*(0.85+R()*0.3);cars.push({id,lane:l,x:i*STREET_W/3+R()*200,v,v0:v,puff:R()});}
   const puffs=[];
   const birds=Array.from({length:6},()=>({x:300+R()*(STREET_W-600),y:WALK[0]+10+R()*(WALK[1]-WALK[0]-20),z:0,dir:R()<.5?-1:1,st:'g',t:R()*40,vx:0,vz:0}));
-  let camX=lemos.x,camY=null,t=0,doorT=0;
+  // poeira no ar, só visível contra a luz (qualidade alta): poucas partículas, recicladas
+  const motes=Array.from({length:28},()=>({x:R(),y:R(),v:.3+R()*.7,p:R()*6.28}));
+  let camX=lemos.x,camY=null,t=0,doorT=0,tapFx=null;
+
+  // lista de desenho reaproveitada entre quadros (sem criar funções por quadro); ordenada pelo pé (y)
+  const ENTS=[];const ent=(k,ref,y)=>({k,ref,y});
+  for(const p of PROPS)ENTS.push(ent('prop',p,p.y));
+  for(const tr of trees)ENTS.push(ent('tree',tr,tr.y));
+  for(const p of peds)ENTS.push(ent('ped',p,p.y));
+  ENTS.push(ent('ped',lemos,lemos.y));
+  for(const p of parked)ENTS.push(ent('car',p,p.y));
+  for(const k of cars)ENTS.push(ent('car',k,LANES[k.lane].y));
+  for(const b of birds)ENTS.push(ent('bird',b,b.y));
+  for(const m of MANHOLES.slice(0,1))ENTS.push(ent('steam',m,m.y));
 
   function update(dt){
     t+=dt;
@@ -108,7 +152,8 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A}){
     }
     for(const b of birds){b.t+=dt*30;
       if(b.st==='g'){if(Math.random()<dt*.6)b.x+=b.dir*2;if(Math.random()<dt*.2)b.dir=-b.dir;
-        const near=[lemos,...peds].some(p=>Math.abs(p.x-b.x)<34&&Math.abs(p.y-b.y)<18);if(near){b.st='f';b.vx=(Math.random()<.5?-1:1)*(70+Math.random()*50);b.vz=70;b.dir=Math.sign(b.vx);b.tx=Math.max(60,Math.min(STREET_W-60,b.x+b.vx*2.4));}}
+        let near=Math.abs(lemos.x-b.x)<34&&Math.abs(lemos.y-b.y)<18;for(let i=0;!near&&i<peds.length;i++){const p=peds[i];near=Math.abs(p.x-b.x)<34&&Math.abs(p.y-b.y)<18;}
+        if(near){b.st='f';b.vx=(Math.random()<.5?-1:1)*(70+Math.random()*50);b.vz=70;b.dir=Math.sign(b.vx);b.tx=Math.max(60,Math.min(STREET_W-60,b.x+b.vx*2.4));}}
       else{b.x+=b.vx*dt;b.z=Math.max(0,b.z+b.vz*dt);if(Math.abs(b.x-b.tx)<60)b.vz=-60;else if(b.z>60)b.vz=0;
         if(b.vz<0&&b.z<=0){b.st='g';b.z=0;b.y=WALK[0]+10+Math.random()*(WALK[1]-WALK[0]-20);}}}
     // trânsito: cada um segue o da frente na mesma faixa; fumacinha do escapamento atrás
@@ -116,81 +161,141 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A}){
       for(let i=0;i<ln.length;i++){const k=ln[i],lead=ln[i-1];let v=k.v0;
         if(lead){const gap=dir>0?lead.x-(k.x+W(k)):k.x-(lead.x+W(lead));if(gap<70)v=Math.min(v,lead.v*(gap<28?0.6:1));}
         k.v+=(v-k.v)*Math.min(1,dt*3);k.x+=dir*k.v*dt;
-        k.puff+=dt;if(k.puff>.45){k.puff=0;puffs.push({x:dir>0?k.x+4:k.x+W(k)-4,y:LANES[l].y-10,vx:-dir*12,t:0});}
+        k.puff+=dt;if(k.puff>.45){k.puff=0;if(puffs.length<40)puffs.push({x:dir>0?k.x+4:k.x+W(k)-4,y:LANES[l].y-10,vx:-dir*12,t:0});}
         if(dir>0&&k.x>STREET_W+60){const back=Math.min(...ln.map(o=>o.x));k.x=Math.min(-W(k)-60,back-W(k)-120)-R()*300;}
         if(dir<0&&k.x<-W(k)-60){const back=Math.max(...ln.map(o=>o.x+W(o)));k.x=Math.max(STREET_W+60,back+120)+R()*300;}}}
     for(const p of puffs){p.t+=dt;p.x+=p.vx*dt;p.y-=dt*5;}while(puffs.length&&puffs[0].t>1)puffs.shift();
+    if(!RM)for(const m of motes){m.p+=dt*m.v;m.x+=dt*.004*m.v;m.y+=Math.sin(m.p)*dt*.004;if(m.x>1)m.x-=1;}
+    if(tapFx&&(tapFx.t+=dt)>.7)tapFx=null;
   }
 
   // enquadramento Beat Cop: ~760 px de mundo na altura (fachadas até o topo, calçada e as faixas);
-  // no retrato a rua inteira cabe na altura. A câmera segue o Lemos.
+  // a escala é inteira (cada pixel da arte vira um bloco igual de pixels da tela: nada tremendo nem com pixel torto).
+  // No retrato a rua inteira cabe na altura. A câmera segue o Lemos.
   const VIEWH=760;
   function view(cw,ch,rs){
-    const s=Math.max(Math.min(ch/VIEWH,cw/760),ch/STREET_H);
+    let s=Math.max(1,Math.round(Math.min(ch/VIEWH,cw/760)));if(ch/s>STREET_H)s=Math.ceil(ch/STREET_H);
     const vw=cw/s,vh=ch/s;
     camX+=(clamp(lemos.x,vw/2,STREET_W-vw/2)-camX)*0.12;camX=clamp(camX,vw/2,STREET_W-vw/2);
-    let top;if(vh>=STREET_H)top=STREET_H-vh;else{const want=clamp(lemos.y-vh*0.6,0,STREET_H-vh);camY=camY==null?want:camY+(want-camY)*0.12;top=clamp(camY,0,STREET_H-vh);}
-    return {s,left:camX-vw/2,top,rs};
+    let top;if(vh>=STREET_H)top=STREET_H-vh;else{/* tela de 3x mostra menos altura: sobe, para o letreiro e as bandeiras não ficarem sob o cabeçalho */const want=clamp(lemos.y-vh*(vh<700?0.74:0.6),0,STREET_H-vh);camY=camY==null?want:camY+(want-camY)*0.12;top=clamp(camY,0,STREET_H-vh);}
+    return {s,left:camX-vw/2,top,rs,vw,vh};
   }
   const clamp=(v,a,b)=>a>b?(a+b)/2:v<a?a:v>b?b:v;
 
+  // camada de sombras projetadas, em meia resolução (as bordas saem macias ao ampliar)
+  const shc=document.createElement('canvas'),shx=shc.getContext('2d');
+  let gradeKey='',gradeSun=null;   // a vinheta é a mesma da base (#vig, em CSS): nada de pintar outra aqui
+  const stats={ents:0,drawn:0,shadows:0,particles:0};
+
   function draw(ctx,cw,ch,rs,marker){
-    const V=view(cw,ch,rs),{s,left}=V;
+    const q=Q();
+    const V=view(cw,ch,rs),{s,left,top,vw}=V;
     ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';ctx.filter='none';
     ctx.fillStyle='#8fa9c4';ctx.fillRect(0,0,cw,ch);ctx.imageSmoothingEnabled=false;
-    const ox=Math.round(-left*s),oyr=Math.round(-V.top*s);
+    const ox=Math.round(-left*s),oyr=Math.round(-top*s);
     ctx.setTransform(s,0,0,s,ox,oyr);
     ctx.drawImage(layer,0,0);
-    // porta do DHPP acesa quando o Lemos entra, e as bandeiras tremulando
+    const x0=left-200,x1=left+vw+200;
+    // porta do DHPP acesa quando o Lemos entra
     if(doorT>0){ctx.fillStyle=`rgba(255,226,160,${.45*doorT})`;ctx.fillRect(DOOR.x-50,GY-76,100,68);}
     for(const f of DHPP.flags||[])flag(ctx,f.x,f.y,f.v);
-    const ents=[],shadow=(x,y,rx,ry,a)=>{ctx.fillStyle=`rgba(0,0,0,${a})`;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,7);ctx.fill();};
-    for(const p of PROPS){const im=art(PATH.prop(p.k));if(!im)continue;ents.push({y:p.y,d:()=>{const w=im.width*PROP_S,h=im.height*PROP_S;shadow(p.x+4,p.y,Math.max(4,w*.45),3,.22);ctx.drawImage(im,Math.round(p.x-w/2),Math.round(p.y-h),Math.round(w),Math.round(h));}});}
-    for(const p of peds)ents.push({y:p.y,d:()=>person(ctx,p)});
-    ents.push({y:lemos.y,d:()=>person(ctx,lemos)});
-    for(const p of parked)ents.push({y:p.y,d:()=>car(ctx,p,p.x,p.y,1,p===viatura)});
-    for(const k of cars){const L=LANES[k.lane];ents.push({y:L.y,d:()=>car(ctx,k,k.x,L.y,L.dir,false)});}
-    for(const b of birds)ents.push({y:b.y,d:()=>bird(ctx,b)});
-    ents.sort((a,b)=>a.y-b.y);for(const e of ents)e.d();
+    // ordem de desenho pelo pé
+    for(const e of ENTS){const r=e.ref;if(e.k==='ped'||e.k==='bird'||e.k==='prop'||e.k==='tree'||e.k==='steam')e.y=r.y;}
+    for(let i=1;i<ENTS.length;i++){const e=ENTS[i];let j=i-1;while(j>=0&&ENTS[j].y>e.y){ENTS[j+1]=ENTS[j];j--;}ENTS[j+1]=e;}
+    // sombras projetadas (média e alta): silhuetas inclinadas na direção do sol, numa camada só (não somam escuro)
+    if(q>=1){const hs=s/2,sw=Math.ceil(cw/2),sh=Math.ceil(ch/2);if(shc.width!==sw||shc.height!==sh){shc.width=sw;shc.height=sh;}
+      shx.setTransform(1,0,0,1,0,0);shx.clearRect(0,0,sw,sh);shx.imageSmoothingEnabled=false;let n=0;
+      const cast=(im,fx,fyy,u0,v0,dw,dh,flip,sx,sy,sww,shh)=>{shx.setTransform(hs,0,0,hs,ox/2,oyr/2);shx.transform(1,0,-SUN.kx,-SUN.ky,fx,fyy);if(flip)shx.scale(-1,1);
+        if(sx!=null)shx.drawImage(silhouette(im),sx,sy,sww,shh,u0,v0,dw,dh);else shx.drawImage(silhouette(im),u0,v0,dw,dh);n++;};
+      for(const e of ENTS){const r=e.ref;
+        if(e.k==='prop'){const im=art(PATH.prop(r.k));if(!im||r.x<x0||r.x>x1||r.dark)continue;const w=im.width*PROP_S,h=im.height*PROP_S;cast(im,r.x,r.y,-w/2,-h,w,h);}
+        else if(e.k==='ped'){if(r.x<x0||r.x>x1)continue;const fr=r.moving?Math.floor(r.walk*3.2)%4:0,im=r.frames[fr];cast(im,Math.round(r.x),Math.round(r.y),-14,-45,im.width,im.height,r.dir<0);}
+        else if(e.k==='tree'){if(r.x<x0||r.x>x1)continue;cast(r.trunk,r.x,r.y,-10,-80,20,80);cast(r.crown,r.x,r.y,-r.crown.width/2,-150,r.crown.width,r.crown.height);}
+        else if(e.k==='car'){const x=r.x;if(x+300<x0||x>x1)continue;const m=meta(r.id),im=art(PATH.veiculo(r.id));if(!im)continue;const w=m.w*CAR_S,h=m.h*CAR_S,dir=r.lane!=null?LANES[r.lane].dir:1;
+          shx.setTransform(hs,0,0,hs,ox/2,oyr/2);shx.transform(1,0,-SUN.kx*.7,-SUN.ky*.8,Math.round(dir<0?x+w:x),e.y);if(dir<0)shx.scale(-1,1);shx.drawImage(silhouette(im),0,0,m.w,m.h,0,-h,w,h);n++;}}
+      ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=true;ctx.globalAlpha=.36;ctx.drawImage(shc,0,0,sw*2,sh*2);ctx.restore();ctx.imageSmoothingEnabled=false;stats.shadows=n;}
+    let drawn=0;
+    for(const e of ENTS){const r=e.ref;
+      switch(e.k){
+        case 'prop':{if(r.x<x0||r.x>x1)break;const im=art(PATH.prop(r.k));if(!im)break;const w=im.width*PROP_S,h=im.height*PROP_S;
+          contact(ctx,r.x+1,r.y,Math.max(4,w*.42),2.5,.3);ctx.drawImage(r.dark?dimmed(im,r.dark):im,Math.round(r.x-w/2),Math.round(r.y-h),Math.round(w),Math.round(h));drawn++;break;}
+        case 'tree':{if(r.x<x0||r.x>x1)break;tree(ctx,r);drawn++;break;}
+        case 'ped':{if(r.x<x0||r.x>x1)break;person(ctx,r);drawn++;break;}
+        case 'car':{const x=r.x;if(x+300<x0||x>x1)break;if(r.lane!=null){const L=LANES[r.lane];car(ctx,r,x,L.y,L.dir,false);}else car(ctx,r,x,r.y,1,r===viatura);drawn++;break;}
+        case 'bird':{if(r.x<x0||r.x>x1)break;bird(ctx,r);drawn++;break;}
+        case 'steam':{if(q>=1&&r.x>x0&&r.x<x1)steam(ctx,r);break;}
+      }}
+    stats.ents=ENTS.length;stats.drawn=drawn;
     const fum=art(PATH.efeito('fumaca-escape'));
-    for(const p of puffs){const u=p.t;if(fum){const f=Math.min(3,Math.floor(u*4));ctx.globalAlpha=1-u;ctx.drawImage(fum,f*12,0,12,8,p.x-9,p.y-6,18,12);ctx.globalAlpha=1;}
+    for(const p of puffs){if(p.x<x0||p.x>x1)continue;const u=p.t;if(fum){const f=Math.min(3,Math.floor(u*4));ctx.globalAlpha=1-u;ctx.drawImage(fum,f*12,0,12,8,p.x-9,p.y-6,18,12);ctx.globalAlpha=1;}
       else{ctx.fillStyle=`rgba(210,210,214,${.45*(1-u)})`;ctx.beginPath();ctx.ellipse(p.x,p.y,3+u*6,2+u*4,0,0,7);ctx.fill();}}
+    // luzes que emitem: neon das lojas (com tremida rara), arandelas do DHPP, vitrines e o giroflex da viatura parada
+    ctx.globalCompositeOperation='lighter';
+    for(const b of BUILDINGS){if(!b.glows||b.X+b.w<x0||b.X>x1)continue;for(const gl of b.glows){
+      let a=gl.neon?.34:gl.lamp?.3:.12;if(gl.neon&&!RM&&q>=1){const ph=Math.sin(t*1.3+gl.x)*Math.sin(t*7.1+gl.y);if(ph>.93)a*=.35;}
+      const sp=glowSprite(rgba(gl.c,1));ctx.globalAlpha=a;const r=gl.r;ctx.drawImage(sp,gl.x-r,gl.y-r*.7,r*2,r*1.4);
+      if(gl.lamp){ctx.globalAlpha=a*.5;ctx.drawImage(sp,gl.x-r*.8,GY-6,r*1.6,r*.5);}}}
+    if(q>=1&&viatura.x+200>x0&&viatura.x<x1){const red=(2+Math.floor(t*2.5)%2)===2,m=meta(viatura.id),cx=viatura.x+(red?67:85)*CAR_S,cyy=viatura.y-m.h*CAR_S+6*CAR_S;
+      const sp=glowSprite(red?'rgba(255,60,50,1)':'rgba(60,110,255,1)');ctx.globalAlpha=.5;ctx.drawImage(sp,cx-18,cyy-14,36,28);
+      ctx.globalAlpha=.16;ctx.drawImage(sp,cx-130,viatura.y-90,260,110);ctx.globalAlpha=.08;ctx.drawImage(sp,cx-160,GY-130,320,190);}
+    ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+    // retorno do toque: um anel no chão onde o Lemos vai
+    if(tapFx){const k=tapFx.t/.7;ctx.strokeStyle=`rgba(242,194,48,${.9*(1-k)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(tapFx.x,tapFx.y,6+k*14,2+k*5,0,0,7);ctx.stroke();}
     if(marker){const b=Math.round(Math.sin(t*6)*2),X=DOOR.x,Y=GY-160+b;ctx.fillStyle='#1e1611';ctx.beginPath();ctx.moveTo(X,Y+9);ctx.lineTo(X-8,Y);ctx.lineTo(X,Y-9);ctx.lineTo(X+8,Y);ctx.fill();
       ctx.fillStyle='#f2c230';ctx.beginPath();ctx.moveTo(X,Y+7);ctx.lineTo(X-6,Y);ctx.lineTo(X,Y-7);ctx.lineTo(X+6,Y);ctx.fill();ctx.fillStyle='#1e1611';ctx.fillRect(X-1,Y-4,2,6);ctx.fillRect(X-1,Y+3,2,1.5);}
-    // luz da manhã, como o clima de cor da planta
-    ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='soft-light';
-    const sun=ctx.createLinearGradient(0,0,cw,ch);sun.addColorStop(0,'rgba(255,214,150,.34)');sun.addColorStop(.6,'rgba(255,224,176,.08)');sun.addColorStop(1,'rgba(90,120,170,.18)');
-    ctx.fillStyle=sun;ctx.fillRect(0,0,cw,ch);ctx.globalCompositeOperation='source-over';
+    // fachos de luz da manhã descendo do alto à esquerda, e a poeira que só aparece dentro deles
+    let np=0;
+    if(q>=2){ctx.globalCompositeOperation='screen';const br=RM?1:.85+.15*Math.sin(t*.4);
+      for(const [sx,wd,a] of [[200,140,.07],[900,90,.05],[1700,160,.06],[2300,110,.05]]){if(sx+wd+700<x0||sx-200>x1)continue;
+        ctx.fillStyle=`rgba(255,232,190,${a*br})`;for(const f of [1,.6]){const ww=wd*f;ctx.beginPath();ctx.moveTo(sx-ww/2,top-40);ctx.lineTo(sx+ww/2,top-40);ctx.lineTo(sx+ww/2+(CURB-top)*.55,CURB);ctx.lineTo(sx-ww/2+(CURB-top)*.55,CURB);ctx.closePath();ctx.fill();}}
+      for(const m of motes){const X=left+m.x*vw,Y=top+m.y*(CURB-top);const a=.25+.25*Math.sin(m.p*2);ctx.fillStyle=`rgba(255,244,220,${a})`;ctx.fillRect(Math.round(X),Math.round(Y),1,1);np++;}
+      ctx.globalCompositeOperation='source-over';}
+    stats.particles=np+puffs.length;
+    // luz da manhã, como o clima de cor da planta (gradientes guardados por tamanho de tela)
+    ctx.setTransform(1,0,0,1,0,0);
+    const key=cw+'x'+ch;if(key!==gradeKey){gradeKey=key;gradeSun=ctx.createLinearGradient(0,0,cw,ch);gradeSun.addColorStop(0,'rgba(255,214,150,.34)');gradeSun.addColorStop(.6,'rgba(255,224,176,.08)');gradeSun.addColorStop(1,'rgba(90,120,170,.18)');
+}
+    ctx.globalCompositeOperation='soft-light';ctx.fillStyle=gradeSun;ctx.fillRect(0,0,cw,ch);ctx.globalCompositeOperation='source-over';
     ctx.restore();
     lastView={...V,oy:oyr,ox,cw,ch};
   }
   let lastView=null;
+  const contact=(ctx,x,y,rx,ry,a)=>{ctx.fillStyle=`rgba(16,12,20,${a})`;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,7);ctx.fill();};
 
   // bandeira da planta (Brasil e DHPP): pano coluna a coluna numa onda, com luz e sombra nas dobras
   const cloths={};
   function flag(ctx,X,Y,v){let cl=cloths[v];
     if(!cl)cl=cloths[v]=A.S2(17,12,(P)=>{if(v==='br'){P(0,0,17,12,'#2f7a3a');for(let k=0;k<5;k++)P(8-k*2,3+k-2,1+k*4,1,'#e8c63a');for(let k=0;k<4;k++)P(4+k*2,6+k,9-k*4,1,'#e8c63a');P(5,4,7,4,'#e8c63a');P(6,4,5,4,'#2f4f9a');P(6,6,5,1,'#e8ecef');}
       else{P(0,0,17,12,'#1e2a3a');P(0,0,17,1,'#3a4f6a');P(4,3,9,1,'#e8ecef');P(4,6,9,1,'#c9a24a');P(4,9,9,1,'#e8ecef');}});
-    const S=2;for(let i=0;i<17;i++){const ph=t*8.6-i*0.5,dy=Math.round(Math.sin(ph)*2*(i/16));ctx.drawImage(cl,i,0,1,12,X+i*S,Y+dy,S,12*S);
+    const S=2;for(let i=0;i<17;i++){const ph=t*8.6-i*0.5,dy=Math.round(Math.sin(ph)*2*(i/16));
+      ctx.fillStyle='rgba(28,18,14,.18)';ctx.fillRect(X+i*S+6,Y+dy+10,S,12*S);              // sombra do pano na fachada
+      ctx.drawImage(cl,i,0,1,12,X+i*S,Y+dy,S,12*S);
       if(Math.cos(ph)<-0.3){ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillRect(X+i*S,Y+dy,S,12*S);}else if(Math.cos(ph)>0.7){ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(X+i*S,Y+dy,S,12*S);}}}
-  // carro oficial (rodas girando; a viatura parada com o giroflex alternando), ampliado sem suavizar, com sombra
+  // árvore: tronco parado, copa balançando 1 px com o vento
+  function tree(ctx,r){
+    contact(ctx,r.x,r.y-2,9,3,.35);ctx.drawImage(r.trunk,Math.round(r.x-10),Math.round(r.y-80));
+    const sway=RM?0:Math.round(Math.sin(t*.9+r.ph)*1.2);ctx.drawImage(r.crown,Math.round(r.x-r.crown.width/2+sway),Math.round(r.y-150));
+  }
+  // carro oficial (rodas girando; a viatura parada com o giroflex alternando), ampliado sem suavizar, com volume e sombra
   function car(ctx,k,x,y,dir,isViatura){
     const m=meta(k.id),im=art(PATH.veiculo(k.id));const w=m.w*CAR_S,h=m.h*CAR_S;
-    ctx.fillStyle='rgba(0,0,0,.32)';ctx.beginPath();ctx.ellipse(x+w/2+4,y-3,w/2,7,0,0,7);ctx.fill();
+    contact(ctx,x+w/2,y-3,w*.44,4,.42);contact(ctx,x+w/2,y-2,w*.36,2,.3);
     if(!im)return;
     const f=isViatura?2+Math.floor(t*2.5)%2:(k.v?Math.floor(t*10)%2:0);
     ctx.save();ctx.translate(Math.round(dir<0?x+w:x),Math.round(y-h));if(dir<0)ctx.scale(-1,1);
-    ctx.drawImage(im,f*m.w,0,m.w,m.h,0,0,Math.round(w),Math.round(h));ctx.restore();
+    ctx.drawImage(Q()>=1?shaded(im):im,f*m.w,0,m.w,m.h,0,0,Math.round(w),Math.round(h));ctx.restore();
   }
-  // pessoa: o boneco da planta, com sombra no pé e o quadro do passo, espelhado para a esquerda
+  // pessoa: o boneco da planta, com sombra de contato no pé e o quadro do passo, espelhado para a esquerda
   function person(ctx,p){
     const fr=p.moving?Math.floor(p.walk*3.2)%4:0,img=p.frames[fr],X=Math.round(p.x),Y=Math.round(p.y);
-    ctx.fillStyle='rgba(0,0,0,.24)';ctx.beginPath();ctx.ellipse(X+5,Y-1,12,3.5,0,0,7);ctx.fill();
+    contact(ctx,X+2,Y-1,9,2.6,.34);
     if(p.dir<0){ctx.save();ctx.translate(X,0);ctx.scale(-1,1);ctx.drawImage(img,-14,Y-45);ctx.restore();}else ctx.drawImage(img,X-14,Y-45);
   }
+  // vapor do bueiro (efeito oficial, 6 quadros), subindo devagar
+  function steam(ctx,m){const im=art(PATH.efeito('vapor-bueiro'));if(!im)return;const f=Math.floor(t*7)%6;ctx.globalAlpha=.75;ctx.drawImage(im,f*24,0,24,40,Math.round(m.x-16),Math.round(m.y-50),31,52);ctx.globalAlpha=1;}
   function bird(ctx,b){
     const X=Math.round(b.x),Y=Math.round(b.y),z=Math.round(b.z),d=b.dir;
-    ctx.globalAlpha=0.28*Math.max(0.2,1-b.z/90);ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(X,Y,5,1.6,0,0,7);ctx.fill();ctx.globalAlpha=1;
+    ctx.globalAlpha=0.28*Math.max(0.2,1-b.z/90);ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(X+z*SUN.kx,Y+z*SUN.ky,5,1.6,0,0,7);ctx.fill();ctx.globalAlpha=1;
     const y=Y-z-6,peck=b.st==='g'&&(b.t%50)<8,fly=b.st!=='g',up=(Math.floor(b.t/4))%2,F=(x,yy,w,h,c)=>{ctx.fillStyle=c;ctx.fillRect(x,yy,w,h);};
     if(fly){F(X-7,up?y-5:y+1,14,4,'#1e1611');F(X-6,up?y-4:y+2,12,2,'#a3a9b0');}
     F(X-5-(d>0?1:0),y-1,11,7,'#1e1611');F(X-4,y,9,5,'#8a9098');F(X-3,y,6,2,'#a3a9b0');F(d>0?X-5:X+3,y+1,3,2,'#5a6068');
@@ -200,8 +305,8 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A}){
   /** toque na tela (px do canvas): no prédio do DHPP vai até a porta e entra; na calçada anda até lá */
   function tap(px,py){
     if(!lastView||lemos.climb)return;const {s,ox,oy}=lastView,wx=(px-ox)/s,wy=(py-oy)/s;
-    if(wx>=DHPP.X&&wx<=DHPP.X+DHPP.w&&wy<GY+8){lemos.tx=DOOR.x;lemos.ty=DOOR.y;lemos.enter=true;return;}
-    lemos.tx=clamp(wx,12,STREET_W-12);lemos.ty=clamp(wy,WALK[0],WALK[1]);lemos.enter=false;
+    if(wx>=DHPP.X&&wx<=DHPP.X+DHPP.w&&wy<GY+8){lemos.tx=DOOR.x;lemos.ty=DOOR.y;lemos.enter=true;tapFx={x:DOOR.x,y:DOOR.y,t:0};return;}
+    lemos.tx=clamp(wx,12,STREET_W-12);lemos.ty=clamp(wy,WALK[0],WALK[1]);lemos.enter=false;tapFx={x:lemos.tx,y:lemos.ty,t:0};
   }
   /** posiciona Lemos: 'porta' (saindo do DHPP) ou 'carro' (chegando na viatura) */
   function place(where){
@@ -210,5 +315,5 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A}){
     else{lemos.x=viatura.x+W(viatura)/2;lemos.y=WALK[1];lemos.dir=1;}
     camX=lemos.x;camY=null;
   }
-  return {update,draw,tap,place,lemos,door:DOOR,ready,get view(){return lastView;},get cars(){return cars;},parked,peds,birds,get t(){return t;},zoom:()=>getZoom?getZoom():1};
+  return {update,draw,tap,place,lemos,door:DOOR,ready,stats,shadowLayer:shc,get view(){return lastView;},get cars(){return cars;},parked,peds,birds,trees,get t(){return t;},zoom:()=>getZoom?getZoom():1};
 }

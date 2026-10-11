@@ -5,6 +5,8 @@ import { applyRequest, applyTopic, caseTeam, requestOk, teamDialogues, teamMater
 import { readCase, writeCase } from '../case/caseSave';
 import { depoPeople, summon } from '../case/depositions';
 import { createStreet } from './street';
+import { applyQuality, getQuality, onQualityChange } from '../characters/quality';
+import { perfHud } from '../perfHud';
 (() => {
 'use strict';
 const T=32,TH=22,K=TH/T,RISE=16,CAPH=8,W=34,H=26,N=W*H;
@@ -25,6 +27,14 @@ if(FXMODE==='gl')import('./post').then(m=>{try{POST=m.createPost(cv);}catch(e){P
 // soft: cor aplicada em luz suave por cima da cena (versão 2D); tint: o mesmo clima na versão WebGL
 const GRADE={interro:{tint:[0.93,0.99,1.08],soft:[60,92,140,0.3],bloom:0.7,vig:0.62},sonia:{tint:[1.06,1.0,0.92],soft:[255,176,112,0.2],bloom:0.55,vig:0.45},arquivo:{tint:[1.06,1.0,0.88],soft:[224,176,96,0.22],bloom:0.6,vig:0.5},pericia:{tint:[0.97,1.0,1.04],soft:[168,200,232,0.14],bloom:0.4,vig:0.38},equipe:{tint:[0.99,1.0,1.02],soft:[160,184,216,0.1],bloom:0.5,vig:0.42},hall:{tint:[1.02,1.0,0.97],soft:[255,216,168,0.12],bloom:0.48,vig:0.4},fora:{tint:[1.03,1.0,0.96],soft:[255,224,176,0.14],bloom:0.45,vig:0.36}};
 const FX={dof:0.6,fy:0.6,ms:0,n:0,tint:[1,1,1],soft:[255,216,168,0.12],bloom:0.5,vig:0.42,sx:0,sy:0,band:0.19,vigS:-1},POST_SUB=[0,0],FX_FORCE=FXMODE==='gl';
+// qualidade gráfica escolhida pelo jogador (Ajustes): vale para a rua, a planta e os efeitos
+// baixa: resolução até 2x (pixels nítidos ampliados), sem profundidade de campo, poeira, reflexos nem luz de contorno;
+// média: sem profundidade de campo e metade da poeira; alta: tudo. Ver docs/GRAPHICS_UPGRADE.md.
+let QUAL=getQuality();applyQuality(QUAL);
+const QLOW=()=>QUAL==='low',QHIGH=()=>QUAL==='high';
+onQualityChange(q=>{QUAL=q;if(typeof applyLayout==='function')applyLayout(false);});
+// ?perf=1: tempo por quadro e o que a cena desenha
+perfHud(()=>{const st=SCENE==='rua'&&STREET?STREET.stats:null;return `qualidade ${QUAL} · cena ${SCENE} · RS ${RS}`+(st?`\nsprites ${st.drawn}/${st.ents} · sombras ${st.shadows} · partículas ${st.particles}`:` · zoom ${cam.z.toFixed(2)} · detalhe ${LODV}`);});
 const RS_FORCE=(location.search.match(/[?&]rs=([\d.]+)/)||[])[1];
 let dpr=1,RS=1;
 // resolução de desenho: com o WebGL ligado, o 2D é desenhado em até 2x e o shader amplia nítido até a tela.
@@ -547,9 +557,13 @@ function buildGround(){
   for(let i=0;i<N;i++)if(floor[i]===F.DOOR){const x=(i%W)*T,y=((i/W)|0)*T;g.fillStyle='rgba(40,28,18,.55)';
     if((i%W)===15||(i%W)===16){g.fillRect(x,y+24,T,5);g.fillStyle='#c9a24a';g.fillRect(x,y+24,T,1);}else{g.fillRect(x+12,y,8,T);g.fillStyle='#c9a24a';g.fillRect(x+12,y,1,T);g.fillRect(x+19,y,1,T);}}
   // sombras de contato sob os móveis
+  // oclusão de ambiente macia (desfoque da sombra do canvas, que o Safari também faz): uma mancha larga sob a pegada e
+  // uma faixa mais escura e justa onde o móvel encosta no chão. Pintada uma vez no piso.
+  const OFF=4000;g.save();g.shadowOffsetX=OFF;
   for(const o of objs){if(o.far||o.t==='flag')continue;const x=o.x*T,y=o.y*T,w2=o.w*T,h2=o.h*T;
-    for(let k=4;k>=1;k--){g.fillStyle=`rgba(0,0,0,${0.05})`;g.fillRect(x-k+2,y+h2*0.35-k,w2+k*2-4,h2*0.75+k*2);}
-    g.fillStyle='rgba(0,0,0,.10)';g.fillRect(x+2,y+h2-6,w2-4,6);}
+    g.shadowColor='rgba(16,10,6,.38)';g.shadowBlur=9;g.fillStyle='#000';g.fillRect(x+3-OFF,y+h2*0.45,w2-6,h2*0.55+5);
+    g.shadowColor='rgba(16,10,6,.42)';g.shadowBlur=3;g.fillRect(x+4-OFF,y+h2-3,w2-8,5);}
+  g.restore();
   return c;
 }
 
@@ -1199,9 +1213,10 @@ function glowPass(){
     const sh=1-0.75*sunShade(x*T),y0=2*TH-2;if(!GR.beam){GR.beam=ctx.createLinearGradient(0,y0,0,y0+76);GR.beam.addColorStop(0,'rgba(255,228,180,.22)');GR.beam.addColorStop(1,'rgba(255,228,180,0)');}ctx.globalAlpha=sh;ctx.fillStyle=GR.beam;
     ctx.beginPath();ctx.moveTo(x*T+6,y0);ctx.lineTo(x*T+26,y0);ctx.lineTo(x*T+26+34,y0+76);ctx.lineTo(x*T+6+34,y0+76);ctx.closePath();ctx.fill();ctx.restore();}
   ctx.fillStyle='rgba(255,240,210,.85)';
-  for(const d of DUST){d.u=(d.u+d.s)%1;const w=((d.v+Math.sin(frame/90+d.ph)*0.06)%1+1)%1,tw=0.65+0.35*Math.sin(frame/17+d.ph*5);ctx.globalAlpha=(d.big?0.35:0.6)*tw*(1-d.u)*Math.min(1,d.u*6)*(1-0.7*sunShade(d.w*T));const sz=d.big?2:1;ctx.fillRect(Math.round(d.w*T+6+w*20+d.u*34),Math.round(2*TH-2+d.u*76),sz,sz);}
+  const dustN=QLOW()?0:QHIGH()?DUST.length:DUST.length>>1;
+  for(let di=0;di<dustN;di++){const d=DUST[di];d.u=(d.u+d.s)%1;const w=((d.v+Math.sin(frame/90+d.ph)*0.06)%1+1)%1,tw=0.65+0.35*Math.sin(frame/17+d.ph*5);ctx.globalAlpha=(d.big?0.35:0.6)*tw*(1-d.u)*Math.min(1,d.u*6)*(1-0.7*sunShade(d.w*T));const sz=d.big?2:1;ctx.fillRect(Math.round(d.w*T+6+w*20+d.u*34),Math.round(2*TH-2+d.u*76),sz,sz);}
   // poeira no ar de cada sala, acesa onde há luz
-  ctx.fillStyle='#fff4dc';for(const m of MOTES){const tw=0.5+0.5*Math.sin(frame/23+m.ph*7);ctx.globalAlpha=(m.r==='interro'?0.26:0.42)*tw*(m.big?0.6:1);const sz=m.big?2:1;ctx.fillRect(Math.round(m.x),Math.round(m.y-m.z),sz,sz);}
+  ctx.fillStyle='#fff4dc';const moteStep=QLOW()?0:QHIGH()?1:2;if(moteStep)for(let mi=0;mi<MOTES.length;mi+=moteStep){const m=MOTES[mi];const tw=0.5+0.5*Math.sin(frame/23+m.ph*7);ctx.globalAlpha=(m.r==='interro'?0.26:0.42)*tw*(m.big?0.6:1);const sz=m.big?2:1;ctx.fillRect(Math.round(m.x),Math.round(m.y-m.z),sz,sz);}
   // reflexo das lâmpadas no piso encerado
   for(const l of LIGHTS)if(GLOSSY.has(l[5])&&l[2]>2.5){ctx.globalAlpha=0.07*l[4];const r=l[2]*T*0.55;ctx.drawImage(lightSprite(LC_WHITE),l[0]*T-r,l[1]*TH-r*0.3,r*2,r*0.6);}
   // tela do monitor de Lemos, de frente, e o reflexo azul do da recepção
@@ -1427,11 +1442,11 @@ function drawPerson(p,sit,id){
   const X=DP(p.x*T+16),Y=DP(p.y*TH+TH-2);
   const bob=p.moving?((Math.floor(p.walk*3.2)%2)?-1:0):sit?dy:(Math.sin(frame/26+(id||0)*1.7)>0.55?-1:0);
   const hdA=clamp((LODE-2.2)/0.35,0,1),img=hdA>=1?framesHDFor(p)[f]:fr[f],dw=fr[f].width,dh=fr[f].height;
-  if(!sit){if(GLOSSY.has(room[ti(p)]))drawReflect(fr[f],X,Y,p.dir<0,dw,dh);drawCast(fr[f],X,Y,p.dir<0,castFrom(p),dw,dh);ctx.drawImage(SHADOW,X-11,Y-5);}
+  if(!sit){if(!QLOW()&&GLOSSY.has(room[ti(p)]))drawReflect(fr[f],X,Y,p.dir<0,dw,dh);drawCast(fr[f],X,Y,p.dir<0,castFrom(p),dw,dh);ctx.drawImage(SHADOW,X-11,Y-5);}
   if(p.mop){const mx=X+p.dir*10,sw=p.moving?Math.sin(frame/5)*3:0;ctx.strokeStyle='#8a6a4a';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(X+p.dir*4,Y-26);ctx.lineTo(mx+sw,Y-2);ctx.stroke();ctx.fillStyle='#d8d0c0';ctx.fillRect(Math.round(mx+sw-5),Y-3,10,3);ctx.fillStyle='#b8b0a0';ctx.fillRect(Math.round(mx+sw-5),Y-1,10,1);}
   const dw0=dofW(Y-22),put=(im,nb)=>{const w=nb?0:dw0;if(p.dir<0){ctx.save();ctx.translate(X,0);ctx.scale(-1,1);drawB(im,-14,Y-45+bob,w,dw,dh);ctx.restore();}else drawB(im,X-14,Y-45+bob,w,dw,dh);};
   put(img);if(hdA>0&&hdA<1){ctx.save();ctx.globalAlpha=hdA;put(framesHDFor(p)[f]);ctx.restore();}
-  if(LODV>=1){const rl=rimLight(p);if(rl&&rl.a>0.05){const st=Math.max(1,Math.round(img.width/dw));ctx.save();ctx.globalAlpha=rl.a;if(dw0<0.5)put(rimImg(img,p.dir<0?-rl.lx:rl.lx,rl.ly,rl.col,st),true);ctx.restore();}}
+  if(LODV>=1&&!QLOW()){const rl=rimLight(p);if(rl&&rl.a>0.05){const st=Math.max(1,Math.round(img.width/dw));ctx.save();ctx.globalAlpha=rl.a;if(dw0<0.5)put(rimImg(img,p.dir<0?-rl.lx:rl.lx,rl.ly,rl.col,st),true);ctx.restore();}}
   // piscar
   if(p.pose==='drink'&&LODV>=1){const cx=X+(p.dir<0?-2:2),cy=Y-45+bob+(sit?4:0)+3+6;ctx.fillStyle='rgba(255,255,255,.35)';for(let k=0;k<3;k++){const ph=(frame/14+k*0.33)%1;ctx.globalAlpha=1-ph;ctx.fillRect(Math.round(cx+Math.sin(frame/9+k*2)*1.2),Math.round(cy-ph*7),1,1);}ctx.globalAlpha=1;}
   if(LODV>=2&&!p.moving&&((frame+(id||0)*53)%190)<6){const sk=p.look.skin,cy=isSitF(f)?4:0;ctx.fillStyle=sk;
@@ -1471,7 +1486,7 @@ function render(){
   FX.sx=oxf-ox;FX.sy=oyf-oy;
   LODE=s/RS;LODV=lodOf(LODE);SC=s;UIK=Math.min(1,2.2/LODE);
   const SPR=()=>{ctx.setTransform(s,0,0,s,ox,oy);ctx.imageSmoothingEnabled=false;};
-  DOF_S=s;DOF_OY=oy;DOF_ON=FXMODE==='2d'&&!POST&&FX.dof>0.02;
+  DOF_S=s;DOF_OY=oy;DOF_ON=FXMODE==='2d'&&!POST&&FX.dof>0.02&&QHIGH();
   ctx.setTransform(s,0,0,s*K,ox,oy);ctx.imageSmoothingEnabled=false;ctx.drawImage(BG,0,0);dofGround(s,ox,oy);SPR();drawFloorFX();
   if(!ROWS){ROWS=Array.from({length:H},()=>({o:[],p:[],x:[]}));for(const o of objs)if(o.spr)ROWS[clamp(o.y+o.h-1,0,H-1)].o.push(o);}
   for(const r of ROWS){r.p.length=0;r.x.length=0;}
@@ -1514,7 +1529,7 @@ function isSeat(n){const i=ti(n);return objs.some(o=>o.nocc&&idx(o.x,o.y)===i);}
 let lastRoom='',lastClk='';
 /* ---------- Rua (lado de fora) ⇄ planta (lado de dentro) ---------- */
 let SCENE='rua',STREET=null;
-const street=()=>STREET||(STREET=createStreet({lemosLook:LOOK.lemos,personFrames,getZoom:()=>cam.z,onEnter:()=>enterBase(),art:{S2,refine,outlined,bush,hash,mulberry32,txt,txtW,sign:()=>SIGN,door:()=>DOORSPR}}));
+const street=()=>STREET||(STREET=createStreet({lemosLook:LOOK.lemos,personFrames,getZoom:()=>cam.z,onEnter:()=>enterBase(),art:{S2,refine,outlined,bush,hash,mulberry32,txt,txtW,sign:()=>SIGN,door:()=>DOORSPR},quality:()=>QUAL}));
 // a rua (street.js) vem da direção americana aprovada; a arte oficial de public/base/rua/ entra quando chega
 const streetView=()=>street();
 const FADE=document.createElement('div');FADE.id='fade';FADE.setAttribute('aria-hidden','true');appEl.appendChild(FADE);
@@ -1546,7 +1561,7 @@ function loop(now){
   if(depoOpen){last=now;requestAnimationFrame(loop);return;}
   // o relógio pode ser reiniciado fora do quadro (passagem rua ⇄ planta): o passo nunca anda para trás
   const raw=Math.max(0,now-last),dt=Math.min(0.1,raw/1000);last=now;adaptRS(raw);
-  if(SCENE==='rua'){const st=street();st.update(dt);streetView().draw(ctx,cv.width,cv.height,RS,started);frame++;if(frame%6===0){const c=clockStr();if(c!==lastClk){lastClk=c;$('#clk').textContent=c;}}
+  if(SCENE==='rua'){if(FX.vigS!==0.5){FX.vigS=0.5;VIG.style.opacity=0.5;}const st=street();st.update(dt);streetView().draw(ctx,cv.width,cv.height,RS,started);frame++;if(frame%6===0){const c=clockStr();if(c!==lastClk){lastClk=c;$('#clk').textContent=c;}}
     lastClock+=dt;if(lastClock>3){lastClock=0;gameMin++;}requestAnimationFrame(loop);return;}
   update(dt);updFX();updAtmo();stepZoom();followCam(dt);if(started)primeBlur();frame++;const r0=performance.now();render();PROF.r2d+=(performance.now()-r0-PROF.r2d)*0.05;postFX(dt);if(talk)updLink();if(frame%6===0)updateUI();
   requestAnimationFrame(loop);
@@ -1609,6 +1624,7 @@ function dofGround(s,ox,oy){
 // prepara as versões desfocadas aos poucos, sem travar quadros
 const BLURQ=[];let blurPrimed=false;
 function primeBlur(){
+  if(!QHIGH())return;   // as versões desfocadas só existem para a profundidade de campo (alta)
   if(!blurPrimed){blurPrimed=true;if(FXMODE!=='2d'||POST)return;BLURQ.push(BG);for(const w of WALLROWS)if(w)BLURQ.push(w);for(const o of objs)if(o.spr)BLURQ.push(o.spr.c);for(const n of [P1,...NPCS])for(const f of framesFor(n))BLURQ.push(f);}
   const t0=performance.now();while(BLURQ.length&&performance.now()-t0<3)blurOf(BLURQ.shift());
 }
@@ -1632,7 +1648,7 @@ function applyLayout(force){
   document.body.classList.toggle('rot',!!ROT);setInsets();
   const L=VW()>VH();document.body.classList.toggle('land',L);document.body.classList.toggle('narrow',VW()<560);document.body.classList.toggle('tiny',VW()<400);document.body.classList.toggle('short',VH()<720);document.body.classList.toggle('low',VH()<420);
   $('#rot').hidden=SW()>SH();
-  dpr=Math.min(window.devicePixelRatio||1,3);sizeCanvas();
+  dpr=Math.min(window.devicePixelRatio||1,QLOW()?2:3);sizeCanvas();
   const ht=$('.hud');HUDT=ht?ht.offsetTop+ht.offsetHeight+4:58;
   fitCard();
   if(force||L!==lastL){lastL=L;fitView();}else clampCam();
@@ -1655,6 +1671,6 @@ $('#b-start').addEventListener('click',()=>{
   else{street().place('carro');setWhere('Rua do DHPP');}
   setTimeout(()=>toast('Sônia Prado','Lemos, na minha sala. A equipe já está com o material da casa.',{img:'/sonia.jpg',col:'#c9a24a'}),1200);
 });
-window.__base={get scene(){return SCENE;},setScene:s=>{if(s==='base')enterBase(true);else{SCENE='rua';street().place('porta');}},street:()=>street(),startDepo,get CASE(){return CASE;},VIS:()=>VIS,get P1(){return P1;},NPCS:()=>NPCS,cam,goTalk,goTile,openTalk,openGallery,FOUND,get started(){return started;},objs:()=>objs,tap,idx,W,H,T,TH,ti,passable,zoomTo,get ROT(){return ROT;},get LODV(){return LODV;},get FITZ(){return FITZ;},get GL(){return !!POST;},prof:()=>({r2d:+PROF.r2d.toFixed(2),post:+FX.ms.toFixed(2),frame:+frameMs.toFixed(2),RS})};
+window.__base={get BG(){return BG;},get scene(){return SCENE;},setScene:s=>{if(s==='base')enterBase(true);else{SCENE='rua';street().place('porta');}},street:()=>street(),startDepo,get CASE(){return CASE;},VIS:()=>VIS,get P1(){return P1;},NPCS:()=>NPCS,cam,goTalk,goTile,openTalk,openGallery,FOUND,get started(){return started;},objs:()=>objs,tap,idx,W,H,T,TH,ti,passable,zoomTo,get ROT(){return ROT;},get LODV(){return LODV;},get FITZ(){return FITZ;},get GL(){return !!POST;},prof:()=>({r2d:+PROF.r2d.toFixed(2),post:+FX.ms.toFixed(2),frame:+frameMs.toFixed(2),RS})};
 requestAnimationFrame(loop);
 })();
