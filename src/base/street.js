@@ -83,7 +83,7 @@ const SCALE=38/46; // o boneco provisório (o da planta, 46 px) reduzido para a 
 /** art: as funções de desenho da base (S2, refine, outlined, bush, hash, mulberry32, txt, txtW) */
 export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A}){
   const facades=BUILDINGS.map(b=>facadeSprite(A,b));
-  const props=PROPS.map(p=>({...p,spr:propSprite(A,p.k==='semaforo'?'semaforo':p.k),sign:p.sign?propSprite(A,'placa-rua',p.sign):null}));
+  const props=PROPS.map(p=>({...p,spr:propSprite(A,p.k==='semaforo'?'semaforo':p.k),name:p.sign,sign:p.sign?propSprite(A,'placa-rua',p.sign):null}));
   const lights=[0,1,2].map(i=>propSprite(A,'semaforo',i));
   let layer=buildStatic();
   // quando a arte oficial termina de carregar, o fundo é refeito com ela
@@ -210,7 +210,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A}){
     for(const p of props){const of=art(p.k==='semaforo'?PATH.semaforo():PATH.prop(p.k));
       ents.push({y:p.y,d:()=>{const w=of?(p.k==='semaforo'?18:of.width):p.spr.width,h=of?of.height:p.spr.height;shadow(p.x+3,p.y,Math.max(3,w*.45),2,.2);
         if(p.k==='semaforo'){const st=Math.floor((t/4+p.x/300)%3);if(of)ctx.drawImage(of,st*18,0,18,96,p.x-9,p.y-96,18,96);else ctx.drawImage(lights[st],Math.round(p.x-9),p.y-lights[st].height);
-          const ps=art(PATH.placa(p.sign==='N 9TH ST'?'n-9th-st':'w-oak-st'));if(ps)ctx.drawImage(ps,p.x-22,p.y-104);else if(p.sign)ctx.drawImage(p.sign,Math.round(p.x-22),p.y-106);}
+          const ps=p.name&&art(PATH.placa(p.name==='N 9TH ST'?'n-9th-st':'w-oak-st'));if(ps)ctx.drawImage(ps,p.x-22,p.y-104);else if(p.sign)ctx.drawImage(p.sign,Math.round(p.x-22),p.y-106);}
         else if(of)ctx.drawImage(of,Math.round(p.x-of.width/2),p.y-of.height);else ctx.drawImage(p.spr,Math.round(p.x-p.spr.width/2),p.y-p.spr.height);}});}
     for(const p of peds)ents.push({y:p.y,d:()=>person(ctx,p)});
     for(const g of guards)ents.push({y:g.y,d:()=>person(ctx,g,true)});
