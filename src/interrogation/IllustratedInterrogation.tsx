@@ -219,6 +219,8 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
   // olhar do Lemos: enquanto ele escolhe a pergunta, o foco desce para o caderno; quando o depoente fala, volta para o rosto
   const picking = phase==='idle' && tab==='ask' && !review && !showFarewell && (!finished || retaking) && !tutorial
   const focus = busy ? ' ii-listen' : picking ? ' ii-pick' : ''
+  const cameraBeat = phase==='answering' ? ' ii-answering' : phase==='asking' ? ' ii-asking' : ''
+  const tensionFrame = (progress.pressure ?? 0)>=60 ? ' ii-tight' : ''
 
   const hud = !character.portrait.hasBakedHud
   // depoimento já encerrado: o resumo vira um arquivo em papel, sem o retrato
@@ -267,9 +269,9 @@ export default function IllustratedInterrogation({config,progress,onProgress,onC
     </main>
   )
   return (
-    <main className={'ii ii-room'+focus+(flicker?' ii-flicker':'')+(!busy && review && tab==='ask' ? ' ii-review' : '')} style={{'--p':(progress.pressure ?? 0)/100} as CSSProperties}>
+    <main className={'ii ii-room'+focus+cameraBeat+tensionFrame+(flicker?' ii-flicker':'')+(!busy && review && tab==='ask' ? ' ii-review' : '')} style={{'--p':(progress.pressure ?? 0)/100} as CSSProperties}>
       <section className="ii-stage">
-        {/* sala de depoimentos vista pelos olhos do Lemos: a câmera respira junto com ele */}
+        {/* sala de depoimentos vista pelos olhos do Lemos: enquadramento motivado pela fase, sem balanço constante */}
         <div className="ii-scene">
           <div className="ii-far">
             <div className="ii-wall" aria-hidden="true"/>

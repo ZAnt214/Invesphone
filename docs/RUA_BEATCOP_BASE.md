@@ -31,7 +31,7 @@ O quarteirão, em ordem: GROCERY 240, apt 260, DINER 280, beco 110, DHPP 620, be
 
 ## Câmera
 
-Mostra cerca de 760 px de mundo na altura, o que deixa as fachadas até o topo da tela e a calçada e as faixas visíveis. A câmera segue o Lemos na horizontal e na vertical, com ele a 60% da altura. Quando a altura da tela comporta a rua inteira, ela aparece toda. A tela é girada para paisagem, como na base.
+Mostra cerca de 760 px de mundo na altura, o que deixa as fachadas até o topo da tela e a calçada e as faixas visíveis. A câmera usa dead zone, mostra mais espaço no sentido em que Lemos caminha e estabiliza gradualmente quando ele para. Perto da entrada, compõe Lemos e a fachada do DHPP sem trocar a perspectiva. Arrasto, pinça, roda e toque duplo permitem olhar/inspecionar; a escala final continua inteira e o zoom fica ancorado no gesto. Quando a altura da tela comporta a rua inteira, ela aparece toda. A tela é girada para paisagem, como na base. Arquitetura e diagnóstico: `docs/CAMERA_DIRECTION_SYSTEM.md`.
 
 ## Testes
 
