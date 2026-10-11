@@ -1,0 +1,1105 @@
+{
+  "date": "2026-10-11",
+  "art_method": "Built-in imagegen; sem API/CLI de geração",
+  "reference": "creative-requests/refs/2026-10-11-rua-americana-dhpp/referencia-aprovada.png",
+  "technical_processing": [
+    "Recorte, redimensionamento nearest-neighbor, quantização e empacotamento via ImageMagick.",
+    "Pés dos personagens na última linha da célula; colunas não utilizadas transparentes.",
+    "Fachada DHPP ajustada para escadaria22px e porta44x64 em(63,244).",
+    "Paleta, régua, sinalização tipográfica e marcações geométricas de trânsito rasterizadas com medidas exatas.",
+    "Guia de NPCs montado a partir dos quadros frontais oficiais; panos de bandeiras e sinais OPEN reutilizados em camadas correspondentes."
+  ],
+  "generations": [
+    {
+      "id": "fachadas/dhpp",
+      "w": 170,
+      "h": 330,
+      "prompt": "Production game asset: isolated full-height American DHPP precinct FRONT ELEVATION facade, match provided approved street reference exactly in pixel-art technique, warm muted palette and depth. Transparent background, no street, no sidewalk, no cars or people. Tall narrow building aspect 170:330, filling complete width and height, no margin except thin transparent above cornice. Logical layout at 170x330: at bottom five stone steps y308-329 with rails, double dark wood/glass door centered x85, width44 height64 spanning x63..106 y244..307; deeply recessed vestibule. Symmetrical pale stone columns and arch, fictional DHPP shield, black sign ONLY 'DHPP', number87 on right pier, small lit wall lamps either side. Two short outward flagpoles ONLY, NO cloth flags (separate animation). Upper red-brick floors, paired symmetric windows with stone lintels, 52-unit story intervals and dark interiors, stone cornice. Recessed stairwell, projecting portico, real depth and shadows to right; all steps within image. Fine crisp low-resolution pixel clusters, 1px outline and top-left light, no smoothing. Main door base exactly22 units above image bottom. American architecture, NO Brazilian identity or real police seals. Provide only this asset.",
+      "source_image": "exec-9cdd75e6-7697-4bf1-936f-31d8ecd9ac73.png"
+    },
+    {
+      "id": "fachadas/diner",
+      "w": 132,
+      "h": 330,
+      "prompt": "Isolated production pixel game facade diner, matching reference American street. Chrome diner ground floor with large red DINER sign, glass windows with seated customers inside, glass door at right, small OPEN neon dark/off. Red brick upper floors, paired windows AC units and plants, black iron fire escape. Full narrow tall rectangular frontage 132:330 aspect, complete building cornice to ground, transparent background outside, no margin left/right/bottom, front elevation without perspective convergence. FIVE evenly spaced residential floors above the shop, each logical52px, shop bottom72px; upper floor levels must line up across all buildings. Fine warm muted brick pixel art, 1px outline, top-left light, deep recessed doors and shop windows, projecting lintels signs and stairs with shadows. Complete full building not a street scene, no sidewalks no vehicles no pedestrians outside; fixtures and boxes contained inside building width. Pixel clusters not painting. Exact approved aesthetic. Sign lettering clear at final small size.",
+      "source_image": "exec-7b5a8930-48aa-45ff-97ff-10268971305b.png"
+    },
+    {
+      "id": "fachadas/grocery",
+      "w": 136,
+      "h": 330,
+      "prompt": "Isolated production pixel game facade grocery, matching reference American street. Green GROCERY sign, small subline COLD BEER · SODA · CIGARETTES, ATM sign, recessed windows with posters and produce boxes, glass entrance door at right. Dark red brick upper floors, paired windows, black iron fire escape. Full narrow tall rectangular frontage 136:330 aspect, complete building cornice to ground, transparent background outside, no margin left/right/bottom, front elevation without perspective convergence. FIVE evenly spaced residential floors above the shop, each logical52px, shop bottom72px; upper floor levels must line up across all buildings. Fine warm muted brick pixel art, 1px outline, top-left light, deep recessed doors and shop windows, projecting lintels signs and stairs with shadows. Complete full building not a street scene, no sidewalks no vehicles no pedestrians outside; fixtures and boxes contained inside building width. Pixel clusters not painting. Exact approved aesthetic. Sign lettering clear at final small size.",
+      "source_image": "exec-ee3b14a5-c6f7-4542-a3ff-596b3a0f8207.png"
+    },
+    {
+      "id": "fachadas/pawn-shop",
+      "w": 136,
+      "h": 330,
+      "prompt": "Single isolated full American PAWN SHOP building facade production sprite. Closely match approved reference: faded yellow-beige brick, black external iron fire escape, projecting landings and sill shadows, front elevation, warm muted pixel art and fine crisp clusters. Five upper residential stories at regular52unit intervals, shop occupies bottom72 of330 logical units. Full tall narrow building aspect136:330. White sign clear 'PAWN SHOP', smaller 'BUY · SELL · LOANS', dark recessed shopwindow guitar and oldTV, WE BUY neon off, right-side glass door number213. Deep glass recesses, cornice, airconditioners and plants. No pedestrians outside, no cars, no sidewalk, no street. Transparent background outside silhouette; complete image from cornice to feet with no extra surrounding margins. No real brands. Top-left light. Rich pixel-art rendering faithful to reference; no 3D smoothness. Windows align evenly in paired rows.",
+      "source_image": "exec-c1a930c0-3b34-4a3f-b894-157ce5786d7e.png"
+    },
+    {
+      "id": "fachadas/laundry",
+      "w": 132,
+      "h": 330,
+      "prompt": "Production game pixel art asset, isolated laundry architecture slice, aspect132:330. Brown brick. LAUNDRY blue sign, small WASH · DRY · FOLD line. Wide dark ground-floor window shows four front-loading washing machines evenly spaced, OPEN neon dark/off, glass door at right. Air conditioners. FIVE upper residential floors. Match approved reference American street composition and warm restrained palette, deeply recessed doors windows, top-left light and shadow depth, sharp 1px clusters not smooth painting. Whole lot from roof cornice at top to feet at bottom, no empty margins, transparent outside outer silhouette. Front facades orthographic with story52logicalpx, commercial/entrance ground floor72px out of330. Complete width132 and height330 logical pixels. No street furniture protruding below feet, no people outside, no vehicles. If an alley or street slice, include entire receding view inside slice. No Brazilian references or real brands.",
+      "source_image": "exec-e300712b-3fc5-402e-8e50-ab4c92c42e8b.png"
+    },
+    {
+      "id": "fachadas/predio-oeste",
+      "w": 120,
+      "h": 330,
+      "prompt": "Production game pixel art asset, isolated predio-oeste architecture slice, aspect120:330. Red-brown residential brick tenement, black fire escape, paired symmetrical windows, AC units and plants, recessed small22x40 front door with3 steps in bottom72px entrance floor. FIVE upper floors. Match approved reference American street composition and warm restrained palette, deeply recessed doors windows, top-left light and shadow depth, sharp 1px clusters not smooth painting. Whole lot from roof cornice at top to feet at bottom, no empty margins, transparent outside outer silhouette. Front facades orthographic with story52logicalpx, commercial/entrance ground floor72px out of330. Complete width120 and height330 logical pixels. No street furniture protruding below feet, no people outside, no vehicles. If an alley or street slice, include entire receding view inside slice. No Brazilian references or real brands.",
+      "source_image": "exec-95c2e243-4f7c-4eb5-9a58-0a72f4e454c4.png"
+    },
+    {
+      "id": "fachadas/predio-leste",
+      "w": 120,
+      "h": 330,
+      "prompt": "Production game pixel art asset, isolated predio-leste architecture slice, aspect120:330. Faded sage and ochre residential brick tenement, black fire escape at left, pairs of windows, AC units and a few potted plants, recessed small22x40 front door with3 steps in bottom72px entrance floor. FIVE upper floors. Different architecture and weathering than west tenement. Match approved reference American street composition and warm restrained palette, deeply recessed doors windows, top-left light and shadow depth, sharp 1px clusters not smooth painting. Whole lot from roof cornice at top to feet at bottom, no empty margins, transparent outside outer silhouette. Front facades orthographic with story52logicalpx, commercial/entrance ground floor72px out of330. Complete width120 and height330 logical pixels. No street furniture protruding below feet, no people outside, no vehicles. If an alley or street slice, include entire receding view inside slice. No Brazilian references or real brands.",
+      "source_image": "exec-deb8edfc-f9b8-4a72-a907-c3c2bf40bb6d.png"
+    },
+    {
+      "id": "fachadas/beco-oeste",
+      "w": 58,
+      "h": 330,
+      "prompt": "Production game pixel art asset, isolated beco-oeste architecture slice, aspect58:330. Very narrow deep alley canyon between two tall American brick buildings. Walls converge inward, left wall very dark, right brick brighter, fire escapes on side walls. Recessed iron gate mid-depth, green dumpster garbage sacks boxes deep inside, distant small rear building lit windows. Feet of alley reach front lower edge. NO foreground sidewalk. Full image filled by walls and alley, not an isolated miniature house. Match approved reference American street composition and warm restrained palette, deeply recessed doors windows, top-left light and shadow depth, sharp 1px clusters not smooth painting. Whole lot from roof cornice at top to feet at bottom, no empty margins, transparent outside outer silhouette. Front facades orthographic with story52logicalpx, commercial/entrance ground floor72px out of330. Complete width58 and height330 logical pixels. No street furniture protruding below feet, no people outside, no vehicles. If an alley or street slice, include entire receding view inside slice. No Brazilian references or real brands.",
+      "source_image": "exec-7b5b29c9-1db4-464b-9d8d-754c9f83ea45.png"
+    },
+    {
+      "id": "fachadas/beco-leste",
+      "w": 58,
+      "h": 330,
+      "prompt": "Production game pixel art asset, isolated beco-leste architecture slice, aspect58:330. Very narrow deep alley canyon between American tenements, asymmetrical walls converge toward recessed distant rear building with lit windows, left shaded brick, warm brighter right wall, fire stairs, pipes and iron gate, few trash bags and stacked boxes, dark garbage dumpster within. Different from west alley. No foreground sidewalk. Full image walls and alley. Match approved reference American street composition and warm restrained palette, deeply recessed doors windows, top-left light and shadow depth, sharp 1px clusters not smooth painting. Whole lot from roof cornice at top to feet at bottom, no empty margins, transparent outside outer silhouette. Front facades orthographic with story52logicalpx, commercial/entrance ground floor72px out of330. Complete width58 and height330 logical pixels. No street furniture protruding below feet, no people outside, no vehicles. If an alley or street slice, include entire receding view inside slice. No Brazilian references or real brands.",
+      "source_image": "exec-d25c9141-cf3f-4faa-91f5-5d39b7790ac1.png"
+    },
+    {
+      "id": "fachadas/esquina-oeste",
+      "w": 110,
+      "h": 330,
+      "prompt": "Pixel art production background slice fachadas/esquina-oeste, aspect110:330. Cross street N 9TH ST receding from foreground into distance. At bottom TWO-LANE ASPHALT roadway occupies CENTRAL70% of image width, sidewalks at extreme left/right ONLY, no sidewalk bar across road. Road vanishing point central upper third. Tall American brick buildings only on outer edges; left corner nearer, right more distant. No trash blocking road. This is a STREET FOR CARS, not an alley. No vehicles/pedestrians/labels. Match supplied American DHPP street muted colors top-left daytime light, crisp logical pixels no blur. Fill canvas. Transparent only above skyline.",
+      "source_image": "exec-03567005-7bf0-4d04-983a-7fa7206f8eca.png"
+    },
+    {
+      "id": "fachadas/esquina-leste",
+      "w": 110,
+      "h": 330,
+      "prompt": "Pixel art production background slice fachadas/esquina-leste, aspect110:330. Cross street W OAK ST receding deeply from foreground toward centralupperthird vanishing point. At bottom TWO-LANE ASPHALT roadway occupies CENTRAL70% width; sidewalks only at far outer edges, open bottom road not curb across it. American tenements far at sides, right corner nearer, left more distant. A full-size street for traffic, not a narrow alley. No vehicles/pedestrians/labels. Match supplied American DHPP street muted colors top-left daytime light, crisp logical pixels no blur. Fill canvas. Transparent only above skyline.",
+      "source_image": "exec-5c5161b4-2df0-4d3e-bfe7-5f139bb47c16.png"
+    },
+    {
+      "id": "fundo/ceu",
+      "w": 64,
+      "h": 340,
+      "prompt": "Pixel art production background slice fundo/ceu, aspect64:340. Clean vertical strip of clear morning sky, muted light blue high above fading toward warm pale horizon at bottom using discrete horizontal pixel color bands with sparse subtle dithering. No buildings clouds suns or objects, seamless repeating horizontally. Match supplied American DHPP street muted colors top-left daytime light, crisp logical pixels no blur. Fill canvas. Fully opaque sky.",
+      "source_image": "exec-81cc2f11-a655-4f68-ac07-45ea1038de6b.png"
+    },
+    {
+      "id": "props/lixeira",
+      "w": 16,
+      "h": 24,
+      "prompt": "One isolated production pixel-art street prop: Black ribbed metal street trash can with fitted lid. Transparent background no floor no cast shadow no environment no other props. Match provided American DHPP pixel street palette and texture. Front view slightly elevated showing top, crisp tiny pixel clusters and dark outline, upper-left light. Entire object centered occupying canvas silhouette, aspect16:24, intended exact logical sprite16x24. Readable restrained detail at tiny size, not glossy3D. Feet at bottom center.",
+      "source_image": "exec-04aa570d-61ed-48d8-b3bf-e2cf0524da7d.png"
+    },
+    {
+      "id": "props/lixeira-cheia",
+      "w": 18,
+      "h": 26,
+      "prompt": "One isolated production pixel-art street prop: Black metal trash can overflowing with a few paper scraps and bags. Transparent background no floor no cast shadow no environment no other props. Match provided American DHPP pixel street palette and texture. Front view slightly elevated showing top, crisp tiny pixel clusters and dark outline, upper-left light. Entire object centered occupying canvas silhouette, aspect18:26, intended exact logical sprite18x26. Readable restrained detail at tiny size, not glossy3D. Feet at bottom center.",
+      "source_image": "exec-dcde2ad1-996d-49d4-8554-b4cc76d003bd.png"
+    },
+    {
+      "id": "props/sacos-lixo",
+      "w": 30,
+      "h": 18,
+      "prompt": "One isolated production pixel-art street prop: Small pile of tied black garbage bags. Transparent background no floor no cast shadow no environment no other props. Match provided American DHPP pixel street palette and texture. Front view slightly elevated showing top, crisp tiny pixel clusters and dark outline, upper-left light. Entire object centered occupying canvas silhouette, aspect30:18, intended exact logical sprite30x18. Readable restrained detail at tiny size, not glossy3D. Feet at bottom center.",
+      "source_image": "exec-1b47ca7c-9317-4780-aae3-aa2a872b1f3c.png"
+    },
+    {
+      "id": "props/cacamba",
+      "w": 46,
+      "h": 32,
+      "prompt": "One isolated production pixel-art street prop: Green metal alley dumpster with CLOSED lid, worn edges. Transparent background no floor no cast shadow no environment no other props. Match provided American DHPP pixel street palette and texture. Front view slightly elevated showing top, crisp tiny pixel clusters and dark outline, upper-left light. Entire object centered occupying canvas silhouette, aspect46:32, intended exact logical sprite46x32. Readable restrained detail at tiny size, not glossy3D. Feet at bottom center.",
+      "source_image": "exec-35d8d3d6-f81b-4e8b-8c5c-3659d2512301.png"
+    },
+    {
+      "id": "props/caixa-papelao",
+      "w": 14,
+      "h": 12,
+      "prompt": "One isolated production pixel-art street prop: Small brown cardboard shipping box closed, no logo. Transparent background no floor no cast shadow no environment no other props. Match supplied American DHPP street pixel art palette. Front view slightly elevated showing top, crisp low-resolution clusters, 1pixel dark outline and upper-left light. Entire object centered with bottom support at image bottom, silhouette aspect14:12, final logical14x12. Restrained detail readable at tiny size, no real brands no blur no glossy3D.",
+      "source_image": "exec-5fd8c907-9ec0-418f-8244-2087c31d4428.png"
+    },
+    {
+      "id": "props/pallet",
+      "w": 24,
+      "h": 8,
+      "prompt": "One isolated production pixel-art street prop: Low wooden shipping pallet with slats. Transparent background no floor no cast shadow no environment no other props. Match supplied American DHPP street pixel art palette. Front view slightly elevated showing top, crisp low-resolution clusters, 1pixel dark outline and upper-left light. Entire object centered with bottom support at image bottom, silhouette aspect24:8, final logical24x8. Restrained detail readable at tiny size, no real brands no blur no glossy3D.",
+      "source_image": "exec-bb6f8d46-2a85-49aa-abd3-585b5a3b70df.png"
+    },
+    {
+      "id": "props/hidrante",
+      "w": 10,
+      "h": 18,
+      "prompt": "One isolated production pixel-art street prop: Red American fire hydrant with cap and side outlets. Transparent background no floor no cast shadow no environment no other props. Match supplied American DHPP street pixel art palette. Front view slightly elevated showing top, crisp low-resolution clusters, 1pixel dark outline and upper-left light. Entire object centered with bottom support at image bottom, silhouette aspect10:18, final logical10x18. Restrained detail readable at tiny size, no real brands no blur no glossy3D.",
+      "source_image": "exec-0bc24ec9-c862-4461-99df-bfd430d5ba54.png"
+    },
+    {
+      "id": "props/caixa-correio",
+      "w": 16,
+      "h": 30,
+      "prompt": "One isolated production pixel-art street prop: American blue rounded-top curbside collection mailbox on legs, slot, no real logo. Transparent background no floor no cast shadow no environment no other props. Match supplied American DHPP street pixel art palette. Front view slightly elevated showing top, crisp low-resolution clusters, 1pixel dark outline and upper-left light. Entire object centered with bottom support at image bottom, silhouette aspect16:30, final logical16x30. Restrained detail readable at tiny size, no real brands no blur no glossy3D.",
+      "source_image": "exec-817e099e-3f6e-4389-b2d4-c4124d2450bc.png"
+    },
+    {
+      "id": "props/parquimetro",
+      "w": 6,
+      "h": 30,
+      "prompt": "One isolated production pixel-art street prop: Single-head silver parking meter on slender black pole. Transparent background no floor no cast shadow no environment no other props. Match supplied American DHPP street pixel art palette. Front view slightly elevated showing top, crisp low-resolution clusters, 1pixel dark outline and upper-left light. Entire object centered with bottom support at image bottom, silhouette aspect6:30, final logical6x30. Restrained detail readable at tiny size, no real brands no blur no glossy3D.",
+      "source_image": "exec-52058d56-3398-4844-9e8f-38dc31c41e5a.png"
+    },
+    {
+      "id": "props/poste-luz",
+      "w": 16,
+      "h": 120,
+      "prompt": "One isolated production pixel-art street prop: Very tall slender dark cast-iron streetlamp, one modest warm glowing lantern on top. Transparent background no floor no cast shadow no environment no other props. Match supplied American DHPP street pixel art palette. Front view slightly elevated showing top, crisp low-resolution clusters, 1pixel dark outline and upper-left light. Entire object centered with bottom support at image bottom, silhouette aspect16:120, final logical16x120. Restrained detail readable at tiny size, no real brands no blur no glossy3D.",
+      "source_image": "exec-b56b9936-ceb0-4f70-adf0-a462aef1ba5c.png"
+    },
+    {
+      "id": "props/placa-proibido",
+      "w": 12,
+      "h": 44,
+      "prompt": "Production pixel-art American street prop: White no-parking sign with red crossed P symbol on slender gray pole. Match approved reference style, muted palette, top-left light, 1px outline. Slight elevated FRONT view shows top. Transparent background, isolated with NO cast ground shadow, no scenery, no text except requested signs. Full-object silhouette aspect12:44; logical final12x44. Feet at bottom center. Crisp pixel clusters, not painted or 3D. One object only.",
+      "source_image": "exec-a300ff81-7f5b-4826-8cbf-ae5970729770.png"
+    },
+    {
+      "id": "props/placa-onibus",
+      "w": 12,
+      "h": 46,
+      "prompt": "Production pixel-art American street prop: Small blue bus-stop sign with white bus pictogram on slender gray pole, no company. Match approved reference style, muted palette, top-left light, 1px outline. Slight elevated FRONT view shows top. Transparent background, isolated with NO cast ground shadow, no scenery, no text except requested signs. Full-object silhouette aspect12:46; logical final12x46. Feet at bottom center. Crisp pixel clusters, not painted or 3D. One object only.",
+      "source_image": "exec-d7b3c059-c19c-4ea0-ba9f-83c40f224da1.png"
+    },
+    {
+      "id": "props/telefone-publico",
+      "w": 22,
+      "h": 46,
+      "prompt": "Production pixel-art American street prop: American rectangular silver payphone in blue half-booth on pedestal, NOT Brazilian shell phone. Match approved reference style, muted palette, top-left light, 1px outline. Slight elevated FRONT view shows top. Transparent background, isolated with NO cast ground shadow, no scenery, no text except requested signs. Full-object silhouette aspect22:46; logical final22x46. Feet at bottom center. Crisp pixel clusters, not painted or 3D. One object only.",
+      "source_image": "exec-33cec395-2e4d-44b6-a6d8-60b1120ea482.png"
+    },
+    {
+      "id": "props/jornal-azul",
+      "w": 14,
+      "h": 24,
+      "prompt": "Production pixel-art American street prop: Blue metal newspaper vending box with newspaper behind glass and coin slot, no brand. Match approved reference style, muted palette, top-left light, 1px outline. Slight elevated FRONT view shows top. Transparent background, isolated with NO cast ground shadow, no scenery, no text except requested signs. Full-object silhouette aspect14:24; logical final14x24. Feet at bottom center. Crisp pixel clusters, not painted or 3D. One object only.",
+      "source_image": "exec-a45b43af-88e1-4b94-9b84-fd47411c941c.png"
+    },
+    {
+      "id": "props/jornal-vermelho",
+      "w": 14,
+      "h": 24,
+      "prompt": "Production pixel-art American street prop: Red metal newspaper vending box with newspaper behind glass and coin slot, no brand. Match approved reference style, muted palette, top-left light, 1px outline. Slight elevated FRONT view shows top. Transparent background, isolated with NO cast ground shadow, no scenery, no text except requested signs. Full-object silhouette aspect14:24; logical final14x24. Feet at bottom center. Crisp pixel clusters, not painted or 3D. One object only.",
+      "source_image": "exec-96b11203-6490-41f7-8dfe-18a45d13d852.png"
+    },
+    {
+      "id": "props/alarme-incendio",
+      "w": 8,
+      "h": 38,
+      "prompt": "Production pixel-art American street prop: Small red vintage American fire alarm call box atop narrow dark pole. Match approved reference style, muted palette, top-left light, 1px outline. Slight elevated FRONT view shows top. Transparent background, isolated with NO cast ground shadow, no scenery, no text except requested signs. Full-object silhouette aspect8:38; logical final8x38. Feet at bottom center. Crisp pixel clusters, not painted or 3D. One object only.",
+      "source_image": "exec-c16c2e48-a3fb-4f10-a80b-98f564db7292.png"
+    },
+    {
+      "id": "props/banco",
+      "w": 40,
+      "h": 16,
+      "prompt": "Production pixel-art American street prop: Park bench with warm worn wood slats and dark iron legs, front view seat top visible. Match approved reference style, muted palette, top-left light, 1px outline. Slight elevated FRONT view shows top. Transparent background, isolated with NO cast ground shadow, no scenery, no text except requested signs. Full-object silhouette aspect40:16; logical final40x16. Feet at bottom center. Crisp pixel clusters, not painted or 3D. One object only.",
+      "source_image": "exec-8cfd5a11-9857-4419-aef4-0bf57fab3dea.png"
+    },
+    {
+      "id": "props/semaforo",
+      "w": 54,
+      "h": 96,
+      "prompt": "Production pixel-art American street prop: SPRITESHEET exactly3 equal columns and1 row, each frame18x96: same slender American traffic-light pole, identical registration. Frame1 bottom GREEN lit, frame2 middle YELLOW lit, frame3 upper RED lit; all other lamps dark. Transparent gap between isolated poles, no borders or labels.. Match approved reference style, muted palette, top-left light, 1px outline. Slight elevated FRONT view shows top. Transparent background, isolated with NO cast ground shadow, no scenery, no text except requested signs. Full-object silhouette aspect54:96; logical final54x96. Feet at bottom center. Crisp pixel clusters, not painted or 3D. Exactly3 equally spaced identical-size frames aligned at bottom, horizontal sheet.",
+      "source_image": "exec-f2354099-f9d2-44d7-8a6c-9a6c5cbba4d1.png"
+    },
+    {
+      "id": "veiculos/viatura-dhpp",
+      "w": 616,
+      "h": 50,
+      "fw": 154,
+      "fh": 50,
+      "cols": 4,
+      "rows": 1,
+      "prompt": "Production animated vehicle sprite sheet for supplied American DHPP pixel street. Black and white 1980s American police sedan, exact DHPP on white door, fictional gold badge, number732, red/blue rooftop lightbar. 4frames: frames1-2 same body with two distinct wheel spoke rotations, lights not flashing; frames3-4 parked identical wheels with red light then blue light flashing. EXACTLY4 isolated identical cars in ONE HORIZONTAL ROW, same size alignedbottoms, equalspacing; no gridlabels no background. Every car faces RIGHT, long hood atRIGHT, near side and roof windshield hood clearly seen from high orthographic side view matching reference. No diagonal frontperspective, no castshadow, no road or exhaust. Consistent immutable body details betweenframes, ONLY requestedwheel andlight changes. Crisp actual pixelclusters, muted1980s palette, top-leftlight, 1px outline, no smoothrender. Target each car154x50 logicalpixels; keep bodyproportions154:50. Transparentcanvas with enough room for ALL4 complete cars across, can leave transparent spaceabove/below, never wraptorows.",
+      "source_image": "exec-12ca4e7e-39b0-4470-a5b0-a4af15d915f4.png"
+    },
+    {
+      "id": "veiculos/taxi",
+      "w": 300,
+      "h": 52,
+      "fw": 150,
+      "fh": 52,
+      "cols": 2,
+      "rows": 1,
+      "prompt": "Production animated vehicle SPRITESHEET, Yellow boxy 1980s American taxi sedan, rooftop TAXI sign, black white checkered stripe, driver silhouette.2frames same car with distinct rotating wheel spoke angles. EXACTLY TWO identical vehicles in ONE HORIZONTAL ROW, equally spaced, complete uncropped bodies, SAME size and wheelbaseline. Only wheel spoke rotation changes between frames, immutable chassis. All face RIGHT with longhood/windshield atRIGHT, near side AND roof/hood seen from high orthographic side view like approved reference, NOT pure profile. Actual crisp pixelclusters 1pxoutline muted American1980s colors top-leftlight, target each150x52 logicalpx. Transparentbackground no castshadow no smoke no scenery. Each vehicle proportion150:52. No real companynames orlogos. Leave transparent space above/below if needed to fit wide row, NEVER put frames on differentrows.",
+      "source_image": "exec-c4cf6e9c-b058-4ea3-9608-5caf19abe766.png"
+    },
+    {
+      "id": "veiculos/sedan-bordo",
+      "w": 304,
+      "h": 46,
+      "fw": 152,
+      "fh": 46,
+      "cols": 2,
+      "rows": 1,
+      "prompt": "Production animated vehicle SPRITESHEET, Long burgundy 1980s American 4-door sedan, chrome bumpers, driver.2frames same body anddifferent wheelspoke positions. EXACTLY TWO identical vehicles in ONE HORIZONTAL ROW, equally spaced, complete uncropped bodies, SAME size and wheelbaseline. Only wheel spoke rotation changes between frames, immutable chassis. All face RIGHT with longhood/windshield atRIGHT, near side AND roof/hood seen from high orthographic side view like approved reference, NOT pure profile. Actual crisp pixelclusters 1pxoutline muted American1980s colors top-leftlight, target each152x46 logicalpx. Transparentbackground no castshadow no smoke no scenery. Each vehicle proportion152:46. No real companynames orlogos. Leave transparent space above/below if needed to fit wide row, NEVER put frames on differentrows.",
+      "source_image": "exec-c35038f6-927a-44b0-b76e-157917642a7d.png"
+    },
+    {
+      "id": "veiculos/sedan-azul",
+      "w": 312,
+      "h": 46,
+      "fw": 156,
+      "fh": 46,
+      "cols": 2,
+      "rows": 1,
+      "prompt": "Production animated vehicle SPRITESHEET, Long blue1980s American sedan with WHITE VINYL ROOF, chrome, driver.2frames identicalbody differentwheelspokes. EXACTLY TWO identical vehicles in ONE HORIZONTAL ROW, equally spaced, complete uncropped bodies, SAME size and wheelbaseline. Only wheel spoke rotation changes between frames, immutable chassis. All face RIGHT with longhood/windshield atRIGHT, near side AND roof/hood seen from high orthographic side view like approved reference, NOT pure profile. Actual crisp pixelclusters 1pxoutline muted American1980s colors top-leftlight, target each156x46 logicalpx. Transparentbackground no castshadow no smoke no scenery. Each vehicle proportion156:46. No real companynames orlogos. Leave transparent space above/below if needed to fit wide row, NEVER put frames on differentrows.",
+      "source_image": "exec-53a61af9-fae8-4cd0-97b4-f5028c856f61.png"
+    },
+    {
+      "id": "veiculos/sedan-verde",
+      "w": 300,
+      "h": 46,
+      "fw": 150,
+      "fh": 46,
+      "cols": 2,
+      "rows": 1,
+      "prompt": "Production animated vehicle SPRITESHEET, Dark green boxy1980s American sedan, driver silhouette.2frames identicalbody differentwheelspokes. EXACTLY TWO identical vehicles in ONE HORIZONTAL ROW, equally spaced, complete uncropped bodies, SAME size and wheelbaseline. Only wheel spoke rotation changes between frames, immutable chassis. All face RIGHT with longhood/windshield atRIGHT, near side AND roof/hood seen from high orthographic side view like approved reference, NOT pure profile. Actual crisp pixelclusters 1pxoutline muted American1980s colors top-leftlight, target each150x46 logicalpx. Transparentbackground no castshadow no smoke no scenery. Each vehicle proportion150:46. No real companynames orlogos. Leave transparent space above/below if needed to fit wide row, NEVER put frames on differentrows.",
+      "source_image": "exec-4ff48c59-8eeb-4279-95ab-8f9d42f0fb9f.png"
+    },
+    {
+      "id": "veiculos/sedan-bege",
+      "w": 296,
+      "h": 46,
+      "fw": 148,
+      "fh": 46,
+      "cols": 2,
+      "rows": 1,
+      "prompt": "Production animated vehicle SPRITESHEET, Beige boxy1980s American sedan, driver silhouette.2frames identicalbody differentwheelspokes. EXACTLY TWO identical vehicles in ONE HORIZONTAL ROW, equally spaced, complete uncropped bodies, SAME size and wheelbaseline. Only wheel spoke rotation changes between frames, immutable chassis. All face RIGHT with longhood/windshield atRIGHT, near side AND roof/hood seen from high orthographic side view like approved reference, NOT pure profile. Actual crisp pixelclusters 1pxoutline muted American1980s colors top-leftlight, target each148x46 logicalpx. Transparentbackground no castshadow no smoke no scenery. Each vehicle proportion148:46. No real companynames orlogos. Leave transparent space above/below if needed to fit wide row, NEVER put frames on differentrows.",
+      "source_image": "exec-45924284-2504-4c1c-a183-ba905f2759cc.png"
+    },
+    {
+      "id": "veiculos/perua-madeira",
+      "w": 320,
+      "h": 48,
+      "fw": 160,
+      "fh": 48,
+      "cols": 2,
+      "rows": 1,
+      "prompt": "Production animated vehicle SPRITESHEET, Cream1980s American station wagon with faux wood panels on doors, luggage space,longroof,driver.2frames identicalbody differentwheelspokes. EXACTLY TWO identical vehicles in ONE HORIZONTAL ROW, equally spaced, complete uncropped bodies, SAME size and wheelbaseline. Only wheel spoke rotation changes between frames, immutable chassis. All face RIGHT with longhood/windshield atRIGHT, near side AND roof/hood seen from high orthographic side view like approved reference, NOT pure profile. Actual crisp pixelclusters 1pxoutline muted American1980s colors top-leftlight, target each160x48 logicalpx. Transparentbackground no castshadow no smoke no scenery. Each vehicle proportion160:48. No real companynames orlogos. Leave transparent space above/below if needed to fit wide row, NEVER put frames on differentrows.",
+      "source_image": "exec-3c35342e-ae71-4e9a-a169-2b38b0859377.png"
+    },
+    {
+      "id": "veiculos/furgao-marrom",
+      "w": 284,
+      "h": 58,
+      "fw": 142,
+      "fh": 58,
+      "cols": 2,
+      "rows": 1,
+      "prompt": "Production animated vehicle SPRITESHEET, Brown1980s American cargo van, boxybody, frontcab atRIGHT driver visible.2frames identicalbody differentwheelspokes. EXACTLY TWO identical vehicles in ONE HORIZONTAL ROW, equally spaced, complete uncropped bodies, SAME size and wheelbaseline. Only wheel spoke rotation changes between frames, immutable chassis. All face RIGHT with longhood/windshield atRIGHT, near side AND roof/hood seen from high orthographic side view like approved reference, NOT pure profile. Actual crisp pixelclusters 1pxoutline muted American1980s colors top-leftlight, target each142x58 logicalpx. Transparentbackground no castshadow no smoke no scenery. Each vehicle proportion142:58. No real companynames orlogos. Leave transparent space above/below if needed to fit wide row, NEVER put frames on differentrows.",
+      "source_image": "exec-3df6c515-71f0-45e4-b3f4-1a0bcaff5a0b.png"
+    },
+    {
+      "id": "veiculos/onibus",
+      "w": 600,
+      "h": 84,
+      "fw": 300,
+      "fh": 84,
+      "cols": 2,
+      "rows": 1,
+      "prompt": "Production animated vehicle SPRITESHEET, Long1980s American city transit bus cream with mutedblue stripe, frontdoor and windshield atRIGHT. NO company names logos or readablelicenseplate.2frames identicalbody differentwheelspokes. EXACTLY TWO identical vehicles in ONE HORIZONTAL ROW, equally spaced, complete uncropped bodies, SAME size and wheelbaseline. Only wheel spoke rotation changes between frames, immutable chassis. All face RIGHT with longhood/windshield atRIGHT, near side AND roof/hood seen from high orthographic side view like approved reference, NOT pure profile. Actual crisp pixelclusters 1pxoutline muted American1980s colors top-leftlight, target each300x84 logicalpx. Transparentbackground no castshadow no smoke no scenery. Each vehicle proportion300:84. No real companynames orlogos. Leave transparent space above/below if needed to fit wide row, NEVER put frames on differentrows.",
+      "source_image": "exec-3641b8c1-3339-48ed-9e21-1cbfcee5124e.png"
+    },
+    {
+      "id": "chao/calcada",
+      "w": 64,
+      "h": 50,
+      "prompt": "Use case: stylized-concept. Production raster pixel art game asset, matching supplied American 1980s street style reference. One seamless concrete sidewalk texture tile, viewed from above with subtle high-front angle, large warm gray-beige rectangular paving slabs, fine dark joints, sparse restrained wear. Perfectly seamless left and right edges. NO curb, objects, shadows, road, text or borders. Fill entire rectangular canvas. Limited warm muted palette, crisp pixel clusters and hard pixel edges, light upper left. Final native size 64x50. No text, no logos, no Brazilian details.",
+      "source_image": "exec-f2c67dc6-843b-4b57-a2c0-674c7dc83a0a.png"
+    },
+    {
+      "id": "chao/meio-fio",
+      "w": 64,
+      "h": 6,
+      "prompt": "Use case: stylized-concept. Production raster pixel art game asset, matching supplied American 1980s street style reference. One very long narrow horizontal seamless granite street CURB strip, lighter top plane and darker vertical front face, aged warm gray stone, very restrained joints. 10:1 final aspect ratio. Fill whole image edge to edge, no background, no road, no sidewalk objects. Limited warm muted palette, crisp pixel clusters and hard pixel edges, light upper left. Final native size 64x6. No text, no logos, no Brazilian details.",
+      "source_image": "exec-36fbd48e-6adf-4b0c-a139-7d8195d783c8.png"
+    },
+    {
+      "id": "chao/asfalto",
+      "w": 128,
+      "h": 160,
+      "prompt": "Use case: stylized-concept. Production raster pixel art game asset, matching supplied American 1980s street style reference. One seamless street ASPHALT texture tile, flat overhead, muted blue charcoal gray rough fine grain, a few restrained worn patches and faint cracks, low contrast. Perfectly seamless left and right. NO markings, NO road lines, no manholes, no objects, no curb, no shadows. Fill entire canvas. Limited warm muted palette, crisp pixel clusters and hard pixel edges, light upper left. Final native size 128x160. No text, no logos, no Brazilian details.",
+      "source_image": "exec-8d596f85-61ed-4b95-8216-69a60a7cb963.png"
+    },
+    {
+      "id": "chao/bueiro",
+      "w": 20,
+      "h": 8,
+      "prompt": "Use case: stylized-concept. Production raster pixel art game asset, matching supplied American 1980s street style reference. One isolated cast iron round manhole cover viewed from high front angle appears wide ellipse 2.5:1, concentric rim and subtle waffle grid, worn dark gray metal with rusty muted highlights. No surrounding street or shadow. Limited warm muted palette, crisp pixel clusters and hard pixel edges, light upper left. Final native size 20x8. No text, no logos, no Brazilian details.",
+      "source_image": "exec-ea6e4790-d1b6-4b2a-a94e-7ac2f4b93b28.png"
+    },
+    {
+      "id": "chao/boca-de-lobo",
+      "w": 24,
+      "h": 6,
+      "prompt": "Use case: stylized-concept. Production raster pixel art game asset, matching supplied American 1980s street style reference. One isolated rectangular cast iron storm drain grille, high front angle, broad horizontal rectangle 4:1, narrow parallel black drain slots, dull gray edge, no street, no background or shadow. Limited warm muted palette, crisp pixel clusters and hard pixel edges, light upper left. Final native size 24x6. No text, no logos, no Brazilian details.",
+      "source_image": "exec-e2f5f7a6-665e-41b9-bb48-e7290512af38.png"
+    },
+    {
+      "id": "chao/manchas",
+      "w": 192,
+      "h": 12,
+      "prompt": "Use case: stylized-concept. Production raster pixel art game asset, matching supplied American 1980s street style reference. Sprite sheet SIX isolated different low contrast muted charcoal oil and grime stains on transparent background, exactly SIX in ONE evenly spaced horizontal row, separate with ample gaps, each a different flat irregular wide puddle silhouette about 32:12 aspect. No road, no objects, no labels, no shadow. Each stain with sparse pixelated edge speckles. Limited warm muted palette, crisp pixel clusters and hard pixel edges, light upper left. Final native size 192x12. No text, no logos, no Brazilian details.",
+      "source_image": "exec-e8072c8f-66e3-447f-81c0-cea028076288.png"
+    },
+    {
+      "id": "chao/lixo-chao",
+      "w": 80,
+      "h": 6,
+      "prompt": "Use case: stylized-concept. Production raster pixel art game asset, matching supplied American 1980s street style reference. Sprite sheet EIGHT isolated tiny street litter decals in ONE evenly spaced horizontal row on transparent background: crumpled white paper, crushed paper cup, crushed gray soda can without label, two dry brown leaves, cigarette butt, beige paper scrap, gray bottle cap, small dark leaf cluster. Eight distinct separated objects, viewed from above, each fits10:6 rectangle, no shadows, no floor, no labels. Limited warm muted palette, crisp pixel clusters and hard pixel edges, light upper left. Final native size 80x6. No text, no logos, no Brazilian details.",
+      "source_image": "exec-42ea0aab-c8ca-4c98-a030-71dcd0d68824.png"
+    },
+    {
+      "id": "npcs/executivo",
+      "w": 208,
+      "h": 264,
+      "prompt": "Use case: stylized-concept. Production PIXEL ART character sprite sheet for American 1980s street game, matching small adult proportions of pedestrians in supplied reference (style reference ONLY, no street rendered). One adult man, medium brown skin, short dark hair, gray business suit, ivory shirt and subdued tie, dark shoes, carrying brown briefcase. Exactly 6 horizontal ROWS separated by generous transparent gaps. Row1 has FOUR right-facing idle breathing poses. Row2 has EIGHT right-facing walking cycle poses, distinct successive leg and arm positions. Row3 has SIX walking toward camera poses. Row4 has SIX walking AWAY from camera poses, show back of head and jacket. Row5 has FOUR front-facing idle breathing poses. Row6 has SIX sequential poses checking wristwatch while holding briefcase, from arm relaxed through wrist raised to relaxed. All rows start at same left margin, each pose in identical evenly spaced cell, unused cells at row end transparent. Overall layout EIGHT columns by SIX rows, portrait canvas, cell aspect ratio26:44. Every figure same height and baseline within cell. Intended adult38pixels tall within26x44cell. Refined economical pixel clusters, 1px dark contour at native scale, no smooth painting, no gradient, no antialiasing. Full body feet included, NO shadows, NO floor, NO text, NO grid lines, NO labels, NO scenery. True transparent background. Never overlap figures.",
+      "source_image": "exec-ee253eb4-3d89-42d1-8de6-746eea626bb5.png"
+    },
+    {
+      "id": "npcs/operario",
+      "w": 208,
+      "h": 264,
+      "prompt": "Use case: stylized-concept. Production PIXEL ART character sprite sheet for American 1980s street game. FIRST image is style reference only. SECOND image is EXACT sheet layout reference and body proportions to follow, but replace character with: stocky adult working man with light tan skin, short dark hair, white sleeveless tank top, blue jeans, dark work boots. Exactly SIX horizontal rows separated by generous transparent gaps. Row1 FOUR right-facing idle breathing poses. Row2 EIGHT right-facing walk-cycle poses with distinct successive foot/arm positions. Row3 SIX walking TOWARD camera poses. Row4 SIX walking AWAY from camera poses with back of head and clothing visible. Row5 FOUR FRONT facing idle breathing poses. Row6 SIX sequential poses wiping sweat from forehead with forearm, complete loop. Row counts MUST be 4,8,6,6,4,6. All rows start at same left margin, same cell pitch, unused end cells transparent. Eight-column six-row portrait layout, cells26:44. Each full-body adult same intended38pixel height, with feet aligned at identical cell baseline. Crisp restrained pixel clusters and dark1pixel native outlines, light upper left, limited warm muted palette. No gradients, no smooth painting, no text, no labels, no grid lines, NO floor or cast shadow, no scenery, no extra people. TRUE transparent background. Keep all figures separated, no overlapping frames.",
+      "source_image": "exec-b5e4674d-a260-40c3-8cfb-6a8bbdf446df.png"
+    },
+    {
+      "id": "npcs/mulher-vestido-vermelho",
+      "w": 208,
+      "h": 264,
+      "prompt": "Use case: stylized-concept. Production PIXEL ART character sprite sheet for American 1980s street game. FIRST image is style reference only. SECOND image is EXACT sheet layout reference and body proportions to follow, but replace character with: adult woman with dark brown skin, dark shoulder-length hair, red knee-length dress, small brown handbag, low dark shoes. Exactly SIX horizontal rows separated by generous transparent gaps. Row1 FOUR right-facing idle breathing poses. Row2 EIGHT right-facing walk-cycle poses with distinct successive foot/arm positions. Row3 SIX walking TOWARD camera poses. Row4 SIX walking AWAY from camera poses with back of head and clothing visible. Row5 FOUR FRONT facing idle breathing poses. Row6 SIX sequential poses searching inside handbag, complete loop. Row counts MUST be 4,8,6,6,4,6. All rows start at same left margin, same cell pitch, unused end cells transparent. Eight-column six-row portrait layout, cells26:44. Each full-body adult same intended38pixel height, with feet aligned at identical cell baseline. Crisp restrained pixel clusters and dark1pixel native outlines, light upper left, limited warm muted palette. No gradients, no smooth painting, no text, no labels, no grid lines, NO floor or cast shadow, no scenery, no extra people. TRUE transparent background. Keep all figures separated, no overlapping frames.",
+      "source_image": "exec-474291c2-923a-452f-9887-bd729bf02746.png"
+    },
+    {
+      "id": "npcs/mulher-loira",
+      "w": 208,
+      "h": 264,
+      "prompt": "Use case: stylized-concept. Production PIXEL ART character sprite sheet for American 1980s street game. FIRST image is style reference only. SECOND image is EXACT sheet layout reference and body proportions to follow, but replace character with: adult blonde woman with fair skin, pale ivory blouse, muted green knee-length skirt, low brown shoes. Exactly SIX horizontal rows separated by generous transparent gaps. Row1 FOUR right-facing idle breathing poses. Row2 EIGHT right-facing walk-cycle poses with distinct successive foot/arm positions. Row3 SIX walking TOWARD camera poses. Row4 SIX walking AWAY from camera poses with back of head and clothing visible. Row5 FOUR FRONT facing idle breathing poses. Row6 SIX sequential poses waving to someone, complete loop. Row counts MUST be 4,8,6,6,4,6. All rows start at same left margin, same cell pitch, unused end cells transparent. Eight-column six-row portrait layout, cells26:44. Each full-body adult same intended38pixel height, with feet aligned at identical cell baseline. Crisp restrained pixel clusters and dark1pixel native outlines, light upper left, limited warm muted palette. No gradients, no smooth painting, no text, no labels, no grid lines, NO floor or cast shadow, no scenery, no extra people. TRUE transparent background. Keep all figures separated, no overlapping frames.",
+      "source_image": "exec-81fd8fa8-be19-4b8d-99fa-d05cc794b9fb.png"
+    },
+    {
+      "id": "npcs/jovem-jaqueta",
+      "w": 208,
+      "h": 264,
+      "prompt": "Use case: stylized-concept. Production PIXEL ART character sprite sheet for American 1980s street game. FIRST image is style reference only. SECOND image is EXACT sheet layout reference and body proportions to follow, but replace character with: young adult man with medium brown skin, denim jacket and dark baseball cap, dark trousers, sneakers, unbranded small portable cassette player and headphones. Exactly SIX horizontal rows separated by generous transparent gaps. Row1 FOUR right-facing idle breathing poses. Row2 EIGHT right-facing walk-cycle poses with distinct successive foot/arm positions. Row3 SIX walking TOWARD camera poses. Row4 SIX walking AWAY from camera poses with back of head and clothing visible. Row5 FOUR FRONT facing idle breathing poses. Row6 SIX sequential poses nodding head to music from portable cassette player, complete loop. Row counts MUST be 4,8,6,6,4,6. All rows start at same left margin, same cell pitch, unused end cells transparent. Eight-column six-row portrait layout, cells26:44. Each full-body adult same intended38pixel height, with feet aligned at identical cell baseline. Crisp restrained pixel clusters and dark1pixel native outlines, light upper left, limited warm muted palette. No gradients, no smooth painting, no text, no labels, no grid lines, NO floor or cast shadow, no scenery, no extra people. TRUE transparent background. Keep all figures separated, no overlapping frames.",
+      "source_image": "exec-5c1c809c-8581-4ae4-a087-5faeae4cc5ce.png"
+    },
+    {
+      "id": "npcs/idoso-chapeu",
+      "w": 208,
+      "h": 264,
+      "prompt": "Use case: stylized-concept. Production PIXEL ART character sprite sheet for American 1980s street game. FIRST image is style reference only. SECOND image is EXACT sheet layout reference and body proportions to follow, but replace character with: elderly man with light wrinkled skin, gray hair, brown brimmed hat, beige cardigan, charcoal trousers, brown cane held in hand, slightly stooped. Exactly SIX horizontal rows separated by generous transparent gaps. Row1 FOUR right-facing idle breathing poses. Row2 EIGHT right-facing walk-cycle poses with distinct successive foot/arm positions. Row3 SIX walking TOWARD camera poses. Row4 SIX walking AWAY from camera poses with back of head and clothing visible. Row5 FOUR FRONT facing idle breathing poses. Row6 SIX sequential poses tossing corn grains to pigeons, no pigeons included, complete loop. Row counts MUST be 4,8,6,6,4,6. All rows start at same left margin, same cell pitch, unused end cells transparent. Eight-column six-row portrait layout, cells26:44. Each full-body adult same intended38pixel height, with feet aligned at identical cell baseline. Crisp restrained pixel clusters and dark1pixel native outlines, light upper left, limited warm muted palette. No gradients, no smooth painting, no text, no labels, no grid lines, NO floor or cast shadow, no scenery, no extra people. TRUE transparent background. Keep all figures separated, no overlapping frames.",
+      "source_image": "exec-f2015910-ad29-488f-94b1-c1bfdda229d7.png"
+    },
+    {
+      "id": "npcs/entregador",
+      "w": 208,
+      "h": 264,
+      "prompt": "Use case: stylized-concept. Production PIXEL ART character sprite sheet for American 1980s street game. FIRST image is style reference only. SECOND image is EXACT sheet layout reference and body proportions to follow, but replace character with: adult delivery man with dark skin, blue cap, ochre work shirt, dark blue trousers, brown shoes, holding plain cardboard box in arms. Exactly SIX horizontal rows separated by generous transparent gaps. Row1 FOUR right-facing idle breathing poses. Row2 EIGHT right-facing walk-cycle poses with distinct successive foot/arm positions. Row3 SIX walking TOWARD camera poses. Row4 SIX walking AWAY from camera poses with back of head and clothing visible. Row5 FOUR FRONT facing idle breathing poses. Row6 SIX sequential poses adjusting cardboard box in arms, complete loop. Row counts MUST be 4,8,6,6,4,6. All rows start at same left margin, same cell pitch, unused end cells transparent. Eight-column six-row portrait layout, cells26:44. Each full-body adult same intended38pixel height, with feet aligned at identical cell baseline. Crisp restrained pixel clusters and dark1pixel native outlines, light upper left, limited warm muted palette. No gradients, no smooth painting, no text, no labels, no grid lines, NO floor or cast shadow, no scenery, no extra people. TRUE transparent background. Keep all figures separated, no overlapping frames.",
+      "source_image": "exec-1c8bba30-8049-4402-a84a-3bfcda56980e.png"
+    },
+    {
+      "id": "npcs/senhora-carrinho",
+      "w": 208,
+      "h": 264,
+      "prompt": "Use case: stylized-concept. Production PIXEL ART character sprite sheet for American 1980s street game. FIRST image is style reference only. SECOND image is EXACT sheet layout reference and body proportions to follow, but replace character with: elderly woman with light brown skin, gray hair in bun, muted mauve coat, dark skirt and sturdy shoes, small wire shopping trolley with grocery bags close beside her; person and trolley together fit narrow cell. Exactly SIX horizontal rows separated by generous transparent gaps. Row1 FOUR right-facing idle breathing poses. Row2 EIGHT right-facing walk-cycle poses with distinct successive foot/arm positions. Row3 SIX walking TOWARD camera poses. Row4 SIX walking AWAY from camera poses with back of head and clothing visible. Row5 FOUR FRONT facing idle breathing poses. Row6 SIX sequential poses arranging grocery bags in shopping trolley, complete loop. Row counts MUST be 4,8,6,6,4,6. All rows start at same left margin, same cell pitch, unused end cells transparent. Eight-column six-row portrait layout, cells26:44. Each full-body adult same intended38pixel height, with feet aligned at identical cell baseline. Crisp restrained pixel clusters and dark1pixel native outlines, light upper left, limited warm muted palette. No gradients, no smooth painting, no text, no labels, no grid lines, NO floor or cast shadow, no scenery, no extra people. TRUE transparent background. Keep all figures separated, no overlapping frames.",
+      "source_image": "exec-3af508ac-d6b1-4ae1-94ba-0f02dcb738a3.png"
+    },
+    {
+      "id": "npcs/jaqueta-couro",
+      "w": 208,
+      "h": 264,
+      "prompt": "Use case: stylized-concept. Production PIXEL ART character sprite sheet for American 1980s street game. FIRST image is style reference only. SECOND image is EXACT sheet layout reference and body proportions to follow, but replace character with: adult man with olive skin, dark swept-back hair, black leather jacket, gray shirt, dark blue jeans and dark boots. Exactly SIX horizontal rows separated by generous transparent gaps. Row1 FOUR right-facing idle breathing poses. Row2 EIGHT right-facing walk-cycle poses with distinct successive foot/arm positions. Row3 SIX walking TOWARD camera poses. Row4 SIX walking AWAY from camera poses with back of head and clothing visible. Row5 FOUR FRONT facing idle breathing poses. Row6 SIX sequential poses raising cigarette to mouth then lowering hand, tiny restrained smoke, complete loop. Row counts MUST be 4,8,6,6,4,6. All rows start at same left margin, same cell pitch, unused end cells transparent. Eight-column six-row portrait layout, cells26:44. Each full-body adult same intended38pixel height, with feet aligned at identical cell baseline. Crisp restrained pixel clusters and dark1pixel native outlines, light upper left, limited warm muted palette. No gradients, no smooth painting, no text, no labels, no grid lines, NO floor or cast shadow, no scenery, no extra people. TRUE transparent background. Keep all figures separated, no overlapping frames.",
+      "source_image": "exec-b58bd94f-8fa5-4bca-af19-3e106fba0f7f.png"
+    },
+    {
+      "id": "npcs/estudante",
+      "w": 208,
+      "h": 264,
+      "prompt": "Use case: stylized-concept. Production PIXEL ART character sprite sheet for American 1980s street game. FIRST image is style reference only. SECOND image is EXACT sheet layout reference and body proportions to follow, but replace character with: young adult student with light brown skin, curly dark hair, rust sweater, dark trousers, sneakers and olive backpack. Exactly SIX horizontal rows separated by generous transparent gaps. Row1 FOUR right-facing idle breathing poses. Row2 EIGHT right-facing walk-cycle poses with distinct successive foot/arm positions. Row3 SIX walking TOWARD camera poses. Row4 SIX walking AWAY from camera poses with back of head and clothing visible. Row5 FOUR FRONT facing idle breathing poses. Row6 SIX sequential poses opening and reading small book, complete loop. Row counts MUST be 4,8,6,6,4,6. All rows start at same left margin, same cell pitch, unused end cells transparent. Eight-column six-row portrait layout, cells26:44. Each full-body adult same intended38pixel height, with feet aligned at identical cell baseline. Crisp restrained pixel clusters and dark1pixel native outlines, light upper left, limited warm muted palette. No gradients, no smooth painting, no text, no labels, no grid lines, NO floor or cast shadow, no scenery, no extra people. TRUE transparent background. Keep all figures separated, no overlapping frames.",
+      "source_image": "exec-c156a76e-fc7b-452e-ba06-8810c153abee.png"
+    },
+    {
+      "id": "npcs/corredor",
+      "w": 208,
+      "h": 264,
+      "prompt": "Use case: stylized-concept. Production PIXEL ART character sprite sheet for American 1980s street game. FIRST image is style reference only. SECOND image is EXACT sheet layout reference and body proportions to follow, but replace character with: adult male jogger with dark brown skin, short hair, blue and gray tracksuit and white sneakers. Exactly SIX horizontal rows separated by generous transparent gaps. Row1 FOUR right-facing idle breathing poses. Row2 EIGHT right-facing walk-cycle poses with distinct successive foot/arm positions. Row3 SIX walking TOWARD camera poses. Row4 SIX walking AWAY from camera poses with back of head and clothing visible. Row5 FOUR FRONT facing idle breathing poses. Row6 SIX sequential poses gently stretching shoulders and arms upright within narrow frame, complete loop. Row counts MUST be 4,8,6,6,4,6. All rows start at same left margin, same cell pitch, unused end cells transparent. Eight-column six-row portrait layout, cells26:44. Each full-body adult same intended38pixel height, with feet aligned at identical cell baseline. Crisp restrained pixel clusters and dark1pixel native outlines, light upper left, limited warm muted palette. No gradients, no smooth painting, no text, no labels, no grid lines, NO floor or cast shadow, no scenery, no extra people. TRUE transparent background. Keep all figures separated, no overlapping frames.",
+      "source_image": "exec-56ad8acc-e10e-4ad3-95ab-1c92d1974691.png"
+    },
+    {
+      "id": "npcs/mulher-executiva",
+      "w": 208,
+      "h": 264,
+      "prompt": "Use case: stylized-concept. Production PIXEL ART character sprite sheet for American 1980s street game. FIRST image is style reference only. SECOND image is EXACT sheet layout reference and body proportions to follow, but replace character with: adult businesswoman with fair skin, dark bob haircut, navy blue skirt suit, ivory blouse, dark low shoes, brown briefcase. Exactly SIX horizontal rows separated by generous transparent gaps. Row1 FOUR right-facing idle breathing poses. Row2 EIGHT right-facing walk-cycle poses with distinct successive foot/arm positions. Row3 SIX walking TOWARD camera poses. Row4 SIX walking AWAY from camera poses with back of head and clothing visible. Row5 FOUR FRONT facing idle breathing poses. Row6 SIX sequential poses checking wristwatch, complete loop. Row counts MUST be 4,8,6,6,4,6. All rows start at same left margin, same cell pitch, unused end cells transparent. Eight-column six-row portrait layout, cells26:44. Each full-body adult same intended38pixel height, with feet aligned at identical cell baseline. Crisp restrained pixel clusters and dark1pixel native outlines, light upper left, limited warm muted palette. No gradients, no smooth painting, no text, no labels, no grid lines, NO floor or cast shadow, no scenery, no extra people. TRUE transparent background. Keep all figures separated, no overlapping frames.",
+      "source_image": "exec-3794207e-1647-4af2-a900-c491f76ef0d3.png"
+    },
+    {
+      "id": "npcs/guarda-dhpp-a",
+      "w": 208,
+      "h": 264,
+      "prompt": "Use case: stylized-concept. Production PIXEL ART character sprite sheet for American 1980s street game. FIRST image is style reference only. SECOND image is EXACT sheet layout reference and body proportions to follow, but replace character with: adult male fictional DHPP officer with medium brown skin, navy blue uniform and peaked cap, gold tiny generic shield badge, black duty belt and black shoes, no real department logos. Exactly SIX horizontal rows separated by generous transparent gaps. Row1 FOUR right-facing idle breathing poses. Row2 EIGHT right-facing walk-cycle poses with distinct successive foot/arm positions. Row3 SIX walking TOWARD camera poses. Row4 SIX walking AWAY from camera poses with back of head and clothing visible. Row5 FOUR FRONT facing idle breathing poses. Row6 SIX sequential poses raising right hand to cap in salute then lowering, complete loop. Row counts MUST be 4,8,6,6,4,6. All rows start at same left margin, same cell pitch, unused end cells transparent. Eight-column six-row portrait layout, cells26:44. Each full-body adult same intended38pixel height, with feet aligned at identical cell baseline. Crisp restrained pixel clusters and dark1pixel native outlines, light upper left, limited warm muted palette. No gradients, no smooth painting, no text, no labels, no grid lines, NO floor or cast shadow, no scenery, no extra people. TRUE transparent background. Keep all figures separated, no overlapping frames.",
+      "source_image": "exec-c07b7084-aa10-4a53-80f2-b531bb11bece.png"
+    },
+    {
+      "id": "npcs/guarda-dhpp-b",
+      "w": 208,
+      "h": 264,
+      "prompt": "Use case: stylized-concept. Production PIXEL ART character sprite sheet for American 1980s street game. FIRST image is style reference only. SECOND image is EXACT sheet layout reference and body proportions to follow, but replace character with: adult female fictional DHPP officer with light brown skin, dark hair tucked under navy peaked cap, navy blue uniform trousers, gold tiny generic shield badge, black duty belt and black shoes, no real department logos. Exactly SIX horizontal rows separated by generous transparent gaps. Row1 FOUR right-facing idle breathing poses. Row2 EIGHT right-facing walk-cycle poses with distinct successive foot/arm positions. Row3 SIX walking TOWARD camera poses. Row4 SIX walking AWAY from camera poses with back of head and clothing visible. Row5 FOUR FRONT facing idle breathing poses. Row6 SIX sequential poses raising right hand to cap in salute then lowering, complete loop. Row counts MUST be 4,8,6,6,4,6. All rows start at same left margin, same cell pitch, unused end cells transparent. Eight-column six-row portrait layout, cells26:44. Each full-body adult same intended38pixel height, with feet aligned at identical cell baseline. Crisp restrained pixel clusters and dark1pixel native outlines, light upper left, limited warm muted palette. No gradients, no smooth painting, no text, no labels, no grid lines, NO floor or cast shadow, no scenery, no extra people. TRUE transparent background. Keep all figures separated, no overlapping frames.",
+      "source_image": "exec-8c0d52c4-f580-4634-bede-cd2d68792eb3.png"
+    },
+    {
+      "id": "dhpp-porta",
+      "w": 44,
+      "h": 64,
+      "n": 4,
+      "prompt": "Use case: stylized-concept. Production pixel art game animation asset. American1980s muted warm street style. Exactly FOUR matching tall rectangular double-door states in ONE horizontal row with transparent gaps. Dark walnut wood double doors with square upper glass panes and brass handles, match door in supplied facade. Frame1 fully closed; frame2 both leaves quarter open inward; frame3 both leaves three-quarters open inward; frame4 fully open with leaves at sides and warmly lit recessed empty corridor. Every door rectangle SAME exterior dimensions44:64, same frame and threshold, all four full opaque rectangular backgrounds INCLUDING dark or warm interior (not transparent through doorway). No wall, no stairs, no text, no people. Hard pixel clusters, limited palette, no anti-aliasing except translucent light halo.",
+      "source_image": "exec-67183944-b25d-43ef-908b-09caa8331744.png"
+    },
+    {
+      "id": "dhpp-bandeira",
+      "w": 12,
+      "h": 22,
+      "n": 4,
+      "prompt": "Use case: stylized-concept. Production pixel art game animation asset. American1980s muted warm street style. Exactly FOUR animation frames of the SAME small American flag cloth hanging mostly downward from its top left corner, wind blowing slightly to right. Four consecutive gently waving poses, recognizable navy canton with tiny white star dots and red/ivory stripes. Vertical draped flag proportions12:22, modest sideways wave variation, NO flag pole, NO finial, NO wall, NO text, NO shadow. ONE horizontal row of FOUR separate cloths with transparent gaps. Hard pixel clusters, limited palette, no anti-aliasing except translucent light halo.",
+      "source_image": "exec-5f936108-fab5-4a8a-b9b1-61799200c0bd.png"
+    },
+    {
+      "id": "neon-open",
+      "w": 24,
+      "h": 12,
+      "n": 2,
+      "prompt": "Use case: stylized-concept. Production pixel art game animation asset. American1980s muted warm street style. Exactly TWO identical rectangular small neon window sign panels in ONE horizontal row with transparent gap. Text exactly \"OPEN\", capital block letters. First panel glowing red orange letters and thin blue rectangular border on opaque very dark brown-black glass panel; second same sign UNLIT with very dim dark-red tube letters and dim border on same opaque dark panel. Same2:1 rectangle size, no hanging chain, no wall, no scene, no extra words. Crisp low resolution pixel art readable at24x12. Hard pixel clusters, limited palette, no anti-aliasing except translucent light halo.",
+      "source_image": "exec-1f83c567-425f-470f-a907-96f466907693.png"
+    },
+    {
+      "id": "neon-we-buy",
+      "w": 34,
+      "h": 12,
+      "n": 2,
+      "prompt": "Use case: stylized-concept. Production pixel art game animation asset. American1980s muted warm street style. Exactly TWO identical wide rectangular small neon window sign panels in ONE horizontal row with transparent gap. Text exactly \"WE BUY\", capital block letters. First panel glowing amber orange letters on opaque dark brown-black glass rectangle; second same text half-lit flickering, WE lit dim and BUY mostly dark. Same34:12 aspect rectangle, no wall, no scene, no extra words. Crisp low resolution pixel art readable at34x12. Hard pixel clusters, limited palette, no anti-aliasing except translucent light halo.",
+      "source_image": "exec-6f259b7f-a764-4761-84e8-98aadfecf1ef.png"
+    },
+    {
+      "id": "laundry-maquinas",
+      "w": 84,
+      "h": 25,
+      "n": 2,
+      "prompt": "Use case: stylized-concept. Production pixel art game animation asset. American1980s muted warm street style. Exactly TWO animation frames of FOUR laundromat washing machines side by side as a single horizontal bank, each machine with silver metal square face and dark round glass porthole containing muted white, blue and red clothes. In second frame same bank of FOUR identical machines but clothes rotated around drum. TWO separate banks in ONE horizontal row with transparent gap. Each bank proportions84:25, slight top view, same positions and silhouettes. No wall, no background, no people, no signage, no text. Hard pixel clusters, limited palette, no anti-aliasing except translucent light halo.",
+      "source_image": "exec-accb284e-6e83-4072-88ab-aa45629c9811.png"
+    },
+    {
+      "id": "poste-luz-brilho",
+      "w": 40,
+      "h": 40,
+      "n": 1,
+      "prompt": "Use case: stylized-concept. Production pixel art game animation asset. American1980s muted warm street style. One small warm amber circular light halo sprite on TRUE transparent background. Soft concentric pixelated translucent bands, brighter pale warm center, gently fading completely transparent at outer edge. Radially symmetric. No lamp, no objects, no rays, no floor, no text, no opaque black background. Intended40x40 pixels. Hard pixel clusters, limited palette, no anti-aliasing except translucent light halo.",
+      "source_image": "exec-af0fa4ed-59bc-487b-b6f8-b0a2bb94d378.png"
+    },
+    {
+      "id": "efeitos/vapor-bueiro",
+      "w": 144,
+      "h": 40,
+      "fw": 24,
+      "n": 6,
+      "prompt": "Use case: stylized-concept. Production PIXEL ART game sprite animation sheet for muted American1980s street, minimal clean crisp pixel clusters. SIX successive looping frames of pale white gray steam rising from unseen street manhole, beginning low curling plume, rising and widening, curling left then right then dissipating, gentle loop. Exactly SIX equal-sized cells in ONE horizontal row. Every plume starts same bottom-center point, smoke stays within vertical24:40 cell. No manhole or street drawn, only translucent steam, preserve semi-transparent alpha and soft pixel clusters. TRUE transparent background, no labels or grid.",
+      "source_image": "exec-c9713256-9d37-4f19-99d2-5e3eb0f769c5.png"
+    },
+    {
+      "id": "efeitos/fumaca-escape",
+      "w": 48,
+      "h": 8,
+      "fw": 12,
+      "n": 4,
+      "prompt": "Use case: stylized-concept. Production PIXEL ART game sprite animation sheet for muted American1980s street, minimal clean crisp pixel clusters. FOUR consecutive tiny gray exhaust puff animation frames, emitted from left toward right, growing slightly then dissipating into light gray wisps. Exactly FOUR separated cells in ONE horizontal row. Each cell12:8 aspect, no vehicle, no floor, only smoke with partial transparency. TRUE transparent background, no labels or grid.",
+      "source_image": "exec-136bc65c-febd-4462-ba2e-239d2e1d7d35.png"
+    },
+    {
+      "id": "efeitos/pombo",
+      "w": 80,
+      "h": 8,
+      "fw": 10,
+      "n": 8,
+      "prompt": "Use case: stylized-concept. Production PIXEL ART game sprite animation sheet for muted American1980s street, minimal clean crisp pixel clusters. EIGHT animation poses of SAME tiny gray city pigeon facing RIGHT in ONE horizontal row. Frames1-2 standing pecking ground, frames3-4 walking right with alternate tiny red feet, frames5-8 flying with distinct wing stroke up, horizontal, down, halfway up. Gray body, dark head with muted iridescent green neck, small beak, tiny reddish feet. Pixel art intended10x8 each, only pigeon, no shadows, no ground, no text. All exactly8 separate frames evenly spaced. TRUE transparent background, no labels or grid.",
+      "source_image": "exec-be227471-61af-4a7b-bf38-9aa5c1a6cb90.png"
+    },
+    {
+      "id": "personagens/lemos-rua",
+      "w": 208,
+      "h": 352,
+      "prompt": "Use case: identity-preserve. Production pixel art full-body animation SPRITE SHEET of detective LEMOS for1980s American street game. First reference is canonical identity: short dark brown hair neatly side-parted and combed, light tan skin, graphite suit. Preserve hair and clothing identity, adapt to tiny street sprites. Second reference is exact pixel art body proportions and animation row layout, NOT identity. Lemos wears graphite suit, pale ivory shirt, burgundy tie, dark shoes, small gold belt badge; NO briefcase. EXACTLY EIGHT ROWS, maximum8columns. Row1 FOUR RIGHT-facing idle breathing poses. Row2 EIGHT RIGHT-facing side walking poses full cycle. Row3 SIX walking toward camera poses. Row4 SIX walking away BACK-view poses. Row5 FOUR front idle poses. Row6 SIX looking around poses, body still head turns left right. Row7 FOUR speaking poses with subtle hand gesture. Row8 FOUR poses revealing small gold badge at belt with hand, then returning to rest. Counts4,8,6,6,4,6,4,4. All rows start same left margin, evenly separated cells and clear transparent row gaps. Unused end columns EMPTY. Each cell26:44, adult38pixels tall at final native scale, feet same baseline. Same person all frames, no scene, no captions, no grid, no shadows. Crisp restrained pixel clusters, 1pixel native outline, light upper left. Transparent background. Full body all poses.",
+      "source_image": "exec-67698664-48c6-425f-a592-1bfd4c03b92c.png"
+    },
+    {
+      "id": "guia/escala",
+      "source_image": "exec-5d17fd52-76f3-470f-a610-60395b773f0a.png",
+      "method": "Prancha gerada, recortada e montada em escala técnica: pessoa38px, porta22x40, porta dupla44x64, andar52px, carro155x50, hidrante10x18. Régua técnica rasterizada."
+    }
+  ],
+  "files": [
+    {
+      "path": "public/base/rua/chao/asfalto.png",
+      "width": 128,
+      "height": 160,
+      "sha256": "623fb4e6dcc85df76efde4461286c0b6a28059069f21280c52f8f4b28a1645eb"
+    },
+    {
+      "path": "public/base/rua/chao/boca-de-lobo.png",
+      "width": 24,
+      "height": 6,
+      "sha256": "98f16d0130ef84c8dffc5cf6cc051d5d96b75934e15d74df68bb198c9d5ddafb"
+    },
+    {
+      "path": "public/base/rua/chao/bueiro.png",
+      "width": 20,
+      "height": 8,
+      "sha256": "40532742a9d2345e1653d3d265b9c3453b62a0a8de52765df0a2d14acc0eda96"
+    },
+    {
+      "path": "public/base/rua/chao/calcada.png",
+      "width": 64,
+      "height": 50,
+      "sha256": "1c156c94d691bccc54deb1624f12910cb33666e90e2c79211e5013302d7dfac0"
+    },
+    {
+      "path": "public/base/rua/chao/faixa-amarela.png",
+      "width": 64,
+      "height": 5,
+      "sha256": "b3108e84c4c1d5546ff178419d8d57b315e2ba2b8e675ed9ce9ce13dee451a6c"
+    },
+    {
+      "path": "public/base/rua/chao/faixa-branca.png",
+      "width": 24,
+      "height": 3,
+      "sha256": "da13bddd941faefd689d32e410d33ad4d8998df7222d8338c024954fa857aa45"
+    },
+    {
+      "path": "public/base/rua/chao/faixa-pedestres.png",
+      "width": 30,
+      "height": 160,
+      "sha256": "b84585ad7254102c64235883cadebf5120c996a98b3d245fed9c8e6d0568a1cf"
+    },
+    {
+      "path": "public/base/rua/chao/lixo-chao.png",
+      "width": 80,
+      "height": 6,
+      "sha256": "0265e7d27f7a49dba7509f861fa821f9b6a5fa516f96e481429e1790c1a24932"
+    },
+    {
+      "path": "public/base/rua/chao/manchas.png",
+      "width": 192,
+      "height": 12,
+      "sha256": "0ee3e72909aee452729d650655cb341b490f151d88474db65bc07d2006e410f1"
+    },
+    {
+      "path": "public/base/rua/chao/meio-fio.png",
+      "width": 64,
+      "height": 6,
+      "sha256": "ce00d3449bcf05eb0e6958eb6f6827a44fe03606fc7a4ac7ba0ee4bb50fa5448"
+    },
+    {
+      "path": "public/base/rua/chao/vaga-dhpp.png",
+      "width": 180,
+      "height": 40,
+      "sha256": "f2fcbce3005b5100dadb30d80dabd61abe7b12227f2d6d4a982a8617417a924e"
+    },
+    {
+      "path": "public/base/rua/efeitos/fumaca-escape.png",
+      "width": 48,
+      "height": 8,
+      "sha256": "5524da57b7350702d93ade3936793a96f41497b9ba63ea20767fbad58f264a84"
+    },
+    {
+      "path": "public/base/rua/efeitos/pombo.png",
+      "width": 80,
+      "height": 8,
+      "sha256": "e5f0a58c0935f6a15fdf56c0e219885acf3f3dff9d285b15f3b2a71be645d69b"
+    },
+    {
+      "path": "public/base/rua/efeitos/poste-luz-brilho.png",
+      "width": 40,
+      "height": 40,
+      "sha256": "25db222e15531720325b8651ca6f7653dd0bb9e9eac77b0a84e6dc512f365bd9"
+    },
+    {
+      "path": "public/base/rua/efeitos/vapor-bueiro.png",
+      "width": 144,
+      "height": 40,
+      "sha256": "00568f4265f0ad66ec296ed9b006752a8bb125a816331a92ea5af064e138239a"
+    },
+    {
+      "path": "public/base/rua/fachadas/beco-leste.png",
+      "width": 58,
+      "height": 330,
+      "sha256": "e6c247e4ac242032c593617f42bc54c7d4ec48326ce49e5fd1c8aa5146c9d558"
+    },
+    {
+      "path": "public/base/rua/fachadas/beco-oeste.png",
+      "width": 58,
+      "height": 330,
+      "sha256": "bd5df2656af8d83168269a87943fecf47371a0b99511de0cfdb458985d4d6995"
+    },
+    {
+      "path": "public/base/rua/fachadas/dhpp-bandeiras-0.png",
+      "width": 170,
+      "height": 330,
+      "sha256": "5a09f925c52f428eb7c13ef76b9850be76c42e032ce3192a3bc23ac9f9b87c8c"
+    },
+    {
+      "path": "public/base/rua/fachadas/dhpp-bandeiras-1.png",
+      "width": 170,
+      "height": 330,
+      "sha256": "937c8aeae8aa6e75b9dfb08ac970ac036079a522fc2042eea95148375646694f"
+    },
+    {
+      "path": "public/base/rua/fachadas/dhpp-bandeiras-2.png",
+      "width": 170,
+      "height": 330,
+      "sha256": "a64bc2264a741084929f37390c7ef026654a68f6b0e8892871574f443e176ef3"
+    },
+    {
+      "path": "public/base/rua/fachadas/dhpp-bandeiras-3.png",
+      "width": 170,
+      "height": 330,
+      "sha256": "4618a95b8dff8cb6a5a310d5115a45ce3b84d9612d9a25946e889f9884e53f89"
+    },
+    {
+      "path": "public/base/rua/fachadas/dhpp-luzes-0.png",
+      "width": 170,
+      "height": 330,
+      "sha256": "f72e66e25ea178b3d89d6de772a618afc639d99ddd52cb6950b3c24c633234bd"
+    },
+    {
+      "path": "public/base/rua/fachadas/dhpp-porta-0.png",
+      "width": 170,
+      "height": 330,
+      "sha256": "f9af2214f1178ce558dec68127ecde930e18fb1bc671c71e613b398ecebb8b42"
+    },
+    {
+      "path": "public/base/rua/fachadas/dhpp-porta-1.png",
+      "width": 170,
+      "height": 330,
+      "sha256": "a2e80303079879862ef30175483be6d4de26afd96a8d28c09687450e1ab016d3"
+    },
+    {
+      "path": "public/base/rua/fachadas/dhpp-porta-2.png",
+      "width": 170,
+      "height": 330,
+      "sha256": "cd4249d9292816a01b1fa6ba3f268d0a7996989e830c2ff3ebee3b790fce4b83"
+    },
+    {
+      "path": "public/base/rua/fachadas/dhpp-porta-3.png",
+      "width": 170,
+      "height": 330,
+      "sha256": "e143dfd41d34d319763f5d359476e121d3b7f300e427accdadbcbb3ccd68ea6f"
+    },
+    {
+      "path": "public/base/rua/fachadas/dhpp.png",
+      "width": 170,
+      "height": 330,
+      "sha256": "c9492eed4a469c8049f7fee39683956149f9cbbcaa7b7181a4ea1dad7758a3e6"
+    },
+    {
+      "path": "public/base/rua/fachadas/diner-neon-0.png",
+      "width": 132,
+      "height": 330,
+      "sha256": "72cceda0377590499c3f040cb4b9f8c75417136db718dec06c7ea44669dc9252"
+    },
+    {
+      "path": "public/base/rua/fachadas/diner-neon-1.png",
+      "width": 132,
+      "height": 330,
+      "sha256": "a1ded830110070858ccb5d8bd859b5a34c63789e479357a34cfa82499c071cc3"
+    },
+    {
+      "path": "public/base/rua/fachadas/diner.png",
+      "width": 132,
+      "height": 330,
+      "sha256": "8550daa03a31812a8b4e57ffc1608356956e1a7e65ecfffb4c2864befe6a853f"
+    },
+    {
+      "path": "public/base/rua/fachadas/esquina-leste.png",
+      "width": 110,
+      "height": 330,
+      "sha256": "d8d14243d639dc9539b7e551d9b08fb047c8770a38856c3eab15b076780b27eb"
+    },
+    {
+      "path": "public/base/rua/fachadas/esquina-oeste.png",
+      "width": 110,
+      "height": 330,
+      "sha256": "3ba33eb9b7143668fff968e858d0864f3edba26e076f43f087cbe1c72f59787e"
+    },
+    {
+      "path": "public/base/rua/fachadas/grocery.png",
+      "width": 136,
+      "height": 330,
+      "sha256": "a490c3210c8cb568acc33a8919dca22a4ce60051931f5b1246f94125d2469d3b"
+    },
+    {
+      "path": "public/base/rua/fachadas/laundry-maquinas-0.png",
+      "width": 132,
+      "height": 330,
+      "sha256": "71590ac9c48d8c07bc46deff1913694a4c684b3befa079ba03a85f5a7f05b2f7"
+    },
+    {
+      "path": "public/base/rua/fachadas/laundry-maquinas-1.png",
+      "width": 132,
+      "height": 330,
+      "sha256": "8737597a003ece40c2d9b49c6d23e1ef93b8c918ac1799e4d5d96b5973517d24"
+    },
+    {
+      "path": "public/base/rua/fachadas/laundry-neon-0.png",
+      "width": 132,
+      "height": 330,
+      "sha256": "e7f83dbdfbfb6d4efe276ecfa534f6834a8381c8276b2a28823158c99ad9ae11"
+    },
+    {
+      "path": "public/base/rua/fachadas/laundry-neon-1.png",
+      "width": 132,
+      "height": 330,
+      "sha256": "6384eaeb33faa9e176853c5931320b93d59e62ffb2dab5c4c75b5f14c6b40d2b"
+    },
+    {
+      "path": "public/base/rua/fachadas/laundry.png",
+      "width": 132,
+      "height": 330,
+      "sha256": "efa2d9ae0d8ca97fa489bf341ea67b44c1083e583cd83af35b902816ec692bde"
+    },
+    {
+      "path": "public/base/rua/fachadas/pawn-shop-neon-0.png",
+      "width": 136,
+      "height": 330,
+      "sha256": "2479f21460dbdbddddc9adf349e8ef0a8efccc9afe9275eaa55bab0b7bd2ba09"
+    },
+    {
+      "path": "public/base/rua/fachadas/pawn-shop-neon-1.png",
+      "width": 136,
+      "height": 330,
+      "sha256": "bfc0a42b0a9981cc94f5a5f88fd2513291ad7e7ea78c0440077ef0c23237d9d1"
+    },
+    {
+      "path": "public/base/rua/fachadas/pawn-shop.png",
+      "width": 136,
+      "height": 330,
+      "sha256": "2981ad614e154b8df972466de61ea7676c9f19c947630a1f4dcbf891819f5f58"
+    },
+    {
+      "path": "public/base/rua/fachadas/predio-leste.png",
+      "width": 120,
+      "height": 330,
+      "sha256": "3eeea1389bfb5735c962bb2c0d4b1962b5c9bccf0f6ff91d996d9786bea96f0b"
+    },
+    {
+      "path": "public/base/rua/fachadas/predio-oeste.png",
+      "width": 120,
+      "height": 330,
+      "sha256": "8988421eb56b810ad5247498837db0deca764458847c638dc22e0ed906d3607a"
+    },
+    {
+      "path": "public/base/rua/fundo/ceu.png",
+      "width": 64,
+      "height": 340,
+      "sha256": "998a795f4f112a76031a28a979e106a2bca11de994ca2d3c89551db4aa594eaa"
+    },
+    {
+      "path": "public/base/rua/guia/escala.png",
+      "width": 640,
+      "height": 200,
+      "sha256": "7552998edddae307dfb5c263fbc2e0d42384efaefa145751d724cb5695e9218b"
+    },
+    {
+      "path": "public/base/rua/guia/paleta.png",
+      "width": 256,
+      "height": 64,
+      "sha256": "db1aad18b509a31a8fc6522cdad154e6a8385259951df470453adf1107900a60"
+    },
+    {
+      "path": "public/base/rua/npcs/corredor.png",
+      "width": 208,
+      "height": 264,
+      "sha256": "e2ede90934068410048d8e224f0185231a47d264285789ac9106e6365d99ffef"
+    },
+    {
+      "path": "public/base/rua/npcs/entregador.png",
+      "width": 208,
+      "height": 264,
+      "sha256": "e3d69e4a61d8365e0d9ec8be143cd368f8cc31fb6b669b349ccf576f18c14fb9"
+    },
+    {
+      "path": "public/base/rua/npcs/estudante.png",
+      "width": 208,
+      "height": 264,
+      "sha256": "202d8e8721d0ea2bce519e1b05dc091fb0e36ac0c9ea36b30cd5b865d99539c4"
+    },
+    {
+      "path": "public/base/rua/npcs/executivo.png",
+      "width": 208,
+      "height": 264,
+      "sha256": "1b2846cda18776b5694187e2d5d6ada1d8033047ac0a9ecf7e209c27a430414c"
+    },
+    {
+      "path": "public/base/rua/npcs/guarda-dhpp-a.png",
+      "width": 208,
+      "height": 264,
+      "sha256": "da01f1d76964ab487992d50fb773dbba7ae46bc7cc60d0cffbaf0a1f22a06ce6"
+    },
+    {
+      "path": "public/base/rua/npcs/guarda-dhpp-b.png",
+      "width": 208,
+      "height": 264,
+      "sha256": "f3166ccebd5305e24bc4976c2b300e87424bdbb150d63d0d64208ccc672618f0"
+    },
+    {
+      "path": "public/base/rua/npcs/guia-npcs.png",
+      "width": 640,
+      "height": 60,
+      "sha256": "5dc77c60e845b8fb36aaa264eeab9323141c673b097ee4e1d8a20e3815e81dcf"
+    },
+    {
+      "path": "public/base/rua/npcs/idoso-chapeu.png",
+      "width": 208,
+      "height": 264,
+      "sha256": "6a46b8d1124d6d7da3a34027bc0f2afa6cd6fa8d106d71daeec8e76827104fd0"
+    },
+    {
+      "path": "public/base/rua/npcs/jaqueta-couro.png",
+      "width": 208,
+      "height": 264,
+      "sha256": "41741f3deab06892d094fec9bcbf826cc97a8cac0a590b86b437455fd2ccacfc"
+    },
+    {
+      "path": "public/base/rua/npcs/jovem-jaqueta.png",
+      "width": 208,
+      "height": 264,
+      "sha256": "2434351dd73206fdb7353cf585cb241656c46097c57f57f9901072682115f7a3"
+    },
+    {
+      "path": "public/base/rua/npcs/mulher-executiva.png",
+      "width": 208,
+      "height": 264,
+      "sha256": "0a2469155d8705347a47cd9e3bd199ef6cbc432a47d899ee2d6232a3759d72cf"
+    },
+    {
+      "path": "public/base/rua/npcs/mulher-loira.png",
+      "width": 208,
+      "height": 264,
+      "sha256": "3eabe49b73448d0fd86e517fdaf96f4cca11bef8e761bd97d34610a1d95b14a1"
+    },
+    {
+      "path": "public/base/rua/npcs/mulher-vestido-vermelho.png",
+      "width": 208,
+      "height": 264,
+      "sha256": "9c7a8dae5e39b09087a42e0decceece121f1694ee8a6bdb394444a5ef05a2dc2"
+    },
+    {
+      "path": "public/base/rua/npcs/operario.png",
+      "width": 208,
+      "height": 264,
+      "sha256": "bf0e4260c1c1a7dbe7cb496b0c61548fbb67666f2d3d179cda7564d27de86c0a"
+    },
+    {
+      "path": "public/base/rua/npcs/senhora-carrinho.png",
+      "width": 208,
+      "height": 264,
+      "sha256": "d5ef22855715df5749fa0069128ba572ec1f5b2cc8da6ee312cbdd0e5299b569"
+    },
+    {
+      "path": "public/base/rua/personagens/lemos-rua.png",
+      "width": 208,
+      "height": 352,
+      "sha256": "bf7d73229f0c64d0d8e2fb7ddbd672709adb02ef225b407e2cfed0c54383c9c6"
+    },
+    {
+      "path": "public/base/rua/props/alarme-incendio.png",
+      "width": 8,
+      "height": 38,
+      "sha256": "dc735b680f3be9fb4a085b48c4655d02f3ade3110c95d610254b0985b826edc2"
+    },
+    {
+      "path": "public/base/rua/props/banco.png",
+      "width": 40,
+      "height": 16,
+      "sha256": "9aaa787772f9300e90363f91fa3809a8290d1860878cb9d873b2b23ae8473586"
+    },
+    {
+      "path": "public/base/rua/props/cacamba.png",
+      "width": 46,
+      "height": 32,
+      "sha256": "a4bdcb3da7665c566935080ee4324499931b12990a017c66236d077baf366492"
+    },
+    {
+      "path": "public/base/rua/props/caixa-correio.png",
+      "width": 16,
+      "height": 30,
+      "sha256": "9b028e3ccf4eadcac018f9d8de1f597b913d6e15d440167d363b488de2a914d7"
+    },
+    {
+      "path": "public/base/rua/props/caixa-papelao.png",
+      "width": 14,
+      "height": 12,
+      "sha256": "d1605951876fb6d5f7965b698ed89b828f4cf1a341c3e5ebc389f9642ac70588"
+    },
+    {
+      "path": "public/base/rua/props/hidrante.png",
+      "width": 10,
+      "height": 18,
+      "sha256": "40a0c3070fd8e0b2b14ee86cb42519b828eaba5b1a6d5f6469a43dc10d20a489"
+    },
+    {
+      "path": "public/base/rua/props/jornal-azul.png",
+      "width": 14,
+      "height": 24,
+      "sha256": "e3c99c7483f4d1a4b71906cc004561566c325f73738f3ce3569ee2735ea54f4b"
+    },
+    {
+      "path": "public/base/rua/props/jornal-vermelho.png",
+      "width": 14,
+      "height": 24,
+      "sha256": "a683f34ddacbaeb57be1fecfa68d4c33badf0d84ab6c781b8b061137a173f476"
+    },
+    {
+      "path": "public/base/rua/props/lixeira-cheia.png",
+      "width": 18,
+      "height": 26,
+      "sha256": "68971d4de2439b2e6a75f65ff1fd12e61b09b2849be571c4cb5d4a98cecfe522"
+    },
+    {
+      "path": "public/base/rua/props/lixeira.png",
+      "width": 16,
+      "height": 24,
+      "sha256": "71ed52d913784d4c3519cc1404d88642c497fa60c7c7b62d95724cd5d141f354"
+    },
+    {
+      "path": "public/base/rua/props/pallet.png",
+      "width": 24,
+      "height": 8,
+      "sha256": "4fe2888bdc13ad4a195eb3c39eba10ff5679932f71b75399e644cfffbfd26a84"
+    },
+    {
+      "path": "public/base/rua/props/parquimetro.png",
+      "width": 6,
+      "height": 30,
+      "sha256": "32b9bb300a3704c3509ca62f80f2cc40defa6afb9a45854eb01a9ff5f96fea69"
+    },
+    {
+      "path": "public/base/rua/props/placa-n-9th-st.png",
+      "width": 44,
+      "height": 8,
+      "sha256": "9d431c6137ad1abe764c5d8c88063ca9b40c92382a6ae362938439faa938ebd8"
+    },
+    {
+      "path": "public/base/rua/props/placa-onibus.png",
+      "width": 12,
+      "height": 46,
+      "sha256": "644536fae03b40477142e5edd7dcb344f70d3a0cac34bfc3142fe4d1878ce7f9"
+    },
+    {
+      "path": "public/base/rua/props/placa-proibido.png",
+      "width": 12,
+      "height": 44,
+      "sha256": "b783b5160f845f4003f3d9c0d2b33168779538875a14abf210a7dfbb4f8dfad7"
+    },
+    {
+      "path": "public/base/rua/props/placa-w-oak-st.png",
+      "width": 44,
+      "height": 8,
+      "sha256": "87690e2bd62d5de1f36ce0cebbeb6a372fd6c7bd922235128b9fdbf27c5388bd"
+    },
+    {
+      "path": "public/base/rua/props/poste-luz.png",
+      "width": 16,
+      "height": 120,
+      "sha256": "5e4f9ea2391e939dfddf9ad13ed07650915202365f9c290b4feb8c711d168140"
+    },
+    {
+      "path": "public/base/rua/props/sacos-lixo.png",
+      "width": 30,
+      "height": 18,
+      "sha256": "8d567dfb2a7f3cf34c5d21e53f2a1710e98fb3d7fe550c41ed11ded447e1cd4b"
+    },
+    {
+      "path": "public/base/rua/props/semaforo.png",
+      "width": 54,
+      "height": 96,
+      "sha256": "2c6111362995be1ed841f9f4bec9901b08ff269a6f41b978a332b120089c33c0"
+    },
+    {
+      "path": "public/base/rua/props/telefone-publico.png",
+      "width": 22,
+      "height": 46,
+      "sha256": "f7f8b657401fe0d4f4457293cc0d3af6ac500ec39b2f32aabd78010f1af2ae1c"
+    },
+    {
+      "path": "public/base/rua/veiculos/furgao-marrom.png",
+      "width": 284,
+      "height": 58,
+      "sha256": "5faa512c201af78911d09e4299eaa31f235a00da7d6ea01312d4a9953376dc1b"
+    },
+    {
+      "path": "public/base/rua/veiculos/onibus.png",
+      "width": 600,
+      "height": 84,
+      "sha256": "c514950d69e27c2b9ba5311bb473f4c9ac534f7db52fc0958477c495342a278e"
+    },
+    {
+      "path": "public/base/rua/veiculos/perua-madeira.png",
+      "width": 320,
+      "height": 48,
+      "sha256": "ea48528a784143d4a7662da6da5f783c47380e32da1186e256ee97be065649cc"
+    },
+    {
+      "path": "public/base/rua/veiculos/sedan-azul.png",
+      "width": 312,
+      "height": 46,
+      "sha256": "222f0d32054a738d3200704d77ff5d3ca1ec1f1d89421ab0eff15f1f6c6b5c01"
+    },
+    {
+      "path": "public/base/rua/veiculos/sedan-bege.png",
+      "width": 296,
+      "height": 46,
+      "sha256": "7adc05cd67e4abb239fff2428298a94f4bd54d808a9a54d508d134fe80816f2d"
+    },
+    {
+      "path": "public/base/rua/veiculos/sedan-bordo.png",
+      "width": 304,
+      "height": 46,
+      "sha256": "672e8c91abe43339030118d4b0f48097f1c12bde581f405bfad7cf74a391dead"
+    },
+    {
+      "path": "public/base/rua/veiculos/sedan-verde.png",
+      "width": 300,
+      "height": 46,
+      "sha256": "5475abe5361babe9a71d7614f25903d62b993632de4fe66af1c222ca2d5180fc"
+    },
+    {
+      "path": "public/base/rua/veiculos/taxi.png",
+      "width": 300,
+      "height": 52,
+      "sha256": "91380414bf4b26ee7c8ba8048649f8c9e9eb010d689db7f291a7d536d224b36b"
+    },
+    {
+      "path": "public/base/rua/veiculos/viatura-dhpp.png",
+      "width": 616,
+      "height": 50,
+      "sha256": "e9dc82184f437b443c4fe8e504b4f9f232b65a6c74d61242f7331acc0a9f7af3"
+    }
+  ]
+}
