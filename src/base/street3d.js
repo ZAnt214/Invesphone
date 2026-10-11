@@ -89,7 +89,7 @@ export function createStreet3D(sim){
     conc:new Bin(true),asph:new Bin(true),roof:new Bin(true),slate:new Bin(true),dirt:new Bin(true),corr:new Bin(true),gen:new Bin(true),genLit:new Bin(true)};
   const MAT={col:new THREE.MeshStandardMaterial({vertexColors:true,roughness:.78}),
     glass:new THREE.MeshStandardMaterial({vertexColors:true,roughness:.06,metalness:.85,envMapIntensity:1.4}),
-    lit:new THREE.MeshStandardMaterial({vertexColors:true,emissive:'#ffcf80',emissiveIntensity:.55,roughness:.4}),
+    lit:new THREE.MeshBasicMaterial({vertexColors:true}),
     brick:new THREE.MeshStandardMaterial({vertexColors:true,map:TX.brick,roughness:.9}),plaster:new THREE.MeshStandardMaterial({vertexColors:true,map:TX.plaster,roughness:.9}),
     siding:new THREE.MeshStandardMaterial({vertexColors:true,map:TX.siding,roughness:.85}),stone:new THREE.MeshStandardMaterial({vertexColors:true,map:TX.stone,roughness:.9}),
     conc:new THREE.MeshStandardMaterial({vertexColors:true,map:TX.concrete,roughness:.95}),asph:new THREE.MeshStandardMaterial({vertexColors:true,map:TX.asphalt,roughness:.92}),
@@ -105,7 +105,7 @@ export function createStreet3D(sim){
   /* janela de guilhotina saindo um pouco da parede: vidro, caixilho, verga, peitoril; acesa ou com cortina */
   function win(cx,y0,w,h,o={}){
     const z=0,fr=o.frame||'#efe9dd',lit=o.lit;
-    (lit?B.lit:B.glass).add(G.plane,TF(cx,y0+h/2,z+.02,0,0,0,w,h,1),lit?'#ffe2a8':'#4d6b86');
+    (lit?B.lit:B.glass).add(G.plane,TF(cx,y0+h/2,z+.02,0,0,0,w,h,1),lit?'#e8c48a':'#4d6b86');
     for(const [x,yy,ww,hh] of [[cx-w/2,y0+h/2,.07,h+.07],[cx+w/2,y0+h/2,.07,h+.07],[cx,y0+h,w,.07],[cx,y0,w,.07],[cx,y0+h/2,w,.05]])col.box(fr,x,yy,z+.05,ww,hh,.08);
     if(o.six){for(const yy of [y0+h*.25,y0+h*.75])col.box(fr,cx,yy,z+.04,w,.03,.04);for(const xx of [cx-w/6,cx+w/6])col.box(fr,xx,y0+h/2,z+.04,.03,h,.04);}
     if(o.arch){for(let k=-5;k<=5;k++){const a=k/5*.9,r=w*.7;col.box(o.brick||'#8e3b2c',cx+Math.sin(a)*r,y0+h+.08+Math.cos(a)*r-r*.62,z+.03,.14,.2,.1,0,0,-a);}}
@@ -163,7 +163,7 @@ export function createStreet3D(sim){
     const fr=b.frame||'#3a2e28',band=b.shop==='closed'?'#5a5248':b.band||'#2f5a3a',g0=SWH;
     col.box(fr,x0+w/2,g0+1.5,.05,w,3.0,.1);
     const vx=b.shop==='market'||b.shop==='deli'?x0+w*.42:x0+w*.58,vw=w*.62,dx=b.shop==='market'||b.shop==='deli'?x0+w-.75:x0+.75;
-    const interior={deli:'#f2d6a0',laundry:'#cfe6ee',tavern:'#d89050',barber:'#e8f0f4',pharmacy:'#e8f6f2',closed:'#c8b48c',market:'#f2d6a0'}[b.shop]||'#cfe6ee';
+    const interior={deli:'#d8b47a',laundry:'#a9c4d2',tavern:'#9a5a32',barber:'#c4d6e2',pharmacy:'#c6e2d8',closed:'#c8b48c',market:'#d8b47a'}[b.shop]||'#a9c4d2';
     if(b.shop==='closed'){col.box('#c8b48c',vx,g0+1.35,.11,vw,1.9,.01);col.box('#f2f0e8',vx,g0+1.5,.12,1.2,.45,.01);col.box('#c0392b',vx,g0+1.62,.125,1.1,.12,.01);col.box('#8a8c8e',dx,g0+1.2,.12,1.0,2.3,.05);for(let k=0;k<12;k++)col.box('#6a6c6e',dx,g0+.1+k*.19,.15,1.0,.03,.01);}
     else{B.lit.add(G.plane,TF(vx,g0+1.35,.11,0,0,0,vw,1.9,1),interior);B.glass.add(G.plane,TF(dx,g0+1.2,.11,0,0,0,.95,2.2,1),'#3a5068');
       if(b.shop==='laundry')for(let k=0;k<4;k++)col.add(G.circle,TF(vx-vw/2+.45+k*vw/4,g0+.75,.115,0,0,0,.42,.42,1),'#e8eaec');
@@ -198,7 +198,7 @@ export function createStreet3D(sim){
     col.box('#c8bea8',x0+w/2,H+.05,.08,w+.1,.3,.3);
     const bays=Math.round(b.w/50),bw=w/bays;
     for(let L=1;L<6;L++){col.box('#c8bea8',x0+w/2,L*FH+.15,.08,w,.18,.16);
-      for(let i=0;i<bays;i++){const cx=x0+(i+.5)*bw,ww=bw-.7,hh=2.1,y0=L*FH+.6;const lit=R()<.25;(lit?B.lit:B.glass).add(G.plane,TF(cx,y0+hh/2,.02,0,0,0,ww,hh,1),lit?'#ffe2a8':'#5a7a90');
+      for(let i=0;i<bays;i++){const cx=x0+(i+.5)*bw,ww=bw-.7,hh=2.1,y0=L*FH+.6;const lit=R()<.25;(lit?B.lit:B.glass).add(G.plane,TF(cx,y0+hh/2,.02,0,0,0,ww,hh,1),lit?'#e8c48a':'#5a7a90');
         for(let q=0;q<=3;q++)col.box('#2a2b2e',cx-ww/2+q*ww/3,y0+hh/2,.04,.05,hh,.05);for(let r=0;r<=4;r++)col.box('#2a2b2e',cx,y0+r*hh/4,.04,ww,.05,.05);col.box('#d8d0c0',cx,y0-.06,.1,ww+.2,.1,.2);}}
     for(let i=0;i<=bays;i++)col.box(br,x0+i*bw,H/2,.12,.35,H,.24);
     // anúncio pintado e desbotado
@@ -272,7 +272,9 @@ export function createStreet3D(sim){
   function tree(x,z,kind){const s=kind==='young'?.55:kind==='mid'?.8:1;col.add(G.cyl6,TF(x,SWH+1.6*s,z,0,0,0,.24*s,3.2*s,.24*s),'#5a3a22');
     const Rt=rnd(Math.round(x*100));for(let k=0;k<6;k++)col.add(G.ico,TF(x+(Rt()-.5)*2.2*s,SWH+(3.6+Rt()*1.4)*s,z+(Rt()-.5)*1.6*s,Rt()*3,0,0,(1.6+Rt())*s,(1.4+Rt()*.8)*s,(1.6+Rt())*s),['#356a2e','#4a8a3c','#3f7a34','#5a9a44'][k%4]);}
   for(const x of LAMPS)lampAt(X(x),ZC-.25);
-  for(const t of TREES){tree(X(t.x),ZC-.4,t.kind);col.box('#3a2a1c',X(t.x),SWH+.005,ZC-.4,1.4,.01,1.0);if(t.guard)for(const [dx,dz,ww,dd] of [[0,-.5,1.4,.04],[0,.5,1.4,.04],[-.7,0,.04,1.0],[.7,0,.04,1.0]])col.box('#1c1d20',X(t.x)+dx,SWH+.25,ZC-.4+dz,ww,.5,dd);}
+  for(const t of TREES){const x=X(t.x),z=ZC-.4;tree(x,z,t.kind);col.box('#4a3424',x,SWH+.004,z,1.3,.01,.9);col.box('#8a857a',x,SWH+.002,z,1.42,.006,1.02);
+    // grade baixa de ferro: só os pinos e a barra de cima
+    if(t.guard){for(let k=0;k<=6;k++)for(const dz of [-.47,.47])col.box('#1c1d20',x-.66+k*.22,SWH+.2,z+dz,.025,.4,.025);for(const dz of [-.47,.47])col.box('#1c1d20',x,SWH+.4,z+dz,1.34,.03,.03);for(const dx of [-.67,.67])col.box('#1c1d20',x+dx,SWH+.4,z,.03,.03,.96);}}
   const poleTop=9.2,poles=[];
   for(const px of POLES){const x=X(px),z=ZC-.2;poles.push(x);col.add(G.cyl6,TF(x,poleTop/2,z,0,0,0,.28,poleTop,.28),'#5a4632');for(const y of [poleTop-.5,poleTop-1.1])col.box('#4a3a2a',x,y,z,2.2,.12,.14);
     for(const dx of [-.9,-.45,.45,.9])col.add(G.cyl6,TF(x+dx,poleTop-.35,z,0,0,0,.08,.2,.08),'#7aa08a');col.add(G.cyl,TF(x+.32,poleTop-2.2,z,0,0,0,.5,.9,.5),'#8a8c8e');
