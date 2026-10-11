@@ -1,6 +1,6 @@
 ---
 id: 2026-10-10-rua-alta-resolucao
-status: pending
+status: cancelled
 requested_by: claude
 priority: high
 character: ""
@@ -10,6 +10,8 @@ destination: public/base/street/
 
 # Pedido — Rua do DHPP na mesma resolução de pixel da base
 
+> **Cancelado (2026-10-11).** Não gerar. O usuário pediu outra rua: um bairro de casas geminadas tipo Filadélfia, sem nomes de comércio brasileiros e no mesmo estilo da planta da base. Por isso a rua passou a ser desenhada em código, com as mesmas funções de pixel art da base (`src/base/street.js`). As imagens antigas de `public/base/street/` saíram do jogo e continuam no histórico do git.
+
 ## Objetivo
 O usuário pediu que a rua tenha **o mesmo nível gráfico do lado de dentro do DHPP**.
 
@@ -18,7 +20,7 @@ O motor da rua já foi ajustado para isso:
 - usa os mesmos bonecos de dentro (o Lemos tem **46 px de altura**);
 - aplica a mesma luz da manhã.
 
-Falta a arte. As imagens atuais foram desenhadas numa escala em que as pessoas tinham 28 px, e hoje o jogo as amplia cerca de 1,64× para caberem ao lado dos bonecos de 46 px. Com isso o pixel da rua fica grosso e borrado de detalhe, enquanto dentro o pixel é fino. Veja `creative-requests/refs/2026-10-10-rua-alta-resolucao/densidade-de-pixel-rua-x-base.png`: à esquerda a rua ampliada, à direita a base.
+Falta a arte. As imagens atuais foram desenhadas numa escala em que as pessoas tinham 28 px, e hoje o jogo as amplia cerca de 1,64× para caberem ao lado dos bonecos de 46 px. Com isso o pixel da rua fica grosso e borrado de detalhe, enquanto dentro o pixel é fino. Veja `creative-requests/refs/2026-10-10-rua-alta-resolucao/densidade-de-pixel-rua-x-base.png` (removida com o cancelamento): à esquerda a rua ampliada, à direita a base.
 
 O pedido é **refazer as 24 imagens da rua nos tamanhos novos abaixo**, com 1 px da imagem = 1 px da base. O desenho, a composição, as cores e os nomes continuam os mesmos das entregas anteriores; o que muda é a densidade, com mais pixels e mais detalhe por objeto.
 
