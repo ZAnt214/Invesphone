@@ -827,7 +827,7 @@ function prepIntro(){
   const giveUp=setTimeout(finish,12000);
   const prog=(d,t)=>{const k=t?d/t:1;fill.style.width=Math.round(k*100)+'%';label.textContent=`Baixando o material do caso · ${Math.round(k*100)}%`;};
   // o quadro já fica pronto para abrir sem travar (Lemos decodificado, cortiça e parede desenhadas)
-  Promise.all([loadPrep().then(m=>m.prepare(prog)).then(()=>loadBoard()).then(m=>m.prewarm()),loadDepo()]).then(finish,finish);
+  Promise.all([loadPrep().then(m=>m.prepare(prog)).then(()=>loadBoard()).then(m=>m.prewarm()),loadDepo(),new Promise(r=>setTimeout(r,0)).then(()=>load3D())]).then(finish,finish); // a rua 3D: depois de o módulo terminar de montar
 }
 prepIntro();
 function startBoard(){
@@ -1515,20 +1515,21 @@ let lastRoom='',lastClk='';
 /* ---------- Rua (lado de fora) ⇄ planta (lado de dentro) ---------- */
 let SCENE='rua',STREET=null;
 const street=()=>STREET||(STREET=createStreet({lemosLook:LOOK.lemos,personFrames,getZoom:()=>cam.z,onEnter:()=>enterBase(),art:{S2,refine,outlined,bush,hash,mulberry32,txt,txtW,sign:()=>SIGN,door:()=>DOORSPR}}));
-// visual da rua em teste (street3d.js, carregado só quando ligado). O botão do cabeçalho passa pelos modos; a escolha
-// fica no aparelho, e ?rua=2d|3d|px|hd2d no endereço também escolhe.
-// modos: 2d (pixel art), 3d (3D liso, bonecos 3D), px (3D desenhado no pixel da planta, bonecos pixel), hd2d (3D liso, bonecos pixel)
-const RMODES=['2d','3d','px','hd2d'],RLABEL={'2d':'2D','3d':'3D','px':'PIX','hd2d':'HD-2D'};
-let RMODE='2d',STREET3D=null,S3D_LOADING=null;
-try{const q=(location.search.match(/[?&]rua=(2d|3d|px|hd2d)/)||[])[1];if(q)localStorage.setItem('rua.visual',q);const v=localStorage.getItem('rua.visual');if(RMODES.includes(v))RMODE=v;}catch(e){}
-function load3D(){const mode=RMODE;if(mode==='2d'||S3D_LOADING===mode||(STREET3D&&STREET3D.mode===mode))return;S3D_LOADING=mode;
-  import('./street3d').then(m=>{if(RMODE!==mode){S3D_LOADING=null;return;}try{if(STREET3D)STREET3D.dispose();STREET3D=m.createStreet3D(street(),{mode});}catch(e){console.error(e);RMODE='2d';sync3DBtn();}S3D_LOADING=null;})
-    .catch(e=>{console.error(e);S3D_LOADING=null;RMODE='2d';sync3DBtn();});}
-function sync3DBtn(){const b=$('#b-3d');if(!b)return;b.hidden=SCENE!=='rua';b.querySelector('span').textContent=RLABEL[RMODE];b.setAttribute('aria-pressed',String(RMODE!=='2d'));}
-function setRMode(m){RMODE=RMODES.includes(m)?m:'2d';try{localStorage.setItem('rua.visual',RMODE);}catch(e){}load3D();sync3DBtn();}
-$('#b-3d').addEventListener('click',()=>setRMode(RMODES[(RMODES.indexOf(RMODE)+1)%RMODES.length]));
-sync3DBtn();
-const streetView=()=>RMODE!=='2d'&&STREET3D&&STREET3D.mode===RMODE?STREET3D:street();
+// visual da rua: PIX — o quarteirão em 3D (street3d.js) desenhado no tamanho de pixel da planta, com os bonecos de pixel
+// art de dentro. É preparado no carregamento, antes do "Começar"; se o aparelho não tiver WebGL, fica a rua 2D (street.js).
+// Para comparar: ?rua=2d|3d|px|hd2d no endereço.
+let RMODE='px',STREET3D=null,S3D_P=null;
+try{const q=(location.search.match(/[?&]rua=(2d|3d|px|hd2d)/)||[])[1];if(q)RMODE=q;}catch(e){}
+function load3D(){
+  if(RMODE==='2d')return Promise.resolve(null);if(STREET3D&&STREET3D.mode===RMODE)return Promise.resolve(STREET3D);if(S3D_P)return S3D_P;const mode=RMODE;
+  S3D_P=import('./street3d').then(m=>{S3D_P=null;if(RMODE!==mode)return load3D();if(STREET3D)STREET3D.dispose();STREET3D=m.createStreet3D(street(),{mode});return STREET3D;})
+    .catch(e=>{console.error(e);S3D_P=null;RMODE='2d';return null;});
+  return S3D_P;
+}
+// dentro da base o 3D da rua sai da memória (no iPhone, faltar memória recarrega a página); volta ao sair pela porta
+function free3D(){if(STREET3D){STREET3D.dispose();STREET3D=null;}}
+function setRMode(m){RMODE=['2d','3d','px','hd2d'].includes(m)?m:'px';free3D();return load3D();}
+const streetView=()=>{if(STREET3D&&STREET3D.lost)free3D();return RMODE!=='2d'&&STREET3D&&STREET3D.mode===RMODE?STREET3D:street();};
 const FADE=document.createElement('div');FADE.id='fade';FADE.setAttribute('aria-hidden','true');appEl.appendChild(FADE);
 function fadeTo(fn){FADE.classList.add('on');setTimeout(()=>{fn();requestAnimationFrame(()=>FADE.classList.remove('on'));},200);}
 function setWhere(t){lastRoom=null;$('#where-n').textContent=t;}
@@ -1536,11 +1537,12 @@ function setWhere(t){lastRoom=null;$('#where-n').textContent=t;}
 function enterBase(instant){
   const go=()=>{SCENE='base';P1.x=16;P1.y=17;P1.path=[];P1.pend=null;P1.dir=1;
     const e=bfs(ti(P1),i=>i===idx(16,15),walkPass);if(e>=0)P1.path=pathTo(e);
-    cam.x=P1.x*T+16;cam.y=P1.y*TH;clampCam();follow=true;last=performance.now();updateUI();sync3DBtn();};
+    cam.x=P1.x*T+16;cam.y=P1.y*TH;clampCam();follow=true;last=performance.now();updateUI();free3D();};
   if(instant)go();else fadeTo(go);
 }
 // saiu pela porta da frente: volta para a calçada, na porta do DHPP
-function toStreet(){fadeTo(()=>{SCENE='rua';street().place('porta');setWhere('Rua do DHPP');sync3DBtn();});}
+// a rua 3D é refeita com a tela já escura, para não aparecer a rua 2D nem travar no meio da passagem
+function toStreet(){FADE.classList.add('on');setTimeout(()=>{const go=()=>{SCENE='rua';street().place('porta');setWhere('Rua do DHPP');last=performance.now();requestAnimationFrame(()=>FADE.classList.remove('on'));};load3D().then(go,go);},200);}
 function goExit(){
   P1.pend=null;if(talk)closeTalk();
   const door=i=>i===idx(16,18)||i===idx(15,18);
@@ -1664,9 +1666,9 @@ $('#b-start').addEventListener('click',()=>{
   // voltou de uma recarga feita para pegar a versão nova: reabre o que o jogador tinha pedido
   const reopen=safe(()=>sessionStorage.getItem('base.reopen'),null);
   if(reopen){safe(()=>sessionStorage.removeItem('base.reopen'));enterBase(true);setTimeout(()=>reopen==='board'?startBoard():startDepo(reopen.slice(5)),500);}
-  else{street().place('carro');setWhere('Rua do DHPP');sync3DBtn();}
+  else{street().place('carro');setWhere('Rua do DHPP');}
   setTimeout(()=>toast('Sônia Prado','Lemos, na minha sala. A equipe já está com o material da casa.',{img:'/sonia.jpg',col:'#c9a24a'}),1200);
 });
-window.__base={get scene(){return SCENE;},street3d:()=>STREET3D,setRMode,setScene:s=>{if(s==='base')enterBase(true);else{SCENE='rua';street().place('porta');sync3DBtn();}},street:()=>street(),startDepo,get CASE(){return CASE;},VIS:()=>VIS,get P1(){return P1;},NPCS:()=>NPCS,cam,goTalk,goTile,openTalk,openGallery,FOUND,get started(){return started;},objs:()=>objs,tap,idx,W,H,T,TH,ti,passable,zoomTo,get ROT(){return ROT;},get LODV(){return LODV;},get FITZ(){return FITZ;},get GL(){return !!POST;},prof:()=>({r2d:+PROF.r2d.toFixed(2),post:+FX.ms.toFixed(2),frame:+frameMs.toFixed(2),RS})};
+window.__base={get scene(){return SCENE;},street3d:()=>STREET3D,setRMode,setScene:s=>{if(s==='base')enterBase(true);else{SCENE='rua';street().place('porta');load3D();}},street:()=>street(),startDepo,get CASE(){return CASE;},VIS:()=>VIS,get P1(){return P1;},NPCS:()=>NPCS,cam,goTalk,goTile,openTalk,openGallery,FOUND,get started(){return started;},objs:()=>objs,tap,idx,W,H,T,TH,ti,passable,zoomTo,get ROT(){return ROT;},get LODV(){return LODV;},get FITZ(){return FITZ;},get GL(){return !!POST;},prof:()=>({r2d:+PROF.r2d.toFixed(2),post:+FX.ms.toFixed(2),frame:+frameMs.toFixed(2),RS})};
 requestAnimationFrame(loop);
 })();
