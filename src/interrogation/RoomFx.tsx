@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { roomSfx, setRoomPressure, startRoom, stopRoom } from './roomAudio'
+import { getQuality, onQualityChange } from '../characters/quality'
 
 type Props = {
   /** Pressão acumulada, 0 a 100: a lâmpada falha mais e o coração aparece no som. */
@@ -73,15 +74,21 @@ export default function RoomFx({pressure,onFlicker}:Props){
     }
     const rnd = (a:number,b:number)=>a+Math.random()*(b-a)
     type Mote = { x:number; y:number; vx:number; vy:number; r:number; ph:number }
+    // qualidade (Ajustes): baixa = 24 partículas a 30 fps; média = 45; alta = 70 a cada quadro
+    let q = getQuality()
+    const offQ = onQualityChange(v=>{ q = v })
     const motes:Mote[] = Array.from({length:70},()=>({ x:rnd(0,1), y:rnd(.05,1), vx:rnd(-.004,.004), vy:rnd(-.006,.002), r:rnd(.5,1.7), ph:rnd(0,6.28) }))
     const frame = (now:number)=>{
+      if(q==='low' && now-last<1000/31){ raf = requestAnimationFrame(frame); return }
       const dt = Math.min(.05,(now-last)/1000); last = now
+      const nM = q==='low' ? 24 : q==='medium' ? 45 : motes.length
       ctx.setTransform(dpr,0,0,dpr,0,0)
       ctx.clearRect(0,0,W,H)
       const flickering = now-flick.current<260 ? .35 : 1
       // poeira: posições em fração do canvas, vagando devagar
       ctx.globalCompositeOperation = 'lighter'
-      for(const m of motes){
+      for(let i=0;i<nM;i++){
+        const m = motes[i]
         if(!calm){
           m.ph += dt*.6
           m.x += (m.vx+Math.sin(m.ph)*.002)*dt; m.y += (m.vy+Math.cos(m.ph*.7)*.002)*dt
@@ -100,7 +107,7 @@ export default function RoomFx({pressure,onFlicker}:Props){
     raf = requestAnimationFrame(frame)
     const vis = ()=>{ cancelAnimationFrame(raf); if(!document.hidden){ last = performance.now(); raf = requestAnimationFrame(frame) } }
     document.addEventListener('visibilitychange',vis)
-    return ()=>{ cancelAnimationFrame(raf); ro.disconnect(); document.removeEventListener('visibilitychange',vis) }
+    return ()=>{ cancelAnimationFrame(raf); ro.disconnect(); offQ(); document.removeEventListener('visibilitychange',vis) }
   },[])
 
   return (

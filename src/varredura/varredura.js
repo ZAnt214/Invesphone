@@ -1,4 +1,6 @@
 /* Varredura das Acácias: cena 2D do Caso 01 (página inicial do site). */
+import { applyQuality, getQuality, onQualityChange } from '../characters/quality';
+import { perfHud } from '../perfHud';
 (() => {
 'use strict';
 const T=32,W=36,H=26,N=W*H;
@@ -8,6 +10,13 @@ const VW=()=>ROT?SH():SW(),VH=()=>ROT?SW():SH();
 const PX=e=>ROT===90?e.clientY:ROT===-90?SH()-e.clientY:e.clientX;
 const PY=e=>ROT===90?SW()-e.clientX:ROT===-90?e.clientX:e.clientY;
 const START_MIN=4*60+35;
+// qualidade gráfica escolhida pelo jogador (Ajustes): baixa = resolução até 2x, metade da chuva, uma camada de névoa e sem
+// vapor das poças; média = chuva cheia e névoa em duas camadas; alta = tudo. Ver docs/GRAPHICS_UPGRADE.md.
+let QUAL=getQuality();applyQuality(QUAL);
+const QLOW=()=>QUAL==='low';
+onQualityChange(q=>{QUAL=q;if(typeof resize==='function')resize();});
+// ?perf=1: tempo por quadro e o que a cena desenha
+perfHud(()=>`qualidade ${QUAL} · gotas ${DROPS.length} · partículas ${FX.p.length} · detalhe ${LODV} · zoom ${cam.z.toFixed(2)}`);
 const $=s=>document.querySelector(s);
 const cv=$('#cv'),ctx=cv.getContext('2d');
 const lc=document.createElement('canvas'),lctx=lc.getContext('2d');
@@ -919,7 +928,7 @@ function clampCam(){
 }
 function s2w(sx,sy){const e=ez(),ys=cam.y+(sy-VH()/2)/e;return {x:cam.x+(sx-VW()/2)/e,y:ys/K,ys};}
 function tileAt(sx,sy){const w=s2w(sx,sy);return idx(clamp(Math.floor(w.x/T),0,W-1),clamp(Math.floor(w.y/T),0,H-1));}
-function resize(){dpr=Math.min(window.devicePixelRatio||1,3);cv.width=Math.round(VW()*dpr);cv.height=Math.round(VH()*dpr);lc.width=Math.ceil(cv.width/LS);lc.height=Math.ceil(cv.height/LS);clampCam();}
+function resize(){dpr=Math.min(window.devicePixelRatio||1,QLOW()?2:3);cv.width=Math.round(VW()*dpr);cv.height=Math.round(VH()*dpr);lc.width=Math.ceil(cv.width/LS);lc.height=Math.ceil(cv.height/LS);clampCam();}
 const LS=3;
 function fitView(){
   const L=VW()>VH();
@@ -1046,13 +1055,13 @@ function viewRect(){const e=ez(),hw=VW()/2/e,hh=VH()/2/e;return {x0:cam.x-hw,x1:
 function newDrop(v,anyZ){return {x:v.x0-30+Math.random()*(v.x1-v.x0+60),y:v.y0+Math.random()*(v.y1-v.y0+90),z:anyZ?Math.random()*110:80+Math.random()*40,v:3+Math.random()*1.6};}
 function roofed(x,y){const tx=Math.floor(x/T),ty=Math.floor(y/TH);if(tx<0||ty<0||tx>=W||ty>=H)return false;const i=idx(tx,ty);return inHouse(i)||isWallF(floor[i]);}
 function updWeather(){
-  const ri=rainI(),v=viewRect(),want=Math.round(ri*190);
+  const ri=rainI(),v=viewRect(),want=Math.round(ri*(QLOW()?95:190));
   while(DROPS.length<want)DROPS.push(newDrop(v,true));if(DROPS.length>want)DROPS.length=want;
   for(const d of DROPS){d.z-=d.v;d.x+=d.v*(0.18+WIND*0.25);
     if(d.z<=0){if(!roofed(d.x,d.y)&&Math.random()<0.45)splashAt(d.x,d.y);Object.assign(d,newDrop(v,false));}
     else if(d.x<v.x0-60||d.x>v.x1+60||d.y<v.y0-20||d.y>v.y1+120)Object.assign(d,newDrop(v,false));}
   if(ri>0.1)for(const p of PUDDLES)if(Math.random()<0.05*ri*WET)fxAdd({k:'ripple',x:p.x+(Math.random()-0.5)*p.rx*1.4,y:p.y+(Math.random()-0.5)*p.ry*1.2,z:0,t:0,life:26,r:3+Math.random()*3});
-  if(sunF()>0.12&&WET>0.1){if(Math.random()<0.35){const p=Math.random()<0.5?pick(PUDDLES):{x:v.x0+Math.random()*(v.x1-v.x0),y:v.y0+Math.random()*(v.y1-v.y0)};if(!roofed(p.x,p.y))fxAdd({k:'wisp',x:p.x+(Math.random()-0.5)*20,y:p.y,z:0,vx:0.08+WIND*0.1,vy:0,vz:0.18,t:0,life:110,sz:3});}}
+  if(sunF()>0.12&&WET>0.1&&!QLOW()){if(Math.random()<0.35){const p=Math.random()<0.5?pick(PUDDLES):{x:v.x0+Math.random()*(v.x1-v.x0),y:v.y0+Math.random()*(v.y1-v.y0)};if(!roofed(p.x,p.y))fxAdd({k:'wisp',x:p.x+(Math.random()-0.5)*20,y:p.y,z:0,vx:0.08+WIND*0.1,vy:0,vz:0.18,t:0,life:110,sz:3});}}
   // falling leaves from trees in view
   if(Math.random()<0.05){const tr=objs.filter(o=>o.t==='arvore'&&o.x*T>v.x0-40&&o.x*T<v.x1+40&&o.y*TH>v.y0-60&&o.y*TH<v.y1+80);if(tr.length){const o=pick(tr);fxAdd({k:'leaf',x:o.x*T+16+(Math.random()-0.5)*30,y:o.y*TH-46+Math.random()*16,gy:o.y*TH+TH+Math.random()*26,vx:0.15+WIND*0.4,vy:0.25+Math.random()*0.2,t:0,life:420,c:pick(['#6a9a40','#8cb050','#c9a040','#a8642a']),ph:Math.random()*6});}}
   // birds at dawn
@@ -1148,7 +1157,7 @@ function glowPass(L,nf){
     ctx.globalAlpha=0.25*nf;for(const x of [12,24]){ctx.drawImage(lightSprite([255,190,110]),x*T-6,16*TH-RISE+8,44,34);}}
   // dawn light through the north windows, with dust in the beam
   if(sf>0.01)for(const x of [12,13,19,24,25]){const rm=room[idx(x,4)],r=roomClip(rm);ctx.save();ctx.beginPath();ctx.rect(r[0],r[1],r[2]-r[0],r[3]-r[1]);ctx.clip();
-    const y0=4*TH+14,g=ctx.createLinearGradient(0,y0,0,y0+70);g.addColorStop(0,`rgba(255,220,170,${0.22*sf})`);g.addColorStop(1,'rgba(255,220,170,0)');ctx.globalAlpha=1;ctx.fillStyle=g;
+    const y0=4*TH+14;if(!BEAMG){BEAMG=ctx.createLinearGradient(0,y0,0,y0+70);BEAMG.addColorStop(0,'rgba(255,220,170,.22)');BEAMG.addColorStop(1,'rgba(255,220,170,0)');}ctx.globalAlpha=sf;ctx.fillStyle=BEAMG;
     ctx.beginPath();ctx.moveTo(x*T+5,y0);ctx.lineTo(x*T+27,y0);ctx.lineTo(x*T+27+34,y0+70);ctx.lineTo(x*T+5+34,y0+70);ctx.closePath();ctx.fill();
     ctx.fillStyle='rgba(255,240,210,.8)';for(let k=0;k<6;k++){const u=((k*0.37+frame*0.0016*(1+k%3))%1),w=((k*0.61+Math.sin(frame/90+k)*0.05)%1+1)%1;ctx.globalAlpha=0.5*sf*(1-u);ctx.fillRect(Math.round(x*T+5+w*22+u*34),Math.round(y0+u*70),1,1);}
     ctx.restore();}
@@ -1171,17 +1180,35 @@ function glowPass(L,nf){
     else if(p.k==='flare'){const rr=46*k*p.a+8;ctx.globalAlpha=Math.min(1,k*1.2);ctx.drawImage(lightSprite([255,255,255]),p.x-rr,p.y-p.z-rr,rr*2,rr*2);ctx.fillStyle='#ffffff';ctx.fillRect(Math.round(p.x-rr*0.8),Math.round(p.y-p.z),Math.round(rr*1.6),1);ctx.fillRect(Math.round(p.x),Math.round(p.y-p.z-rr*0.5),1,Math.round(rr));}}
   ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
 }
+// poças: o desenho parado de cada uma (contorno orgânico de três lobos, halo de chão molhado, reflexo do céu com a
+// borda de lá mais clara e a de cá escura) fica guardado e só é refeito quando a cor do céu muda; por quadro só entram
+// os brilhos que correm na água. Nada de gradiente novo a cada quadro.
+const PUDC=new Map();let pudKey='';
+function puddleSprite(p,sky,key){
+  let c=PUDC.get(p);if(c&&c._k===key)return c;
+  const rx=p.rx,ry=p.ry,pad=3,w=Math.ceil(rx*2+pad*2+6),h=Math.ceil(ry*2+pad*2+4);
+  if(!c){c=document.createElement('canvas');PUDC.set(p,c);}c.width=w;c.height=h;c._k=key;const g=c.getContext('2d');
+  const cx=w/2,cy=h/2,r=mulberry32((p.x*7+p.y*13)|0),lobes=[[0,0,1,1],[(r()-.5)*rx*.7,(r()-.5)*ry*.4,.55+r()*.2,.7+r()*.2],[(r()-.5)*rx*.9,(r()-.5)*ry*.5,.4+r()*.2,.6+r()*.2]];
+  const shape=(grow,fill)=>{g.fillStyle=fill;for(const [ox,oy,sx,sy] of lobes){g.beginPath();g.ellipse(cx+ox,cy+oy,rx*sx+grow,ry*sy+grow*.6,0,0,7);g.fill();}};
+  g.globalAlpha=.55;shape(2.5,'#0e131b');g.globalAlpha=1;                                  // chão molhado em volta
+  shape(0,'#000');g.globalCompositeOperation='source-atop';
+  const gr=g.createLinearGradient(0,cy-ry,0,cy+ry);gr.addColorStop(0,rgbs(mul(sky,0.62)));gr.addColorStop(0.5,rgbs(mul(sky,0.26)));gr.addColorStop(1,rgbs(mul(sky,0.42)));
+  g.fillStyle=gr;g.fillRect(0,0,w,h);
+  g.fillStyle=rgbs(mix(sky,[255,255,255],0.35),0.55);g.fillRect(0,Math.round(cy-ry),w,1);     // borda de lá: reflexo mais claro
+  g.fillStyle='rgba(6,9,14,.55)';g.fillRect(0,Math.round(cy+ry-1),w,1);                       // borda de cá: escura
+  g.globalCompositeOperation='source-over';return c;
+}
+let BEAMG=null;   // facho de sol das janelas (o gradiente é fixo; a força vem do alpha)
 function drawPuddles(){
   const al=0.25+0.75*WET,amb=ambient(),sky=mix(amb,[150,175,215],0.5);
+  const key=(sky[0]>>3)+','+(sky[1]>>3)+','+(sky[2]>>3);
+  const hi=rgbs(mix(sky,[255,255,255],0.5));
   for(const p of PUDDLES){
-    ctx.globalAlpha=0.6*al;ctx.fillStyle='#10161f';ctx.beginPath();ctx.ellipse(p.x,p.y+1,p.rx+1,p.ry+1,0,0,7);ctx.fill();
-    const g=ctx.createLinearGradient(0,p.y-p.ry,0,p.y+p.ry);g.addColorStop(0,rgbs(mul(sky,0.55),0.9));g.addColorStop(0.55,rgbs(mul(sky,0.22),0.9));g.addColorStop(1,rgbs(mul(sky,0.4),0.9));
-    ctx.globalAlpha=0.75*al;ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(p.x,p.y,p.rx,p.ry,0,0,7);ctx.fill();
-    // shimmering highlight streaks
-    ctx.globalAlpha=0.55*al;ctx.fillStyle=rgbs(mix(sky,[255,255,255],0.5));
+    const sp=puddleSprite(p,sky,key);ctx.globalAlpha=0.8*al;ctx.drawImage(sp,Math.round(p.x-sp.width/2),Math.round(p.y-sp.height/2));
+    // brilhos correndo na água
+    ctx.globalAlpha=0.55*al;ctx.fillStyle=hi;
     const sh=Math.sin(frame/40+p.ph)*p.rx*0.25;ctx.fillRect(Math.round(p.x-p.rx*0.45+sh),Math.round(p.y-p.ry*0.45),Math.round(p.rx*0.55),1);
-    ctx.globalAlpha=0.3*al;ctx.fillRect(Math.round(p.x-p.rx*0.1-sh*0.6),Math.round(p.y+p.ry*0.15),Math.round(p.rx*0.4),1);
-    ctx.globalAlpha=0.35*al;ctx.fillStyle='#0a0e14';ctx.fillRect(Math.round(p.x-p.rx*0.6),Math.round(p.y+p.ry-1),Math.round(p.rx*1.2),1);}
+    ctx.globalAlpha=0.3*al;ctx.fillRect(Math.round(p.x-p.rx*0.1-sh*0.6),Math.round(p.y+p.ry*0.15),Math.round(p.rx*0.4),1);}
   ctx.globalAlpha=1;
 }
 function drawDecals(){
@@ -1205,14 +1232,16 @@ function drawPostParticles(nf){
     else if(p.k==='steam'){ctx.globalAlpha=0.28*k;ctx.fillStyle='#eef2f6';const r=p.sz+p.t*0.05;ctx.beginPath();ctx.ellipse(p.x+Math.sin(p.t/8)*1.5,p.y-p.z,r,r,0,0,7);ctx.fill();}}
   ctx.globalAlpha=1;
 }
+// chuva em duas profundidades: gotas de longe finas e curtas, as de perto (uma em cada três) mais longas e claras
+const RAIN_L=[[false,'rgba(190,208,232,.26)',5,0.6],[true,'rgba(216,230,248,.44)',8,0.9]];
 function drawRain(){
   const ri=rainI();if(ri<=0.01)return;
-  ctx.strokeStyle='rgba(200,218,240,.34)';ctx.lineWidth=0.75;ctx.beginPath();
   const dx=0.18+WIND*0.25;
-  for(const d of DROPS){if(roofed(d.x,d.y))continue;const x=d.x,y=d.y-d.z;ctx.moveTo(x,y);ctx.lineTo(x-dx*6,y-6);}
-  ctx.stroke();
+  for(const [near,col,len,lw] of RAIN_L){ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.beginPath();
+    for(let i=0;i<DROPS.length;i++){if((i%3===0)!==near)continue;const d=DROPS[i];if(roofed(d.x,d.y))continue;const x=d.x,y=d.y-d.z;ctx.moveTo(x,y);ctx.lineTo(x-dx*len,y-len);}
+    ctx.stroke();}
 }
-const AC=document.createElement('canvas'),actx=AC.getContext('2d');const AS=6;
+const AC=document.createElement('canvas'),actx=AC.getContext('2d');const AS=6;let VIGK='',VIGG=null;   // vinheta guardada por tamanho e noite
 function drawAtmos(s,ox,oy,nf){
   // mist and vignette share one low-resolution layer, composited once
   const w=Math.ceil(cv.width/AS),h=Math.ceil(cv.height/AS);if(AC.width!==w||AC.height!==h){AC.width=w;AC.height=h;}
@@ -1220,12 +1249,12 @@ function drawAtmos(s,ox,oy,nf){
   const fi=fogI();
   if(fi>0.01&&FOG){actx.imageSmoothingEnabled=true;const sc=s/AS,TS=720;
     const lay=(off,offy,al)=>{actx.globalAlpha=al;const v=viewRect();for(let y=Math.floor((v.y0-offy)/TS)*TS+offy-TS;y<v.y1+TS;y+=TS)for(let x=Math.floor((v.x0-off)/TS)*TS+off-TS;x<v.x1+TS;x+=TS)actx.drawImage(FOG,(x*s+ox)/AS,(y*s+oy)/AS,TS*sc,TS*sc);};
-    lay((frame*0.22*(0.6+WIND))%720,(frame*0.05)%720,fi);lay(-(frame*0.14)%720+360,(frame*0.03)%720+200,fi*0.6);}
+    lay((frame*0.22*(0.6+WIND))%720,(frame*0.05)%720,fi);if(!QLOW())lay(-(frame*0.14)%720+360,(frame*0.03)%720+200,fi*0.6);}
   const df=dayF(),sf=sunF();
   if(df>0.02){actx.imageSmoothingEnabled=true;const blk=lightSprite([0,0,0]);for(const c of FX.clouds){actx.globalAlpha=0.16*df;actx.drawImage(blk,(c.x-c.rx)*s/AS+ox/AS,(c.y-c.ry)*s/AS+oy/AS,c.rx*2*s/AS,c.ry*2*s/AS);}}
   if(sf>0.02){actx.save();actx.translate(w*0.8,-h*0.2);actx.rotate(0.62);for(let k=0;k<5;k++){const x=(k*0.23*w+frame*0.02)%(w*1.3)-w*0.15,bw=w*(0.04+0.03*(k%3));const g2=actx.createLinearGradient(x,0,x+bw,0);g2.addColorStop(0,'rgba(255,230,180,0)');g2.addColorStop(0.5,`rgba(255,230,180,${0.07*sf})`);g2.addColorStop(1,'rgba(255,230,180,0)');actx.globalAlpha=1;actx.fillStyle=g2;actx.fillRect(x,0,bw,h*2);}actx.restore();}
   actx.globalAlpha=1;
-  const g=actx.createRadialGradient(w/2,h/2,Math.min(w,h)*0.35,w/2,h/2,Math.max(w,h)*0.75);g.addColorStop(0,'rgba(4,6,12,0)');g.addColorStop(1,`rgba(4,6,12,${0.32+0.22*nf})`);actx.fillStyle=g;actx.fillRect(0,0,w,h);
+  const vk=w+'x'+h+':'+Math.round(nf*50);if(vk!==VIGK){VIGK=vk;VIGG=actx.createRadialGradient(w/2,h/2,Math.min(w,h)*0.35,w/2,h/2,Math.max(w,h)*0.75);VIGG.addColorStop(0,'rgba(4,6,12,0)');VIGG.addColorStop(1,`rgba(4,6,12,${0.32+0.22*nf})`);}actx.fillStyle=VIGG;actx.fillRect(0,0,w,h);
   ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=true;ctx.drawImage(AC,0,0,cv.width,cv.height);
 }
 function drawBirds(){

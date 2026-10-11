@@ -168,3 +168,5 @@ body:not(.gl) #glv{display:none}
 /* passagem rua ⇄ planta pela porta do DHPP */
 #fade{position:absolute;inset:0;z-index:9;background:#050607;opacity:0;pointer-events:none;transition:opacity .2s ease}
 #fade.on{opacity:1}
+/* qualidade baixa: o canvas é desenhado em até 2x e ampliado sem suavizar (pixels nítidos) */
+[data-quality="low"] #cv{image-rendering:pixelated}

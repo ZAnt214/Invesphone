@@ -40,3 +40,12 @@ Feitos em 844×390, 390×844 e 375×667:
 - fluxo rua → DHPP → rua;
 - trânsito (sem carros sobrepostos);
 - regressões do quadro e dos NPCs da base.
+
+## Luz, sombra e qualidade (out/2026)
+
+- Sol da manhã do alto à esquerda, uma regra só:
+  - nas fachadas, o que sai da parede faz sombra para a direita e para baixo, e os recuos escurecem no alto e à esquerda;
+  - no chão, as sombras dos objetos caem para a direita e para cá (`SUN` em `streetArt.js`).
+- Becos com profundidade; DHPP com pórtico recuado, embasamento e arandelas acesas.
+- Câmera em escala inteira de pixel.
+- O que entra em cada qualidade e as medições: `docs/GRAPHICS_UPGRADE.md`.
