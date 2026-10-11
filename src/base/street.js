@@ -319,5 +319,5 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art}){
     else{lemos.x=viatura.x+W(viatura)/2;lemos.y=WALK[1];lemos.dir=1;}
     camX=lemos.x;camY=null;
   }
-  return {update,draw,tap,place,lemos,door:DOOR,get view(){return lastView;},get cars(){return cars;},parked,peds,birds,get t(){return t;}};
+  return {update,draw,tap,place,lemos,door:DOOR,get view(){return lastView;},get cars(){return cars;},parked,peds,birds,get t(){return t;},zoom:()=>getZoom?getZoom():1};
 }
