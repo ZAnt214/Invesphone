@@ -1,6 +1,6 @@
 # Direção visual aprovada pelo usuário — rua americana com DHPP
 
-Data: 11/10/2026. Destinatário: Claude (implementação). Status: implementação e levantamento de assets pendentes.
+Data: 11/10/2026. Destinatário: Claude (implementação). Status: levantamento feito e pedidos criados (`creative-requests/inbox/2026-10-11-rua-us-01` a `-11`); a rua do jogo já está no layout, escala e composição aprovados (`docs/RUA_AMERICANA_ESPEC.md`), com provisórios no lugar das peças que ainda não chegaram. Falta integrar a arte oficial conforme o ChatGPT entregar.
 
 ## Solicitação expressa do usuário
 
