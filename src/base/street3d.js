@@ -399,7 +399,7 @@ export function createStreet3D(sim,{mode='3d'}={}){
   function frameCam(cw,ch){const a=cw/ch;cam.aspect=a;const vf=cam.fov*Math.PI/180,hf=2*Math.atan(Math.tan(vf/2)*a);
     const dist=Math.max(16,(VIEW_W/2)/Math.tan(hf/2));const lx=X(sim.lemos.x),half=(VIEW_W/2);
     const want=Math.min(Math.max(lx,half),WORLD_W-half);camX=camX==null?want:camX+(want-camX)*.12;
-    const tx=camX,ty=3.6,tz=3.4;cam.position.set(tx,ty+Math.sin(PITCH)*dist,tz+Math.cos(PITCH)*dist);cam.lookAt(tx,ty,tz);cam.updateProjectionMatrix();
+    let tx=camX;const ty=3.6,tz=3.4;if(PIXEL&&lastSize){const ph=parseInt(lastSize.split('x')[1]),pw=2*dist*Math.tan(vf/2)/ph;tx=Math.round(tx/pw)*pw;}cam.position.set(tx,ty+Math.sin(PITCH)*dist,tz+Math.cos(PITCH)*dist);cam.lookAt(tx,ty,tz);cam.updateProjectionMatrix();
     sun.position.set(tx-16,26,tz+14);sun.target.position.set(tx+2,0,tz-3);}
 
   let out=null,lastT=0;
@@ -427,6 +427,12 @@ export function createStreet3D(sim,{mode='3d'}={}){
     if(ray.ray.intersectPlane(facade,hitP)&&hitP.y>SWH&&hitP.y<10&&hitP.x>x0&&hitP.x<x1){L.tx=DOOR.x;L.ty=DOOR.y;L.enter=true;return;}
     if(!ray.ray.intersectPlane(ground,hitP))return;
     const wx=hitP.x/M,wy=hitP.z/M+GY;L.tx=Math.min(Math.max(wx,20),STREET_W-20);L.ty=Math.min(Math.max(wy,WALK[0]),WALK[1]);L.enter=false;}
-  function dispose(){renderer.dispose();renderer.forceContextLoss();}
-  return {mode,draw,tap,dispose,renderer,scene,cam};
+  // perda do contexto gráfico (o iOS faz isso com o app em segundo plano): a base refaz a rua na volta
+  let lost=false;renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();lost=true;},false);
+  function dispose(){
+    const seen=new Set(),drop=o=>{if(o&&!seen.has(o)){seen.add(o);o.dispose();}};
+    scene.traverse(o=>{drop(o.geometry);const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(!m)continue;for(const k of ['map','emissiveMap'])drop(m[k]);drop(m);}});
+    for(const t of Object.values(TX))drop(t);for(const o of sprites.values())o.texs.forEach(drop);drop(scene.environment);drop(scene.background);
+    pmrem.dispose();renderer.dispose();renderer.forceContextLoss();}
+  return {mode,draw,tap,dispose,renderer,scene,cam,get lost(){return lost;}};
 }
