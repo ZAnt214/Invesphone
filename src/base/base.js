@@ -7,6 +7,8 @@ import { depoPeople, summon } from '../case/depositions';
 import { createStreet } from './street';
 import { applyQuality, getQuality, onQualityChange } from '../characters/quality';
 import { perfHud } from '../perfHud';
+import * as AMB from '../world/ambientAudio';
+import { choose, eventLog, jitter, lifeDebug, lineBank } from '../world/life';
 (() => {
 'use strict';
 const T=32,TH=22,K=TH/T,RISE=16,CAPH=8,W=34,H=26,N=W*H;
@@ -704,7 +706,7 @@ let gameMin=8*60+10,lastClock=0;
 function newGame(){
   buildMap();
   P1={id:'lemos',x:16,y:20,path:[],dir:1,walk:0,moving:false,look:LOOK.lemos,pend:null};
-  NPCS=NPCDEF.map((d,k)=>({...d,k,dir:d.id==='paulo'?-1:1,path:[],walk:0,moving:false,timer:120+Math.floor(Math.random()*200),wp:0,hold:false,say:null,sayT:600+Math.floor(Math.random()*900),pose:null,poseT:0,poseCD:60+Math.floor(Math.random()*500),sayQ:null}));
+  NPCS=NPCDEF.map((d,k)=>({...d,k,route:d.walk,home:idx(d.x,d.y),act:null,actT:3+k*2.3,mem:{},dir:d.id==='paulo'?-1:1,path:[],walk:0,moving:false,timer:120+Math.floor(Math.random()*200),wp:0,hold:false,say:null,sayT:600+Math.floor(Math.random()*900),pose:null,poseT:0,poseCD:60+Math.floor(Math.random()*500),sayQ:null}));
 }
 function framesFor(p){if(!p.frames)p.frames=personFrames(p.look||LOOK[p.lookId]);return p.frames;}
 function framesHDFor(p){if(!p.framesHD)p.framesHD=personFramesHD(p.look,framesFor(p));return p.framesHD;}
@@ -978,7 +980,7 @@ function advance(){
   if(talk.page<talk.d.pages.length-1){talk.page++;showPage();}
 }
 function closeTalk(){
-  clearInterval(tkTimer);if(talk){const n=NPCS.find(x=>x.id===talk.id);if(n)n.hold=false;}
+  clearInterval(tkTimer);if(talk){const n=NPCS.find(x=>x.id===talk.id);if(n){n.hold=false;if(n.act&&n.act.st!=='do'){n.act=null;n.actT=1.5+Math.random()*2;}}}
   // o cartão volta a ser um ponto no lugar de onde nasceu
   const el=$('#talk'),s=!el.hidden&&!CALM()&&el.animate?talkWho():null;
   talkStopAnims();$('#tk-link').setAttribute('hidden','');
@@ -1092,17 +1094,13 @@ function update(dt){
   for(const n of NPCS){
     if(n.sayQ&&(n.sayQ.d-=dt*60)<=0){n.say={txt:n.sayQ.txt,t:0,life:170};n.sayQ=null;}
     if(n.say){n.say.t+=dt*60;if(n.say.t>n.say.life)n.say=null;}
-    else if(started&&(n.sayT-=dt*60)<0){n.sayT=900+Math.random()*1500;if(dist(P1.x,P1.y,n.x,n.y)<9)n.say={txt:pick(n.lines),t:0,life:170};}
+    else if(started&&(n.sayT-=dt*60)<0){n.sayT=1300+Math.random()*2000;if(dist(P1.x,P1.y,n.x,n.y)<9&&!(n.act&&n.act.st==='ring')){const txt=LINES.pick(LR,n.lines.map(t=>({t})),LCTX,n.id,performance.now()/1000);if(txt)n.say={txt,t:0,life:170};}}
     if(n.hold){n.pose=null;continue;}
-    if(n.path.length){n.pose=null;stepAgent(n,1.5*dt,i=>passable(i)&&ti(P1)!==i&&!NPCS.some(m=>m!==n&&ti(m)===i));
-      if(!n.path.length){if(n.id==='paulo')n.dir=-1;const g=n.walk&&n.walk[n.wp];if(g&&g[2])startPose(n,g[2]);}continue;}
-    idlePose(n,dt);
-    if(!n.walk||!n.walk.length)continue;
-    n.timer-=dt*60;if(n.timer>0||n.pose)continue;n.timer=300+Math.random()*420;n.wp=(n.wp+1)%n.walk.length;
-    const g=n.walk[n.wp],tgt=idx(g[0],g[1]);if(ti(n)===tgt)continue;
-    const e=bfs(ti(n),i=>i===tgt,i=>(passable(i)||i===tgt||!!objs[occ[i]]&&objs[occ[i]].nocc)&&!NPCS.some(m=>m!==n&&ti(m)===i)&&ti(P1)!==i);
-    if(e>=0)n.path=pathTo(e);
+    if(n.path.length){n.pose=null;const was=n.path.length;stepAgent(n,(RT[n.id]?RT[n.id].speed:1.5)*dt,i=>passable(i)&&ti(P1)!==i&&!NPCS.some(m=>m!==n&&ti(m)===i));
+      if(!n.path.length&&was){arriveAct(n);}else if(!n.path.length&&n.act&&n.act.st==='go'){n.actT=.5;}continue;}
+    routine(n,dt);
   }
+  if(started)lifeTick(dt);
   lastClock+=dt;if(lastClock>3){lastClock=0;gameMin++;}
 }
 
@@ -1116,21 +1114,150 @@ function idlePose(n,dt){
   // quem está perto vira para o Lemos quando ele passa
   const near=dist(P1.x,P1.y,n.x,n.y)<2.6;
   if(near&&Math.abs(P1.x-n.x)>0.3)n.dir=P1.x<n.x?-1:1;
+  if(n.act&&n.act.pose){n.pose=n.act.st==='do'?n.act.pose:null;return;}
   if(n.pose){if((n.poseT-=dt*60)<=0){n.pose=null;n.poseCD=240+Math.random()*520;}return;}
   if((n.poseCD-=dt*60)>0||!n.idle||!n.idle.length||near)return;
   startPose(n,pick(n.idle));
 }
 function idleChats(dt){
   if(!started||(chatT-=dt*60)>0)return;
-  chatT=1100+Math.random()*1400;
-  const free=n=>n&&!n.hold&&!n.moving&&!n.path.length&&!n.say&&!n.sayQ;
+  chatT=1400+Math.random()*1800;if(!LINES.ready(performance.now()/1000)){chatT=300;return;}
+  const free=n=>n&&!n.hold&&!n.moving&&!n.path.length&&!n.say&&!n.sayQ&&!(n.act&&(n.act.st==='ring'||n.act.pose==='phone'));
   const opts=CHATS.filter(([a,b])=>{const A=NPCS.find(n=>n.id===a),B=NPCS.find(n=>n.id===b);
     return free(A)&&free(B)&&dist(A.x,A.y,B.x,B.y)<6&&dist(P1.x,P1.y,A.x,A.y)<10;});
   if(!opts.length){chatT=300;return;}
   const [a,b,l1,l2]=pick(opts),A=NPCS.find(n=>n.id===a),B=NPCS.find(n=>n.id===b);
   A.dir=B.x<A.x?-1:1;B.dir=A.x<B.x?-1:1;A.pose=null;
-  A.say={txt:l1,t:0,life:170};B.sayQ={txt:l2,d:150};
+  A.say={txt:l1,t:0,life:170};B.sayQ={txt:l2,d:150};LINES.hold(performance.now()/1000,10);LIFE.emit(performance.now()/1000,'conversa',a+' e '+b);
 }
+
+/* ---------- Mundo vivo da base: rotina de trabalho de cada um (docs/LIVING_WORLD_SYSTEM.md) ----------
+   Cada pessoa tem função, ritmo e lugares de trabalho de verdade (a mesa, o quadro, a copiadora, a bancada, a mesa de
+   luz, o arquivo, o bebedouro). A cada atividade concluída escolhe a próxima por peso — o que combina com o papel dela e
+   com o momento do caso — sem repetir a anterior; cada atividade tem começo (vai até o lugar), meio (faz, com gesto e
+   som) e fim (volta ou emenda outra). Conversar com o Lemos interrompe; depois ela retoma. Nada aqui muda o caso:
+   só mostra o trabalho. As falas nunca dizem que algo aconteceu antes de o save dizer. */
+const LIFE=eventLog(18),LINES=lineBank({gap:11,recent:14}),LR=Math.random;
+const done=(k,id)=>!!(CASE&&CASE[k]&&CASE[k].includes(id));
+const CX={topics:()=>(CASE&&CASE.teamTopics||[]).length,interviewed:()=>(CASE&&CASE.interviewed||[]).length,clues:()=>(CASE&&CASE.clues||[]).length,waiting:()=>VIS.length};
+// onde cada um fica de pé para usar um objeto: a linha logo à frente dele (ou dos lados)
+function standAt(t,nth=0,filter){const os=objs.filter(o=>o.t===t&&(!filter||filter(o)));const o=os[nth%Math.max(1,os.length)];if(!o)return -1;
+  const c=[];for(let x=o.x;x<o.x+o.w;x++)c.push(idx(x,o.y+o.h));for(let y=o.y;y<o.y+o.h;y++){c.push(idx(o.x-1,y));c.push(idx(o.x+o.w,y));}
+  const ok=c.filter(i=>floor[i]===F.FLOOR&&passable(i)&&!blk[i]);return ok.length?ok[Math.floor(LR()*ok.length)]:-1;}
+const near=(id)=>{const m=NPCS.find(x=>x.id===id);if(!m)return -1;for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1]]){const i=idx(Math.round(m.x)+dx,Math.round(m.y)+dy);if(floor[i]===F.FLOOR&&passable(i))return i;}return -1;};
+const at=(x,y)=>()=>idx(x,y);
+// atividades por pessoa: w = peso (pode depender do caso), dur = segundos, pose = gesto do boneco, snd = som do lugar
+const RT={
+  sonia:{speed:1.3,acts:[
+    {id:'mesa',w:5,where:'home',dur:[25,60],snd:'paper'},
+    {id:'telefone',w:1.4,where:'home',dur:[10,18],pose:'phone',ring:true,lines:'sonia_tel'},
+    {id:'estante',w:.8,where:()=>standAt('shelf',0,o=>o.v==='books'),dur:[6,12],pose:'read',snd:'paper'},
+    {id:'arquivo',w:.5,where:()=>standAt('filing',0,o=>o.x<10),dur:[5,9],pose:'read',snd:'paper'},
+    {id:'quadro',w:()=>CX.topics()>2?.5:.15,where:()=>standAt('board'),dur:[8,14],pose:'chin',lines:'quadro'}]},
+  renata:{speed:1.6,acts:[
+    {id:'digitar',w:5,where:'home',dur:[20,50],snd:'type'},
+    {id:'telefone',w:1,where:'home',dur:[9,16],pose:'phone',ring:true,lines:'renata_tel'},
+    {id:'quadro',w:()=>1+Math.min(1.5,CX.topics()*.15),where:()=>standAt('board'),dur:[8,16],pose:'chin',lines:'quadro'},
+    {id:'copiadora',w:.8,where:()=>standAt('xerox'),dur:[6,10],pose:'read',snd:'print'},
+    {id:'café',w:.7,where:()=>standAt('coffee'),dur:[6,10],pose:'drink',snd:'cup'},
+    {id:'arquivo',w:.5,where:()=>standAt('shelf',Math.floor(LR()*4),o=>o.v==='arq'),dur:[9,16],pose:'read',snd:'paper',lines:'arquivo'},
+    {id:'denise',w:.6,where:()=>near('denise'),dur:[6,10],chat:'denise'}]},
+  denise:{speed:1.3,acts:[
+    {id:'transcrever',w:6,where:'home',dur:[30,70],snd:'type',lines:'denise_mesa'},
+    {id:'copiadora',w:1.1,where:()=>standAt('xerox'),dur:[6,11],pose:'read',snd:'print'},
+    {id:'sala',w:()=>CX.waiting()?1.4:.2,where:at(3,12),dur:[6,10],pose:'read',snd:'chair',lines:'sala'},
+    {id:'café',w:.5,where:()=>standAt('coffee'),dur:[5,8],pose:'drink',snd:'cup'},
+    {id:'arquivo',w:.4,where:()=>standAt('filing',0,o=>o.x>9&&o.x<12),dur:[5,9],pose:'read',snd:'paper'}]},
+  paulo:{speed:1.8,acts:[
+    {id:'café',w:2,where:()=>standAt('coffee'),dur:[8,16],pose:'drink',snd:'cup'},
+    {id:'telefone',w:1.6,where:at(16,7),dur:[10,18],pose:'phone',lines:'paulo_tel'},
+    {id:'quadro',w:()=>1+Math.min(1,CX.topics()*.1),where:()=>standAt('board'),dur:[6,12],pose:'cross',lines:'quadro'},
+    {id:'janela',w:1,where:at(18,2),dur:[6,12],pose:'watch'},
+    {id:'plantão',w:.7,where:()=>near('plantao'),dur:[6,10],chat:'plantao'},
+    {id:'renata',w:.8,where:()=>near('renata'),dur:[6,10],chat:'renata'},
+    {id:'rádio',w:.6,where:at(19,6),dur:[5,9],pose:'phone',snd:'radio',lines:'paulo_radio'}]},
+  mauricio:{speed:1.4,acts:[
+    {id:'bancada',w:5,where:'home',dur:[25,60],snd:'paper',lines:'mauricio_bancada'},
+    {id:'mesa de luz',w:()=>done('requestedMaterials','fotos_cena')?2.2:1,where:()=>standAt('lightbox'),dur:[10,20],pose:'chin',lines:'mauricio_luz'},
+    {id:'armário',w:.7,where:()=>standAt('locker',Math.floor(LR()*2)),dur:[5,9],pose:'read'},
+    {id:'malotes',w:.9,where:()=>standAt('bagtable'),dur:[8,14],pose:'read',snd:'paper'},
+    {id:'entregar',w:.35,where:()=>near('renata'),dur:[5,8],chat:'renata',pose:'read'}]},
+  plantao:{speed:1.3,acts:[
+    {id:'balcão',w:4,where:'home',dur:[20,45],snd:'paper'},
+    {id:'telefone',w:2.2,where:'home',dur:[8,14],pose:'phone',ring:true,lines:'plantao_tel'},
+    {id:'bebedouro',w:.5,where:()=>standAt('cooler'),dur:[5,8],pose:'drink',snd:'cup'}]},
+  faxina:{speed:1.0,acts:[
+    {id:'pano',w:5,where:()=>{const r=NPCS.find(x=>x.id==='faxina').route;const g=r[Math.floor(LR()*r.length)];return idx(g[0],g[1]);},dur:[10,22]},
+    {id:'pausa',w:.6,where:()=>standAt('cooler'),dur:[6,10],pose:'drink'}]}
+};
+// falas de trabalho: curtas, do dia a dia, e as que dependem do caso só aparecem quando o save já tem o fato
+const POOL={
+  sonia_tel:[{t:'Prado. Pode falar.'},{t:'Me manda isso por escrito.'},{t:'Ainda não. Estou com a equipe.'},{t:'Quando eu tiver, o senhor fica sabendo.'}],
+  renata_tel:[{t:'Oi, é a Renata, do DHPP.'},{t:'Pode me mandar a lista inteira?'},{t:'Preciso disso com data e hora.'},{t:'Manda no e-mail da equipe, por favor.'}],
+  paulo_tel:[{t:'Fala. Tô na base.'},{t:'Passa o endereço completo.'},{t:'Já vou, já vou.'},{t:'Me liga quando ele chegar.'}],
+  paulo_radio:[{t:'Viatura 7, na escuta.'},{t:'Copiado. Base.'},{t:'Negativo, ainda na base.'}],
+  plantao_tel:[{t:'DHPP, bom dia.'},{t:'Um momento, por favor.'},{t:'Não, senhor. Sem comentários.'},{t:'Vou transferir, aguarde.'},{t:'Imprensa, de novo.'}],
+  quadro:[{t:'Hm.'},{t:'Isso aqui não fecha.'},{t:'Falta uma linha aqui.',when:()=>CX.topics()>0},{t:'Vou mudar isso de lugar.',when:()=>CX.clues()>2}],
+  arquivo:[{t:'Caixa 14… cadê a 15?'},{t:'Quem guardou isso fora da ordem?'}],
+  denise_mesa:[{t:'Folha 2 de 3.'},{t:'Termo pronto pra assinar.',when:()=>CX.interviewed()>0},{t:'Transcrevendo.',when:()=>CX.interviewed()>0}],
+  sala:[{t:'Sala pronta.'},{t:'Fita nova no gravador.'}],
+  mauricio_bancada:[{t:'Etiqueta, lacre, assinatura.'},{t:'Luva nova.'},{t:'Foto 14, refaz.'}],
+  mauricio_luz:[{t:'Foto por foto.',when:()=>done('requestedMaterials','fotos_cena')},{t:'A luz não mente.'}],
+  chat_renata:[{t:'Tem um minuto?',who:['paulo','mauricio']},{t:'Confere isso pra mim?',who:'mauricio'},{t:'Deixo na tua mesa.',who:'mauricio'},{t:'Vai um café?',who:'paulo'}],
+  chat_denise:[{t:'Denise, tem grampeador aí?',who:'renata'},{t:'Esse ar-condicionado tá de brincadeira.',who:'renata'},{t:'Você viu a pasta azul?',who:'renata'}],
+  chat_plantao:[{t:'Alguém procurou por mim?',who:'paulo'},{t:'A chave da viatura tá aí?',who:'paulo'}],
+  reply:[{t:'Hm, já vejo.'},{t:'Pode deixar.'},{t:'Gaveta de cima.'},{t:'Agora não, depois.'},{t:'Tá.'},{t:'Já já.'}],
+  greet_sonia:[{t:'Lemos.'}],greet_plantao:[{t:'Bom dia, doutor.'},{t:'Doutor.'}],greet:[{t:'Bom dia, Lemos.'},{t:'E aí, Lemos.'},{t:'Lemos.'}],
+  board_new:[{t:'Vou pôr no quadro.'},{t:'Isso muda a ordem aqui.'}]
+};
+const LCTX={};
+function bubble(n,pool,life=170){const txt=LINES.pick(LR,POOL[pool]||[],LCTX,n.id,performance.now()/1000);if(txt){n.say={txt,t:0,life};return true;}return false;}
+function soundAt(n,k,a=1){const dx=(n.x*T-cam.x)/(VW()/2/cam.z),dd=dist(P1.x,P1.y,n.x,n.y);if(SCENE!=='base')return;AMB.fx(k,Math.max(-1,Math.min(1,dx*.7)),a*Math.max(0,1-dd/13));}
+function pickAct(n){const R0=RT[n.id];if(!R0)return null;const o=choose(LR,R0.acts,null,n.mem,performance.now()/1000);return o;}
+function startAct(n,o){
+  if(!o){n.actT=4;return;}
+  n.act={...o,st:'go',t:jitter(LR,(o.dur[0]+o.dur[1])/2,.35)};n.pose=null;
+  const tgt=o.where==='home'?n.home:o.where();if(tgt<0){n.act=null;n.actT=3;return;}
+  n.act.tgt=tgt;LIFE.emit(performance.now()/1000,n.id,o.id);
+  if(ti(n)===tgt){arriveAct(n);return;}
+  if(n._sit)soundAt(n,'chair',.6);
+  const e=bfs(ti(n),i=>i===tgt,i=>(passable(i)||i===tgt||!!objs[occ[i]]&&objs[occ[i]].nocc)&&!NPCS.some(m=>m!==n&&ti(m)===i)&&ti(P1)!==i);
+  if(e>=0)n.path=pathTo(e);else{n.act=null;n.actT=2+LR()*3;}
+}
+function arriveAct(n){const a=n.act;if(!a)return;a.st=a.ring?'ring':'do';a.rt=a.ring?1.3+LR()*1.5:0;
+  if(n.id==='paulo'&&a.id==='janela')n.dir=1;
+  if(a.chat){const m=NPCS.find(x=>x.id===a.chat);if(m&&!m.hold){n.dir=m.x<n.x?-1:1;if(!m.path.length)m.dir=n.x<m.x?-1:1;
+    if(dist(P1.x,P1.y,n.x,n.y)<10&&bubble(n,'chat_'+a.chat)){const rp=LINES.pick(LR,POOL.reply,LCTX,m.id,performance.now()/1000+3)||'Hm.';m.sayQ={txt:rp,d:140};}}}
+  else if(a.lines&&!a.ring&&LR()<.45&&dist(P1.x,P1.y,n.x,n.y)<9)bubble(n,a.lines,160);
+  if(a.snd&&a.snd!=='type')soundAt(n,a.snd,.7);
+}
+function routine(n,dt){
+  idlePose(n,dt);
+  const a=n.act;
+  if(!a){if((n.actT-=dt)<=0)startAct(n,pickAct(n));return;}
+  if(a.st==='go'){if(!n.path.length){if(ti(n)===a.tgt)arriveAct(n);else if((n.actT-=dt)<=0){n.act=null;n.actT=2;}}return;}
+  if(a.st==='ring'){if((a.rt-=dt)<=0){a.st='do';soundAt(n,'pickup',.8);if(dist(P1.x,P1.y,n.x,n.y)<10)bubble(n,a.lines,180);}else if(((a.rt*10)|0)%28===0)soundAt(n,'ring',.9);return;}
+  // fazendo: digitação e papéis soam de tempos em tempos; o gesto é o da atividade
+  if(a.snd==='type'&&n._sit&&LR()<dt*.55)soundAt(n,'type',.55);
+  if(a.snd==='paper'&&LR()<dt*.08)soundAt(n,'paper',.5);
+  if((a.t-=dt)<=0){n.act=null;n.pose=null;n.actT=.6+LR()*2.4;}
+}
+// reações: ao entrar numa sala, alguém de lá cumprimenta (às vezes); um fato novo no save leva alguém ao quadro
+let lastRoomP1='',greetCD=0,cluesSeen=-1;
+function lifeTick(dt){
+  greetCD-=dt;const r=roomOf(P1);
+  if(r!==lastRoomP1){lastRoomP1=r;if(greetCD<=0&&LR()<.55){const cand=NPCS.filter(n=>roomOf(n)===r&&!n.hold&&!n.say&&dist(P1.x,P1.y,n.x,n.y)<7&&!(n.act&&n.act.st==='ring'));
+      const n=cand[Math.floor(LR()*cand.length)];if(n){n.dir=P1.x<n.x?-1:1;bubble(n,n.id==='sonia'?'greet_sonia':n.id==='plantao'?'greet_plantao':'greet',150);greetCD=45;}}}
+  const c=CX.clues();if(cluesSeen<0)cluesSeen=c;else if(c>cluesSeen){cluesSeen=c;const n=NPCS.find(x=>x.id==='renata');
+    if(n&&!n.hold){n.act=null;n.path=[];startAct(n,RT.renata.acts.find(o=>o.id==='quadro'));if(n.act)n.act.lines='board_new';LIFE.emit(performance.now()/1000,'caso','fato novo: Renata vai ao quadro');}}
+}
+// voltou da rua depois de um tempo: quem estava a caminho já chegou, e as atividades andaram
+function resumeBase(){const sec=baseLeft?(performance.now()-baseLeft)/1000:0;if(sec<8)return;
+  for(const n of NPCS){if(n.hold)continue;if(n.path.length){const e=n.path[n.path.length-1];n.x=e%W;n.y=(e/W)|0;n.path=[];if(n.act)arriveAct(n);}
+    if(n.act&&(n.act.t-=sec)<=0){n.act=null;n.pose=null;n.actT=LR()*3;}}}
+lifeDebug(()=>SCENE==='rua'&&STREET?STREET.debugRows():['BASE · '+clockStr()+' · tópicos '+CX.topics()+' · depoimentos '+CX.interviewed()+' · esperando '+CX.waiting(),
+  ...NPCS.map(n=>`${n.id.padEnd(8)} ${n.hold?'CONVERSANDO':n.act?(n.act.st+' '+n.act.id+' '+(n.act.t|0)+'s'):'livre '+(n.actT|0)+'s'}${n.path.length?' → '+n.path.length+' passos':''}${n.say?' «'+n.say.txt+'»':''}`),
+  '— acontecimentos —',...LIFE.list.slice(-8).map(e=>`${e.t.toFixed(0)}s ${e.type}: ${e.txt}`)]);
 
 /* ---------- Câmera e zoom ---------- */
 const ZMIN=0.6,ZMAX=5;let FITZ=1,ZA=null,zoomAnchor=null,lastZoomIn=0;
@@ -1529,7 +1656,7 @@ function isSeat(n){const i=ti(n);return objs.some(o=>o.nocc&&idx(o.x,o.y)===i);}
 let lastRoom='',lastClk='';
 /* ---------- Rua (lado de fora) ⇄ planta (lado de dentro) ---------- */
 let SCENE='rua',STREET=null;
-const street=()=>STREET||(STREET=createStreet({lemosLook:LOOK.lemos,personFrames,getZoom:()=>cam.z,onEnter:()=>enterBase(),art:{S2,refine,outlined,bush,hash,mulberry32,txt,txtW,sign:()=>SIGN,door:()=>DOORSPR},quality:()=>QUAL}));
+const street=()=>STREET||(STREET=createStreet({lemosLook:LOOK.lemos,personFrames,getZoom:()=>cam.z,onEnter:()=>enterBase(),art:{S2,refine,outlined,bush,hash,mulberry32,txt,txtW,sign:()=>SIGN,door:()=>DOORSPR},quality:()=>QUAL,onSound:(k,x,a)=>ambStreet(k,x,a)}));
 // a rua (street.js) vem da direção americana aprovada; a arte oficial de public/base/rua/ entra quando chega
 const streetView=()=>street();
 const FADE=document.createElement('div');FADE.id='fade';FADE.setAttribute('aria-hidden','true');appEl.appendChild(FADE);
@@ -1537,13 +1664,25 @@ function fadeTo(fn){FADE.classList.add('on');setTimeout(()=>{fn();requestAnimati
 function setWhere(t){lastRoom=null;$('#where-n').textContent=t;}
 // entrou pela porta do DHPP: aparece na recepção, logo depois da porta
 function enterBase(instant){
-  const go=()=>{SCENE='base';P1.x=16;P1.y=17;P1.path=[];P1.pend=null;P1.dir=1;
+  const go=()=>{SCENE='base';AMB.setScene('base');streetLeft=performance.now();resumeBase();P1.x=16;P1.y=17;P1.path=[];P1.pend=null;P1.dir=1;
     const e=bfs(ti(P1),i=>i===idx(16,15),walkPass);if(e>=0)P1.path=pathTo(e);
     cam.x=P1.x*T+16;cam.y=P1.y*TH;clampCam();follow=true;last=performance.now();updateUI();};
   if(instant)go();else fadeTo(go);
 }
 // saiu pela porta da frente: volta para a calçada, na porta do DHPP
-function toStreet(){fadeTo(()=>{SCENE='rua';street().place('porta');setWhere('Rua do DHPP');});}
+// a rua não congela enquanto Lemos está lá dentro: ao voltar, ela avança o tempo que passou (e a base, ao entrar)
+let streetLeft=0,baseLeft=0;
+function toStreet(){fadeTo(()=>{SCENE='rua';AMB.setScene('rua');baseLeft=performance.now();if(streetLeft)street().resume((performance.now()-streetLeft)/1000);street().place('porta');setWhere('Rua do DHPP');});}
+// som pontual da rua: lado e volume pela distância até o centro da câmera
+function ambStreet(k,x,a){const v=STREET&&STREET.view;if(!v||SCENE!=='rua')return;const cx=v.left+v.vw/2,d=(x-cx)/(v.vw/2);AMB.fx(k,Math.max(-1,Math.min(1,d*.8)),a*Math.max(0,1-Math.abs(d)*.55));}
+let ambT=0,stepW=0;
+function streetAmbience(st,dt){
+  if((ambT+=dt)<.25)return;ambT=0;const v=st.view;if(!v)return;const cx=v.left+v.vw/2;let lv=0;
+  for(const k of st.cars){const w=k.id==='onibus'?360:180,d=Math.abs(k.x+w/2-cx);lv+=Math.max(0,1-d/700)*Math.min(1,k.v/70)*(k.id==='onibus'?1.6:1);}
+  AMB.traffic(Math.min(1,lv*.6));
+  const L=st.lemos;if(L.moving&&Math.floor(L.walk*2)!==stepW){stepW=Math.floor(L.walk*2);AMB.fx('step',0,.5);}
+  if(Math.random()<.025)AMB.fx('bird',Math.random()*1.6-.8,.5);
+}
 function goExit(){
   P1.pend=null;if(talk)closeTalk();
   const door=i=>i===idx(16,18)||i===idx(15,18);
@@ -1561,7 +1700,7 @@ function loop(now){
   if(depoOpen){last=now;requestAnimationFrame(loop);return;}
   // o relógio pode ser reiniciado fora do quadro (passagem rua ⇄ planta): o passo nunca anda para trás
   const raw=Math.max(0,now-last),dt=Math.min(0.1,raw/1000);last=now;adaptRS(raw);
-  if(SCENE==='rua'){if(FX.vigS!==0.5){FX.vigS=0.5;VIG.style.opacity=0.5;}const st=street();st.update(dt);streetView().draw(ctx,cv.width,cv.height,RS,started);frame++;if(frame%6===0){const c=clockStr();if(c!==lastClk){lastClk=c;$('#clk').textContent=c;}}
+  if(SCENE==='rua'){if(FX.vigS!==0.5){FX.vigS=0.5;VIG.style.opacity=0.5;}const st=street();st.update(dt);streetAmbience(st,dt);streetView().draw(ctx,cv.width,cv.height,RS,started);frame++;if(frame%6===0){const c=clockStr();if(c!==lastClk){lastClk=c;$('#clk').textContent=c;}}
     lastClock+=dt;if(lastClock>3){lastClock=0;gameMin++;}requestAnimationFrame(loop);return;}
   update(dt);updFX();updAtmo();stepZoom();followCam(dt);if(started)primeBlur();frame++;const r0=performance.now();render();PROF.r2d+=(performance.now()-r0-PROF.r2d)*0.05;postFX(dt);if(talk)updLink();if(frame%6===0)updateUI();
   requestAnimationFrame(loop);
@@ -1664,6 +1803,7 @@ addEventListener('resize',()=>applyLayout(false));
 newGame();initArt();buildTraffic();buildVisitors();applyLayout(true);cam.x=16*T;cam.y=15*TH;clampCam();
 setTimeout(()=>{framesHDFor(P1);for(const n of NPCS)framesHDFor(n);},300);
 $('#b-start').addEventListener('click',()=>{
+  AMB.unlock();AMB.setScene(SCENE==='rua'?'rua':'base');
   $('#intro').hidden=true;started=true;setTimeout(()=>loadDepo().catch(()=>{}),4000);setTimeout(()=>loadPrep().then(m=>m.background()).catch(()=>{}),3000);
   // voltou de uma recarga feita para pegar a versão nova: reabre o que o jogador tinha pedido
   const reopen=safe(()=>sessionStorage.getItem('base.reopen'),null);

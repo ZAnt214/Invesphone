@@ -188,6 +188,19 @@ export default function App(){
 
   useEffect(()=>localStorage.setItem(SAVE_KEY,JSON.stringify(game)),[game])
 
+  // continuidade entre a base, a casa e o aparelho (docs/LIVING_WORLD_SYSTEM.md): se o save mudou em outra aba ou a
+  // página voltou do cache do navegador (iOS/PWA), recarrega os fatos do caso e mantém a tela em que o jogador estava,
+  // para o aparelho nunca regravar por cima o que a base acabou de registrar
+  useEffect(()=>{
+    const reload=()=>{const fresh=loadGame();setGame(prev=>{if(JSON.stringify({...fresh,screen:prev.screen,app:prev.app})===JSON.stringify(prev))return prev;
+      return {...fresh,screen:prev.screen,app:prev.app,depoId:prev.depoId,interrogationOrigin:prev.interrogationOrigin}})}
+    const onStorage=(e:StorageEvent)=>{if(e.key===SAVE_KEY)reload()}
+    const onShow=(e:PageTransitionEvent)=>{if(e.persisted)reload()}
+    const onVis=()=>{if(!document.hidden)reload()}
+    window.addEventListener('storage',onStorage);window.addEventListener('pageshow',onShow);document.addEventListener('visibilitychange',onVis)
+    return ()=>{window.removeEventListener('storage',onStorage);window.removeEventListener('pageshow',onShow);document.removeEventListener('visibilitychange',onVis)}
+  },[])
+
   useEffect(()=>{
     if(game.screen!=='incoming'){stopRingtone();return}
     // Sem vibração física repetitiva: o pulso visual já comunica a chamada
@@ -637,12 +650,12 @@ function ChatThread({messages,memberName,sending,onOpenAsset}:{messages:{time:st
   <p className="tm-notice"><Lock/>Canal oficial do DHPP. Mensagens criptografadas, registradas no inquérito e sem cópia. Contatos verificados.</p>
   {messages.map((m,i)=><div key={m.time+m.from+i} className={`tm-msg ${m.outgoing?'out':'in'}${i>=messages.length-2&&messages.length>2?' fresh':''}`}>
    {!m.outgoing&&m.from!==memberName&&m.from!==memberName.split(' ')[0]&&<small>{m.from}</small>}
-   <p>{m.text}<span>{m.time}{m.outgoing?' ✓✓':''}</span></p>
+   <p>{m.text}<span>{m.time}{m.outgoing&&<b className="tm-read" aria-label="lida"> ✓✓</b>}</span></p>
    {m.assets&&m.assets.length>0&&<div className="tm-attach">{m.assets.map((a,k)=><button key={a} onClick={()=>onOpenAsset?.(m.assetsTitle??'Material',m.assets!,k)} aria-label={`Abrir ${m.assetsTitle??'material'} ${k+1}`}><img src={assetUrl(a)} alt="" loading="lazy"/>{m.assets!.length>1&&k===0&&<b>{m.assets!.length}</b>}</button>)}</div>}
    {m.use&&<div className="tm-use"><b>PARA QUE SERVE</b>{m.use}</div>}
    {m.actions&&m.actions.length>0&&<div className="tm-people">{m.actions.map(a=><button key={a.key} disabled={a.disabled} onClick={a.run}><b>{a.label}</b>{a.hint&&<span>{a.hint}</span>}</button>)}</div>}
   </div>)}
-  {sending&&<div className="tm-msg out fresh pending"><p>{sending.text}<span>{sending.phase==='sending'?<><i className="tm-clock"/>enviando…</>:<>{sending.time} ✓✓</>}</span></p></div>}
+  {sending&&<div className="tm-msg out fresh pending"><p>{sending.text}<span>{sending.phase==='sending'?<><i className="tm-clock"/>enviando…</>:<>{sending.time}<b className="tm-read" aria-label="lida"> ✓✓</b></>}</span></p></div>}
   {sending?.phase==='typing'&&<div className="tm-msg in fresh"><p className="tm-typing" aria-label={`${memberName} está digitando`}><i/><i/><i/></p><small className="tm-typing-label">{memberName.split(' ')[0]} está digitando…</small></div>}
  </div>
 }

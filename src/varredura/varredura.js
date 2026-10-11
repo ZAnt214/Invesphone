@@ -1,6 +1,7 @@
 /* Varredura das Acácias: cena 2D do Caso 01 (página inicial do site). */
 import { applyQuality, getQuality, onQualityChange } from '../characters/quality';
 import { perfHud } from '../perfHud';
+import { choose as chooseLife } from '../world/life';
 (() => {
 'use strict';
 const T=32,W=36,H=26,N=W*H;
@@ -185,13 +186,35 @@ function decide(a){
     const r=periciaFind(a,()=>true);
     if(r){a.job={k:'pericia',tile:r.tile,resKey:'p'+r.tile,p:0};S.res['p'+r.tile]=a.id;a.path=r.path;a.status='Indo periciar '+(ROOM_NAME[room[r.tile]]||'área');return;}
   }
-  // ocioso: volta para perto do posto
-  let count=0;const lim=3+Math.floor(Math.random()*10);
-  const homeX=a.home%W,homeY=(a.home/W)|0;
-  const r=findPath(a,i=>{const x=i%W,y=(i/W)|0;return Math.abs(x-homeX)+Math.abs(y-homeY)<4&&++count>=lim;});
-  if(r&&r.path.length){a.job={k:'wander'};a.path=r.path.slice(0,6);}
-  a.status=a.kind==='pericia'?'Aguardando área para periciar':a.kind==='pm'?'Segurando o perímetro':'Observando a rua';
-  a.think=30;
+  // sem ordem e sem área marcada: cada função tem o seu "tempo morto" de verdade (mundo vivo, docs/LIVING_WORLD_SYSTEM.md).
+  // Tudo aqui é interrompível: uma ordem, uma área marcada ou um curioso no lote encerram na hora.
+  idleJob(a);
+}
+// o que cada um faz enquanto espera: o perito separa material e anota, o PM faz a ronda e fala com a central,
+// o Paulo observa a rua; dois colegas parados perto trocam uma informação que o estado da cena confirma
+const IDLE={
+  pericia:[{k:'prep',w:2,st:'Separando material na viatura'},{k:'notes',w:2,st:'Revisando as anotações'},{k:'look',w:1.2,st:'Observando a casa de fora'}],
+  pm:[{k:'patrol',w:3,st:'Fazendo a ronda do perímetro'},{k:'radio',w:1,st:'Na escuta com a central'},{k:'look',w:1,st:'Olhando o movimento da rua'}],
+  campo:[{k:'look',w:2.5,st:'Observando a rua'},{k:'notes',w:1.5,st:'Anotando placas e nomes'},{k:'patrol',w:1,st:'Andando pela calçada'}]
+};
+function idleJob(a){
+  const pool=IDLE[a.kind]||IDLE.pm;a.mem=a.mem||{};
+  const o=chooseLife(Math.random,pool.map(x=>({id:x.k,w:x.w,cool:400,x})),null,a.mem,S.tick).x;
+  const homeX=a.home%W,homeY=(a.home/W)|0;let r=null;
+  if(o.k==='prep')r=findPath(a,i=>adjacentToObj(i,'viatura'));
+  else if(o.k==='patrol'){let count=0;const lim=6+Math.floor(Math.random()*12);r=findPath(a,i=>{const x=i%W,y=(i/W)|0;return Math.abs(x-homeX)+Math.abs(y-homeY)<6&&++count>=lim;});}
+  else{let count=0;const lim=2+Math.floor(Math.random()*6);r=findPath(a,i=>{const x=i%W,y=(i/W)|0;return Math.abs(x-homeX)+Math.abs(y-homeY)<3&&++count>=lim;});}
+  a.job={k:'idle',sub:o.k,p:0,dur:120+Math.floor(Math.random()*200),idle:true};if(r&&r.path.length)a.path=r.path.slice(0,o.k==='patrol'?10:6);
+  a.status=o.st;a.think=0;
+}
+// troca de informação entre colegas: a fala depende do que a cena já tem (nunca adianta um achado)
+function crewLine(a){
+  const nf=Object.keys(S.found).length,tape=S.tape.some(Boolean),desig=S.desig.some(Boolean),civ=S.civs.some(c=>c.state!=='leave');
+  const L=[];
+  if(a.kind==='pm'){L.push('Perímetro fechado do meu lado.');if(tape)L.push('Fita firme no portão.');if(civ)L.push('Tem curioso no portão de novo.');}
+  if(a.kind==='pericia'){L.push('Luva nova antes de entrar.');if(desig)L.push('Ainda tem área marcada lá dentro.');if(nf)L.push('O que achamos já foi pra foto.');else L.push('Nada fotografado ainda.');}
+  if(a.kind==='campo'){L.push('Movimento parado na rua.');if(civ)L.push('Vizinho querendo saber de tudo.');}
+  return L[Math.floor(Math.random()*L.length)];
 }
 function runJob(a){
   const j=a.job;
@@ -235,6 +258,19 @@ function runJob(a){
     case 'wander':
       if(!a.path.length){endJob(a);a.think=30;}
       break;
+    case 'idle':{
+      if(a.path.length)return;
+      j.p++;
+      if(j.sub==='prep'){a.dir=a.x<1?1:a.dir;if(j.p%40===1)SND.click&&SND.click();}
+      else if(j.sub==='notes'){if(j.p===1&&Math.random()<.5)SND.click&&SND.click();}
+      else if(j.sub==='look'){a.dir=a.kind==='pericia'?1:-1;}
+      else if(j.sub==='radio'){if(j.p===20&&Math.random()<.5){SND.radio&&SND.radio();}}
+      else if(j.sub==='patrol'&&j.p>40&&j.p<45){const r=findPath(a,i=>{const x=i%W,y=(i/W)|0,hx=a.home%W,hy=(a.home/W)|0;return Math.abs(x-hx)+Math.abs(y-hy)<6&&Math.random()<.08;});if(r)a.path=r.path.slice(0,8);}
+      // colega parado por perto: troca rápida de informação, de vez em quando
+      if(j.p===30&&Math.random()<.35&&!a.say){const b=S.crew.find(o=>o!==a&&!o.temp&&o.job&&o.job.idle&&!o.path.length&&Math.hypot(o.x-a.x,o.y-a.y)<2.6&&!o.say);
+        if(b){a.dir=b.x<a.x?-1:1;b.dir=-a.dir;say(a,crewLine(a),130);setTimeout(()=>{if(!b.say)say(b,pick(['Certo.','Copiado.','Beleza, fico de olho.','Tá.']),110);},1300);}}
+      if(j.p>=j.dur){endJob(a);a.think=4+Math.floor(Math.random()*10);}
+      break;}
     case 'goto':
       if(!a.path.length){endJob(a);a.think=0;}
       break;
@@ -264,7 +300,10 @@ function moveAgent(a,pass,speed){
 function stepCrew(a){
   if(!(a.job&&a.job.k==='coffee'&&!a.path.length))a.energy=Math.max(0,a.energy-ENERGY_RATE);
   if(a.job&&a.job.k!=='coffee'&&a.energy<8){endJob(a);a.think=0;}
-  if(a.kind!=='pericia'&&a.job&&(a.job.k==='tape'||a.job.k==='wander')&&!(a.order&&a.order.k!=='guard'&&a.order.k!=='sweep')&&S.civs.some(c=>c.state!=='leave'&&inLot(Math.round(c.x),Math.round(c.y))&&!S.res['c'+c.id])){endJob(a);a.think=0;}
+  if(a.kind!=='pericia'&&a.job&&(a.job.k==='tape'||a.job.k==='wander'||a.job.idle)&&!(a.order&&a.order.k!=='guard'&&a.order.k!=='sweep')&&S.civs.some(c=>c.state!=='leave'&&inLot(Math.round(c.x),Math.round(c.y))&&!S.res['c'+c.id])){endJob(a);a.think=0;}
+  // perito parado: área marcada para periciar interrompe o tempo morto (checa a cada 10 passos)
+  if(a.kind==='pericia'&&a.job&&a.job.idle&&S.tick%10===a.id%10&&S.desig.some((v,i)=>v&&!S.res['p'+i])){endJob(a);a.think=0;}
+  if(a.job&&a.job.idle&&a.order){endJob(a);a.think=0;}
   if(!a.job){if(a.think>0)a.think--;else decide(a);}
   if(a.job)runJob(a);
   if(!moveAgent(a,passable,0.1*(a.energy<15?0.8:1)))endJob(a);
@@ -1923,7 +1962,7 @@ function drawPerson(p,isCrew){
   const fr=framesFor(p);
   let f=0;
   if(p.moving)f=Math.floor(p.walk*3.2)%4;
-  else if(isCrew&&p.job&&!p.path.length&&(p.job.k==='pericia'||p.job.k==='tape'))f=((frame>>4)+p.id)%2?4:0;
+  else if(isCrew&&p.job&&!p.path.length&&(p.job.k==='pericia'||p.job.k==='tape'||(p.job.k==='idle'&&p.job.sub==='prep')))f=((frame>>4)+p.id)%2?4:0;
   const X=Math.round(p.x*T)+16,Y=Math.round(p.y*TH)+TH-2;
   const bob=p.moving?((Math.floor(p.walk*3.2)%2)?-1:0):(Math.sin(frame/26+p.id*1.7)>0.55?-1:0);
   ctx.drawImage(SHADOW,X-11,Y-5);

@@ -209,3 +209,12 @@ Os SVGs em `public/evidence/case01/` são assets oficiais, não placeholders.
 ## Direção visual da rua: Beat Cop com o visual da base (aprovada em 11/10/2026)
 
 A rua do DHPP usa a perspectiva de Beat Cop (fachadas de frente até o topo da tela, calçada vista de cima, rua horizontal com carros de lado), com o visual da planta da base e da casa: fachadas e janelas no estilo da base, o letreiro, a porta e as bandeiras reais do DHPP, os bonecos da planta, e os carros e o mobiliário oficiais do ChatGPT (`public/base/rua/veiculos`, `props`). Antes de mexer, ler `docs/RUA_BEATCOP_BASE.md`. O usuário pediu: nada de gerador externo de imagem (o que não for PNG oficial é desenhado em código) e nada de nomes de negócios brasileiros. As direções anteriores (PIX/3D e a rua americana em `docs/DIRECAO_RUA_AMERICANA_DHPP.md`) ficam só como histórico.
+
+
+## Mundo vivo
+
+Rua, base e casa têm rotinas próprias: cada personagem tem função, ritmo e lugares de trabalho, escolhe por peso o que fazer sem repetir, e reage ao Lemos e aos fatos do save, sem avançar a história sozinho. Antes de mexer em NPCs, falas ambientes ou som ambiente, ler `docs/LIVING_WORLD_SYSTEM.md`.
+
+- Peças comuns ficam em `src/world/life.js` (escolha com memória, falas sem repetição, registro de acontecimentos, painel `?debug=1`).
+- O som ambiente, sintetizado, fica em `src/world/ambientAudio.js`.
+- Falas que dependem do caso precisam de condição no save.
