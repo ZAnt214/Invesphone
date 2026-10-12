@@ -222,3 +222,12 @@ Rua, base e casa têm rotinas próprias: cada personagem tem função, ritmo e l
 - Peças comuns ficam em `src/world/life.js` (escolha com memória, falas sem repetição, registro de acontecimentos, painel `?debug=1`).
 - O som ambiente, sintetizado, fica em `src/world/ambientAudio.js`.
 - Falas que dependem do caso precisam de condição no save.
+
+
+## Ajustes: todo efeito pode ser desligado
+
+Todo efeito visual ou sonoro (os que já existem e os que vierem) precisa estar em `src/settings/gameSettings.ts`, na categoria certa (Luz e sol, Atmosfera, Tela e bordas, Vida no cenário, Som — criar outra se nenhuma servir), com nome curto, descrição e a opção de desligar. O código do efeito consulta `fxOn(id)` (ou o objeto `F` em `street.js`) antes de desenhar ou tocar, e reage na hora a `onFxChange`.
+
+- As telas de ajustes são geradas desse registro: o botão de engrenagem no cabeçalho do jogo (`src/settings/settingsPanel.ts`, que gira junto com o jogo no celular em pé) e o app Ajustes do aparelho (`src/EffectsSettings.tsx`). Não escrever opção à mão em nenhuma das duas.
+- O aparelho será descontinuado: o que hoje só existe no app Ajustes deve ter equivalente no painel do jogo.
+- A qualidade gráfica continua valendo por cima (a baixa desliga efeitos pesados mesmo que estejam ligados aqui).

@@ -1,0 +1,29 @@
+/* Ajustes dentro do jogo: mesmo visual do cabeçalho (vidro escuro, chanfro, amarelo do DHPP) */
+.st-wrap{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));background:rgba(6,8,12,.55);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+.st-wrap[hidden]{display:none}
+.st-wrap.st-in{position:absolute}
+.st-card{width:min(560px,100%);max-height:100%;display:grid;grid-template-rows:auto auto minmax(0,1fr);background:rgba(20,23,28,.97);color:#e8ecef;border:1px solid rgba(255,255,255,.12);clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);font:500 13px/1.4 system-ui,-apple-system,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.st-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 8px}
+.st-head b{font:700 15px/1 system-ui,sans-serif;letter-spacing:.02em}
+.st-x{width:32px;height:32px;border:0;background:rgba(255,255,255,.08);color:#e8ecef;font-size:20px;line-height:1;cursor:pointer;border-radius:4px}
+.st-tabs{display:flex;gap:6px;padding:0 14px 10px;overflow-x:auto;scrollbar-width:none}
+.st-tabs::-webkit-scrollbar{display:none}
+.st-tabs button{flex:none;border:1px solid rgba(255,255,255,.14);background:none;color:#a9b3b8;font:700 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;padding:8px 10px;border-radius:4px;cursor:pointer}
+.st-tabs button.on{background:#f2c230;border-color:#f2c230;color:#15171b}
+.st-list{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:0 14px 14px;display:grid;gap:8px;align-content:start}
+.st-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.03);border-radius:4px}
+.st-txt b{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px}
+.st-txt p{margin:3px 0 0;font-size:11.5px;color:#a3adb2}
+.st-tag{font:700 8px/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:#7d878c;border:1px solid rgba(255,255,255,.12);padding:3px 5px;border-radius:3px}
+.st-sw{flex:none;position:relative;width:46px;height:26px;border-radius:13px;border:0;background:rgba(255,255,255,.18);cursor:pointer;transition:background .15s}
+.st-sw i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#e8ecef;transition:transform .15s}
+.st-sw.on{background:#f2c230}.st-sw.on i{transform:translateX(20px);background:#15171b}
+.st-seg{flex:none;display:flex;border:1px solid rgba(255,255,255,.16);border-radius:4px;overflow:hidden}
+.st-seg button{border:0;background:none;color:#a9b3b8;font:700 10px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;padding:9px 10px;cursor:pointer}
+.st-seg button+button{border-left:1px solid rgba(255,255,255,.16)}
+.st-seg button.on{background:rgba(242,194,48,.9);color:#15171b}
+.st-act{flex:none;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#e8ecef;font:700 11px/1 system-ui,sans-serif;padding:9px 12px;border-radius:4px;cursor:pointer}
+.st-act.danger{background:#b02a24;border-color:#b02a24}
+.st-note{margin:2px 2px 0;font-size:11px;color:#8d979b}
+@media (max-height:430px){.st-head{padding:8px 12px 6px}.st-tabs{padding-bottom:8px}.st-row{padding:7px 10px}.st-txt p{font-size:11px}}
+@media (prefers-reduced-motion:reduce){.st-sw,.st-sw i{transition:none}}

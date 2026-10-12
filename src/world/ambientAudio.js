@@ -7,6 +7,9 @@
    - Nada de loop idêntico: tons e volumes variam um pouco a cada vez, cada tipo tem intervalo mínimo próprio e no máximo
      seis sons pontuais tocam juntos. Volume e lado (pan) pela distância da câmera. */
 import { audioContext, sfxEnabled } from '../sfx';
+import { fxOn, onFxChange } from '../settings/gameSettings';
+// som ambiente ligado? (Sons e vibração + Som ambiente, em Ajustes)
+const on=()=>sfxEnabled()&&fxOn('ambient');
 
 let C=null,master=null,noise=null,scene=null,beds={},active=0;
 const last={};
@@ -31,7 +34,7 @@ export function setScene(name){
   for(const k in beds){const b=beds[k];b.g.gain.setTargetAtTime(.0001,now(),.8);setTimeout(()=>{try{b.s.stop();}catch(e){/* já parou */}},4000);}beds={};
   if(name==='rua'){beds.air=loopNoise('bandpass',700,.012,.4);beds.rumble=loopNoise('lowpass',140,.05);beds.engine=loopNoise('lowpass',220,.0001,1.2);}
   if(name==='base'){beds.hvac=loopNoise('lowpass',320,.035);beds.room=loopNoise('bandpass',520,.006,.6);}
-  master.gain.setTargetAtTime(sfxEnabled()&&!document.hidden?.9:.0001,now(),.6);
+  master.gain.setTargetAtTime(on()&&!document.hidden?.9:.0001,now(),.6);
 }
 /** chamado a cada ~quarto de segundo pela cena: trânsito perto da câmera (0..1) e para que lado */
 export function traffic(level,p){const b=beds.engine;if(!b||!C)return;b.g.gain.setTargetAtTime(.0001+.06*Math.min(1,level),now(),.25);b.fl.frequency.setTargetAtTime(160+level*220,now(),.3);}
@@ -39,7 +42,7 @@ function gate(kind,min){const t=performance.now();if(last[kind]&&t-last[kind]<mi
 
 /** sons pontuais. p: lado (-1 esquerda .. 1 direita); a: força (0..1, já com a distância) */
 export function fx(kind,p=0,a=1){
-  if(!ctx()||!sfxEnabled()||a<.03)return;const t=now();
+  if(!ctx()||!on()||a<.03)return;const t=now();
   switch(kind){
     case 'door':if(!gate(kind,.6))return;tone({f:v(1760,.04),dur:.5,vol:.02*a,type:'triangle',pan:p});tone({f:v(2350,.04),at:t+.09,dur:.45,vol:.014*a,type:'triangle',pan:p});burst({f:900,dur:.08,vol:.03*a,pan:p});break;
     case 'coin':if(!gate(kind,2))return;tone({f:2600,dur:.06,vol:.02*a,pan:p});tone({f:3200,at:t+.1,dur:.05,vol:.015*a,pan:p});break;
@@ -65,7 +68,8 @@ export function fx(kind,p=0,a=1){
   }
 }
 // aba oculta: o ambiente some (e volta ao voltar); som desligado em Ajustes: some também
-if(typeof document!=='undefined'){document.addEventListener('visibilitychange',()=>{if(master&&C)master.gain.setTargetAtTime(document.hidden||!sfxEnabled()?.0001:.9,now(),.3);});
-  addEventListener('storage',e=>{if(e.key==='invesphone.sfx'&&master&&C)master.gain.setTargetAtTime(sfxEnabled()?.9:.0001,now(),.3);});}
+if(typeof document!=='undefined'){document.addEventListener('visibilitychange',()=>{if(master&&C)master.gain.setTargetAtTime(document.hidden||!on()?.0001:.9,now(),.3);});
+  addEventListener('storage',e=>{if(e.key==='invesphone.sfx'&&master&&C)master.gain.setTargetAtTime(on()?.9:.0001,now(),.3);});
+  onFxChange(()=>{if(master&&C)master.gain.setTargetAtTime(on()&&!document.hidden?.9:.0001,now(),.3);});}
 /** primeiro toque na página: destrava o áudio (iOS) e volta o leito, se já havia cena */
 export function unlock(){if(C&&C.state==='running'&&master)return;const s=scene;if(!ctx())return;if(s){scene=null;setScene(s);}}
