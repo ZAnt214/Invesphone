@@ -1,6 +1,6 @@
 /* Quem mora e trabalha nos prédios da rua (docs/LIVING_WORLD_SYSTEM.md): gente nas janelas (olhando para fora, ao telefone, tomando
    café, vendo TV, regando planta, acenando para o Lemos), nas varandas dos apartamentos, dentro das lojas (garçom, caixa, barbeiro,
-   clientes) e nos prédios de baixo, cortados, onde cada um circula pelos cômodos (sofá, cozinha, cama, mesa). Cada pessoa tem um
+   clientes) Cada pessoa tem um
    estado simples com duração irregular e escolhe o próximo por peso, sem repetir o que acabou de fazer (choose, de life.js).
    Tudo é desenhado com os mesmos bonecos da planta (personFrames) ou com bustos em código, nas cores de cada um. */
 import {choose,jitter} from '../world/life';
@@ -83,7 +83,7 @@ export function createDwellers({buildings,rooms,looks,personFrames,R,RM,lemos,on
     if(Math.abs(lemos.x-p.x)<70&&R()<dt*.3)p.dir=lemos.x>p.x?1:-1;
   }
 
-  /* ---------- prédios de baixo: cada um circula pela sua casa ---------- */
+  /* ---------- (os prédios de baixo só mostram o telhado: não há gente lá; `rooms` chega vazio) ---------- */
   const people=[];
   const COUNT={living:2,kitchen:1,bedroom:1,office:1,laundry:2,cafe:2};
   for(const rm of rooms){const n=Math.min(COUNT[rm.type]||1,rm.spots.length);if(R()<.18)continue;

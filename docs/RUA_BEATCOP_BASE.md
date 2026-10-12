@@ -67,8 +67,8 @@ Feitos em 844×390, 390×844 e 375×667:
 
 ## Vida dentro dos prédios (12/10/2026)
 
-- **Prédios de baixo** (`src/base/streetFG.js`): primeiro plano cortado, com a platibanda logo depois da calçada de cá, a face de dentro da parede da frente com janelas e o facho de sol no piso, e cômodos (sala, cozinha, quarto, escritório, lavanderia, café) com móveis. Cada pessoa circula pelos cômodos do seu prédio (`src/base/dwellers.js`: sofá, mesa, fogão, cama com o "z" de quem dorme).
+- **Prédios de baixo** (`src/base/streetFG.js`): primeiro plano visto de cima, só os telhados (o interior não aparece): platibanda logo depois da calçada de cá e terraços com ar-condicionado, ventilação, caixa d'água, casa de escada, claraboias, antenas, poças e remendos.
 - **Janelas**: bustos em código atrás do vidro (olhando para fora, ao telefone, tomando café, vendo TV com luz azul, regando planta, digitando no DHPP, acenando para o Lemos quando ele para perto). Algumas janelas ficam vazias ou com cortina.
 - **Varandas** nos apartamentos (porta de vidro com interior, laje, vasos, varal); quem está lá usa o boneco da planta, atrás do guarda-corpo.
 - **Lojas**: garçom andando, clientes sentados, caixa, barbeiro e cliente, atrás do vidro das vitrines.
-- **Câmera**: no celular na horizontal o quadro padrão mostra só a faixa essencial (escala inteira de pixel). O botão "visão geral" no cabeçalho (ou o pinça) afasta até a escala 1 e mostra a rua inteira com os prédios de baixo; a pinça agora vai até 0,34x.
+- **Câmera**: no celular na horizontal o quadro padrão mostra só a faixa essencial (escala inteira de pixel). O botão "visão geral" no cabeçalho (ou o pinça) afasta até a escala 1 e mostra a rua inteira com os telhados dos prédios de baixo; a pinça agora vai até 0,34x.
