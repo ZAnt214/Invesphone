@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
-import { CATEGORIES, EFFECTS, fxOn, onFxChange, setFx } from './settings/gameSettings'
+import { EFFECTS, categoriesOf, fxOn, onFxChange, setFx } from './settings/gameSettings'
+import type { SectionId } from './settings/gameSettings'
 import './quality-picker.css'
 
-/** Efeitos visuais e sonoros, por categoria, com a opção de desligar (o mesmo registro do botão de Ajustes do jogo). */
-export default function EffectsSettings(){
+/** Efeitos de uma seção (Gráficos ou Som), por categoria, com a opção de desligar (o mesmo registro do botão de Ajustes do jogo). */
+export default function EffectsSettings({section}:{section:SectionId}){
   const [,tick] = useState(0)
   useEffect(()=>onFxChange(()=>tick(n=>n+1)),[])
-  return <>{CATEGORIES.map(c=>(
+  return <>{categoriesOf(section).map(c=>(
     <div className="qp fs" key={c.id}>
       <div className="qp-row"><small>{c.label.toUpperCase()}</small></div>
       {EFFECTS.filter(e=>e.cat===c.id).map(e=>{

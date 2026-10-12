@@ -2,7 +2,7 @@
  * Ajustes do jogo: o registro único de tudo que o jogador pode ligar e desligar.
  *
  * REGRA (CLAUDE.md): todo efeito visual ou sonoro novo entra aqui, na categoria certa, com um texto curto e
- * a opção de desligar — e o código do efeito consulta `fxOn(id)` antes de desenhar/tocar. As duas telas de
+ * a opção de desligar (efeito visual = seção Gráficos; som = seção Som) — e o código do efeito consulta `fxOn(id)` antes de desenhar/tocar. As duas telas de
  * ajustes (o botão de engrenagem do jogo, em src/settings/settingsPanel.ts, e o app Ajustes do aparelho)
  * são montadas a partir desta lista; nenhuma das duas tem opção escrita à mão.
  *
@@ -11,16 +11,20 @@
  */
 
 export type CategoryId = 'luz'|'atmosfera'|'tela'|'vida'|'som'
-export type Category = { id:CategoryId; label:string }
+export type SectionId = 'graficos'|'som'
+/** cada categoria pertence a uma seção dos Ajustes: tudo o que é visual fica em Gráficos, junto da qualidade */
+export type Category = { id:CategoryId; label:string; section:SectionId }
 export type Effect = { id:string; cat:CategoryId; label:string; desc:string; def:boolean; where:string }
 
 export const CATEGORIES:Category[] = [
-  { id:'luz', label:'Luz e sol' },
-  { id:'atmosfera', label:'Atmosfera' },
-  { id:'tela', label:'Tela e bordas' },
-  { id:'vida', label:'Vida no cenário' },
-  { id:'som', label:'Som' }
+  { id:'luz', label:'Luz e sol', section:'graficos' },
+  { id:'atmosfera', label:'Atmosfera', section:'graficos' },
+  { id:'tela', label:'Bordas da tela', section:'graficos' },
+  { id:'vida', label:'Vida no cenário', section:'graficos' },
+  { id:'som', label:'Som', section:'som' }
 ]
+export const SECTIONS:{ id:SectionId; label:string }[] = [{ id:'graficos', label:'Gráficos' },{ id:'som', label:'Som' }]
+export const categoriesOf = (sec:SectionId)=>CATEGORIES.filter(c=>c.section===sec)
 
 export const EFFECTS:Effect[] = [
   // luz e sol
