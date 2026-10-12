@@ -19,16 +19,16 @@ export {STREET_H};
 
 /* ---------- o quarteirão, da esquerda para a direita ---------- */
 const LOT=[
-  {k:'grocery',w:240,brick:'#8a3a2c',name:'GROCERY',signc:'#2f5a3a',ink:'#f1e6c8',awn:'#2f5a3a',fire:true},
-  {k:'apt',w:260,brick:'#8e4434',door:'#2f4a3a'},
-  {k:'diner',w:280,brick:'#9a3f30',name:'DINER',signc:'#b02a24',ink:'#f6f0e2',awn:'#b02a24'},
+  {k:'grocery',w:240,brick:'#8a3a2c',name:'GROCERY',signc:'#2f5a3a',ink:'#f1e6c8',awn:'#2f5a3a',fire:true,floors:4},
+  {k:'apt',w:260,brick:'#8e4434',door:'#2f4a3a',floors:7,inset:[16,0]},
+  {k:'diner',w:280,brick:'#9a3f30',name:'DINER',signc:'#b02a24',ink:'#f6f0e2',awn:'#b02a24',floors:3,inset:[12,0]},
   {k:'alley',w:110},
   {k:'dhpp',w:620},
   {k:'alley',w:60},
-  {k:'pawn',w:250,brick:'#b09a6a',name:'PAWN SHOP',signc:'#f2efe6',ink:'#a82a24',fire:true},
-  {k:'laundry',w:240,brick:'#7a5a42',name:'LAUNDRY',signc:'#2e4a8a',awn:'#2e4a8a'},
-  {k:'apt',w:180,brick:'#a0603a',door:'#5a2a22'},
-  {k:'barber',w:240,brick:'#8e3b2c',name:'BARBER',signc:'#e8e2d4',ink:'#7a2a2a',fire:true}
+  {k:'pawn',w:250,brick:'#b09a6a',name:'PAWN SHOP',signc:'#f2efe6',ink:'#a82a24',fire:true,floors:5,inset:[0,22]},
+  {k:'laundry',w:240,brick:'#7a5a42',name:'LAUNDRY',signc:'#2e4a8a',awn:'#2e4a8a',floors:4},
+  {k:'apt',w:180,brick:'#a0603a',door:'#5a2a22',floors:6,inset:[14,0]},
+  {k:'barber',w:240,brick:'#8e3b2c',name:'BARBER',signc:'#e8e2d4',ink:'#7a2a2a',fire:true,floors:3,inset:[18,0]}
 ];
 let acc=0;export const BUILDINGS=LOT.map((b,i)=>{const o={...b,i,X:acc};acc+=b.w;return o;});
 export const STREET_W=acc;
@@ -120,7 +120,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
 
   function buildStatic(){
     const cv=document.createElement('canvas');cv.width=STREET_W;cv.height=STREET_H;const g=cv.getContext('2d');g.imageSmoothingEnabled=false;
-    const sky=g.createLinearGradient(0,0,0,200);sky.addColorStop(0,'#8fa9c4');sky.addColorStop(1,'#d8d4cc');g.fillStyle=sky;g.fillRect(0,0,STREET_W,GY);
+    const sky=g.createLinearGradient(0,0,0,420);sky.addColorStop(0,'#8fa9c4');sky.addColorStop(1,'#d8d4cc');g.fillStyle=sky;g.fillRect(0,0,STREET_W,GY);
     paintFacades(g,BUILDINGS,A,{sign:A.sign(),door:A.door()});
     paintGround(g,STREET_W,art,STALLS);
     paintWear(g,BUILDINGS,STREET_W);
