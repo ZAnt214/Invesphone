@@ -10,7 +10,7 @@
  * o que a qualidade baixa desliga.
  */
 
-export type CategoryId = 'luz'|'atmosfera'|'tela'|'vida'|'cenas'|'som'
+export type CategoryId = 'luz'|'atmosfera'|'tela'|'vida'|'cenas'|'interface'|'som'
 export type SectionId = 'graficos'|'som'
 /** cada categoria pertence a uma seção dos Ajustes: tudo o que é visual fica em Gráficos, junto da qualidade */
 export type Category = { id:CategoryId; label:string; section:SectionId }
@@ -22,6 +22,7 @@ export const CATEGORIES:Category[] = [
   { id:'tela', label:'Bordas da tela', section:'graficos' },
   { id:'vida', label:'Vida no cenário', section:'graficos' },
   { id:'cenas', label:'Cenas rápidas', section:'graficos' },
+  { id:'interface', label:'Interface', section:'graficos' },
   { id:'som', label:'Som', section:'som' }
 ]
 export const SECTIONS:{ id:SectionId; label:string }[] = [{ id:'graficos', label:'Gráficos' },{ id:'som', label:'Som' }]
@@ -49,8 +50,13 @@ export const EFFECTS:Effect[] = [
   { id:'dwellers', cat:'vida', label:'Gente nas janelas e lojas', desc:'Moradores nas janelas e varandas, funcionários e clientes nas vitrines.', def:true, where:'Rua' },
   // cenas rápidas
   { id:'scene.badge', cat:'cenas', label:'Passar o crachá na porta', desc:'Passar o crachá na leitora para entrar na área restrita. Desligado, a porta abre sozinha.', def:true, where:'DHPP' },
+  // interface (HUD do Lemos)
+  { id:'hud.particles', cat:'interface', label:'Luz e partículas da interface', desc:'Reflexo de lente, poeira de luz e o rastro da evidência voando até a caderneta.', def:true, where:'Rua e DHPP' },
+  { id:'hud.room', cat:'interface', label:'Nome da sala ao entrar', desc:'O nome do lugar aparece no meio da tela quando Lemos entra.', def:true, where:'Rua e DHPP' },
+  { id:'hud.portrait', cat:'interface', label:'Retrato animado', desc:'O aro do retrato do Lemos gira e brilha, com grão de filme.', def:true, where:'Rua e DHPP' },
   // som
   { id:'ambient', cat:'som', label:'Som ambiente', desc:'O ar da cidade, o trânsito, o burburinho e o ar-condicionado do DHPP.', def:true, where:'Rua e DHPP' },
+  { id:'sfx.hud', cat:'som', label:'Sons da interface', desc:'Ao entrar numa sala, nas descobertas, nas pistas registradas e na caderneta.', def:true, where:'Rua e DHPP' },
   { id:'sfx.badge', cat:'som', label:'Leitora de crachá', desc:'O atrito do crachá na fenda, o bipe da leitora e a trava da porta soltando.', def:true, where:'DHPP' }
 ]
 

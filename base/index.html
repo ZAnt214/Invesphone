@@ -16,20 +16,26 @@
   <div id="vig" aria-hidden="true"></div>
   <div id="etint" aria-hidden="true" hidden></div>
 
-  <div class="hud"><div class="ht">
-    <div class="seg h-id">
-      <div class="mark" aria-label="DHPP Homicídios"><b>DHPP</b><i></i><span>HOMICÍDIOS</span></div>
-      <div class="clk"><b id="clk" role="timer">08:10</b><span><small>QUI 17·10</small><small class="ph">MANHÃ</small></span></div>
+  <div class="hud lh" id="hud">
+    <div class="lh-id">
+      <div class="lh-dial" title="Lemos · em serviço">
+        <svg viewBox="0 0 60 60" aria-hidden="true"></svg>
+        <i class="sheen" aria-hidden="true"></i>
+        <span class="ph"><img src="/characters/lemos/cracha-foto.png" alt="Lemos"></span>
+        <i class="grain" aria-hidden="true"></i>
+        <i class="dot" aria-hidden="true"></i>
+      </div>
+      <div class="lh-nm"><b>LEMOS</b><i></i><span>Investigação · DHPP</span><em><span id="where-n">Pátio do DHPP</span> · <span id="clk" role="timer">08:10</span></em></div>
     </div>
-    <div class="seg h-where"><small>Local</small><b id="where-n">Pátio do DHPP</b></div>
-    <div class="seg h-btns">
-      <a class="hbtn" id="b-home" href="/" aria-label="Voltar à casa da Rua das Acácias" title="Casa"><svg viewBox="0 0 24 24"><path d="M3.5 11L12 4l8.5 7"/><path d="M6 10v10h12V10"/></svg><span>Casa</span></a>
-      <button class="hbtn" id="b-set" aria-label="Ajustes" title="Ajustes"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></button>
-      <button class="hbtn" id="b-view" aria-label="Visão geral da rua" title="Visão geral" hidden><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
-      <button class="hbtn" id="rot" aria-label="Girar tela" title="Girar tela" hidden><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7M21 4v5h-5"/></svg></button>
-      <a class="hbtn phone" id="b-phone" href="/invesphone" aria-label="Abrir o aparelho de Lemos" title="Aparelho"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/></svg><span>Aparelho</span></a>
+    <div class="lh-btns">
+      <button class="lh-b lh-nb" id="b-book" aria-label="Abrir caderneta" title="Caderneta"><svg viewBox="0 0 20 24"><path d="M3 1.5h13.5v21H3a1.5 1.5 0 0 1-1.5-1.5V3A1.5 1.5 0 0 1 3 1.5z"/><path d="M5.5 1.5v21M8.5 7h5.5M8.5 10.5h5.5"/></svg><span class="ct" id="nb-ct"><span>0</span></span><span class="tag" aria-hidden="true">Anexado ao caso</span></button>
+      <button class="lh-b" id="b-view" aria-label="Visão geral da rua" title="Visão geral" hidden><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button class="lh-b" id="rot" aria-label="Girar tela" title="Girar tela" hidden><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7M21 4v5h-5"/></svg></button>
+      <a class="lh-b" id="b-home" href="/" aria-label="Voltar à casa da Rua das Acácias" title="Casa"><svg viewBox="0 0 24 24"><path d="M3.5 11L12 4l8.5 7"/><path d="M6 10v10h12V10"/></svg></a>
+      <button class="lh-b" id="b-set" aria-label="Ajustes" title="Ajustes"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></button>
+      <a class="lh-b phone" id="b-phone" href="/invesphone" aria-label="Abrir o aparelho de Lemos" title="Aparelho"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/></svg></a>
     </div>
-  </div></div>
+  </div>
 
   <div id="toast" hidden role="status"></div>
 

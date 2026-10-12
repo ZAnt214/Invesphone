@@ -1,7 +1,7 @@
 /* Base do DHPP: cena 2D navegável do Caso 01, na mesma técnica da Varredura das Acácias
    (pixel art procedural, câmera oblíqua, luz multiplicada por sala, detalhe por zoom, tela deitada).
    Lemos anda, a equipe fala, o aparelho leva ao resto do caso. */
-import { applyRequest, applyTopic, caseTeam, requestOk, teamDialogues, teamMaterialRequests, teamNews, topicOk } from '../team/teamData';
+import { applyRequest, applyTopic, caseTeam, DEFAULT_DISCOVERED, requestOk, teamDialogues, teamMaterialRequests, teamNews, topicOk } from '../team/teamData';
 import { readCase, writeCase } from '../case/caseSave';
 import { depoPeople, summon } from '../case/depositions';
 import { createStreet } from './street';
@@ -10,6 +10,8 @@ import { perfHud } from '../perfHud';
 import * as AMB from '../world/ambientAudio';
 import { openSettings } from '../settings/settingsPanel';
 import { badgeReady, openBadge } from './badgeSwipe';
+import { createHud } from '../hud/hud';
+import { clues as CLUE_LIST, people as PEOPLE } from '../case01';
 import { fxOn } from '../settings/gameSettings';
 import { choose, eventLog, jitter, lifeDebug, lineBank } from '../world/life';
 import { CAMERA_PRIORITY, createCameraControl, createLead, damp, deadZoneTarget, drawCameraDebug } from '../camera/cameraDirector';
@@ -1055,6 +1057,43 @@ function closeTalk(){
 $('#tk-x').addEventListener('click',e=>{e.stopPropagation();closeTalk();});
 $('#talk').addEventListener('click',advance);
 
+
+/* ---------- HUD do Lemos (src/hud/hud.js, docs/HUD_LEMOS.md) ---------- */
+const ROOM_SUB={hall:'DHPP · Atendimento ao público',fora:'DHPP · Homicídios'};
+const HUD_SEEN='invesphone.hud.seen';
+const DEPO_TXT={chamar:'não chamado',sem_provas:'não chamado',ouvir:'chamado para depor',retomar:'depoimento em aberto',registrado:'depoimento registrado'};
+function hudData(){
+  const c=CASE||readCase(),known=c.discoveredPeople||DEFAULT_DISCOVERED,dp=depoPeople(c);
+  const people=PEOPLE.filter(p=>p.id!=='sonia'&&known.includes(p.id)).map(p=>{const d=dp.find(x=>x.id===p.id);return {id:p.id,name:p.name,role:p.role,photo:p.id==='livia'?'/characters/livia/expressions/neutral.jpg':`/characters/${p.id}/portrait.jpg`,state:d?DEPO_TXT[d.state]:''};});
+  const clues=(c.clues||[]).map(id=>{const k=CLUE_LIST.find(x=>x.id===id);return k?{id,title:k.title,desc:k.description}:null;}).filter(Boolean);
+  return {people,clues};
+}
+const HUD=createHud({app:appEl,clock:()=>clockStr(),data:hudData,canShow:()=>started&&!talkOpen&&!depoOpen&&!BADGE.open&&!galOpen&&!$('#intro')?.offsetParent});
+let HSEEN=safe(()=>JSON.parse(localStorage.getItem(HUD_SEEN)||'null'),null);
+const hudSig=c=>({clues:[...(c.clues||[])],mats:[...(c.requestedMaterials||[])],ppl:[...(c.discoveredPeople||DEFAULT_DISCOVERED)],heard:[...(c.interviewed||[])]});
+// o que chegou no save desde a última olhada vira descoberta (material, pessoa, depoimento) ou pista anexada
+function hudWatch(){
+  if(!CASE)return;const s=hudSig(CASE);
+  if(!HSEEN||!Array.isArray(HSEEN.clues)){HSEEN=s;safe(()=>localStorage.setItem(HUD_SEEN,JSON.stringify(s)));HUD.setCount(s.clues.length);return;}
+  const nw=k=>s[k].filter(x=>!(HSEEN[k]||[]).includes(x));const mats=nw('mats'),ppl=nw('ppl'),heard=nw('heard'),cl=nw('clues');
+  if(!mats.length&&!ppl.length&&!heard.length&&!cl.length)return;
+  HSEEN=s;safe(()=>localStorage.setItem(HUD_SEEN,JSON.stringify(s)));
+  const found=[];
+  mats.slice().reverse().forEach(id=>{const m=teamMaterialRequests.find(r=>r.id===id);if(!m)return;const who=(caseTeam.find(t=>t.id===m.memberId)||{}).name||'Equipe';
+    const imgs=(m.assetPaths||[]).filter(p=>/\.(jpe?g|png|svg|webp)$/i.test(p));
+    found.push({title:m.label,who:who.split(' ')[0],onOpen:imgs.length?()=>openGallery(imgs.map(img=>({title:m.label,img,cap:'Material da equipe · '+who})),0):null});});
+  ppl.forEach(id=>{const p=PEOPLE.find(x=>x.id===id);if(p)found.push({title:'Nova pessoa: '+p.name,who:'Investigação',onOpen:()=>HUD.openBook('pessoas')});});
+  heard.forEach(id=>{const p=PEOPLE.find(x=>x.id===id);if(p)found.push({title:'Depoimento de '+p.name.split(' ')[0]+' registrado',who:'Depoimentos',onOpen:()=>HUD.openBook('pessoas')});});
+  // um cartão só: o material vem antes do depoimento e da pessoa; o resto fica na caderneta
+  if(found.length){const d=found[0];if(found.length>1)d.who+=` · +${found.length-1}`;HUD.discovery(d);}
+  const base=s.clues.length-cl.length,show=cl.slice(-3),skip=cl.length-show.length;
+  show.forEach((id,k)=>{const t=CLUE_LIST.find(x=>x.id===id);const n=base+skip+k+1;HUD.evidence({title:t?t.title:id,label:'Pista '+n+' · anexada',n});});
+}
+HUD.setCount(HSEEN&&Array.isArray(HSEEN.clues)?HSEEN.clues.length:(CASE&&CASE.clues||[]).length);
+setInterval(hudWatch,900);
+// nome do lugar ao entrar: espera Lemos assentar no cômodo e não repete o mesmo lugar em menos de 45 s
+let hudRoomT=0;const hudRoomLast={};
+function hudRoomEnter(key,name,sub){if(!started)return;clearTimeout(hudRoomT);hudRoomT=setTimeout(()=>{const t=performance.now();if(hudRoomLast[key]&&t-hudRoomLast[key]<45000)return;if(depoOpen||talkOpen)return;hudRoomLast[key]=t;HUD.room(name,sub);},450);}
 /* ---------- Fotos ---------- */
 let galI=0,GAL=[];
 function openGallery(list,i){
@@ -1771,7 +1810,7 @@ const street=()=>STREET||(STREET=createStreet({lemosLook:LOOK.lemos,personFrames
 const streetView=()=>street();
 const FADE=document.createElement('div');FADE.id='fade';FADE.setAttribute('aria-hidden','true');appEl.appendChild(FADE);
 function fadeTo(fn){FADE.classList.add('on');setTimeout(()=>{fn();requestAnimationFrame(()=>FADE.classList.remove('on'));},200);}
-function setWhere(t){lastRoom=null;$('#where-n').textContent=t;$('#b-view').hidden=t!=='Rua do DHPP';}
+function setWhere(t){lastRoom=null;$('#where-n').textContent=t;$('#b-view').hidden=t!=='Rua do DHPP';if(t==='Rua do DHPP')hudRoomEnter('rua',t,'São Paulo · outubro de 2002');}
 // entrou pela porta do DHPP: aparece na recepção, logo depois da porta
 function enterBase(instant){
   const go=()=>{SCENE='base';$('#b-view').hidden=true;AMB.setScene('base');streetLeft=performance.now();resumeBase();P1.x=16;P1.y=17;P1.path=[];P1.pend=null;P1.dir=1;
@@ -1801,7 +1840,7 @@ function goExit(){
   P1.path=pathTo(e);P1.pend={kind:'exit'};follow=true;
 }
 function updateUI(){
-  const r=roomOf(P1),nm=ROOM_NAME[r]||'';if(r!==lastRoom){lastRoom=r;$('#where-n').textContent=nm;}
+  const r=roomOf(P1),nm=ROOM_NAME[r]||'';if(r!==lastRoom){lastRoom=r;$('#where-n').textContent=nm;if(nm&&r!=='wall')hudRoomEnter(r,nm,ROOM_SUB[r]||'DHPP · Área restrita');}
   const c=clockStr();if(c!==lastClk){lastClk=c;$('#clk').textContent=c;}
 }
 let last=performance.now();
@@ -1926,6 +1965,6 @@ $('#b-start').addEventListener('click',()=>{
   else{street().place('carro');setWhere('Rua do DHPP');}
   setTimeout(()=>toast('Sônia Prado','Lemos, na minha sala. A equipe já está com o material da casa.',{img:'/sonia.jpg',col:'#c9a24a'}),1200);
 });
-window.__base={amb:()=>AMB.ambientState(),badge:()=>BADGE,get BG(){return BG;},get scene(){return SCENE;},setScene:s=>{if(s==='base')enterBase(true);else{SCENE='rua';street().place('porta');}},street:()=>street(),startDepo,get CASE(){return CASE;},VIS:()=>VIS,get P1(){return P1;},NPCS:()=>NPCS,cam,goTalk,goTile,openTalk,openGallery,FOUND,get started(){return started;},objs:()=>objs,tap,idx,W,H,T,TH,ti,passable,zoomTo,get ROT(){return ROT;},get LODV(){return LODV;},get FITZ(){return FITZ;},get GL(){return !!POST;},prof:()=>({r2d:+PROF.r2d.toFixed(2),post:+FX.ms.toFixed(2),frame:+frameMs.toFixed(2),RS})};
+window.__base={amb:()=>AMB.ambientState(),badge:()=>BADGE,refreshCase:()=>refreshCase(),hud:()=>HUD,get BG(){return BG;},get scene(){return SCENE;},setScene:s=>{if(s==='base')enterBase(true);else{SCENE='rua';street().place('porta');}},street:()=>street(),startDepo,get CASE(){return CASE;},VIS:()=>VIS,get P1(){return P1;},NPCS:()=>NPCS,cam,goTalk,goTile,openTalk,openGallery,FOUND,get started(){return started;},objs:()=>objs,tap,idx,W,H,T,TH,ti,passable,zoomTo,get ROT(){return ROT;},get LODV(){return LODV;},get FITZ(){return FITZ;},get GL(){return !!POST;},prof:()=>({r2d:+PROF.r2d.toFixed(2),post:+FX.ms.toFixed(2),frame:+frameMs.toFixed(2),RS})};
 requestAnimationFrame(loop);
 })();

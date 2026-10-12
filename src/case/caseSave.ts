@@ -10,6 +10,11 @@ export type CaseSave = TeamGame & {version:number;summonedPeople?:string[];[k:st
 /** Começo do caso quando ainda não há save: a ligação da Sônia continua sendo a porta de entrada do aparelho. */
 const seed = ():CaseSave => ({version:SAVE_VERSION,screen:'incoming',app:'home',task:1,clues:[],interviewed:[],orders:[],discoveredPeople:[...DEFAULT_DISCOVERED],summonedPeople:['livia','caio'],score:1000})
 
+/** Recomeçar o caso: apaga o save e o que depende dele (caderneta do Lemos e o que o HUD já anunciou). */
+export function resetCaseStorage(){
+  for(const k of [SAVE_KEY,'invesphone.caderneta','invesphone.hud.seen']){try{localStorage.removeItem(k)}catch{/* sem armazenamento */}}
+}
+
 export function readCase():CaseSave{
   try{
     const raw=localStorage.getItem(SAVE_KEY)
