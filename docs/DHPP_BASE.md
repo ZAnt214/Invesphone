@@ -39,18 +39,18 @@ Vindo da recepção, Lemos para diante da porta (`GATE_X`, linha 13) e a leitora
 
 - **Visual:** o mesmo acabamento do rádio HT da varredura, todo desenhado em código, sobre a cena escurecida. É um terminal deitado de plástico escuro com:
   - a fenda em cima;
-  - a tela verde de cristal líquido, com canal, bateria, duas linhas de texto e barra de leitura;
+  - a tela verde de cristal líquido, com a data e a hora do jogo, duas linhas de texto e barra de leitura;
   - as luzes TRAVA e REDE;
   - a marca DHPP.
 - **Crachá:** encaixado na fenda pela tarja, preso ao cordão vermelho. Tem:
   - fundo de segurança com linhas finas e uma estrela em marca d'água;
   - faixa azul-marinho com o brasão dourado, "DHPP" e o nome do departamento por extenso;
   - furo do cordão;
-  - foto 3×4 de Lemos sem rosto, com selo holográfico;
-  - nome, função, matrícula e validade, assinatura, código de barras, "uso obrigatório nas dependências" e tarja magnética.
+  - foto 3×4 de Lemos com selo holográfico. A foto oficial (`public/characters/lemos/cracha-foto.png`, pedido `2026-10-12-lemos-foto-cracha`) entra sozinha quando o arquivo existir; até lá, uma silhueta;
+  - nome, função, matrícula e validade, assinatura, código de barras, "pessoal e intransferível" e tarja magnética.
 - **Gesto:** arrastar de qualquer ponto da tela; o crachá só anda na horizontal, preso à fenda.
-  - Ao chegar ao fim: tela verde ("ACESSO LIBERADO / BOM TRABALHO, LEMOS"), trava verde, bipe e a trava soltando. O crachá sai, a leitora fecha, a porta da planta abre e Lemos segue.
-  - Ao soltar no meio: "TENTE NOVAMENTE / PASSE ATÉ O FIM", e o crachá volta.
+  - Ao chegar ao fim: tela verde ("ACESSO LIBERADO / LEMOS · INVESTIGAÇÃO"), trava verde, bipe e a trava soltando. O crachá sai, a leitora fecha, a porta da planta abre e Lemos segue.
+  - Ao soltar no meio: "CRACHÁ NÃO LIDO / PASSE NOVAMENTE", e o crachá volta.
   - "Voltar" (ou Esc) fecha sem abrir.
   - A trilha pontilhada aparece até o primeiro acerto (`invesphone.badge.ok`).
 - **Animação:** ao arrastar, o crachá se inclina contra o movimento (o atrito da fenda) e treme de leve enquanto lê. Ao soltar no meio, ele volta como uma mola, balançando no cordão, e o terminal dá um tranco. Ao liberar, a sequência é:
