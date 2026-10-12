@@ -198,6 +198,15 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   const birds=Array.from({length:6},()=>({x:300+R()*(STREET_W-600),y:WALK[0]+10+R()*(WALK[1]-WALK[0]-20),z:0,dir:R()<.5?-1:1,st:'g',t:R()*40,vx:0,vz:0}));
   // poeira no ar, só visível contra a luz (qualidade alta): poucas partículas, recicladas
   // fachos de sol: largos e estreitos, com respiração lenta; janelas das fachadas (para o brilho do sol)
+  const beamSpr=(()=>{const c=document.createElement('canvas');c.width=64;c.height=256;const g=c.getContext('2d');
+    const h=g.createLinearGradient(0,0,64,0);h.addColorStop(0,'rgba(255,214,140,0)');h.addColorStop(.3,'rgba(255,214,140,.55)');h.addColorStop(.5,'rgba(255,224,160,.75)');h.addColorStop(.7,'rgba(255,214,140,.55)');h.addColorStop(1,'rgba(255,214,140,0)');g.fillStyle=h;g.fillRect(0,0,64,256);
+    g.globalCompositeOperation='destination-in';const v=g.createLinearGradient(0,0,0,256);v.addColorStop(0,'rgba(0,0,0,.2)');v.addColorStop(.15,'rgba(0,0,0,1)');v.addColorStop(.65,'rgba(0,0,0,.75)');v.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=v;g.fillRect(0,0,64,256);return c;})();
+  const ghost=(col,ring)=>{const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d'),gr=g.createRadialGradient(64,64,0,64,64,64);
+    if(ring){gr.addColorStop(0,`rgba(${col},0)`);gr.addColorStop(.72,`rgba(${col},.15)`);gr.addColorStop(.86,`rgba(${col},.9)`);gr.addColorStop(.93,`rgba(${col},.35)`);gr.addColorStop(1,`rgba(${col},0)`);}
+    else{gr.addColorStop(0,`rgba(${col},.95)`);gr.addColorStop(.35,`rgba(${col},.55)`);gr.addColorStop(1,`rgba(${col},0)`);}g.fillStyle=gr;g.fillRect(0,0,128,128);return c;};
+  const FLARE=[{u:.32,r:.07,a:.28,spr:ghost('255,214,150')},{u:.48,r:.03,a:.45,spr:ghost('255,240,210')},{u:.62,r:.11,a:.22,spr:ghost('255,170,120',true)},
+    {u:.78,r:.045,k:'hex',a:.12,c:'rgba(140,220,200,1)'},{u:.95,r:.02,a:.5,spr:ghost('255,250,230')},{u:1.12,r:.13,a:.16,spr:ghost('170,210,255',true)},
+    {u:1.3,r:.06,k:'hex',a:.1,c:'rgba(200,160,255,1)'},{u:1.48,r:.09,a:.18,spr:ghost('255,200,140')}];
   const BEAMS=Array.from({length:9},(_,i)=>({x:120+i*(STREET_W/9)+R()*120,w:60+R()*150,a:.07+R()*.07,sp:.2+R()*.3,ph:R()*6}));
   const WINS=BUILDINGS.flatMap(b=>(b.wins||[]).filter(w=>w.y>=0));
   const motes=Array.from({length:40},()=>({x:R(),y:R(),v:.3+R()*.7,p:R()*6.28}));
@@ -602,9 +611,11 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     // brilho nas janelas, nas poças e no cromado dos carros
     let np=0;
     if(q>=1){ctx.globalCompositeOperation='screen';
-      for(const B of BEAMS){if(B.x+B.w+800<x0||B.x-300>x1)continue;const br=RM?1:.8+.2*Math.sin(t*B.sp+B.ph),y0=top-60,y1=CURB+20,run=(y1-y0)*.62;
-        const gr=ctx.createLinearGradient(0,y0,0,y1);gr.addColorStop(0,`rgba(255,206,130,${B.a*br})`);gr.addColorStop(.7,`rgba(255,220,160,${B.a*.7*br})`);gr.addColorStop(1,'rgba(255,226,170,0)');ctx.fillStyle=gr;
-        for(const f of [1,.55]){const ww=B.w*f;ctx.beginPath();ctx.moveTo(B.x-ww/2,y0);ctx.lineTo(B.x+ww/2,y0);ctx.lineTo(B.x+ww/2+run,y1);ctx.lineTo(B.x-ww/2+run,y1);ctx.closePath();ctx.fill();}}
+      // fachos com bordas macias: um sprite com degradê nas laterais e no pé, inclinado na direção do sol
+      for(const B of BEAMS){if(B.x+B.w+800<x0||B.x-300>x1)continue;const br=RM?1:.8+.2*Math.sin(t*B.sp+B.ph),y0=top-60,y1=CURB+20,sh=.62;
+        ctx.save();ctx.transform(1,0,sh,1,-sh*y0,0);ctx.globalAlpha=Math.min(1,B.a*br*4);ctx.drawImage(beamSpr,B.x-B.w/2,y0,B.w,y1-y0);
+        ctx.globalAlpha=Math.min(1,B.a*br*2.5);ctx.drawImage(beamSpr,B.x-B.w*.22,y0,B.w*.44,(y1-y0)*.85);ctx.restore();}
+      ctx.globalAlpha=1;
       // brilho do sol batendo nas janelas: uma faixa clara que corre pelo vidro conforme a câmera anda
       for(const wn of WINS){if(wn.x<x0||wn.x>x1)continue;const ph=wn.x*.011+wn.y*.017-camX*.006-t*.05,v=ph-Math.floor(ph);if(v>.07)continue;const k=Math.sin(v/.07*Math.PI);
         ctx.fillStyle=`rgba(255,240,205,${.75*k})`;for(let j=0;j<wn.h-6;j++){const xx=wn.x+3+((j*.6+v*60)%(wn.w-6));ctx.fillRect(Math.round(xx),wn.y+3+j,2,1);}
@@ -632,8 +643,15 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     ctx.globalCompositeOperation='soft-light';ctx.fillStyle=gradeSun;ctx.fillRect(0,0,cw,ch);
     // a atmosfera dourada perto do sol e reflexos de lente leves na diagonal (qualidade alta)
     if(q>=1){ctx.globalCompositeOperation='screen';ctx.fillStyle=sunGlow;ctx.fillRect(0,0,cw,ch);
-      if(q>=2){const sx=-cw*.08,sy=-ch*.35,dx=cw*.5-sx,dy=ch*.5-sy,R0=Math.min(cw,ch);
-        for(const [u,r,c] of [[.55,.05,'255,214,150'],[.72,.025,'255,170,120'],[.9,.08,'170,220,255'],[1.15,.04,'255,200,140']]){const fx=sx+dx*u,fy=sy+dy*u,rr=R0*r,gr=ctx.createRadialGradient(fx,fy,0,fx,fy,rr);gr.addColorStop(0,`rgba(${c},.10)`);gr.addColorStop(.7,`rgba(${c},.05)`);gr.addColorStop(1,`rgba(${c},0)`);ctx.fillStyle=gr;ctx.fillRect(fx-rr,fy-rr,rr*2,rr*2);}}}
+      // reflexo de lente: o sol fora do quadro, no alto à esquerda, e os fantasmas (discos, anéis e hexágonos coloridos) na reta
+      // que passa pelo centro da tela; deslizam um pouco quando a câmera anda, como numa lente de verdade
+      {const sx=-cw*.08-((camX/STREET_W)-.5)*cw*.3,sy=-ch*.32,dx=cw*.5-sx,dy=ch*.5-sy,R0=Math.min(cw,ch),k=RM?1:.85+.15*Math.sin(t*.5);
+        for(let i=0;i<7;i++){const a=.35+i*.13,L=R0*(1.6+i%3*.4),w2=R0*.018;ctx.globalAlpha=.07*k;ctx.fillStyle='rgba(255,226,170,1)';ctx.beginPath();ctx.moveTo(sx,sy);
+          ctx.lineTo(sx+Math.cos(a)*L-Math.sin(a)*w2,sy+Math.sin(a)*L+Math.cos(a)*w2);ctx.lineTo(sx+Math.cos(a)*L+Math.sin(a)*w2,sy+Math.sin(a)*L-Math.cos(a)*w2);ctx.closePath();ctx.fill();}
+        for(const G of FLARE){const fx=sx+dx*G.u,fy=sy+dy*G.u,rr=R0*G.r;ctx.globalAlpha=Math.min(1,G.a*k*1.5);
+          if(G.k==='hex'){ctx.fillStyle=G.c;ctx.beginPath();for(let j=0;j<6;j++){const an=j*Math.PI/3+.3;ctx.lineTo(fx+Math.cos(an)*rr,fy+Math.sin(an)*rr);}ctx.closePath();ctx.fill();ctx.globalAlpha=G.a*k*1.6;ctx.strokeStyle=G.c;ctx.lineWidth=Math.max(1,rr*.06);ctx.stroke();}
+          else ctx.drawImage(G.spr,fx-rr,fy-rr,rr*2,rr*2);}
+        ctx.globalAlpha=1;}}
     ctx.globalCompositeOperation='source-over';
     ctx.restore();
     lastView={...V,oy:oyr,ox,cw,ch};
