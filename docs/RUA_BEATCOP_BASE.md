@@ -92,3 +92,7 @@ Medido com Chromium, CPU 4x mais lenta, tela 844×390 @3x, desenho de um quadro 
 - O desfoque das bordas não lê a tela de volta: usa uma cópia já desfocada do cenário fixo (`edgeBlur`). O `backdrop-filter` foi descartado porque no Safari chegava um quadro atrasado e deixava um fantasma da cena ao andar. A cor das bordas (cantos âmbar, canto frio) é `#etint`, em CSS.
 - Luz macia (fachos, raios, bolhas, brilho do sol, luz do canto, calor do lado do sol, partículas) é somada numa camada de 1/4 da resolução e entra na tela numa passada só (`LT`). A passada `soft-light` de tela cheia saiu.
 - Sombras do que não se move (mobiliário, semáforos, árvores) são pintadas uma vez na camada fixa (`bakeShadows`); as de carros e pessoas vão direto para a tela com silhuetas macias guardadas (`softSil`), sem a camada intermediária de tela cheia.
+
+## Fachada institucional do DHPP (13/10/2026)
+
+Concreto aparente com brises verticais e janelas em fita, telhado com casa de máquinas, antena de rádio e parabólica; faixa azul-marinho com filetes dourados, o letreiro oficial no centro, o nome completo (Departamento de Homicídios e de Proteção à Pessoa), "Plantão 24 horas" e o brasão; térreo de granito com janelas gradeadas e câmeras; **uma só entrada** (pórtico com a porta oficial ladeada de vidro, marquise iluminada, placa "Atendimento 24h", interfone, degraus e frades de concreto na calçada). A separação entre público e áreas restritas é dentro do prédio (`docs/DHPP_BASE.md`).

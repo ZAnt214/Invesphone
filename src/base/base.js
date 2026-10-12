@@ -87,8 +87,13 @@ const FOUND=((FIM&&FIM.ordem)||[]).filter(id=>CLUES[id]);
 
 /* ---------- Mapa ---------- */
 const F={GRASS:0,STREET:1,WALK:2,CONC:3,WALL:6,DOOR:8,WIN:9,FLOOR:4};
-const ROOM_NAME={sonia:'Sala da delegada',equipe:'Sala da equipe',pericia:'Perícia',interro:'Sala de depoimentos',hall:'Recepção',arquivo:'Arquivo Morto',fora:'Pátio do DHPP',wall:'Corredor'};
-const ROOM_RECT={sonia:[2,2,9,8],equipe:[11,2,21,8],pericia:[23,2,31,8],interro:[2,10,9,17],hall:[11,10,21,17],arquivo:[23,10,31,17]};
+const ROOM_NAME={sonia:'Sala da delegada',equipe:'Sala da equipe',pericia:'Perícia',interro:'Sala de depoimentos',hall:'Recepção',acesso:'Corredor restrito',arquivo:'Arquivo Morto',fora:'Pátio do DHPP',wall:'Corredor'};
+const ROOM_RECT={sonia:[2,2,9,8],equipe:[11,2,21,8],pericia:[23,2,31,8],interro:[2,10,9,17],acesso:[11,10,21,13],hall:[11,14,21,17],arquivo:[23,10,31,17]};
+/* Organização do DHPP (aprovada em 13/10/2026): uma só entrada, pela recepção (área pública: atendimento, espera). A
+   separação é lá dentro: a divisória de vidro com o balcão do Plantão, o detector de metal e a catraca com crachá (com o
+   guarda) levam ao corredor restrito, de onde se chega à sala da equipe (e dela à delegada e à perícia), à sala de
+   depoimentos e ao Arquivo Morto. Só agentes e policiais passam da catraca. */
+const GATE_X=19;   // a catraca, na divisória (linha 13)
 let floor,room,occ,hot,blk,objs;
 function buildMap(){
   floor=new Array(N).fill(F.GRASS);room=new Array(N).fill('fora');occ=new Array(N).fill(-1);hot=new Array(N).fill(null);blk=new Array(N).fill(false);objs=[];
@@ -102,8 +107,8 @@ function buildMap(){
   block(2,8,14,8);block(17,8,31,8);block(2,17,14,17);block(17,17,31,17);
   // o lado de fora agora é a cena da rua (street.js): na planta, sair é pela porta da frente
   block(0,19,W-1,22);
-  for(const [x,y,r] of [[10,5,'equipe'],[22,5,'equipe'],[10,14,'hall'],[22,14,'hall']]){floor[idx(x,y)]=F.DOOR;room[idx(x,y)]=r;}
-  for(const x of [15,16]){set(x,9,x,9,F.FLOOR,'hall');set(x,18,x,18,F.DOOR,'hall');}
+  for(const [x,y,r] of [[10,5,'equipe'],[22,5,'equipe'],[10,11,'acesso'],[22,11,'acesso']]){floor[idx(x,y)]=F.DOOR;room[idx(x,y)]=r;}
+  for(const x of [15,16]){set(x,9,x,9,F.FLOOR,'acesso');set(x,18,x,18,F.DOOR,'hall');}
   for(const [x,y] of [[4,1],[5,1],[13,1],[19,1],[25,1],[29,1],[4,18],[5,18],[9,18],[12,18],[19,18],[22,18],[26,18],[29,18]])floor[idx(x,y)]=F.WIN;
   const add=(t,x,y,w,h,o)=>{const k=objs.length;objs.push(Object.assign({t,x,y,w,h},o||{}));for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++){if(!(o&&o.nocc))occ[idx(xx,yy)]=k;if(o&&o.hot)hot[idx(xx,yy)]=o.hot;}return k;};
   // sala da delegada
@@ -113,12 +118,19 @@ function buildMap(){
   add('desk',12,4,2,1,{v:'renata'});add('desk',16,4,2,1,{v:'denise'});add('desk',19,4,2,1,{v:'lemos',hot:'mesa_lemos'});
   add('board',14,6,3,1,{hot:'quadro'});add('coffee',20,6,1,1);add('xerox',12,6,1,1);add('filing',11,2,1,1);add('plant',21,2,1,1,{v:'tall'});add('plant',18,7,1,1);
   // perícia
-  add('stool',25,3,1,1,{nocc:true});add('bench',24,4,4,1);add('lightbox',28,6,3,1,{hot:'fotos'});add('locker',30,2,1,1);add('locker',31,2,1,1);add('bagtable',24,6,2,1);add('plant',23,7,1,1);
-  // recepção
-  add('chair',14,11,1,1,{nocc:true});add('counter',12,12,5,1);add('wetsign',20,14,1,1);add('sofa',18,15,3,1);add('espera',17,16,1,1);add('cooler',21,11,1,1);add('plant',11,16,1,1,{v:'tall'});add('plant',21,16,1,1,{v:'tall'});add('plant',13,15,1,1);
+  add('stool',25,3,1,1,{nocc:true});add('bench',24,4,4,1);add('lightbox',28,6,3,1,{hot:'fotos'});add('locker',30,2,1,1);add('locker',31,2,1,1);add('bagtable',24,6,2,1);add('evidcage',23,2,2,1);add('plant',23,7,1,1);
+  // recepção (pública) e controle de acesso: divisória de vidro na linha 13 com o balcão do Plantão (atrás do vidro, do lado
+  // restrito), o painel de senha, a placa de área restrita, o detector de metal e a catraca (a única passagem para dentro)
+  add('chair',14,12,1,1,{nocc:true});
+  add('glasswall',11,13,1,1);add('counter',12,13,5,1);add('glasswall',17,13,2,1,{v:'senha'});add('turnstile',GATE_X,13,1,1,{nocc:true});add('glasswall',20,13,2,1,{v:'restrito'});
+  add('detector',GATE_X,14,1,1,{nocc:true});
+  add('sofa',18,15,3,1);add('espera',17,16,1,1);add('cooler',12,16,1,1);add('plant',11,16,1,1,{v:'tall'});add('plant',21,16,1,1,{v:'tall'});add('wetsign',14,15,1,1);
+  // corredor restrito: quadro de avisos e extintor
+  add('filing',11,10,1,1);add('plant',21,10,1,1,{v:'tall'});
   // sala de depoimentos
   // o depoente fica atrás da mesa, de frente para a câmera; a cadeira de quem pergunta fica do lado de cá, de costas
   add('metalchair',5,11,1,1,{v:'front'});add('itable',4,12,3,2,{hot:'interro'});add('metalchair',5,14,1,1,{v:'back'});add('filing',2,15,1,1);
+  add('mirror',7,10,2,1);   // espelho de observação (do outro lado, a equipe acompanha o depoimento)
   // arquivo
   add('shelf',24,11,3,1,{v:'arq'});add('shelf',28,11,3,1,{v:'arq'});add('shelf',24,14,3,1,{v:'arq'});add('shelf',28,14,3,1,{v:'arq',hot:'arquivo'});add('boxes',23,16,1,1);add('boxes',30,16,1,1);add('boxes',31,16,1,1);
   // pátio
@@ -361,6 +373,37 @@ const FACT={
   car(){return [18,(P,E,g,t,fw,fh,B)=>drawCarPx(P,E,{b:'#e4e7e3',hi:'#f6f8f5',sh:'#b9beba',dk:'#8d938f',fr:'#cfd3cf'},true)];},
   tree(o){return [48,(P,E,g,t,fw,fh,B)=>{const rnd=mulberry32(o.x*13+o.y*7+1);P(13,B-28,6,28,'#5a3a22');P(13,B-28,2,28,'#7a5232');P(11,B-3,10,3,'#3e2716');bush(P,E,16,B-44,18,rnd);}];},
   flag(o){return [44,(P,E,g,t,fw,fh,B)=>{P(15,0,2,B,'#c9ccce');P(15,0,1,B,'#eef0f2');P(12,B-4,8,4,'#6a6e72');E(16,0,2,1.5,'#e8c63a');}];},
+  // divisória de vidro sobre mureta (v: 'senha' com o painel de senha, 'restrito' com a placa de área restrita)
+  glasswall(o){return [40,(P,E,g,t,fw,fh,B)=>{
+    P(0,6,fw,B-22,'rgba(176,206,226,.42)');for(let x=8;x<fw;x+=26){for(let j=0;j<16;j++)P(x+j,10+j*1.6,2,1,'rgba(255,255,255,.35)');}
+    P(0,4,fw,3,'#a9b0b6');P(0,4,fw,1,'#d4dade');for(let x=0;x<=fw-3;x+=T)P(Math.min(x,fw-3),4,3,B-20,'#8a9096');
+    P(0,B-16,fw,14,'#6e737a');P(0,B-16,fw,2,'#9aa0a6');P(0,B-3,fw,3,'#4a4f55');
+    if(o.v==='senha'){P(fw/2-18,12,36,14,'#14161a');P(fw/2-17,13,34,1,'#2a2e34');txt(g,'042',fw/2-12,23,9,'#ff4a3a',1.4);P(fw/2-18,26,36,2,'#2a2e34');}
+    if(o.v==='restrito'){P(6,12,fw-12,16,'#b02a24');P(6,12,fw-12,1,'#d8524a');const a=txtW(g,'ÁREA RESTRITA',6,1.2);txt(g,'ÁREA RESTRITA',fw/2-a/2,21,6,'#ffffff',1.2);const b2=txtW(g,'SÓ AGENTES',5,1.1);txt(g,'SÓ AGENTES',fw/2-b2/2,27,5,'#ffe2de',1.1);}
+  }];},
+  // catraca de crachá: coluna de aço com leitor (luz verde) e três braços
+  turnstile(){return [26,(P,E,g,t,fw,fh,B)=>{
+    P(2,4,10,B-6,'#9aa2a8');P(2,4,10,2,'#d4dade');P(10,4,2,B-6,'#6a7278');P(4,8,6,5,'#2a2e34');E(7,10,1.5,1.5,'#3bd16f');
+    for(const [y,l] of [[14,22],[19,20],[24,22]])P(12,y,l,2,'#c4cad0');P(12,14,1,12,'#8a9096');
+    P(2,B-3,10,3,'#4a4f55');
+  }];},
+  // pórtico detector de metal
+  detector(){return [50,(P,E,g,t,fw,fh,B)=>{
+    for(const x of [2,fw-7]){P(x,0,5,B-2,'#c4c9ce');P(x,0,1,B-2,'#eef1f3');P(x+4,0,1,B-2,'#8a9096');}
+    P(2,0,fw-4,7,'#9aa0a6');P(2,0,fw-4,1,'#d4dade');for(let k=0;k<5;k++)P(8+k*4,3,2,2,k===2?'#3bd16f':'#5a6066');
+    P(3,B-3,6,3,'#4a4f55');P(fw-8,B-3,6,3,'#4a4f55');
+  }];},
+  // espelho de observação na parede da sala de depoimentos
+  mirror(){return [34,(P,E,g,t,fw,fh,B)=>{
+    P(0,0,fw,B-14,'#3a3f45');P(2,2,fw-4,B-18,'#1e2630');for(let j=0;j<B-20;j++){const x=fw*.6-j*.8;if(x>4)P(x,3+j,6,1,'rgba(200,220,240,.14)');}P(2,2,fw-4,1,'rgba(255,255,255,.18)');
+  }];},
+  // gaiola de provas: tela de aço, caixas lacradas com etiqueta vermelha, plaqueta PROVAS
+  evidcage(){return [40,(P,E,g,t,fw,fh,B)=>{
+    for(const [x,y,w,h,c] of [[6,B-30,20,14,'#b08a5a'],[30,B-24,22,10,'#c4a06c'],[10,B-46,16,12,'#a37b49'],[34,B-40,18,12,'#b08a5a']]){P(x,y,w,h,c);P(x,y,w,1,lt(c,.25));P(x+3,y+3,8,4,'#f1ece0');P(x+3,y+2,8,1,'#c0392b');}
+    for(let x=0;x<fw;x+=4)P(x,0,1,B-4,'rgba(60,66,72,.55)');for(let y=0;y<B-4;y+=4)P(0,y,fw,1,'rgba(60,66,72,.45)');
+    P(0,0,fw,3,'#6a7278');P(0,0,2,B,'#5a6066');P(fw-2,0,2,B,'#5a6066');P(0,B-4,fw,4,'#4a4f55');
+    P(fw/2-14,6,28,9,'#b02a24');const a=txtW(g,'PROVAS',6,1.3);txt(g,'PROVAS',fw/2-a/2,13,6,'#ffffff',1.3);
+  }];},
   wetsign(){return [16,(P,E,g,t,fw,fh,B)=>{for(let y=0;y<B-4;y++){const w=Math.round(4+y*0.42);P(16-w/2,y+2,w,1,y%7<1?'#2b2b2b':'#f2c230');}P(13,12,6,6,'#2b2b2b');P(15,13,2,3,'#f2c230');P(15,17,2,1,'#f2c230');P(6,B-4,20,3,'#c99a20');}];}
 };
 function drawCarPx(P,E,C,pol){
@@ -405,6 +448,7 @@ const LOOK={
   denise:{skin:'#a8714a',hair:'#2a1d18',style:'curly',kind:'civil',top:'#7b5a8a',pants:'#2b2f36',shoes:'#222',glasses:1},
   paulo:{skin:'#b67c52',hair:'#1f1a18',style:'side',kind:'campo',top:'#3a2b22',pants:'#3b5a8a',shoes:'#3a2416'},
   plantao:{skin:'#f0c9a0',hair:'#3a2416',style:'cap',kind:'pm',top:'#7d8187',pants:'#2b2f36',shoes:'#111'},
+  guarda:{skin:'#8a5a3a',hair:'#1f1a18',style:'cap',kind:'pm',top:'#2b3a55',pants:'#1c1f26',shoes:'#111'},
   livia:{skin:'#e8b58e',hair:'#7a4a2a',style:'bun',kind:'civil',top:'#26282c',pants:'#2b2f36',shoes:'#e8e4da'},
   caio:{skin:'#d9a273',hair:'#3a2416',style:'curly',kind:'civil',top:'#1e1f22',pants:'#3b4a6a',shoes:'#e8e4da'},
   teo:{skin:'#c98e64',hair:'#2a1d18',style:'short',kind:'civil',top:'#1c1d20',pants:'#2b2f36',shoes:'#222'},
@@ -514,7 +558,7 @@ const C={g1:hex('#5b9145'),g2:hex('#77b257'),g3:hex('#8cc366'),a0:hex('#383b41')
 function floorStyle(i){
   const f=floor[i],r=room[i];
   if(f===F.GRASS)return 'grass';if(f===F.STREET)return 'street';if(f===F.WALK)return 'walk';if(f===F.CONC)return 'conc';if(f===F.WALL||f===F.WIN)return 'dark';
-  return {sonia:'wood',equipe:'carpet',pericia:'lab',interro:'vinyl',hall:'checker',arquivo:'conc2'}[r]||'conc';
+  return {sonia:'wood',equipe:'carpet',pericia:'lab',interro:'vinyl',hall:'checker',acesso:'vinyl',arquivo:'conc2'}[r]||'conc';
 }
 function wallIdx(x,y){if(x<0||y<0||x>=W||y>=H)return false;const f=floor[idx(x,y)];return f===F.WALL||f===F.WIN;}
 function groundPx(wx,wy){
@@ -574,8 +618,8 @@ function buildGround(){
 }
 
 /* ---------- Arte: paredes ---------- */
-const FACE={sonia:['#cdbd9d','#b9a885'],equipe:['#c8cfd3','#b3bbc0'],pericia:['#dfe6e6','#c7d0d0'],interro:['#6b7075','#5a5f64'],hall:['#d8d0b8','#c4bca2'],arquivo:['#9a9a90','#86867c'],wall:['#b9b1a0','#a39b8a'],fora:['#b9a58a','#a58f72']};
-const BASE={sonia:'#6b4a2e',equipe:'#59616a',pericia:'#8a9496',interro:'#383c40',hall:'#8a7a5a',arquivo:'#6a6a62',wall:'#6b5a46',fora:'#7a6a52'};
+const FACE={sonia:['#cdbd9d','#b9a885'],equipe:['#c8cfd3','#b3bbc0'],pericia:['#dfe6e6','#c7d0d0'],interro:['#6b7075','#5a5f64'],hall:['#d8d0b8','#c4bca2'],acesso:['#c8cfd3','#b3bbc0'],arquivo:['#9a9a90','#86867c'],wall:['#b9b1a0','#a39b8a'],fora:['#b9b5ac','#a5a198']};   // fachada de concreto aparente (como na rua)
+const BASE={sonia:'#6b4a2e',equipe:'#59616a',pericia:'#8a9496',interro:'#383c40',hall:'#8a7a5a',acesso:'#59616a',arquivo:'#6a6a62',wall:'#6b5a46',fora:'#5c5853'};   // embasamento de granito
 function wallAt(x,y){if(x<0||y<0||x>=W||y>=H)return false;const f=floor[idx(x,y)];return f===F.WALL||f===F.WIN;}
 // extintor de parede com a placa vermelha acima
 function EXT(P,E,X,Y){P(X-2,Y-2,12,6,'#c0392b');P(X-1,Y-1,10,4,'#e8ecef');P(X+1,Y,6,2,'#c0392b');P(X+1,Y+5,6,15,'#b8261c');P(X+1,Y+5,2,15,'#e05a4a');P(X+6,Y+5,1,15,'#7a1a12');P(X+2,Y+3,4,2,'#2b2b2b');P(X+6,Y+3,4,1,'#2b2b2b');P(X+9,Y+3,1,8,'#2b2b2b');P(X+2,Y+10,4,4,'#f2efe6');P(X+3,Y+11,2,1,'#c0392b');P(X+1,Y+20,6,1,'#5a0e0a');}
@@ -635,7 +679,7 @@ function buildWalls(){
         const st=FACE[rm]||FACE.wall;
         P(X,fy-1,T,1,'#241c16');P(X,fy,T,fh,st[0]);
         for(let k=0;k<18;k++)P(X+Math.floor(hash(x,k,y+9)*T),fy+Math.floor(hash(k,x,y+11)*fh),1,1,st[1]);
-        if(rm==='fora'){for(let yy=fy+4;yy<fb-6;yy+=6)P(X,yy,T,1,'rgba(90,70,45,.22)');for(let yy=fy+4;yy<fb-6;yy+=12)P(X+((yy>>2)%2?8:24),yy,1,6,'rgba(90,70,45,.18)');}
+        if(rm==='fora'){for(let yy=fy+8;yy<fb-6;yy+=14)P(X,yy,T,1,'rgba(70,64,56,.3)');if(x%2===0)P(X,fy,1,fb-fy,'rgba(70,64,56,.22)');P(X+8,fy+4,2,2,'rgba(60,56,50,.3)');P(X+24,fy+11,2,2,'rgba(60,56,50,.3)');P(X,fb-8,T,2,'#1b2a44');P(X,fb-8,T,1,'#c9a24a');}
         if(rm==='arquivo'||rm==='interro'){for(let xx=0;xx<T;xx+=8)P(X+xx,fy,1,fh,'rgba(0,0,0,.08)');}
         if(rm==='equipe'||rm==='hall'){P(X,fy+18,T,2,lt(st[0],.1));P(X,fy+20,T,1,'rgba(0,0,0,.08)');}
         if(rm==='pericia'){for(let yy=fy+20;yy<fb-5;yy+=5)P(X,yy,T,1,'rgba(150,165,170,.35)');for(let xx=0;xx<T;xx+=8)P(X+xx,fy+20,1,fb-fy-25,'rgba(150,165,170,.35)');}
@@ -688,7 +732,8 @@ const NPCDEF=[
   {id:'paulo',name:'Paulo Vieira',role:'Investigador de campo',look:'paulo',x:19,y:6,ini:'PV',col:'#d6b27a',walk:[[19,6,'drink'],[16,7,'phone'],[18,2,'watch']],lines:['Café requentado de novo.','A rua acordou cedo.','Vou pegar o carro já já.'],idle:['cross','watch','scratch','phone'],poseLines:{phone:['Fala, chefe. Tô na base.','Passa aqui mais tarde.'],drink:['Tá frio de novo.']}},
   {id:'mauricio',name:'Maurício Farias',role:'Perito criminal',look:'mauricio',x:25,y:3,sit:true,ini:'MF',col:'#9fb7c9',act:'type',walk:[[25,3],[27,5,'read']],lines:['Luva nova.','Etiqueta, lacre, assinatura.','Foto 14, refaz.'],idle:['read','chin','scratch','stretch']},
   {id:'faxina',name:'Limpeza',role:'Equipe de apoio',look:'faxina',x:13,y:15,ini:'LP',col:'#8fb0c8',mop:true,walk:[[13,15],[19,13,'stretch'],[17,16],[12,14,'watch'],[18,12]],lines:['Cuidado, tá molhado.','Bom dia, doutor.','Esse café mancha tudo.'],idle:['watch','scratch']},
-  {id:'plantao',name:'Plantão',role:'Recepção · DHPP',look:'plantao',x:14,y:11,sit:true,ini:'PL',col:'#a9b8c6',act:'write',lines:['DHPP, bom dia.','Um momento, por favor.','Sem comentários.'],idle:['phone','phone','read','cross','drink'],poseLines:{phone:['DHPP, bom dia.','Não, senhor. Sem comentários.','Vou transferir, aguarde.']}}
+  {id:'plantao',name:'Plantão',role:'Recepção · DHPP',look:'plantao',x:14,y:11,sit:true,ini:'PL',col:'#a9b8c6',act:'write',lines:['DHPP, bom dia.','Um momento, por favor.','Sem comentários.'],idle:['phone','phone','read','cross','drink'],poseLines:{phone:['DHPP, bom dia.','Não, senhor. Sem comentários.','Vou transferir, aguarde.']}},
+  {id:'guarda',name:'Guarda',role:'Controle de acesso · DHPP',look:'guarda',x:20,y:14,ini:'GD',col:'#7a8fb0',lines:['Crachá, por favor.','Bolsa no detector.','Aguarde ser chamado, senhor.'],idle:['watch','cross','watch','scratch']},
 ];
 // conversa de fundo entre colegas (nada do caso: só o dia a dia da base). Os dois precisam estar parados e perto.
 const CHATS=[
@@ -880,6 +925,7 @@ function boardNearTick(dt){
 const DLG={
   sonia:()=>teamTalk('sonia'),mauricio:()=>teamTalk('mauricio'),renata:()=>teamTalk('renata'),paulo:()=>teamTalk('paulo'),denise:()=>teamTalk('denise'),
   sonia_mesa:()=>({who:'Mesa da delegada',role:'Sala de Sônia Prado',av:'icon',pages:['Pasta aberta, telefone fora do gancho pela metade, xícara vazia. Nada aqui é para você mexer sem ela dizer.'],opts:[]}),
+  guarda:()=>({who:'Guarda',role:'Controle de acesso · DHPP',av:'guarda',pages:['Bom dia, doutor. Daqui pra dentro só com crachá.','Quem vem depor espera no sofá até alguém da equipe buscar.'],opts:[]}),
   plantao:()=>({who:'Plantão',role:'Recepção · DHPP',av:'plantao',pages:['A imprensa ligou duas vezes. Respondi o que a delegada mandou: sem comentários.','Se alguém procurar a equipe, passa por mim primeiro.'],opts:[]}),
   mesa_lemos:()=>({who:'Sua mesa',role:'Lemos · DHPP',av:'icon',pages:['Café frio e a pasta do Caso 01 ainda fechada. O que importa está no aparelho.'],opts:[OPEN_PHONE]}),
   fotos:()=>FOUND.length?{who:'Mesa de luz',role:'Perícia',av:'icon',pages:['Fotografias periciais da casa, reveladas e penduradas para análise.'],opts:[{t:'Ver as fotos',s:`${FOUND.length} de 7`,fn:()=>openGallery(0),main:true}]}
@@ -1200,6 +1246,10 @@ const RT={
     {id:'balcão',w:4,where:'home',dur:[20,45],snd:'paper'},
     {id:'telefone',w:2.2,where:'home',dur:[8,14],pose:'phone',ring:true,lines:'plantao_tel'},
     {id:'bebedouro',w:.5,where:()=>standAt('cooler'),dur:[5,8],pose:'drink',snd:'cup'}]},
+  guarda:{speed:1.1,acts:[
+    {id:'posto',w:6,where:'home',dur:[20,50],pose:'watch'},
+    {id:'espera',w:1,where:at(16,15),dur:[5,9],pose:'cross'},
+    {id:'entrada',w:.8,where:at(15,16),dur:[4,8],pose:'watch'}]},
   faxina:{speed:1.0,acts:[
     {id:'pano',w:5,where:()=>{const r=NPCS.find(x=>x.id==='faxina').route;const g=r[Math.floor(LR()*r.length)];return idx(g[0],g[1]);},dur:[10,22]},
     {id:'pausa',w:.6,where:()=>standAt('cooler'),dur:[6,10],pose:'drink'}]}
@@ -1303,6 +1353,7 @@ const CAMERA_ROOMS={
   pericia:{zoneX:.11,zoneY:.10,biasX:8,biasY:-8,roomPull:.15},
   interro:{zoneX:.09,zoneY:.09,biasX:8,biasY:-9,roomPull:.2},
   hall:{zoneX:.14,zoneY:.12,biasX:4,biasY:-6,roomPull:.08},
+  acesso:{zoneX:.14,zoneY:.10,biasX:4,biasY:-6,roomPull:.06},
   arquivo:{zoneX:.10,zoneY:.10,biasX:7,biasY:-6,roomPull:.18},
   fora:{zoneX:.17,zoneY:.14,biasX:0,biasY:-4,roomPull:0},wall:{zoneX:.11,zoneY:.16,biasX:0,biasY:-5,roomPull:0}
 };
@@ -1344,10 +1395,11 @@ const LIGHTS=[
   [13,4.6,4.2,COOL,0.95,'equipe'],[17,4.6,4.2,COOL,0.95,'equipe'],[20.5,5.2,3.8,COOL,0.85,'equipe'],
   [25.5,4.6,4.6,[235,246,255],1,'pericia'],[29,5,3.8,[235,246,255],0.95,'pericia'],[29.5,6.2,1.8,[210,236,255],0.9,'pericia'],
   [5.5,13.1,2.7,WARM,1.15,'interro'],
-  [15,13,5.2,[255,240,215],0.9,'hall'],[19.5,12.8,3.2,[255,240,215],0.65,'hall'],[15.5,17.2,2.6,[255,250,235],0.9,'hall'],
+  [15,15.4,4.6,[255,240,215],0.9,'hall'],[19.5,15.2,3,[255,240,215],0.7,'hall'],[15.5,17.2,2.6,[255,250,235],0.9,'hall'],
+  [14,11.4,3.6,COOL,0.9,'acesso'],[19,11.4,3.4,COOL,0.85,'acesso'],
   [25.5,12.5,3.2,[255,216,150],0.8,'arquivo',1],[29.5,15,3,[255,216,150],0.65,'arquivo',1],
   // brilho dos monitores no rosto de quem trabalha
-  [12.6,3.3,1.3,[140,210,255],0.5,'equipe'],[16.6,3.3,1.3,[140,210,255],0.5,'equipe'],[19.6,3.7,1.4,[120,230,190],0.55,'equipe'],[6.6,3.3,1.2,[140,210,255],0.4,'sonia'],[12.8,11.2,1.3,[140,210,255],0.45,'hall']
+  [12.6,3.3,1.3,[140,210,255],0.5,'equipe'],[16.6,3.3,1.3,[140,210,255],0.5,'equipe'],[19.6,3.7,1.4,[120,230,190],0.55,'equipe'],[6.6,3.3,1.2,[140,210,255],0.4,'sonia'],[12.8,12.2,1.3,[140,210,255],0.45,'acesso']
 ];
 const WINDOWS=[[4,'sonia'],[5,'sonia'],[13,'equipe'],[19,'equipe'],[25,'pericia'],[29,'pericia']];
 const HALOS=[{x:4.6*T+1,y:3*TH+3,r:16,c:[255,226,150],a:0.9},{x:5.5*T+16,y:12*TH-18,r:20,c:[255,214,150],a:0.85},{x:29.5*T,y:5.6*TH,r:30,c:[220,240,255],a:0.45},
