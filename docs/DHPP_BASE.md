@@ -31,8 +31,8 @@ A mesa da sala de depoimentos lista quem a investigação já descobriu e o que 
 
 O Invesphone está sendo trazido para dentro das cenas por etapas, cada mecânica no seu lugar físico: Equipe nas mesas (feito), depoimentos na sala de depoimentos (feito), pistas no quadro, arquivo no Arquivo Morto, relatório na sala da delegada. O celular fica com o que é de celular: mensagens, ligações e notificações.
 
-## Salas
-Recepção (Plantão), Sala da delegada (Sônia), Sala da equipe (Renata, Denise, Paulo, quadro do caso, mesa de Lemos), Perícia (Maurício, mesa de luz), Sala de depoimentos, Arquivo Morto. Lá fora, a Rua do DHPP.
+## Salas e organização (aprovada em 13/10/2026)
+Uma só entrada, pela **Recepção** (área pública): atendimento, espera (sofá, cadeira, bebedouro) e o painel de senha. A separação acontece lá dentro, numa divisória de vidro: o balcão do **Plantão** (atrás do vidro), o **detector de metal** e a **catraca com crachá**, com o **Guarda** (`guarda` em `NPCDEF`/`RT`), e a placa "Área restrita · só agentes". A catraca (`GATE_X`) é a única passagem para o **Corredor restrito** (`acesso` em `ROOM_RECT`), que liga a Sala da equipe (Renata, Denise, Paulo, quadro do caso, mesa de Lemos; dela se chega à Sala da delegada e à Perícia, com a gaiola de provas), a Sala de depoimentos (com espelho de observação) e o Arquivo Morto. Quem vem depor espera na recepção. Lá fora, a Rua do DHPP; a fachada (rua e planta) é de concreto aparente com térreo de granito e a faixa institucional azul-marinho.
 
 ## Regras de conteúdo
 Falas só usam fatos do início do Caso 01 (cena lida, painel, Thor, valores, log pedido). Nenhum nome de envolvido é citado antes de ser descoberto. Novos textos seguem `docs/CASE01_STORY_BIBLE.md` e `docs/TEAM_MATERIAL_REQUESTS.md`.

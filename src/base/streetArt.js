@@ -168,32 +168,62 @@ export function paintFacades(g,lots,A,{sign,door,bg}){
       if(il)pass(x,il,lots[b.i-1]);if(ir)pass(x+w-ir,ir,lots[b.i+1]);x+=il;w-=il+ir;top=roof;}
     b.fx=x;b.fw=w;b.roofTop=top;
     if(b.k==='dhpp'){
-      // a fachada bege da base em toda a altura, com calhas nas pontas, platibanda e janelas brancas com ar-condicionado
-      siding(x,40,w,GY-40);P(x-1,40,1,GY-40,O);P(x+w,40,1,GY-40,O);
-      const cap=['#6e5c4c','#8c7862','#4a3e33'];P(x-4,28,w+8,16,cap[0]);P(x-4,28,w+8,2,'#241c16');for(let k=0;k<w/3;k++)P(x-4+R()*(w+8),28+R()*14,2,1,cap[k%3]);P(x-4,30,w+8,1,'rgba(255,255,255,.15)');
-      vgrad(x,44,w,16,[[0,`rgba(${SHC},.4)`],[1,`rgba(${SHC},0)`]]);
-      for(const dx of [10,w-18]){P(x+dx+8,40,4,GY-40,`rgba(${SHC},.22)`);P(x+dx,40,8,GY-40,'#8a8c86');P(x+dx,40,2,GY-40,'#b9bab4');P(x+dx+6,40,2,GY-40,'#6a6c66');for(let y=60;y<GY;y+=24){P(x+dx-2,y,12,3,'#6a6c66');P(x+dx-2,y,12,1,'#9a9c96');}}
-      const n=Math.floor((w-60)/70);for(let y=70;y<GY-170;y+=82)for(let i=0;i<n;i++)win(x+40+i*((w-80)/n)+((w-80)/n-30)/2,y,{lit:R()<.2,ac:R()<.45,w:30,h:42});
-      // térreo: embasamento de granito, pórtico recuado com o letreiro e a porta da planta (ampliados sem suavizar),
-      // degraus e duas janelas; arandelas acesas dos dois lados da porta (luz da fachada)
-      P(x,GY-40,w,34,'#6f6558');for(let k=0;k<w;k+=48){P(x+k,GY-40,1,34,'#5a5248');}P(x,GY-40,w,2,'#9a8f80');P(x,GY-38,w,1,'rgba(0,0,0,.25)');grain(x,GY-40,w,34,.08);
+      // Prédio institucional (aprovado em 13/10/2026): concreto aparente com brises verticais, faixa azul-marinho com o nome
+      // completo e o brasão, térreo de granito com grades nas janelas, câmeras e uma única entrada — a separação entre o
+      // público e as áreas restritas acontece lá dentro (base.js). O letreiro, a porta e as bandeiras são os oficiais da base.
+      const cx=x+w/2,sw=sign.width*1.5,sh=sign.height*1.5,GR=GY-112,BH=Math.max(38,Math.round(sh)+12),BAND=GR-BH;
+      // telhado: platibanda escura, casa de máquinas, antena de rádio e parabólica recortadas no céu
+      P(x+60,8,70,24,'#8a8c8e');P(x+60,8,70,3,'#a8aaac');P(x+126,8,4,24,'rgba(0,0,0,.2)');for(let k=0;k<4;k++)P(x+68+k*14,16,8,10,'#6a6c70');
+      P(x+w-120,0,2,30,'#3a3c40');P(x+w-128,4,18,2,'#3a3c40');P(x+w-126,12,14,2,'#3a3c40');P(x+w-124,20,10,2,'#3a3c40');E(x+w-121,0,2,2,'#c0392b');
+      E(x+w-70,22,10,6,'#d8dadc');E(x+w-68,22,6,4,'#b4b8bc');P(x+w-70,26,2,6,'#5a5e62');
+      P(x-4,28,w+8,14,'#5e5f61');P(x-4,28,w+8,2,'#2a2b2e');P(x-4,30,w+8,1,'rgba(255,255,255,.18)');for(let k=0;k<w/4;k++)P(x-4+R()*(w+8),30+R()*10,2,1,'rgba(0,0,0,.15)');
+      // corpo de concreto aparente: placas com junta e furos de forma, um pouco manchado
+      P(x,42,w,BAND-42,'#b9b5ac');
+      for(let yy=42;yy<BAND;yy+=28){P(x,yy,w,1,'rgba(70,64,56,.35)');P(x,yy+1,w,1,'rgba(255,255,255,.12)');}
+      for(let xx=x;xx<x+w;xx+=62)P(xx,42,1,BAND-42,'rgba(70,64,56,.25)');
+      for(let yy=56;yy<BAND;yy+=28)for(let xx=x+14;xx<x+w;xx+=31)E(xx,yy,1.2,1.2,'rgba(60,56,50,.35)');
+      grain(x,42,w,BAND-42,.07);
+      vgrad(x,42,w,18,[[0,`rgba(${SHC},.42)`],[1,`rgba(${SHC},0)`]]);
+      // janelas em fita entre brises (as janelas da planta: gente trabalhando lá dentro)
+      const n=Math.floor((w-60)/70),step=(w-80)/n;
+      for(let y=70;y<BAND-60;y+=82)for(let i=0;i<n;i++)win(x+40+i*step+(step-30)/2,y,{lit:R()<.25,ac:R()<.35,w:30,h:42});
+      for(let i=0;i<=n;i++){const fx=Math.round(x+40+i*step-5);P(fx+6,44,4,BAND-44,`rgba(${SHC},.2)`);P(fx,44,8,BAND-44,'#cfcbc2');P(fx,44,2,BAND-44,'#e6e2da');P(fx+6,44,2,BAND-44,'#a19d94');}
+      // faixa institucional: azul-marinho com filetes dourados, sigla, nome completo e brasão
+      drop(x,BAND,w,BH,6,.35);P(x-2,BAND,w+4,BH,'#1b2a44');P(x-2,BAND,w+4,2,'#c9a24a');P(x-2,BAND+BH-2,w+4,2,'#c9a24a');P(x-2,BAND+2,w+4,1,'rgba(255,255,255,.12)');
+      // o letreiro oficial no centro da faixa; o nome completo à direita; o brasão à esquerda
+      g.imageSmoothingEnabled=false;{const sy=Math.round(BAND+(BH-sh)/2);g.drawImage(sign,Math.round(cx-sw/2),sy,Math.round(sw),Math.round(sh));}
+      {const tx=cx+sw/2+14;txt('DEPARTAMENTO DE HOMICÍDIOS',tx,BAND+BH/2-6,9,'#e8c66a');txt('E DE PROTEÇÃO À PESSOA',tx,BAND+BH/2+7,9,'#c9d2dc');}
+      txt('PLANTÃO 24 HORAS',x+60,BAND+BH/2,9,'#c9d2dc');
+      {const bx=x+20,by=BAND+(BH-30)/2;g.fillStyle='#c9a24a';g.beginPath();g.moveTo(bx,by);g.lineTo(bx+28,by);g.lineTo(bx+28,by+18);g.lineTo(bx+14,by+30);g.lineTo(bx,by+18);g.closePath();g.fill();
+        g.fillStyle='#1b2a44';g.beginPath();g.moveTo(bx+3,by+3);g.lineTo(bx+25,by+3);g.lineTo(bx+25,by+17);g.lineTo(bx+14,by+26);g.lineTo(bx+3,by+17);g.closePath();g.fill();
+        g.fillStyle='#e8c66a';g.beginPath();for(let k=0;k<10;k++){const an=-Math.PI/2+k*Math.PI/5,r=k%2?3:7;g.lineTo(bx+14+Math.cos(an)*r,by+13+Math.sin(an)*r);}g.closePath();g.fill();}
+      // térreo de granito escuro
+      P(x,GR,w,GY-GR,'#5c5853');for(let xx=x;xx<x+w;xx+=46)P(xx,GR,1,GY-GR,'#47443f');for(let yy=GR;yy<GY;yy+=28)P(x,yy,w,1,'#4a4742');
+      P(x,GR,w,2,'#7a766f');grain(x,GR,w,GY-GR,.09);vgrad(x,GR,w,14,[[0,'rgba(0,0,0,.35)'],[1,'rgba(0,0,0,0)']]);
+      // janelas do térreo com grade de ferro
+      for(const wx of [x+28,x+104,x+w-160,x+w-84]){const wy=GR+22,ww=56,wh=48;P(wx-3,wy-3,ww+6,wh+6,'#3a3835');P(wx,wy,ww,wh,'#33465a');P(wx+2,wy+2,ww-4,8,'rgba(150,180,205,.35)');P(wx,wy+wh/2,ww,1,'#2a2b2e');
+        for(let k=4;k<ww;k+=7){P(wx+k+1,wy,2,wh,'rgba(0,0,0,.25)');P(wx+k,wy,2,wh,'#1c1d20');P(wx+k,wy,1,wh,'#4a4c52');}P(wx,wy+10,ww,2,'#1c1d20');P(wx,wy+wh-12,ww,2,'#1c1d20');P(wx-4,wy+wh+3,ww+8,3,'#8f8a82');}
+      // a entrada: pórtico de granito, marquise de concreto com o letreiro oficial, a porta oficial ladeada de vidro
       g.imageSmoothingEnabled=false;
-      const sw=sign.width*1.5,sh=sign.height*1.5,dw=door.width*1.6,dh=door.height*1.9,cx=x+w/2;
-      const pw=dw+12,ph=dh+14,px0=cx-dw/2-6,py0=GY-dh-14;
-      drop(px0-6,py0-6,pw+12,6,6,.3);
-      P(px0-6,py0-6,pw+12,ph+6,'#a39478');P(px0-6,py0-6,pw+12,2,'#d8ccb4');P(px0-6,py0-6,2,ph+6,'#c4b89e');P(px0+pw+4,py0-6,2,ph+6,'#6e6450');
-      P(px0,py0,pw,ph,'#8f816b');P(px0,py0,pw,2,'#cfc3ad');
+      const dw=door.width*1.6,dh=door.height*1.9;
+      const pw=dw+64,px0=cx-pw/2,py0=GY-dh-16;
+      P(px0-8,py0-8,pw+16,dh+24,'#45423e');P(px0,py0,pw,dh+16,'#2a2b2e');
+      for(const sx of [px0+4,cx+dw/2+6]){P(sx,py0+6,pw/2-dw/2-10,dh+2,'#4c6a82');P(sx+2,py0+8,6,dh-4,'rgba(200,225,245,.35)');P(sx,py0+dh/2,pw/2-dw/2-10,1,'#2a2b2e');}
       g.drawImage(door,Math.round(cx-dw/2),Math.round(GY-dh-8),Math.round(dw),Math.round(dh));
-      recess(px0,py0,pw,ph,10,.42);
-      const sy=Math.round(GY-dh-sh-20);
-      drop(Math.round(cx-sw/2),sy,Math.round(sw),Math.round(sh),7,.32);
-      g.drawImage(sign,Math.round(cx-sw/2),sy,Math.round(sw),Math.round(sh));
-      for(let k=0;k<3;k++){const ww=dw+30+k*14,yy=GY-10+k*4-6;P(cx-ww/2,yy,ww,4,k%2?'#c9c3b8':'#e4e0d8');P(cx-ww/2,yy,ww,1,'#f6f2ea');P(cx-ww/2,yy+3,ww,1,'rgba(0,0,0,.2)');}
-      for(const xx of [x+40,x+w-70])win(xx,GY-110,{w:30,h:42,ac:true});
-      for(const lx of [cx-dw/2-22,cx+dw/2+16]){const ly=GY-dh+6;drop(lx,ly,6,12,4,.32);P(lx,ly,6,12,'#2a2b2e');P(lx+1,ly+2,4,7,'#ffe2a0');P(lx+1,ly+2,4,1,'#fff6d8');glows.push({x:lx+3,y:ly+6,r:46,c:'#ffd79a',lamp:true});}
+      recess(px0,py0,pw,dh+16,10,.45);
+      const my=py0-18;drop(px0-26,my,pw+52,12,8,.4);P(px0-26,my,pw+52,12,'#8a8680');P(px0-26,my,pw+52,2,'#bdb8b0');P(px0-26,my+10,pw+52,2,'#55524c');
+      for(let k=0;k<5;k++){const lx=px0-12+k*(pw+24)/4;P(lx,my+12,5,2,'#fff2c8');glows.push({x:lx+2,y:my+16,r:22,c:'#ffe6b0',lamp:true});}
+      // placa de atendimento, interfone e câmeras de segurança
+      P(px0-22,GY-62,14,20,'#d8dade');P(px0-21,GY-61,12,6,'#1b2a44');P(px0-19,GY-52,8,6,'#2a2b2e');E(px0-15,GY-46,1.5,1.5,'#3bd16f');
+      txt('ATENDIMENTO 24H',cx-34,py0-4+0,7,'#e8ecef');
+      for(const [cx2,cy2] of [[px0-30,py0-30],[px0+pw+30,py0-30],[x+8,GR+6],[x+w-14,GR+6]]){P(cx2-1,cy2-6,3,6,'#2a2b2e');E(cx2+1,cy2+1,5,4,'#e6e8ea');E(cx2+1,cy2+2,3,2,'#1c1d20');E(cx2+3,cy2+2,1,1,'#d03030');}
+      // degraus e rampa
+      for(let k=0;k<3;k++){const ww=pw+20+k*14,yy=GY-10+k*4-6;P(cx-ww/2,yy,ww,4,k%2?'#a9a49c':'#c4bfb6');P(cx-ww/2,yy,ww,1,'#d8d4cc');P(cx-ww/2,yy+3,ww,1,'rgba(0,0,0,.25)');}
       // mastros das bandeiras (o pano é desenhado no jogo, tremulando)
-      b.flags=[];for(const fx of [Math.round(cx-sw/2-40),Math.round(cx+sw/2+36)]){P(fx+5,GY-194,3,188,`rgba(${SHC},.22)`);P(fx,GY-200,4,196,'#c9ccce');P(fx,GY-200,1,196,'#eef0f2');P(fx+3,GY-200,1,196,'#8a8c90');E(fx+2,GY-202,3,2.5,'#e8c63a');P(fx-4,GY-8,12,8,'#6a6e72');P(fx-4,GY-8,12,1,'#9a9ea2');b.flags.push({x:fx+4,y:GY-196,v:b.flags.length?'dh':'br'});}
-      P(x,GY-6,w,6,'#7a6a52');P(x,GY-6,w,1,'#8f816b');
+      b.flags=[];for(const fx of [Math.round(px0-60),Math.round(px0+pw+56)]){P(fx+5,GY-194,3,188,`rgba(${SHC},.22)`);P(fx,GY-200,4,196,'#c9ccce');P(fx,GY-200,1,196,'#eef0f2');P(fx+3,GY-200,1,196,'#8a8c90');E(fx+2,GY-202,3,2.5,'#e8c63a');P(fx-4,GY-8,12,8,'#6a6e72');P(fx-4,GY-8,12,1,'#9a9ea2');b.flags.push({x:fx+4,y:GY-196,v:b.flags.length?'dh':'br'});}
+      P(x,GY-6,w,6,'#4a4742');P(x,GY-6,w,1,'#6a665f');
+      // frades de concreto na calçada, protegendo a entrada
+      for(let k=0;k<6;k++){const bx2=Math.round(cx-pw/2-30+k*(pw+60)/5);P(bx2+3,GY+6,6,4,'rgba(0,0,0,.25)');P(bx2,GY+2,6,12,'#9a968e');P(bx2,GY+2,6,2,'#c4c0b8');P(bx2+4,GY+2,2,12,'rgba(0,0,0,.18)');}
       facadeLight(g,vgrad,x,40,w,GY-40);
       b.glows=glows.slice();b.doors=doors.slice();b.panes=panes.slice();b.wins=wins.slice();b.balconies=[];continue;}
     // prédio de tijolo: andares até o topo, cornija, escada de incêndio e o térreo (loja ou entrada)
