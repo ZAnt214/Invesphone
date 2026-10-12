@@ -9,7 +9,7 @@
    (neon, arandelas, giroflex) somadas por cima, e a luz da manhã. Escala inteira de pixel e corte do que está fora da tela.
    A qualidade escolhida pelo jogador (src/characters/quality.ts) decide o que entra: baixa = só o essencial (sem sombras
    projetadas, brilhos nem vapor); média = sombras, luzes que emitem e vapor; alta = mais os fachos de luz e a poeira no ar. */
-import {GY,CURB,ROAD,NEAR,STREET_H,FG_TOP,WALK,PARK,LANES,SUN,TREES,MANHOLES,CROSSWALKS,CW_HALF,BAND_TOP,BAND_BOT,rnd,paintFacades,paintGround,paintWear,paintSkyline} from './streetArt';
+import {GY,CURB,ROAD,NEAR,STREET_H,FG_TOP,WALK,PARK,LANES,SUN,TREES,MANHOLES,CROSSWALKS,CW_HALF,BAND_TOP,BAND_BOT,rnd,paintFacades,paintGround,paintWear,paintSkyline,PUDDLES} from './streetArt';
 import {paintForeground} from './streetFG';
 import {createDwellers} from './dwellers';
 import {createFront} from './streetFront';
@@ -191,16 +191,15 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   const debris=Array.from({length:18},(_,i)=>({x:R()*STREET_W,y:i<12?GY+50+R()*(CURB-GY-64):CURB+6+R()*4,vx:0,ph:R()*6.28,k:i%3,g:R()}));
   const flies=PROPS.filter(p=>p.k==='sacos-lixo'||p.k==='cacamba').flatMap(p=>[0,1,2].map(i=>({x:p.x,y:p.y-10,i})));
   const POLES=PROPS.filter(p=>p.k==='poste-luz'&&p.y===cy).map(p=>p.x).sort((a,b)=>a-b);
-  // névoa: faixas largas e macias que atravessam a rua devagar, empurradas pelo vento (mais baixas sobre o asfalto e a calçada,
-  // mais altas e ralas diante das fachadas); folhas soltas no ar nas rajadas
-  const fogSpr=(()=>{const c=document.createElement('canvas');c.width=512;c.height=128;const g=c.getContext('2d');
-    for(let i=0;i<9;i++){const x=60+R()*392,y=40+R()*48,r=50+R()*80,gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,'rgba(232,236,242,.5)');gr.addColorStop(1,'rgba(232,236,242,0)');g.fillStyle=gr;g.fillRect(0,0,512,128);}return c;})();
-  const fogs=Array.from({length:9},(_,i)=>({x:R()*STREET_W,y:i<5?GY+30+R()*(NEAR-GY):120+R()*(GY-200),w:500+R()*500,h:110+R()*90,a:i<5?.18+R()*.1:.1+R()*.08,v:.6+R()*.8}));
+  // vento: folhas soltas no ar nas rajadas
   const airLeaves=Array.from({length:10},()=>({x:R()*STREET_W,y:GY-220+R()*260,ph:R()*6.28,c:['#7a5a2a','#a8742a','#5a6a2a','#c08a3a'][Math.floor(R()*4)]}));
   let wv=.5,flagPh=0;
   const cloudSpr=(()=>{const c=document.createElement('canvas');c.width=256;c.height=96;const g=c.getContext('2d'),gr=g.createRadialGradient(128,48,4,128,48,128);gr.addColorStop(0,'rgba(96,112,150,.5)');gr.addColorStop(.55,'rgba(96,112,150,.22)');gr.addColorStop(1,'rgba(96,112,150,0)');g.setTransform(1,0,0,.375,0,0);g.fillStyle=gr;g.fillRect(0,0,256,256);return c;})();
   const birds=Array.from({length:6},()=>({x:300+R()*(STREET_W-600),y:WALK[0]+10+R()*(WALK[1]-WALK[0]-20),z:0,dir:R()<.5?-1:1,st:'g',t:R()*40,vx:0,vz:0}));
   // poeira no ar, só visível contra a luz (qualidade alta): poucas partículas, recicladas
+  // fachos de sol: largos e estreitos, com respiração lenta; janelas das fachadas (para o brilho do sol)
+  const BEAMS=Array.from({length:9},(_,i)=>({x:120+i*(STREET_W/9)+R()*120,w:60+R()*150,a:.07+R()*.07,sp:.2+R()*.3,ph:R()*6}));
+  const WINS=BUILDINGS.flatMap(b=>(b.wins||[]).filter(w=>w.y>=0));
   const motes=Array.from({length:40},()=>({x:R(),y:R(),v:.3+R()*.7,p:R()*6.28}));
   const front=createFront(STREET_W,BAND_BOT);
   const dwellers=createDwellers({buildings:BUILDINGS,rooms:fgRooms,looks:PED_LOOKS,personFrames,R,RM,lemos,onSound});
@@ -470,8 +469,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     for(let l=0;l<LANES.length;l++){const L=LANES[l],dir=L.dir,all=cars.filter(k=>k.lane===l),ln=all.filter(k=>!k.pass&&(k.yo==null||Math.abs(k.yo-L.y)<=40)).sort((a,b)=>dir>0?b.x-a.x:a.x-b.x);
       for(const k of all){if(k.lane!==l)continue;const i=ln.indexOf(k);stepCar(k,L,i>0?ln[i-1]:null,ln,dt);}}
     wv+=(wind()-wv)*Math.min(1,dt*.8);flagPh+=dt*(5.5+wv*6);
-    if(!RM){for(const f of fogs){f.x+=(5+wv*16)*f.v*dt;if(f.x-f.w/2>STREET_W+200)f.x=-f.w/2-200;}
-      for(const l of airLeaves){l.ph+=dt*(3+wv*4);l.x+=(8+wv*wv*110)*dt;l.y+=Math.sin(l.ph)*dt*14+(wv<.45?16:-2)*dt;if(l.x>STREET_W+40||l.y>GY+60){l.x=-30;l.y=GY-240+R()*200;}}}
+    if(!RM){for(const l of airLeaves){l.ph+=dt*(3+wv*4);l.x+=(8+wv*wv*110)*dt;l.y+=Math.sin(l.ph)*dt*14+(wv<.45?16:-2)*dt;if(l.x>STREET_W+40||l.y>GY+60){l.x=-30;l.y=GY-240+R()*200;}}}
     {const gust=wind(),tv=4+gust*gust*70;for(const d of debris){d.vx+=(tv*(d.k===2?1.15:.8)-d.vx)*Math.min(1,dt*.8);d.x+=d.vx*dt;d.ph+=dt*(2+d.vx*.12);if(d.x>STREET_W+30){d.x=-30;d.y=d.g<.66?GY+50+R()*(CURB-GY-64):CURB+6+R()*4;}}}
     for(const p of puffs){p.t+=dt;p.x+=(p.vx+wv*22)*dt;p.y-=dt*5;}while(puffs.length&&puffs[0].t>1)puffs.shift();
     if(!RM)for(const m of motes){m.p+=dt*m.v;m.x+=dt*.004*m.v;m.y+=Math.sin(m.p)*dt*.004;if(m.x>1)m.x-=1;}
@@ -520,7 +518,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
 
   // camada de sombras projetadas, em meia resolução (as bordas saem macias ao ampliar)
   const shc=document.createElement('canvas'),shx=shc.getContext('2d');
-  let gradeKey='',gradeSun=null;   // a vinheta é a mesma da base (#vig, em CSS): nada de pintar outra aqui
+  let gradeKey='',gradeSun=null,sunGlow=null;   // a vinheta é a mesma da base (#vig, em CSS): nada de pintar outra aqui
   const stats={ents:0,drawn:0,shadows:0,particles:0};
 
   function draw(ctx,cw,ch,rs,marker){
@@ -559,7 +557,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
         else if(e.k==='tree'){if(r.x<x0||r.x>x1)continue;cast(r.trunk,r.x,r.y,-10,-80,20,80);cast(r.crown,r.x,r.y,-r.crown.width/2,-150,r.crown.width,r.crown.height);}
         else if(e.k==='car'){const x=r.x;if(x+300<x0||x>x1)continue;const m=meta(r.id),im=art(PATH.veiculo(r.id));if(!im)continue;const w=m.w*CAR_S,h=m.h*CAR_S,dir=r.lane!=null?LANES[r.lane].dir:(r.dir||1);
           shx.setTransform(hs,0,0,hs,ox/2,oyr/2);shx.transform(1,0,-SUN.kx*.7,-SUN.ky*.8,Math.round(dir<0?x+w:x),Math.round(e.y));if(dir<0)shx.scale(-1,1);shx.drawImage(silhouette(im),0,0,m.w,m.h,0,-h,w,h);n++;}}
-      ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=true;ctx.globalAlpha=.36;ctx.drawImage(shc,0,0,sw*2,sh*2);ctx.restore();ctx.imageSmoothingEnabled=false;stats.shadows=n;}
+      ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=true;shx.setTransform(1,0,0,1,0,0);shx.globalCompositeOperation='source-in';shx.fillStyle='#241a3a';shx.fillRect(0,0,sw,sh);shx.globalCompositeOperation='source-over';ctx.globalAlpha=.42;ctx.drawImage(shc,0,0,sw*2,sh*2);ctx.restore();ctx.imageSmoothingEnabled=false;stats.shadows=n;}
     let drawn=0;
     for(const e of ENTS){const r=e.ref;
       switch(e.k){
@@ -600,27 +598,43 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     if(tapFx){const k=tapFx.t/.7;ctx.strokeStyle=`rgba(242,194,48,${.9*(1-k)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(tapFx.x,tapFx.y,6+k*14,2+k*5,0,0,7);ctx.stroke();}
     if(marker){const b=Math.round(Math.sin(t*6)*2),X=DOOR.x,Y=GY-160+b;ctx.fillStyle='#1e1611';ctx.beginPath();ctx.moveTo(X,Y+9);ctx.lineTo(X-8,Y);ctx.lineTo(X,Y-9);ctx.lineTo(X+8,Y);ctx.fill();
       ctx.fillStyle='#f2c230';ctx.beginPath();ctx.moveTo(X,Y+7);ctx.lineTo(X-6,Y);ctx.lineTo(X,Y-7);ctx.lineTo(X+6,Y);ctx.fill();ctx.fillStyle='#1e1611';ctx.fillRect(X-1,Y-4,2,6);ctx.fillRect(X-1,Y+3,2,1.5);}
-    // fachos de luz da manhã descendo do alto à esquerda, e a poeira que só aparece dentro deles
+    // o sol da manhã, baixo e dourado, vindo do alto à esquerda: fachos de luz entre os prédios, poeira dentro deles,
+    // brilho nas janelas, nas poças e no cromado dos carros
     let np=0;
-    if(q>=2){ctx.globalCompositeOperation='screen';const br=RM?1:.85+.15*Math.sin(t*.4);
-      for(const [sx,wd,a] of [[200,140,.07],[900,90,.05],[1700,160,.06],[2300,110,.05]]){if(sx+wd+700<x0||sx-200>x1)continue;
-        ctx.fillStyle=`rgba(255,232,190,${a*br})`;for(const f of [1,.6]){const ww=wd*f;ctx.beginPath();ctx.moveTo(sx-ww/2,top-40);ctx.lineTo(sx+ww/2,top-40);ctx.lineTo(sx+ww/2+(CURB-top)*.55,CURB);ctx.lineTo(sx-ww/2+(CURB-top)*.55,CURB);ctx.closePath();ctx.fill();}}
-      for(const m of motes){const X=left+m.x*vw,Y=top+m.y*(CURB-top);const a=.25+.25*Math.sin(m.p*2);ctx.fillStyle=`rgba(255,244,220,${a})`;ctx.fillRect(Math.round(X),Math.round(Y),1,1);np++;}
+    if(q>=1){ctx.globalCompositeOperation='screen';
+      for(const B of BEAMS){if(B.x+B.w+800<x0||B.x-300>x1)continue;const br=RM?1:.8+.2*Math.sin(t*B.sp+B.ph),y0=top-60,y1=CURB+20,run=(y1-y0)*.62;
+        const gr=ctx.createLinearGradient(0,y0,0,y1);gr.addColorStop(0,`rgba(255,206,130,${B.a*br})`);gr.addColorStop(.7,`rgba(255,220,160,${B.a*.7*br})`);gr.addColorStop(1,'rgba(255,226,170,0)');ctx.fillStyle=gr;
+        for(const f of [1,.55]){const ww=B.w*f;ctx.beginPath();ctx.moveTo(B.x-ww/2,y0);ctx.lineTo(B.x+ww/2,y0);ctx.lineTo(B.x+ww/2+run,y1);ctx.lineTo(B.x-ww/2+run,y1);ctx.closePath();ctx.fill();}}
+      // brilho do sol batendo nas janelas: uma faixa clara que corre pelo vidro conforme a câmera anda
+      for(const wn of WINS){if(wn.x<x0||wn.x>x1)continue;const ph=wn.x*.011+wn.y*.017-camX*.006-t*.05,v=ph-Math.floor(ph);if(v>.07)continue;const k=Math.sin(v/.07*Math.PI);
+        ctx.fillStyle=`rgba(255,240,205,${.75*k})`;for(let j=0;j<wn.h-6;j++){const xx=wn.x+3+((j*.6+v*60)%(wn.w-6));ctx.fillRect(Math.round(xx),wn.y+3+j,2,1);}
+        if(k>.7){ctx.fillStyle=`rgba(255,250,230,${k})`;ctx.fillRect(wn.x+wn.w-6,wn.y+3,1,5);ctx.fillRect(wn.x+wn.w-8,wn.y+5,5,1);}}
+      // poças refletindo o céu e o sol
+      for(const pd of PUDDLES){if(pd.x<x0||pd.x>x1)continue;const k=.5+.5*Math.sin(t*1.6+pd.x*.1);ctx.fillStyle=`rgba(255,226,170,${.18+.22*k})`;ctx.beginPath();ctx.ellipse(pd.x-pd.rx*.25,pd.y-pd.ry*.3,pd.rx*.45,Math.max(.8,pd.ry*.25),0,0,7);ctx.fill();}
+      // reflexo no cromado e no para-brisa dos carros que passam
+      for(const k of cars){if(k.lane==null||k.x+200<x0||k.x>x1)continue;const ph=(k.dist||0)/240+k.x*.0007,v=ph-Math.floor(ph);if(v>.05)continue;const m=meta(k.id),w=W(k),h=m.h*CAR_S,dir=LANES[k.lane].dir,
+          cx=k.x+(dir>0?w*.62:w*.38),cy=(k.yo??LANES[k.lane].y)+(k.yj||0)-h*.62,a=Math.sin(v/.05*Math.PI);
+        ctx.fillStyle=`rgba(255,248,226,${a})`;ctx.fillRect(Math.round(cx)-5,Math.round(cy),11,1);ctx.fillRect(Math.round(cx),Math.round(cy)-5,1,11);ctx.fillRect(Math.round(cx)-1,Math.round(cy)-1,3,3);}
+      for(const m of motes){const X=left+m.x*vw,Y=top+m.y*(CURB-top);const a=.3+.3*Math.sin(m.p*2);ctx.fillStyle=`rgba(255,236,196,${a})`;ctx.fillRect(Math.round(X),Math.round(Y),1,1);np++;}
       ctx.globalCompositeOperation='source-over';}
     stats.particles=np+puffs.length;
     // primeiro plano: os prédios do lado de cá, entre a câmera e a rua (translúcidos onde algo importante passa atrás)
     {const busy=[];if(bus&&bus.st==='stop')busy.push([bus.x,bus.x+W(bus),.35]);for(const p of peds)if(p.onRoad&&!p.hidden)busy.push([p.x-20,p.x+20,.55]);
-      // névoa e folhas no ar (por baixo do primeiro plano, que está perto da câmera e fica limpo)
+      // folhas soltas no ar (vento)
       ctx.setTransform(s,0,0,s,ox,oyr);
-      if(q>=1){for(const f of fogs){if(f.x+f.w/2<x0||f.x-f.w/2>x1)continue;ctx.globalAlpha=f.a;ctx.drawImage(fogSpr,f.x-f.w/2,f.y-f.h/2,f.w,f.h);}ctx.globalAlpha=1;
-        if(!RM)for(const l of airLeaves){if(l.x<x0||l.x>x1)continue;const fl=Math.abs(Math.sin(l.ph*1.7));ctx.globalAlpha=Math.min(1,.3+wv);ctx.fillStyle=l.c;ctx.fillRect(Math.round(l.x),Math.round(l.y),1+Math.round(fl*2),2);}ctx.globalAlpha=1;}
-      ctx.setTransform(1,0,0,1,0,0);{const hz=ctx.createLinearGradient(0,0,0,(GY-top)*s);hz.addColorStop(0,'rgba(214,222,232,.16)');hz.addColorStop(1,'rgba(214,222,232,0)');ctx.fillStyle=hz;ctx.fillRect(0,0,cw,Math.max(0,(GY-top)*s));}
+      if(q>=1){if(!RM)for(const l of airLeaves){if(l.x<x0||l.x>x1)continue;const fl=Math.abs(Math.sin(l.ph*1.7));ctx.globalAlpha=Math.min(1,.3+wv);ctx.fillStyle=l.c;ctx.fillRect(Math.round(l.x),Math.round(l.y),1+Math.round(fl*2),2);}ctx.globalAlpha=1;}
       front.draw(ctx,{s,top,left,vw,cw,ch},t,cameraDt,busy,RM,wv);}
     // luz da manhã, como o clima de cor da planta (gradientes guardados por tamanho de tela)
     ctx.setTransform(1,0,0,1,0,0);
-    const key=cw+'x'+ch;if(key!==gradeKey){gradeKey=key;gradeSun=ctx.createLinearGradient(0,0,cw,ch);gradeSun.addColorStop(0,'rgba(255,214,150,.34)');gradeSun.addColorStop(.6,'rgba(255,224,176,.08)');gradeSun.addColorStop(1,'rgba(90,120,170,.18)');
+    const key=cw+'x'+ch;if(key!==gradeKey){gradeKey=key;gradeSun=ctx.createLinearGradient(0,0,cw,ch);gradeSun.addColorStop(0,'rgba(255,184,96,.55)');gradeSun.addColorStop(.5,'rgba(255,214,150,.16)');gradeSun.addColorStop(1,'rgba(70,96,160,.26)');
+      sunGlow=ctx.createRadialGradient(-cw*.08,-ch*.35,0,-cw*.08,-ch*.35,Math.max(cw,ch)*1.05);sunGlow.addColorStop(0,'rgba(255,214,140,.55)');sunGlow.addColorStop(.35,'rgba(255,190,110,.18)');sunGlow.addColorStop(1,'rgba(255,190,110,0)');
 }
-    ctx.globalCompositeOperation='soft-light';ctx.fillStyle=gradeSun;ctx.fillRect(0,0,cw,ch);ctx.globalCompositeOperation='source-over';
+    ctx.globalCompositeOperation='soft-light';ctx.fillStyle=gradeSun;ctx.fillRect(0,0,cw,ch);
+    // a atmosfera dourada perto do sol e reflexos de lente leves na diagonal (qualidade alta)
+    if(q>=1){ctx.globalCompositeOperation='screen';ctx.fillStyle=sunGlow;ctx.fillRect(0,0,cw,ch);
+      if(q>=2){const sx=-cw*.08,sy=-ch*.35,dx=cw*.5-sx,dy=ch*.5-sy,R0=Math.min(cw,ch);
+        for(const [u,r,c] of [[.55,.05,'255,214,150'],[.72,.025,'255,170,120'],[.9,.08,'170,220,255'],[1.15,.04,'255,200,140']]){const fx=sx+dx*u,fy=sy+dy*u,rr=R0*r,gr=ctx.createRadialGradient(fx,fy,0,fx,fy,rr);gr.addColorStop(0,`rgba(${c},.10)`);gr.addColorStop(.7,`rgba(${c},.05)`);gr.addColorStop(1,`rgba(${c},0)`);ctx.fillStyle=gr;ctx.fillRect(fx-rr,fy-rr,rr*2,rr*2);}}}
+    ctx.globalCompositeOperation='source-over';
     ctx.restore();
     lastView={...V,oy:oyr,ox,cw,ch};
     if(cameraDebug&&cameraInfo)drawCameraDebug(ctx,{width:cw,height:ch,dpr:rs,deadZone:{x:cw/rs/2-cameraInfo.zoneX,y:ch/rs/2-cameraInfo.zoneY,w:cameraInfo.zoneX*2,h:cameraInfo.zoneY*2},target:{x:cameraInfo.targetX,y:cameraInfo.targetY},lines:[`RUA · ${cameraInfo.mode}`,`prioridade ${cameraInfo.priority} · zoom ${camZoom.toFixed(2)} (${V.s}x)`,`cam ${camX.toFixed(1)}, ${camY.toFixed(1)}`]});
