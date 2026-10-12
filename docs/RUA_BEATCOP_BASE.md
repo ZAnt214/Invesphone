@@ -84,4 +84,4 @@ Feitos em 844×390, 390×844 e 375×667:
 
 ## Bordas da tela — direção L (aprovada em 12/10/2026)
 
-`edges()` em `street.js`, por cima da cena e por baixo do cabeçalho: desfoque leve crescendo para as bordas (cópia em 1/6 e 1/4 da resolução com máscara elíptica), cantos um pouco mais escuros e quentes, luz do sol vazando do canto de cima à esquerda (enfraquece quando a câmera vai para a direita) e ~20 partículas de luz desfocadas perto das bordas, que andam com a câmera e com o vento. Qualidade baixa: só os cantos escuros; `prefers-reduced-motion`: partículas paradas.
+`edges()` em `street.js`, por cima da cena e por baixo do cabeçalho: desfoque leve crescendo para as bordas (reduções sucessivas pela metade, 1/2 → 1/4 → 1/8, para não tremer quando a câmera anda; máscara elíptica), cantos um pouco mais escuros e quentes, luz do sol vazando do canto de cima à esquerda (enfraquece quando a câmera vai para a direita) e ~20 partículas de luz desfocadas perto das bordas, que andam com a câmera e com o vento. Qualidade baixa: só os cantos escuros; `prefers-reduced-motion`: partículas paradas.
