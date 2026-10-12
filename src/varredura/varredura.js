@@ -2,7 +2,7 @@
 import { applyQuality, getQuality, onQualityChange } from '../characters/quality';
 import { perfHud } from '../perfHud';
 import { choose as chooseLife } from '../world/life';
-import { CAMERA_PRIORITY, createCameraControl, damp, deadZoneTarget, drawCameraDebug } from '../camera/cameraDirector';
+import { CAMERA_PRIORITY, createCameraControl, createLead, damp, deadZoneTarget, drawCameraDebug } from '../camera/cameraDirector';
 (() => {
 'use strict';
 const T=32,W=36,H=26,N=W*H;
@@ -953,6 +953,7 @@ function buildGround(){
 const cam={x:8*T,y:9*T,z:1};
 const ZMIN=0.5,ZMAX=5;let FITZ=1;
 const CAMERA_DEBUG=/[?&]cameraDebug=1(?:&|$)/.test(location.search);
+const CAMLEAD=createLead({rest:.3});   // espaço à frente do agente seguido (suavizado)
 const CAMCTRL=createCameraControl({manualHold:2800,reducedMotion:!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)});
 let CAMDBG=null,camIdle=0;
 let frame=0,sel=null,selTile=null,follow=false,tool=null,drag=null,pinch=null;
@@ -2791,8 +2792,11 @@ function followCam(dt){
   let sx=a.x*T+16,sy=a.y*TH+TH/2;if(rr){const cx=(rr[0]+rr[2]+1)*T/2,cy=(rr[1]+rr[3]+1)*TH/2,pull=cam.z>FITZ*1.16 ? .22 : .1;sx+=(cx-sx)*pull;sy+=(cy-sy)*pull;}
   if(ctl.focus){sx=ctl.focus.x??sx;sy=ctl.focus.y??sy;}
   const vw=VW()/cam.z,vh=VH()/cam.z,calm=!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const dz=deadZoneTarget(cam,{x:sx,y:sy},{viewportW:vw,viewportH:vh,zoneX:vw*(calm ? .22 : .14),zoneY:vh*(calm ? .2 : .13),dirX:dx,dirY:dy,lookAheadX:calm?0:Math.min(68,vw*.1),lookAheadY:calm?0:Math.min(34,vh*.08),biasY:-8});
-  camIdle=a.path&&a.path.length?0:camIdle+dt;let tx=dz.x,ty=dz.y;if(camIdle>.7&&!ctl.focus){tx+=(sx-tx)*.2;ty+=(sy-8-ty)*.2;}
+  // espaço à frente do agente (até ~10% da largura visível), suavizado; a zona morta fica só como histerese
+  const walking=!!(a.path&&a.path.length),A=calm?0:Math.min(90,vw*.1),AY=calm?0:Math.min(34,vh*.07);
+  const ld=ctl.focus?{x:0,y:0}:CAMLEAD.update(dx,dy,walking,dt,A,AY,a.dir||1);
+  const dz=deadZoneTarget(cam,{x:sx+ld.x,y:sy+ld.y},{viewportW:vw,viewportH:vh,zoneX:vw*(calm ? .2 : .055),zoneY:vh*(calm ? .18 : .09),biasY:-8});
+  camIdle=a.path&&a.path.length?0:camIdle+dt;let tx=dz.x,ty=dz.y;if(camIdle>.7&&!ctl.focus){tx+=(sx+ld.x-tx)*.2;ty+=(sy+ld.y-8-ty)*.2;}
   const rate=ctl.focus?(calm?18:4.4):(a.path&&a.path.length?6.5:2);cam.x=damp(cam.x,tx,rate,dt);cam.y=damp(cam.y,ty,rate,dt);clampCam();
   CAMDBG={mode:ctl.mode,priority:ctl.priority,room:rm||'externo',zoneX:dz.zoneX*cam.z,zoneY:dz.zoneY*cam.z,target:{x:(dz.desiredX-cam.x)*cam.z+VW()/2,y:(dz.desiredY-cam.y)*cam.z+VH()/2}};
 }
