@@ -10,6 +10,8 @@ import { audioContext, sfxEnabled } from '../sfx';
 import { fxOn, onFxChange } from '../settings/gameSettings';
 // som ambiente ligado? (Sons e vibração + Som ambiente, em Ajustes)
 const on=()=>sfxEnabled()&&fxOn('ambient');
+/** para o diagnóstico e os testes: o som ambiente está valendo? e o volume geral alvo */
+export function ambientState(){return {on:on(),scene,gain:master?master.gain.value:0};}
 
 let C=null,master=null,noise=null,scene=null,beds={},active=0;
 const last={};
