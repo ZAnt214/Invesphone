@@ -11,6 +11,18 @@ Implementação de outubro de 2026 para Rua do DHPP, interior da base, Varredura
 - A resposta mudava com o FPS e a rua ignorava gestos de câmera que já existiam no interior.
 - A composição vertical era boa no enquadramento padrão, mas não reagia à aproximação da entrada nem ao sentido do deslocamento.
 
+### Espaço à frente (rua, base e casa)
+
+Corrigido na validação em navegador (ver abaixo). A primeira versão usava uma zona morta (219 px) maior que o look-ahead (125 px): a câmera ficava *atrás* de quem andava e Lemos ocupava a metade da frente da tela, deixando menos espaço à frente do que a câmera anterior.
+
+`createLead` resolve isso separando as duas ideias:
+
+- o **espaço à frente** é um deslocamento do alvo, suavizado, na direção em que o personagem anda;
+- ele cresce e inverte no máximo a ~100 px de mundo por segundo (a caminhada de Lemos), então inverter o sentido leva alguns segundos calmos em vez de uma chicotada;
+- ao parar, a câmera **guarda cerca de um terço** do espaço (na direção em que ele olha) em vez de voltar ao centro: a composição fica estável e não parece estar "procurando";
+- a **zona morta** vira só histerese, para ignorar micro-movimentos;
+- com redução de movimento, o espaço à frente é zero.
+
 ### Interior do DHPP
 
 - Pinça, arrasto, toque duplo, âncora do zoom e limites já existiam e foram preservados.
@@ -43,7 +55,7 @@ Implementação de outubro de 2026 para Rua do DHPP, interior da base, Varredura
 - prioridades de controle;
 - carência do controle manual;
 - foco temporário e interrupção;
-- cálculo de dead zone e look-ahead;
+- cálculo de dead zone (como histerese) e do **espaço à frente** (`createLead`);
 - damping exponencial independente do FPS;
 - overlay de diagnóstico.
 
@@ -70,8 +82,8 @@ Um foco acima de `manual` só bloqueia o gesto se declarar `interruptible: false
 
 - Mantém fachadas frontais, calçada vista de cima, rua horizontal e carros laterais.
 - Escala final sempre inteira; `imageSmoothingEnabled` continua desligado.
-- Dead zone horizontal de 13% e vertical de 12% da área visível.
-- Look-ahead de até 125 px de mundo no sentido da caminhada.
+- Dead zone pequena (4% da largura e 10% da altura visíveis), só como histerese.
+- Espaço à frente (`createLead`): o centro da câmera fica adiante de Lemos, até 14% da largura visível (no máximo 230 px de mundo).
 - Ao se aproximar intencionalmente da porta, enquadra Lemos e DHPP juntos e sobe discretamente o centro para valorizar a fachada.
 - Ao parar, retorna devagar a uma composição estável, sem oscilação.
 - Pinça, roda, arrasto e toque duplo usam zoom próprio entre 1× e 2,75× e preservam o ponto sob o gesto.
@@ -79,7 +91,7 @@ Um foco acima de `manual` só bloqueia o gesto se declarar `interruptible: false
 
 ### Interior do DHPP
 
-Perfis em `CAMERA_ROOMS` ajustam dead zone, viés e atração pelo centro arquitetônico:
+Perfis em `CAMERA_ROOMS` ajustam a histerese (dead zone, aplicada a 40% na horizontal e 70% na vertical), o viés e a atração pelo centro arquitetônico:
 
 | Área | Direção |
 |---|---|
@@ -96,7 +108,7 @@ O próximo tile da rota determina o look-ahead. Quando Lemos para, a recentraliz
 ### Casa
 
 - A visão geral existente (`FITZ`) continua sendo a referência espacial e os limites incluem terreno e margens úteis.
-- O agente selecionado usa dead zone, antecipação do próximo tile e leve atração pelo cômodo atual.
+- O agente selecionado usa o espaço à frente (até 10% da largura visível), histerese pequena e leve atração pelo cômodo atual.
 - Em zoom de detalhe, a atração pelo cômodo cresce para manter móveis e objeto investigado no mesmo contexto.
 - Arrasto, pinça, roda e toque duplo suspendem o acompanhamento. Selecionar novamente um agente retoma o follow de forma explícita.
 - `panTo` de uma ocorrência recebe prioridade contextual e não concorre com o follow durante o foco.
@@ -175,20 +187,86 @@ Os painéis `?debug=1` e de desempenho existentes continuam independentes. `wind
 - Culling, listas de desenho, ordenação por profundidade, camadas e pós-processamento existentes foram preservados.
 - O overlay só desenha quando `cameraDebug=1`.
 
+## Validação em navegador (outubro de 2026)
+
+A primeira entrega foi feita sem navegador. Esta rodada usou o Chromium com Playwright (CPU normal, DPR 2) e os mesmos roteiros na revisão anterior à reformulação (`7fdbbda`, build separado) e na atual. Todas as medições são de jogo rodando, não de imagens estáticas.
+
+### Rua: Lemos anda pelo quarteirão
+
+Medido em quadros em que a câmera não está no limite do mapa, com o mesmo roteiro e o mesmo método nas três revisões. "Espaço à frente" é a fração da largura da tela que fica à frente de Lemos (0,50 = centralizado; maior é melhor).
+
+| Situação | Antes da reformulação | Primeira versão (#227) | Atual |
+|---|---|---|---|
+| 844×390, andando para a direita | 0,49 | 0,42 | **0,57** |
+| 844×390, andando para a esquerda | 0,49 | 0,43 | **0,59** |
+| 375×667, andando para a direita | 0,49 | 0,44 | **0,57** |
+| 375×667, andando para a esquerda | 0,49 | 0,45 | **0,59** |
+| Oscilação de Lemos na tela, 844×390 (px por quadro, normalizada pelo tempo; direita / esquerda) | 0,32 / 0,30 | 0,14 / 0,11 | 0,15 / 0,13 |
+| Oscilação de Lemos na tela, 375×667 (direita / esquerda) | 0,05 / 0,08 | 0,05 / 0,05 | 0,07 / 0,04 |
+| Posição de repouso de Lemos ao parar (esquerda, 844×390) | 0,50 | 0,43 | 0,53 |
+| Inversões da câmera ao parar | 0 | 0 | 0 (1 em 375×667, esquerda) |
+
+A reformulação da #227 já suavizava o movimento (oscilação menor que a câmera anterior em 844×390), mas deixava Lemos *à frente* do centro: menos espaço no sentido da caminhada do que antes. O espaço à frente (`createLead`) inverte isso sem perder a suavidade.
+
+![Antes e depois na rua](img/camera-rua-antes-depois.png)
+
+Ao inverter o sentido de caminhada, Lemos oscila entre 40% e 57% da largura (antes: 49% a 51%). A velocidade da câmera chega a cerca de 180 px/s (a de Lemos é 96 px/s) por no máximo dois segundos, e depois cai. Em um quadro isolado, ao sair do limite do mapa, ela passa de 360 px/s.
+
+### Gestos na rua, nos três tamanhos (inclusive a rotação artificial em retrato)
+
+| Teste | 844×390 | 390×844 | 375×667 |
+|---|---|---|---|
+| Arrastar 160 px na tela: deslocamento do mundo (esperado 320 px) | 320 | 320 | 320 |
+| Retorno ao acompanhamento começa após | 2,58 s | 2,56 s | 2,57 s |
+| Velocidade máxima do retorno | 136 px/s | 138 px/s | 94 px/s |
+| Zoom da roda: escala antes → depois | 1 → 2 | 1 → 2 | 1 → 2 |
+| Deriva do ponto sob o cursor | 3,8 px | 3,8 px | 2,9 px |
+| Escala sempre inteira | sim | sim | sim |
+| Escala mínima / máxima | 1 / 3 | 1 / 3 | 1 / 3 |
+| Área vazia na tela com zoom mínimo | 0 | 0 | 0 |
+
+### Interior do DHPP: percurso por todos os cômodos
+
+Hall → equipe → perícia → sala da delegada → interrogatório → arquivo → hall. Em 844×390 (os outros tamanhos usam a mesma tela lógica, rotacionada):
+
+- distância mínima de Lemos às bordas da tela: 107 px;
+- nenhum quadro com Lemos sob o cabeçalho;
+- área vazia na tela de no máximo 17% (só nos cômodos que ficam nas extremidades do mapa);
+- fora do centro apenas onde o limite do mapa impede centralizar (perícia, delegada, interrogatório e arquivo);
+- resultados iguais antes e depois do espaço à frente.
+
+### Casa
+Visão geral e agente selecionado andando até a casa em 844×390, sem erros; o agente permanece dentro da tela (de 25% a 39% da largura; antes, de 32% a 51%).
+
+### Interrogatório (Lívia)
+Nos três tamanhos:
+
+- parado, o plano não se mexe (transformação identidade);
+- escolher → perguntar → responder passa por três planos distintos, com escala de 0,992 a 1,022 e transição suave;
+- o rosto permanece inteiro na tela (menor margem de 16 px);
+- nenhum erro de script.
+
+### Fluxo rua → DHPP → rua
+Passa nos três tamanhos, sem erros.
+
 ## Testes realizados
 
-- `node tools/camera-system-test.mjs`: 12 verificações de dead zone, look-ahead, equivalência a 30/60 FPS, carência manual, prioridade narrativa, interrupção contextual e redução de movimento.
+- `node tools/camera-system-test.mjs`: 17 verificações de dead zone, espaço à frente (crescimento, inversão limitada e repouso), equivalência a 30/60 FPS, carência manual, prioridade narrativa, interrupção contextual e redução de movimento.
 - `node --check`: controlador, rua, base e casa.
 - `git diff --check`.
 - `npm run build`: TypeScript, Vite e geração do PWA aprovados.
 
-O teste automatizado `tools/e2e/screens-fit.mjs` foi solicitado para 390×844 e 375×667, mas não pôde iniciar: o ambiente não contém o executável Chromium e o instalador recebeu um arquivo vazio/inválido. A superfície de navegador remota também não alcança o servidor local. Por isso, gestos reais, animação em movimento, 844×390 e Safari/iPhone físico permanecem como validação manual obrigatória antes da publicação em loja.
+O que ainda **não** foi validado:
+
+- Safari/iPhone reais (pinça de dois dedos, notch/Dynamic Island, retorno do segundo plano). A pinça foi coberta pela lógica compartilhada e pelo zoom da roda, mas não com dois dedos de verdade.
+- `tools/e2e/screens-fit.mjs` não foi executado nesta rodada.
+- Vídeo da câmera em movimento: as medições acima são séries quadro a quadro, mas não houve gravação.
 
 ## Comparação funcional
 
 | Antes | Depois |
 |---|---|
-| Personagem puxado continuamente para o centro | Dead zone e espaço no sentido do movimento |
+| Personagem sempre no centro | Espaço à frente suavizado (0,57–0,59 da tela à frente, contra 0,49) |
 | `lerp` da rua dependente de quadros | Damping temporal estável |
 | Mesma composição em todas as salas | Perfis por cômodo e atração arquitetônica moderada |
 | Gesto manual perdido assim que o follow voltava | Carência explícita e retorno previsível |
@@ -197,12 +275,13 @@ O teste automatizado `tools/e2e/screens-fit.mjs` foi solicitado para 390×844 e 
 | Balanço contínuo no interrogatório | Mudanças curtas motivadas por pergunta/resposta |
 | Prioridades implícitas | Política compartilhada e depurável |
 
-Capturas “antes/depois” e vídeo de deslocamento não foram produzidos porque não houve navegador executável neste ambiente. Não substituir por imagens estáticas fabricadas: a comparação deve ser capturada na mesma revisão, viewport e posição de mundo quando o teste em navegador estiver disponível.
+A comparação com capturas do mesmo enquadramento está em `docs/img/camera-rua-antes-depois.png` (rua, Lemos andando para a direita; revisão anterior à reformulação contra a atual).
 
 ## Problemas conhecidos e próximos passos
 
-- Validar pinch, rotação artificial, safe areas, notch/Dynamic Island e retorno de background em Safari real.
-- Executar `screens-fit.mjs` e um percurso rua → DHPP → rua assim que houver Chromium compatível.
-- Capturar os mesmos pontos nos três viewports e um vídeo curto caminhando nos dois sentidos.
+- Validar pinça de dois dedos, safe areas, notch/Dynamic Island e retorno de segundo plano em Safari real.
+- Executar `screens-fit.mjs`.
+- Gravar um vídeo curto caminhando nos dois sentidos.
+- A deriva do ponto sob o cursor no zoom da roda (até 3,8 px) vem de arredondar a escala para inteiro; dá para zerar recalculando o ponto de ancoragem com a escala final.
 - Medir conforto e legibilidade em movimento com pessoas reais; ajustar somente constantes de perfil, sem trocar a perspectiva aprovada.
 - Eventos narrativos futuros podem usar `narrative` não interrompível, mas devem oferecer avanço/skip quando durarem além de uma transição curta.
