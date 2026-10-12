@@ -81,3 +81,7 @@ Feitos em 844×390, 390×844 e 375×667:
 ## Primeiro plano em paralaxe — direção A (aprovada em 12/10/2026)
 
 `src/base/streetFront.js`: os prédios do lado de cá ficam entre a câmera e a rua. Vemos a parede dos fundos do último andar (tijolo, janelas só com vidro/cortina/persiana, ar-condicionado, floreira, escada de incêndio, cano de descida) e o telhado recortado (caixa d'água, chaminé, respiros, antena, parabólica, casa de máquinas), com varais entre alguns prédios. Larguras, alturas e vãos sorteados. Escala de pixel um passo acima da rua (`s+1`) e paralaxe horizontal; o topo de cada prédio fica 1,5× a escala da rua acima da linha `BAND_BOT`, então os mais altos chegam perto da faixa amarela em qualquer aparelho. Translúcido onde algo importante passa atrás (ônibus parado no ponto, pedestre atravessando). O interior nunca aparece.
+
+## Bordas da tela — direção L (aprovada em 12/10/2026)
+
+`edges()` em `street.js`, por cima da cena e por baixo do cabeçalho: desfoque leve crescendo para as bordas (cópia em 1/6 e 1/4 da resolução com máscara elíptica), cantos um pouco mais escuros e quentes, luz do sol vazando do canto de cima à esquerda (enfraquece quando a câmera vai para a direita) e ~20 partículas de luz desfocadas perto das bordas, que andam com a câmera e com o vento. Qualidade baixa: só os cantos escuros; `prefers-reduced-motion`: partículas paradas.

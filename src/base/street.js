@@ -658,11 +658,48 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
         gr.addColorStop(0,'rgba(255,214,140,.6)');gr.addColorStop(.35,'rgba(255,190,110,.2)');gr.addColorStop(1,'rgba(255,190,110,0)');ctx.fillStyle=gr;ctx.fillRect(0,0,cw,ch);}
       }
     ctx.globalCompositeOperation='source-over';
+    edges(ctx,cw,ch,rs,q,s,left,top);
     ctx.restore();
     lastView={...V,oy:oyr,ox,cw,ch};
     if(cameraDebug&&cameraInfo)drawCameraDebug(ctx,{width:cw,height:ch,dpr:rs,deadZone:{x:cw/rs/2-cameraInfo.zoneX,y:ch/rs/2-cameraInfo.zoneY,w:cameraInfo.zoneX*2,h:cameraInfo.zoneY*2},target:{x:cameraInfo.targetX,y:cameraInfo.targetY},lines:[`RUA · ${cameraInfo.mode}`,`prioridade ${cameraInfo.priority} · zoom ${camZoom.toFixed(2)} (${V.s}x)`,`cam ${camX.toFixed(1)}, ${camY.toFixed(1)}`]});
   }
   let lastView=null;
+  /* Bordas da tela (direção L, aprovada em 12/10/2026): desfoque leve que cresce para as bordas, cantos um pouco mais escuros
+     e quentes, poucas partículas de luz desfocadas flutuando perto das bordas (andam com a câmera e o vento) e a luz do sol
+     vazando do canto de cima à esquerda. O centro fica limpo. Desfoque em 1/4 e 1/6 da resolução (barato no iPhone). */
+  const EB={key:'',small:null,tiny:null,mask:null,vig:null,leak:null};
+  const dust=Array.from({length:22},()=>({u:R(),v:R(),r:.5+R(),a:.25+R()*.45,ph:R()*6.28,sp:.4+R()*.8}));
+  const dustSpr=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);
+    gr.addColorStop(0,'rgba(255,230,180,.9)');gr.addColorStop(.45,'rgba(255,214,150,.45)');gr.addColorStop(.8,'rgba(255,200,130,.12)');gr.addColorStop(1,'rgba(255,200,130,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);return c;})();
+  const edgeW=(u,v)=>{const dx=(u-.5)*2,dy=(v-.5)*2;return Math.min(1,Math.max(0,(Math.sqrt(dx*dx*.75+dy*dy)-.6)/.55));};
+  function edges(ctx,cw,ch,rs,q,s,left,top){
+    const key=cw+'x'+ch;
+    if(key!==EB.key){EB.key=key;const mk=(w,h)=>{const c=document.createElement('canvas');c.width=Math.max(1,w);c.height=Math.max(1,h);return c;};
+      EB.small=mk(Math.ceil(cw/4),Math.ceil(ch/4));EB.tiny=mk(Math.ceil(cw/6),Math.ceil(ch/6));
+      // máscara: transparente no centro, opaca nas bordas (elipse achatada)
+      EB.mask=mk(EB.small.width,EB.small.height);{const g=EB.mask.getContext('2d'),w=EB.mask.width,h=EB.mask.height;g.save();g.translate(w/2,h/2);g.scale(1,h/w*1.15);
+        const r=w/2,gr=g.createRadialGradient(0,0,r*.55,0,0,r*1.12);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(.55,'rgba(0,0,0,.6)');gr.addColorStop(1,'rgba(0,0,0,1)');g.fillStyle=gr;g.fillRect(-r*2,-r*2,r*4,r*4);g.restore();}
+      EB.vig=ctx.createRadialGradient(cw/2,ch/2,Math.min(cw,ch)*.42,cw/2,ch/2,Math.hypot(cw,ch)*.6);EB.vig.addColorStop(0,'rgba(30,20,14,0)');EB.vig.addColorStop(1,'rgba(30,20,14,.34)');}
+    ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;
+    // desfoque nas bordas
+    if(q>=1){const sm=EB.small,tn=EB.tiny,gs=sm.getContext('2d'),gt=tn.getContext('2d');
+      gt.imageSmoothingEnabled=true;gt.globalCompositeOperation='copy';gt.drawImage(ctx.canvas,0,0,cw,ch,0,0,tn.width,tn.height);
+      gs.imageSmoothingEnabled=true;gs.globalCompositeOperation='copy';gs.drawImage(tn,0,0,sm.width,sm.height);
+      gs.globalCompositeOperation='destination-in';gs.drawImage(EB.mask,0,0);gs.globalCompositeOperation='source-over';
+      ctx.imageSmoothingEnabled=true;ctx.drawImage(sm,0,0,cw,ch);ctx.imageSmoothingEnabled=false;}
+    // cantos mais escuros e quentes
+    ctx.fillStyle=EB.vig;ctx.fillRect(0,0,cw,ch);
+    if(q>=1){ctx.globalCompositeOperation='screen';
+      // luz do sol vazando do canto (segue o sol do mundo: some aos poucos quando a câmera vai para a direita)
+      {const gx=Math.max(-cw*.25,(SUNW.x-left)*s*.35),gy=-ch*.15,k=Math.max(.35,1-Math.max(0,camX-900)/2400),R0=Math.max(cw,ch)*.55,gr=ctx.createRadialGradient(gx,gy,0,gx,gy,R0);
+        gr.addColorStop(0,`rgba(255,176,96,${.42*k})`);gr.addColorStop(.5,`rgba(255,190,110,${.14*k})`);gr.addColorStop(1,'rgba(255,190,110,0)');ctx.fillStyle=gr;ctx.fillRect(0,0,cw,ch);}
+      // partículas de luz perto das bordas: andam com a câmera (paralaxe) e com o vento, piscam devagar
+      const sh=camX*s*.5,ws=Math.min(cw,ch);
+      for(const d of dust){const px=((d.u*cw-sh*.6*d.r+(RM?0:t*(6+wv*30)*d.sp*rs))%cw+cw)%cw,py=((d.v*ch+(RM?0:Math.sin(t*.3*d.sp+d.ph)*14*rs))%ch+ch)%ch,e=edgeW(px/cw,py/ch);if(e<.05)continue;
+        const rr=ws*(.008+.014*d.r)*(.7+e*.6);ctx.globalAlpha=d.a*e*(RM?1:.6+.4*Math.sin(t*d.sp+d.ph));ctx.drawImage(dustSpr,px-rr,py-rr,rr*2,rr*2);}
+      ctx.globalAlpha=1;}
+    ctx.restore();
+  }
   const contact=(ctx,x,y,rx,ry,a)=>{ctx.fillStyle=`rgba(16,12,20,${a})`;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,7);ctx.fill();};
 
   // bandeira da planta (Brasil e DHPP): pano coluna a coluna numa onda, com luz e sombra nas dobras
