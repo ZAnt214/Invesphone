@@ -224,6 +224,10 @@ Rua, base e casa têm rotinas próprias: cada personagem tem função, ritmo e l
 - Falas que dependem do caso precisam de condição no save.
 
 
+## HUD do Lemos
+
+Na rua e na base, a interface é o HUD do Lemos: o retrato num mostrador, a caderneta, a faixa do ambiente, a última descoberta e a pista anexada, com luz, partículas e som. Antes de mexer no cabeçalho, nas descobertas, na caderneta ou no que é anunciado ao jogador, ler `docs/HUD_LEMOS.md`. Código em `src/hud/`. O que é novo sai da comparação com o save do caso: para anunciar algo, grave no save, não chame o HUD direto.
+
 ## Ajustes: todo efeito pode ser desligado
 
 Todo efeito visual ou sonoro (os que já existem e os que vierem) precisa estar em `src/settings/gameSettings.ts`, na categoria certa — tudo o que é visual fica na seção **Gráficos**, junto da qualidade gráfica (categorias Luz e sol, Atmosfera, Bordas da tela, Vida no cenário; criar outra dentro de Gráficos se nenhuma servir), e o que é som fica na seção **Som**, com nome curto, descrição e a opção de desligar. O código do efeito consulta `fxOn(id)` (ou o objeto `F` em `street.js`) antes de desenhar ou tocar, e reage na hora a `onFxChange`.

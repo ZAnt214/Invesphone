@@ -27,7 +27,7 @@ import type { InterrogationProgress } from './interrogation/types'
 import './handset-pages.css'
 import { acceptedProofs, chapters, clues, disclaimer, people, teamMessages, victimMessages } from './case01'
 import EvidenceViewer, { assetUrl } from './evidence/EvidenceViewer'
-import { SAVE_KEY, SAVE_VERSION, advanceTask } from './case/caseSave'
+import { SAVE_KEY, SAVE_VERSION, advanceTask, resetCaseStorage } from './case/caseSave'
 import { summonRequires } from './case/depositions'
 import { applyRequest, applyTopic, caseTeam, requestOk, teamDialogues, teamIntroMessages, teamMaterialRequests, teamMemberForSender, teamNews, topicOk, type TeamDialogue, type TeamMaterialRequest } from './team/teamData'
 
@@ -260,7 +260,7 @@ export default function App(){
     {game.screen==='launching'&&<Launching/>}
     {game.screen==='phone'&&<PolicePhone game={game} setGame={setGame}/>}
     {game.screen==='task'&&<TaskView game={game} setGame={setGame}/>}
-    {game.screen==='ending'&&<Ending game={game} restart={()=>{localStorage.removeItem(SAVE_KEY);setGame(initialGame)}}/>}
+    {game.screen==='ending'&&<Ending game={game} restart={()=>{resetCaseStorage();setGame(initialGame)}}/>}
   </AnimatePresence>
 }
 
@@ -426,7 +426,7 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
  if(game.app==='clues')return <PhonePage title="Pistas" back={()=>openApp('home')}><ClueList ids={game.clues}/></PhonePage>
  if(game.app==='interrogate')return <PhonePage title="Interrogar" back={()=>openApp('home')}><People game={game} setGame={setGame}/></PhonePage>
  if(game.app==='victim')return <PhonePage title="Telefone de Helena" back={()=>openApp('home')}><VictimPhone addClue={cid=>setGame(g=>({...g,clues:g.clues.includes(cid)?g.clues:[...g.clues,cid]}))} hasAgenda={game.clues.includes('agenda_helena')}/></PhonePage>
- if(game.app==='settings')return <PhonePage title="Ajustes" back={()=>openApp('home')}><QualityPicker/><p className="settings-note">A qualidade vale para o jogo inteiro: telas, animações e retratos.</p><EffectsSettings section="graficos"/><FullscreenSetting/><SoundSetting/><EffectsSettings section="som"/><ResetSetting onReset={()=>{localStorage.removeItem(SAVE_KEY);setGame(initialGame)}}/><Diagnostics/></PhonePage>
+ if(game.app==='settings')return <PhonePage title="Ajustes" back={()=>openApp('home')}><QualityPicker/><p className="settings-note">A qualidade vale para o jogo inteiro: telas, animações e retratos.</p><EffectsSettings section="graficos"/><FullscreenSetting/><SoundSetting/><EffectsSettings section="som"/><ResetSetting onReset={()=>{resetCaseStorage();setGame(initialGame)}}/><Diagnostics/></PhonePage>
  if(game.app==='chapters')return <PhonePage title="Arquivo do caso" back={()=>openApp('home')}><ChapterMap game={game}/></PhonePage>
  const status = ({
   0:'Ocorrência recebida',1:'Cena em processamento',2:'Versões sendo colhidas',3:'Aguardando retorno técnico',4:'Janela de horário em aberto',
