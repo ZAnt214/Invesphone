@@ -19,6 +19,27 @@ export function deadZoneTarget(cam,subject,opt={}){
   return {x,y,desiredX,desiredY,zoneX:zx,zoneY:zy};
 }
 
+/** Espaço à frente do personagem: um deslocamento suavizado do alvo na direção em que ele anda.
+ *  Cresce devagar ao começar a andar, atravessa o zero devagar ao inverter o sentido (nunca "chicoteia") e, ao parar,
+ *  mantém uma fração (`rest`) em vez de voltar ao centro: a composição fica estável e a câmera não "procura" o centro.
+ *  A zona morta fica pequena (só histerese): o espaço à frente vem daqui, não da zona morta. */
+export function createLead({rate=2.1,restRate=1.3,rest=.34,maxSpeed=100}={}){
+  let x=0,y=0;
+  // além do amortecimento, o deslocamento anda no máximo `maxSpeed` px de mundo por segundo (~a caminhada de Lemos):
+  // inverter o sentido leva alguns segundos calmos em vez de uma chicotada
+  const step=(v,t,r,dt)=>{const n=damp(v,t,r,dt),m=maxSpeed*dt;return v+Math.max(-m,Math.min(m,n-v));};
+  return {
+    get x(){return x;},get y(){return y;},
+    update(dirX,dirY,moving,dt,maxX,maxY,facing=dirX){
+      const f=moving?1:rest,dx=moving?dirX:facing,dy=moving?dirY:0;
+      const r=moving?rate:restRate;
+      x=step(x,dx*maxX*f,r,dt);y=step(y,dy*maxY*f,r,dt);
+      return {x,y};
+    },
+    reset(){x=0;y=0;}
+  };
+}
+
 export function createCameraControl({manualHold=2400,reducedMotion=false}={}){
   let manualUntil=0,focus=null,mode='follow',lastPriority=CAMERA_PRIORITY.follow;
   const api={

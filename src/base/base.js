@@ -9,7 +9,7 @@ import { applyQuality, getQuality, onQualityChange } from '../characters/quality
 import { perfHud } from '../perfHud';
 import * as AMB from '../world/ambientAudio';
 import { choose, eventLog, jitter, lifeDebug, lineBank } from '../world/life';
-import { CAMERA_PRIORITY, createCameraControl, damp, deadZoneTarget, drawCameraDebug } from '../camera/cameraDirector';
+import { CAMERA_PRIORITY, createCameraControl, createLead, damp, deadZoneTarget, drawCameraDebug } from '../camera/cameraDirector';
 (() => {
 'use strict';
 const T=32,TH=22,K=TH/T,RISE=16,CAPH=8,W=34,H=26,N=W*H;
@@ -704,6 +704,7 @@ let P1,NPCS=[],frame=0,started=false,follow=true,talkOpen=false;
 let SEEN=safe(()=>JSON.parse(localStorage.getItem('base.seen')||'{}'),{});
 const cam={x:16*T,y:15*TH,z:1};
 const CAMERA_DEBUG=/[?&]cameraDebug=1(?:&|$)/.test(location.search);
+const CAMLEAD=createLead({rest:.3});   // espaço à frente de Lemos (suavizado)
 const CAMCTRL=createCameraControl({manualHold:2600,reducedMotion:!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)});
 let CAMDBG=null,camIdle=0;
 let gameMin=8*60+10,lastClock=0;
@@ -1315,10 +1316,14 @@ function followCam(dt){
   let biasX=pr.biasX,biasY=pr.biasY;
   const rr=ROOM_RECT[rm];if(rr&&pr.roomPull&&!talkOpen){const rcx=(rr[0]+rr[2]+1)*T/2,rcy=(rr[1]+rr[3]+1)*TH/2;sx+=(rcx-sx)*pr.roomPull;sy+=(rcy-sy)*pr.roomPull;}
   const vw=VW()/cam.z,vh=VH()/cam.z,calm=CALM();
-  const dz=deadZoneTarget(cam,{x:sx,y:sy},{viewportW:vw,viewportH:vh,zoneX:vw*(calm ? .22 : pr.zoneX),zoneY:vh*(calm ? .18 : pr.zoneY),dirX:dx,dirY:dy,lookAheadX:talkOpen||calm?0:Math.min(72,vw*.11),lookAheadY:talkOpen||calm?0:Math.min(24,vh*.06),biasX,biasY});
+  // espaço à frente: o centro da câmera fica adiante de Lemos (até ~11% da largura visível; em salas pequenas, menos),
+  // crescendo e invertendo devagar; a zona morta de cada cômodo fica só como histerese
+  const A=talkOpen||calm?0:Math.min(110,vw*.11),AY=talkOpen||calm?0:Math.min(30,vh*.07);
+  const ld=ctl.focus||talkOpen?{x:0,y:0}:CAMLEAD.update(dx,dy,P1.moving,dt,A,AY,P1.dir);
+  const dz=deadZoneTarget(cam,{x:sx+ld.x,y:sy+ld.y},{viewportW:vw,viewportH:vh,zoneX:vw*(calm ? .2 : pr.zoneX*.4),zoneY:vh*(calm ? .18 : pr.zoneY*.7),biasX,biasY});
   camIdle=P1.moving||talkOpen?0:camIdle+dt;
   let tx=dz.x,ty=dz.y,rate=talkOpen?5.2:7.5;
-  if(camIdle>.55&&!ctl.focus){const idleX=sx+biasX,idleY=sy+biasY,ik=Math.min(1,(camIdle-.55)/1.4);tx=tx+(idleX-tx)*ik*.38;ty=ty+(idleY-ty)*ik*.38;rate=calm?1.2:2.1;}
+  if(camIdle>.55&&!ctl.focus){const idleX=sx+ld.x+biasX,idleY=sy+ld.y+biasY,ik=Math.min(1,(camIdle-.55)/1.4);tx=tx+(idleX-tx)*ik*.38;ty=ty+(idleY-ty)*ik*.38;rate=calm?1.2:2.1;}
   if(calm&&ctl.focus)rate=18;
   cam.x=damp(cam.x,tx,rate,dt);cam.y=damp(cam.y,ty,rate,dt);clampCam();
   const px=(dz.desiredX-cam.x)*cam.z+VW()/2,py=(dz.desiredY-cam.y)*cam.z+VH()/2;

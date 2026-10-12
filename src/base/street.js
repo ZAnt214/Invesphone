@@ -12,7 +12,7 @@
 import {GY,CURB,ROAD,NEAR,STREET_H,WALK,PARK,LANES,SUN,TREES,MANHOLES,rnd,paintFacades,paintGround} from './streetArt';
 import {RUA_DIR,VEICULOS,PATH} from './ruaAssets';
 import {choose,eventLog,jitter} from '../world/life';
-import {CAMERA_PRIORITY,createCameraControl,damp,deadZoneTarget,drawCameraDebug} from '../camera/cameraDirector';
+import {CAMERA_PRIORITY,createCameraControl,createLead,damp,deadZoneTarget,drawCameraDebug} from '../camera/cameraDirector';
 export {STREET_H};
 
 /* ---------- o quarteirão, da esquerda para a direita ---------- */
@@ -141,6 +141,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   // poeira no ar, só visível contra a luz (qualidade alta): poucas partículas, recicladas
   const motes=Array.from({length:28},()=>({x:R(),y:R(),v:.3+R()*.7,p:R()*6.28}));
   const camera=createCameraControl({manualHold:2600,reducedMotion:RM});
+  const lead=createLead();   // espaço à frente de Lemos (suavizado; ver cameraDirector)
   const cameraDebug=/[?&]cameraDebug=1(?:&|$)/.test(location.search);
   let camX=lemos.x,camY=null,camZoom=1,cameraDt=1/60,cameraInfo=null,gesture=null,lastTap=null,doorFocus=false,t=0,doorT=0,tapFx=null,busT=25+R()*30,bus=null,taxiJob=null;
   const sound=(k,x,a)=>{if(onSound)onSound(k,x,a);};
@@ -329,10 +330,14 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     if(!manual){
       const focus=ctl.focus,dir=lemos.moving&&Math.abs(lemos.vx)>2?Math.sign(lemos.vx):lemos.dir;
       const near=Math.abs(lemos.x-DOOR.x)<330,biasX=near?(DOOR.x-lemos.x)*.22:0;
-      const subject={x:focus?.x??lemos.x,y:focus?.y??lemos.y};
-      const dz=deadZoneTarget({x:camX,y:camY==null?lemos.y:camY},subject,{viewportW:vw,viewportH:vh,zoneX:vw*(RM ? .22 : .13),zoneY:vh*(RM ? .2 : .12),dirX:dir,dirY:Math.sign(lemos.vy||0),lookAheadX:RM?0:Math.min(125,vw*.16),lookAheadY:RM?0:Math.min(32,vh*.05),biasX});
+      // espaço à frente: o centro da câmera fica adiante de Lemos (até ~14% da largura visível), com o deslocamento
+      // crescendo e invertendo devagar; parado, a câmera guarda um terço dele em vez de voltar ao centro
+      const A=RM?0:Math.min(230,vw*.14),AY=RM?0:Math.min(28,vh*.04);
+      const ld=focus?{x:0,y:0}:lead.update(dir,Math.sign(lemos.vy||0),lemos.moving,cameraDt,A,AY,lemos.dir);
+      const subject={x:(focus?.x??lemos.x)+ld.x,y:(focus?.y??lemos.y)+ld.y};
+      const dz=deadZoneTarget({x:camX,y:camY==null?lemos.y:camY},subject,{viewportW:vw,viewportH:vh,zoneX:vw*(RM ? .1 : .04),zoneY:vh*(RM ? .18 : .1),biasX});
       let tx=dz.x,ty=dz.y-vh*(near ? 0.06 : 0);
-      if(!lemos.moving&&!focus){tx+=(lemos.x+biasX-tx)*.12;ty+=(lemos.y-vh*.04-ty)*.12;}
+      if(!lemos.moving&&!focus)ty+=(lemos.y-vh*.04-ty)*.12;
       const rate=focus?(RM?18:4.8):(lemos.moving?6.8:2.1);
       camX=damp(camX,tx,rate,cameraDt);camY=camY==null?ty:damp(camY,ty,rate,cameraDt);
       cameraInfo={mode:ctl.mode,priority:ctl.priority,zoneX:dz.zoneX*s/rs,zoneY:dz.zoneY*s/rs,targetX:(dz.desiredX-(camX-vw/2))*s/rs,targetY:(dz.desiredY-(camY-vh/2))*s/rs};

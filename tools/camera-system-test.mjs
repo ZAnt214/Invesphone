@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { CAMERA_PRIORITY, createCameraControl, damp, deadZoneTarget } from '../src/camera/cameraDirector.js'
+import { CAMERA_PRIORITY, createCameraControl, createLead, damp, deadZoneTarget } from '../src/camera/cameraDirector.js'
 
 const near = (actual, expected, tolerance = 1e-6) =>
   assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} não está próximo de ${expected}`)
@@ -48,4 +48,21 @@ calm.focus({ id: 'calm', priority: CAMERA_PRIORITY.critical, duration: 1200 }, 4
 assert.equal(calm.resolve(4159).focus.id, 'calm')
 assert.equal(calm.resolve(4161).mode, 'follow')
 
-console.log('camera-system-test: 13 verificações aprovadas')
+// Espaço à frente: cresce devagar andando, inverte sem chicotear e, parado, guarda uma fração em vez de voltar ao centro.
+{
+  const lead = createLead({ rate: 2, restRate: 1.3, rest: .3, maxSpeed: 100 })
+  for (let i = 0; i < 60 * 6; i++) lead.update(1, 0, true, 1 / 60, 200, 0)
+  assert.ok(lead.x > 190 && lead.x <= 200, `lead andando: ${lead.x}`)
+  // inversão: passa por valores intermediários, sem salto de uma só vez
+  const steps = []
+  for (let i = 0; i < 30; i++) { const before = lead.x; lead.update(-1, 0, true, 1 / 60, 200, 0); steps.push(Math.abs(lead.x - before)) }
+  assert.ok(Math.max(...steps) <= 100 / 60 + 1e-9, `inversão brusca: ${Math.max(...steps)}`)
+  // parou: mantém ~30% do espaço, na direção em que olha, e não volta ao centro
+  for (let i = 0; i < 60 * 20; i++) lead.update(-1, 0, false, 1 / 60, 200, 0, -1)
+  near(lead.x, -60, 2)
+  // a 30 e a 60 FPS o resultado é o mesmo
+  const run = fps => { const l = createLead({ rate: 2, maxSpeed: 1e9 }); for (let i = 0; i < fps; i++) l.update(1, 0, true, 1 / fps, 200, 0); return l.x }
+  near(run(30), run(60), 1e-6)
+}
+
+console.log('camera-system-test: 17 verificações aprovadas')
