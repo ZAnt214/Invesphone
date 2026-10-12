@@ -9,7 +9,7 @@
    (neon, arandelas, giroflex) somadas por cima, e a luz da manhã. Escala inteira de pixel e corte do que está fora da tela.
    A qualidade escolhida pelo jogador (src/characters/quality.ts) decide o que entra: baixa = só o essencial (sem sombras
    projetadas, brilhos nem vapor); média = sombras, luzes que emitem e vapor; alta = mais os fachos de luz e a poeira no ar. */
-import {GY,CURB,ROAD,NEAR,STREET_H,FG_TOP,WALK,PARK,LANES,SUN,TREES,MANHOLES,CROSSWALKS,CW_HALF,BAND_TOP,BAND_BOT,rnd,paintFacades,paintGround,paintWear} from './streetArt';
+import {GY,CURB,ROAD,NEAR,STREET_H,FG_TOP,WALK,PARK,LANES,SUN,TREES,MANHOLES,CROSSWALKS,CW_HALF,BAND_TOP,BAND_BOT,rnd,paintFacades,paintGround,paintWear,paintSkyline} from './streetArt';
 import {paintForeground} from './streetFG';
 import {createDwellers} from './dwellers';
 import {createFront} from './streetFront';
@@ -121,8 +121,8 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
 
   function buildStatic(){
     const cv=document.createElement('canvas');cv.width=STREET_W;cv.height=STREET_H;const g=cv.getContext('2d');g.imageSmoothingEnabled=false;
-    const sky=g.createLinearGradient(0,0,0,420);sky.addColorStop(0,'#8fa9c4');sky.addColorStop(1,'#d8d4cc');g.fillStyle=sky;g.fillRect(0,0,STREET_W,GY);
-    paintFacades(g,BUILDINGS,A,{sign:A.sign(),door:A.door()});
+    const bg=document.createElement('canvas');bg.width=STREET_W;bg.height=GY;paintSkyline(bg.getContext('2d'),STREET_W,GY);g.drawImage(bg,0,0);
+    paintFacades(g,BUILDINGS,A,{sign:A.sign(),door:A.door(),bg});
     paintGround(g,STREET_W,art,STALLS);
     paintWear(g,BUILDINGS,STREET_W);
     fgRooms=paintForeground(g,STREET_W);
