@@ -77,3 +77,7 @@ Feitos em 844×390, 390×844 e 375×667:
 
 - **De cima (fachadas)**: cada lote tem número de andares próprio (`floors` em `LOT`, `street.js`); acima dos mais baixos aparece o céu, com caixa d'água, chaminé e antena no telhado. Alguns têm uma passagem estreita ao lado (`inset`), então os prédios não ficam todos grudados.
 - **De baixo (telhados)**: larguras sorteadas, vãos de serviço entre eles, recuos diferentes da calçada e alturas diferentes (o mais alto faz sombra no vizinho). O interior nunca aparece.
+
+## Primeiro plano em paralaxe — direção A (aprovada em 12/10/2026)
+
+`src/base/streetFront.js`: os prédios do lado de cá ficam entre a câmera e a rua. Vemos a parede dos fundos do último andar (tijolo, janelas só com vidro/cortina/persiana, ar-condicionado, floreira, escada de incêndio, cano de descida) e o telhado recortado (caixa d'água, chaminé, respiros, antena, parabólica, casa de máquinas), com varais entre alguns prédios. Larguras, alturas e vãos sorteados. Escala de pixel um passo acima da rua (`s+1`) e paralaxe horizontal; o topo de cada prédio fica 1,5× a escala da rua acima da linha `BAND_BOT`, então os mais altos chegam perto da faixa amarela em qualquer aparelho. Translúcido onde algo importante passa atrás (ônibus parado no ponto, pedestre atravessando). O interior nunca aparece.
