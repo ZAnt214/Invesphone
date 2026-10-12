@@ -90,10 +90,10 @@ const F={GRASS:0,STREET:1,WALK:2,CONC:3,WALL:6,DOOR:8,WIN:9,FLOOR:4};
 const ROOM_NAME={sonia:'Sala da delegada',equipe:'Sala da equipe',pericia:'Perícia',interro:'Sala de depoimentos',hall:'Recepção',acesso:'Corredor restrito',arquivo:'Arquivo Morto',fora:'Pátio do DHPP',wall:'Corredor'};
 const ROOM_RECT={sonia:[2,2,9,8],equipe:[11,2,21,8],pericia:[23,2,31,8],interro:[2,10,9,17],acesso:[11,10,21,13],hall:[11,14,21,17],arquivo:[23,10,31,17]};
 /* Organização do DHPP (aprovada em 13/10/2026): uma só entrada, pela recepção (área pública: atendimento, espera). A
-   separação é lá dentro: a divisória de vidro com o balcão do Plantão, o detector de metal e a catraca com crachá (com o
-   guarda) levam ao corredor restrito, de onde se chega à sala da equipe (e dela à delegada e à perícia), à sala de
-   depoimentos e ao Arquivo Morto. Só agentes e policiais passam da catraca. */
-const GATE_X=19;   // a catraca, na divisória (linha 13)
+   separação é lá dentro: na divisória de vidro com o balcão do Plantão, uma porta de vidro que só abre com o crachá
+   do agente (o guarda fica ao lado) leva ao corredor restrito, de onde se chega à sala da equipe (e dela à delegada e à perícia), à sala de
+   depoimentos e ao Arquivo Morto. Só agentes e policiais passam dessa porta. */
+const GATE_X=19;   // a porta de acesso com leitor de crachá, na divisória (linha 13)
 let floor,room,occ,hot,blk,objs;
 function buildMap(){
   floor=new Array(N).fill(F.GRASS);room=new Array(N).fill('fora');occ=new Array(N).fill(-1);hot=new Array(N).fill(null);blk=new Array(N).fill(false);objs=[];
@@ -120,10 +120,9 @@ function buildMap(){
   // perícia
   add('stool',25,3,1,1,{nocc:true});add('bench',24,4,4,1);add('lightbox',28,6,3,1,{hot:'fotos'});add('locker',30,2,1,1);add('locker',31,2,1,1);add('bagtable',24,6,2,1);add('evidcage',23,2,2,1);add('plant',23,7,1,1);
   // recepção (pública) e controle de acesso: divisória de vidro na linha 13 com o balcão do Plantão (atrás do vidro, do lado
-  // restrito), o painel de senha, a placa de área restrita, o detector de metal e a catraca (a única passagem para dentro)
+  // restrito), o painel de senha, a placa de área restrita e a porta com leitor de crachá (a única passagem para dentro)
   add('chair',14,12,1,1,{nocc:true});
-  add('glasswall',11,13,1,1);add('counter',12,13,5,1);add('glasswall',17,13,2,1,{v:'senha'});add('turnstile',GATE_X,13,1,1,{nocc:true});add('glasswall',20,13,2,1,{v:'restrito'});
-  add('detector',GATE_X,14,1,1,{nocc:true});
+  add('glasswall',11,13,1,1);add('counter',12,13,5,1);add('glasswall',17,13,2,1,{v:'senha'});add('secdoor',GATE_X,13,1,1,{nocc:true});add('glasswall',20,13,2,1,{v:'restrito'});
   add('sofa',18,15,3,1);add('espera',17,16,1,1);add('cooler',12,16,1,1);add('plant',11,16,1,1,{v:'tall'});add('plant',21,16,1,1,{v:'tall'});add('wetsign',14,15,1,1);
   // corredor restrito: quadro de avisos e extintor
   add('filing',11,10,1,1);add('plant',21,10,1,1,{v:'tall'});
@@ -381,17 +380,16 @@ const FACT={
     if(o.v==='senha'){P(fw/2-18,12,36,14,'#14161a');P(fw/2-17,13,34,1,'#2a2e34');txt(g,'042',fw/2-12,23,9,'#ff4a3a',1.4);P(fw/2-18,26,36,2,'#2a2e34');}
     if(o.v==='restrito'){P(6,12,fw-12,16,'#b02a24');P(6,12,fw-12,1,'#d8524a');const a=txtW(g,'ÁREA RESTRITA',6,1.2);txt(g,'ÁREA RESTRITA',fw/2-a/2,21,6,'#ffffff',1.2);const b2=txtW(g,'SÓ AGENTES',5,1.1);txt(g,'SÓ AGENTES',fw/2-b2/2,27,5,'#ffe2de',1.1);}
   }];},
-  // catraca de crachá: coluna de aço com leitor (luz verde) e três braços
-  turnstile(){return [26,(P,E,g,t,fw,fh,B)=>{
-    P(2,4,10,B-6,'#9aa2a8');P(2,4,10,2,'#d4dade');P(10,4,2,B-6,'#6a7278');P(4,8,6,5,'#2a2e34');E(7,10,1.5,1.5,'#3bd16f');
-    for(const [y,l] of [[14,22],[19,20],[24,22]])P(12,y,l,2,'#c4cad0');P(12,14,1,12,'#8a9096');
-    P(2,B-3,10,3,'#4a4f55');
-  }];},
-  // pórtico detector de metal
-  detector(){return [50,(P,E,g,t,fw,fh,B)=>{
-    for(const x of [2,fw-7]){P(x,0,5,B-2,'#c4c9ce');P(x,0,1,B-2,'#eef1f3');P(x+4,0,1,B-2,'#8a9096');}
-    P(2,0,fw-4,7,'#9aa0a6');P(2,0,fw-4,1,'#d4dade');for(let k=0;k<5;k++)P(8+k*4,3,2,2,k===2?'#3bd16f':'#5a6066');
-    P(3,B-3,6,3,'#4a4f55');P(fw-8,B-3,6,3,'#4a4f55');
+  // porta de acesso: vidro jateado com a faixa "ACESSO RESTRITO", batente de aço e leitor de crachá ao lado (luz vermelha;
+  // verde quando abre). Aberta, a folha some de lado e mostra o corredor.
+  secdoor(o){return [40,(P,E,g,t,fw,fh,B)=>{
+    P(0,4,fw,3,'#a9b0b6');P(0,4,fw,1,'#d4dade');P(0,4,3,B-6,'#7a8086');P(fw-3,4,3,B-6,'#7a8086');
+    if(o.open){P(3,7,fw-6,B-10,'rgba(40,46,54,.55)');P(fw-9,7,6,B-10,'rgba(176,206,226,.55)');P(fw-9,7,1,B-10,'#d4dade');}
+    else{P(3,7,fw-6,B-10,'rgba(196,214,228,.62)');for(let j=0;j<14;j++)P(8+j,12+j*1.5,2,1,'rgba(255,255,255,.4)');P(3,18,fw-6,7,'rgba(255,255,255,.55)');P(3,21,fw-6,1,'#b02a24');
+      P(fw-10,B/2-2,2,8,'#8a9096');}
+    // leitor de crachá no batente: vermelho fechado, verde ao abrir
+    P(fw-8,14,6,10,'#2a2e34');P(fw-8,14,6,1,'#5a6066');P(fw-7,16,4,3,'#14161a');E(fw-5,22,1.4,1.4,o.open?'#3bd16f':'#e04a3a');
+    P(0,B-3,fw,3,'#4a4f55');
   }];},
   // espelho de observação na parede da sala de depoimentos
   mirror(){return [34,(P,E,g,t,fw,fh,B)=>{
@@ -733,7 +731,7 @@ const NPCDEF=[
   {id:'mauricio',name:'Maurício Farias',role:'Perito criminal',look:'mauricio',x:25,y:3,sit:true,ini:'MF',col:'#9fb7c9',act:'type',walk:[[25,3],[27,5,'read']],lines:['Luva nova.','Etiqueta, lacre, assinatura.','Foto 14, refaz.'],idle:['read','chin','scratch','stretch']},
   {id:'faxina',name:'Limpeza',role:'Equipe de apoio',look:'faxina',x:13,y:15,ini:'LP',col:'#8fb0c8',mop:true,walk:[[13,15],[19,13,'stretch'],[17,16],[12,14,'watch'],[18,12]],lines:['Cuidado, tá molhado.','Bom dia, doutor.','Esse café mancha tudo.'],idle:['watch','scratch']},
   {id:'plantao',name:'Plantão',role:'Recepção · DHPP',look:'plantao',x:14,y:11,sit:true,ini:'PL',col:'#a9b8c6',act:'write',lines:['DHPP, bom dia.','Um momento, por favor.','Sem comentários.'],idle:['phone','phone','read','cross','drink'],poseLines:{phone:['DHPP, bom dia.','Não, senhor. Sem comentários.','Vou transferir, aguarde.']}},
-  {id:'guarda',name:'Guarda',role:'Controle de acesso · DHPP',look:'guarda',x:20,y:14,ini:'GD',col:'#7a8fb0',lines:['Crachá, por favor.','Bolsa no detector.','Aguarde ser chamado, senhor.'],idle:['watch','cross','watch','scratch']},
+  {id:'guarda',name:'Guarda',role:'Controle de acesso · DHPP',look:'guarda',x:20,y:14,ini:'GD',col:'#7a8fb0',lines:['Crachá, por favor.','Só com crachá, senhor.','Aguarde ser chamado, senhor.'],idle:['watch','cross','watch','scratch']},
 ];
 // conversa de fundo entre colegas (nada do caso: só o dia a dia da base). Os dois precisam estar parados e perto.
 const CHATS=[
@@ -747,6 +745,7 @@ const CHATS=[
 // quanto dura cada gesto, em quadros (60 por segundo)
 const POSE_DUR={phone:420,drink:200,cross:360,stretch:110,read:400,chin:300,watch:110,scratch:120};
 let chatT=900;
+const DOORA={t:0,open:false};
 let BG=null,WALLROWS=null,SIGN=null,DOORSPR=null,SHADOW=null,LAMP=null;
 let P1,NPCS=[],frame=0,started=false,follow=true,talkOpen=false;
 let SEEN=safe(()=>JSON.parse(localStorage.getItem('base.seen')||'{}'),{});
@@ -764,7 +763,7 @@ function newGame(){
 function framesFor(p){if(!p.frames)p.frames=personFrames(p.look||LOOK[p.lookId]);return p.frames;}
 function framesHDFor(p){if(!p.framesHD)p.framesHD=personFramesHD(p.look,framesFor(p));return p.framesHD;}
 function initArt(){
-  for(const o of objs)o.spr=makeSprite(o);
+  for(const o of objs){o.spr=makeSprite(o);if(o.t==='secdoor'){o.sprC=o.spr;o.sprO=makeSprite({...o,open:true});}}
   BG=buildGround();WALLROWS=buildWalls();SIGN=buildSign();DOORSPR=buildDoor();LAMP=buildLamp();
   SHADOW=S2(22,8,(P,E)=>{E(11,4,10,3.5,'rgba(0,0,0,.30)');E(11,4,7,2.5,'rgba(0,0,0,.18)');});
   for(const n of NPCS)n.look=LOOK[n.look];
@@ -925,7 +924,7 @@ function boardNearTick(dt){
 const DLG={
   sonia:()=>teamTalk('sonia'),mauricio:()=>teamTalk('mauricio'),renata:()=>teamTalk('renata'),paulo:()=>teamTalk('paulo'),denise:()=>teamTalk('denise'),
   sonia_mesa:()=>({who:'Mesa da delegada',role:'Sala de Sônia Prado',av:'icon',pages:['Pasta aberta, telefone fora do gancho pela metade, xícara vazia. Nada aqui é para você mexer sem ela dizer.'],opts:[]}),
-  guarda:()=>({who:'Guarda',role:'Controle de acesso · DHPP',av:'guarda',pages:['Bom dia, doutor. Daqui pra dentro só com crachá.','Quem vem depor espera no sofá até alguém da equipe buscar.'],opts:[]}),
+  guarda:()=>({who:'Guarda',role:'Controle de acesso · DHPP',av:'guarda',pages:['Bom dia, doutor. A porta só abre com o crachá de vocês.','Quem vem depor espera no sofá até alguém da equipe buscar.'],opts:[]}),
   plantao:()=>({who:'Plantão',role:'Recepção · DHPP',av:'plantao',pages:['A imprensa ligou duas vezes. Respondi o que a delegada mandou: sem comentários.','Se alguém procurar a equipe, passa por mim primeiro.'],opts:[]}),
   mesa_lemos:()=>({who:'Sua mesa',role:'Lemos · DHPP',av:'icon',pages:['Café frio e a pasta do Caso 01 ainda fechada. O que importa está no aparelho.'],opts:[OPEN_PHONE]}),
   fotos:()=>FOUND.length?{who:'Mesa de luz',role:'Perícia',av:'icon',pages:['Fotografias periciais da casa, reveladas e penduradas para análise.'],opts:[{t:'Ver as fotos',s:`${FOUND.length} de 7`,fn:()=>openGallery(0),main:true}]}
@@ -1543,6 +1542,9 @@ function updAtmo(){
   if(frame%7===0)FXP.push({k:'smoke',x:4*T+77,y:12*TH+26,z:2,vz:0.16,t:0,life:240,sz:0.8,ph:Math.random()*6});
   // passos levantam poeira lá fora
   if(P1.moving&&!INSIDE(roomOf(P1))&&frame%10===0)for(let k=0;k<2;k++)FXP.push({k:'puff',x:P1.x*T+16+(Math.random()-0.5)*6,y:P1.y*TH+TH-3,z:1,vz:0.1,vx:(Math.random()-0.5)*0.2,t:0,life:28,sz:1.4});
+  // porta de acesso: abre quando alguém da casa (Lemos ou a equipe) chega com o crachá; bipa e o leitor fica verde
+  {const near=[P1,...NPCS.filter(n=>n.id!=='guarda')].some(a=>Math.abs(a.x-GATE_X)<.7&&a.y>11.8&&a.y<14.2);DOORA.t=near?Math.min(1,DOORA.t+.12):Math.max(0,DOORA.t-.05);const op=DOORA.t>.5;
+    if(op!==DOORA.open){DOORA.open=op;for(const o of objs)if(o.sprO)o.spr=op?o.sprO:o.sprC;if(op)soundAt({x:GATE_X,y:13},'beep',.8);}}
   // rodo da faxineira
   for(const n of NPCS)if(n.mop&&n.moving&&frame%8===0&&WETS.length<70)WETS.push({x:n.x*T+16+n.dir*9,y:n.y*TH+TH-3,t:0,life:1400,rx:7+Math.random()*4});
   for(const n of NPCS)if(n.mop&&n.moving&&frame%6===0)for(let k=0;k<2;k++)FXP.push({k:'drop',x:n.x*T+16+n.dir*10+(Math.random()-0.5)*6,y:n.y*TH+TH-3,z:1,vz:0.5+Math.random()*0.5,vx:(Math.random()-0.5)*0.6,t:0,life:40});
