@@ -79,3 +79,5 @@ Preenchido pelo ChatGPT ao concluir.
 - **`porta-aberta.png`:** não encaixa no fundo (outro batente e outra escala) e ainda não é usada.
 - **Reenvio:** pedido em `creative-requests/inbox/2026-10-12-porta-cracha-reenvio.md`.
 - **`cracha.png`:** guardado para outras telas.
+
+- Depois: o usuário preferiu uma leitora mais simples, no estilo do rádio da varredura e desenhada em código. Esta arte saiu do jogo; os arquivos ficam em `public/base/acesso/`.

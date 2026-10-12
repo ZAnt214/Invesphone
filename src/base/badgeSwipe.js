@@ -1,142 +1,106 @@
-/* Porta de acesso do DHPP: close na leitora de crachá (docs/DHPP_BASE.md, "Porta de acesso").
-   A arte é oficial (public/base/acesso/, pedido 2026-10-13-porta-cracha-close): fundo, mão com o crachá e as
-   coordenadas em manifest.json. O código põe por cima só o que muda: os LEDs, o texto do visor, da plaquinha e do
-   crachá, o cordão e o gesto.
-   - O jogador arrasta de qualquer ponto da tela (o crachá acompanha o dedo, sem precisar mirar nele).
-   - A borda da tarja precisa entrar no alto da fenda e descer até o fim, sem parar e nem rápido demais.
-   - A trilha pontilhada aparece até o primeiro acerto. Ajustes: Gráficos > Cenas rápidas desliga o close
-     (a porta volta a abrir sozinha) e Som > Leitora de crachá desliga o bipe e a trava. */
+/* Porta de acesso do DHPP: leitora de crachá no estilo do rádio da varredura (docs/DHPP_BASE.md, "Porta de acesso").
+   Um terminal deitado aparece sobre a cena escurecida, com a fenda em cima; o crachá de Lemos está encaixado nela
+   pela tarja. O jogador arrasta (de qualquer ponto da tela) e o crachá corre pela fenda, da esquerda para a direita:
+   chegou ao fim, a tela acende verde, a trava solta e a porta abre. Soltou no meio, ele volta e a tela pede de novo.
+   Tudo desenhado aqui (sem imagem); a trilha pontilhada aparece até o primeiro acerto.
+   Ajustes: Gráficos > Cenas rápidas desliga a leitora (a porta abre sozinha); Som > Leitora de crachá. */
 import './badge.css';
 import { sfx, sfxEnabled } from '../sfx';
 import { fxOn } from '../settings/gameSettings';
 
-const DIR='/base/acesso/';
 const KEY='invesphone.badge.ok';
-// mão-cracha.png: a borda da tarja (x) e a ponta de baixo do cartão (y); faixa, nome e função do cartão
-const CARD={edge:262,bottom:309,top:28,mid:176,band:[84,30,146,34],name:[98,237,138,21],fn:[98,271,92,22]};
-const OK_MIN=110,OK_MAX=1800;   // ms para a borda percorrer a fenda inteira
-
-let man=null,arts=null,loading=null;
-const img=src=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src;});
-// o fundo oficial chegou com a metade de baixo corrompida: confere se a imagem decodificou inteira e, se não,
-// usa o provisório (topo oficial + parte de baixo completada) até o ChatGPT reenviar o arquivo
-function whole(i){try{const c=document.createElement('canvas');c.width=32;c.height=16;const g=c.getContext('2d');g.drawImage(i,0,0,32,16);const d=g.getImageData(0,12,32,4).data;for(let k=3;k<d.length;k+=4)if(d[k]<200)return false;return true;}catch(_){return true;}}
-// a arte da mão termina num corte reto (embaixo e à direita) no meio da manga; quando a mão sobe até a fenda, o
-// corte apareceria. Prolonga a manga na direção do braço repetindo as últimas fileiras de pixels da própria arte.
-const ARM={vx:.81,vy:.59,len:760};
-function armed(i){
-  const w=i.naturalWidth,h=i.naturalHeight,ex=Math.ceil(ARM.len*ARM.vx),ey=Math.ceil(ARM.len*ARM.vy);
-  const c=document.createElement('canvas');c.width=w+ex;c.height=h+ey;const g=c.getContext('2d');
-  for(let k=ARM.len;k>0;k-=1){const dx=k*ARM.vx,dy=k*ARM.vy;
-    g.drawImage(i,0,h-3,w,3,dx,h-3+dy,w,3);g.drawImage(i,w-3,0,3,h,w-3+dx,dy,3,h);}
-  // o braço sai da luz: escurece aos poucos para fora do quadro
-  g.globalCompositeOperation='source-atop';const gr=g.createLinearGradient(w-40,h-40,w+ex*.6,h+ey*.6);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.55)');
-  g.fillStyle=gr;g.fillRect(w-60,h-60,ex+60,ey+60);g.globalCompositeOperation='source-over';
-  g.drawImage(i,0,0);return c;
-}
-export function preloadBadge(){
-  if(loading)return loading;
-  loading=(async()=>{
-    man=await fetch(DIR+'manifest.json').then(r=>r.json());
-    let fundo=null;try{fundo=await img(DIR+'fundo.png');if(!whole(fundo))fundo=null;}catch(_){fundo=null;}
-    if(!fundo)fundo=await img(DIR+'fundo-provisorio.png');
-    const mao=armed(await img(DIR+'mao-cracha.png'));
-    arts={fundo,mao};return true;
-  })().catch(()=>{arts=null;return false;});
-  return loading;
-}
-/** a arte carregou? sem ela a porta abre sozinha, como antes */
-export const badgeReady=()=>!!arts;
+// medidas do palco (px antes da escala): terminal, fenda e o curso do crachá
+const DEV={x:60,y:150,w:400,h:170},SLOT={x:76,y:162,w:368,h:16};
+const CARD={w:208,h:132,y:SLOT.y+SLOT.h/2+4-132},X0=-6,X1=300,STAGE={w:520,h:340};
 
 const el=(tag,cls,parent,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;if(parent)parent.appendChild(e);return e;};
 const snd=k=>{if(sfxEnabled()&&fxOn('sfx.badge'))sfx[k]&&sfx[k]();};
 
-/** abre o close. o.pt(e) devolve o ponto do toque no sistema do jogo (já desfaz a tela girada);
+// assinatura rabiscada do crachá
+const SIGN='<svg viewBox="0 0 80 18" aria-hidden="true"><path d="M2 13c4-9 7-10 8-6s-3 9 1 7 6-11 9-9-2 9 2 8 4-6 7-6 1 6 4 5 5-7 9-7-2 5 2 5 7-3 10-4 5 1 9-1"/></svg>';
+function cardHTML(){
+  let bars='';for(let i=0,x=0;i<26;i++){const w=1+((i*7)%3);bars+=`<i style="left:${x}px;width:${w}px"></i>`;x+=w+1+((i*5)%2);}
+  return `<div class="bc-gl" aria-hidden="true"></div>
+  <div class="bc-hd"><span class="bc-crest" aria-hidden="true"><i>★</i></span><span class="bc-org"><b>DHPP</b><small>DEPARTAMENTO DE HOMICÍDIOS<br>E DE PROTEÇÃO À PESSOA</small></span><span class="bc-hole" aria-hidden="true"></span></div>
+  <div class="bc-ph" aria-hidden="true"><i class="h"></i><i class="b"></i><i class="holo"></i></div>
+  <dl class="bc-f">
+    <dt>NOME</dt><dd class="nm">LEMOS</dd>
+    <dt>FUNÇÃO</dt><dd>INVESTIGAÇÃO</dd>
+    <div class="row"><div><dt>MATRÍCULA</dt><dd>04.117-3</dd></div><div><dt>VALIDADE</dt><dd>12/2003</dd></div></div>
+  </dl>
+  <div class="bc-sg">${SIGN}<span>ASSINATURA</span></div>
+  <div class="bc-bar" aria-hidden="true">${bars}</div>
+  <div class="bc-tag">USO OBRIGATÓRIO NAS DEPENDÊNCIAS</div>
+  <div class="bc-mag" aria-hidden="true"></div>`;
+}
+
+/** a leitora não depende de arte: está sempre pronta */
+export const badgeReady=()=>true;
+
+/** abre a leitora. o.pt(e) devolve o ponto do toque no sistema do jogo (já desfaz a tela girada);
     o.done(ok) é chamado ao fechar: true com a porta liberada, false se o jogador voltou */
 export function openBadge(parent,o){
-  if(!arts||!man)return o.done(true);
-  const CW=man.canvas.width,CH=man.canvas.height,S=man.slot,lcd=man.display,pl=man.plaque,hs=man.hand;
-  const slotX=S.x+S.width/2,slotTop=S.y,slotBot=S.y+S.height;
   const root=el('div','bx',parent);root.setAttribute('role','dialog');root.setAttribute('aria-label','Leitora de crachá');
-  const stage=el('div','bx-stage',root);stage.style.width=CW+'px';stage.style.height=CH+'px';
-  const bg=el('img','bx-bg',stage);bg.src=arts.fundo.src;bg.alt='';bg.draggable=false;
-  const plq=el('div','bx-plq',stage,'SÓ AGENTES');Object.assign(plq.style,{left:pl.x+'px',top:pl.y+'px',width:pl.width+'px',height:pl.height+'px'});
-  const scr=el('div','bx-lcd',stage);Object.assign(scr.style,{left:lcd.x+'px',top:lcd.y+'px',width:lcd.width+'px',height:lcd.height+'px'});
-  const led=(p,cls)=>{const e=el('i','bx-led '+cls,stage);Object.assign(e.style,{left:p.x+'px',top:p.y+'px',width:p.radius*2+'px',height:p.radius*2+'px'});return e;};
-  const ledR=led(man.readerLed,'r'),ledL=led(man.lockLed,'l');
+  const stage=el('div','bx-stage',root);stage.style.width=STAGE.w+'px';stage.style.height=STAGE.h+'px';
   const NS='http://www.w3.org/2000/svg';
-  const svg=document.createElementNS(NS,'svg');svg.setAttribute('class','bx-svg');svg.setAttribute('viewBox',`0 0 ${CW} ${CH}`);stage.appendChild(svg);
+  const svg=document.createElementNS(NS,'svg');svg.setAttribute('class','bx-svg');svg.setAttribute('viewBox',`0 0 ${STAGE.w} ${STAGE.h}`);stage.appendChild(svg);
+  const cordO=document.createElementNS(NS,'path'),cordI=document.createElementNS(NS,'path');cordO.setAttribute('class','bx-cord o');cordI.setAttribute('class','bx-cord i');svg.append(cordO,cordI);
+  // terminal
+  const dev=el('div','bx-dev',stage);Object.assign(dev.style,{left:DEV.x+'px',top:DEV.y+'px',width:DEV.w+'px',height:DEV.h+'px'});
+  dev.innerHTML=`<i class="bx-screw" style="left:10px;bottom:10px"></i><i class="bx-screw" style="right:10px;bottom:10px"></i>
+    <div class="bx-lcd"><div class="l1"><span>CH 01</span><span class="bat"><i></i><i></i><i></i></span></div><b class="l2"></b><b class="l3"></b><div class="l4"><i></i></div></div>
+    <div class="bx-side"><span class="bx-ledrow"><i class="bx-led lock"></i>TRAVA</span><span class="bx-ledrow"><i class="bx-led pwr"></i>REDE</span>
+    <div class="bx-brand"><b>DHPP</b><span>HOMICÍDIOS</span></div></div>`;
+  const slot=el('div','bx-slot',stage);Object.assign(slot.style,{left:SLOT.x+'px',top:SLOT.y+'px',width:SLOT.w+'px',height:SLOT.h+'px'});
   const first=(()=>{try{return localStorage.getItem(KEY)!=='1';}catch(_){return true;}})();
-  const hint=document.createElementNS(NS,'path');hint.setAttribute('class','bx-hint');if(first)svg.appendChild(hint);
-  const cordO=document.createElementNS(NS,'path'),cordI=document.createElementNS(NS,'path'),cordH=document.createElementNS(NS,'path');
-  cordO.setAttribute('class','bx-cord o');cordI.setAttribute('class','bx-cord i');cordH.setAttribute('class','bx-cord h');svg.append(cordO,cordI,cordH);
-  const hand=el('div','bx-hand',stage);const hi=arts.mao.cloneNode();hi.getContext('2d').drawImage(arts.mao,0,0);hi.setAttribute('aria-label','Mão de Lemos com o crachá');const hin=el('div','bx-hin',hand);hin.appendChild(hi);
-  const txt=(r,cls,t)=>{const e=el('b','bx-card '+cls,hin,t);Object.assign(e.style,{left:r[0]+'px',top:r[1]+'px',width:r[2]+'px',height:r[3]+'px'});};
-  txt(CARD.band,'org','DHPP');txt(CARD.name,'nm','LEMOS');txt(CARD.fn,'fn','INVESTIGAÇÃO');
+  const hint=el('div','bx-hint',stage,'<i></i><b>▶</b>');Object.assign(hint.style,{left:(X0+CARD.w+8)+'px',top:(SLOT.y+SLOT.h/2-2)+'px',width:(X1-X0+8)+'px'});if(!first)hint.remove();
+  const card=el('div','bx-card',stage,cardHTML());card.setAttribute('aria-label','Crachá de Lemos, investigação, DHPP');
+  // a borda de cima do terminal passa por cima da tarja: o crachá parece entrar na fenda
+  const lip=el('div','bx-lip',stage);Object.assign(lip.style,{left:(SLOT.x-4)+'px',top:(SLOT.y+SLOT.h/2-1)+'px',width:(SLOT.w+8)+'px'});
   const tip=el('p','bx-tip',root);
   const back=el('button','bx-x',root,'Voltar');back.type='button';
+  const l2=dev.querySelector('.l2'),l3=dev.querySelector('.l3'),bar=dev.querySelector('.l4 i'),lcd=dev.querySelector('.bx-lcd'),lock=dev.querySelector('.lock');
 
-  // enquadramento: cobre a tela sem cortar a leitora e a mão; em tela estreita, cabe pela largura
   let s=1,ox=0,oy=0;
   function fit(){const vw=root.clientWidth||1,vh=root.clientHeight||1;
-    s=Math.min(Math.max(vw/CW,vh/CH),vw/(CW-640));
-    ox=Math.min(0,Math.max(vw-CW*s,vw/2-1000*s));oy=CH*s>vh?Math.min(0,Math.max(vh-CH*s,vh/2-CH*s*.52)):(vh-CH*s)/2;
+    s=Math.max(.55,Math.min(1.7,(vw-24)/STAGE.w,(vh-96)/STAGE.h));ox=(vw-STAGE.w*s)/2;oy=Math.max(8,(vh-STAGE.h*s)/2-6);
     stage.style.transform=`translate(${ox}px,${oy}px) scale(${s})`;}
 
-  const rest={x:hs.suggestedX,y:hs.suggestedY};let hx=rest.x,hy=rest.y;
-  let st='idle',drag=null,ent=null,busy=false,msgT=0;
-  const P=()=>({x:hx+CARD.edge,y:hy+CARD.bottom});
-  function place(){hand.style.transform=`translate(${hx}px,${hy}px)`;
-    // cordão: sai do alto do cartão e sobe para fora do quadro, com folga quando a mão sobe
-    const ax=hx+CARD.mid,ay=hy+CARD.top,bx=CW-170,by=-40,d=Math.hypot(ax-bx,ay-by),sag=Math.max(30,(980-d)*.55);
-    const p=`M${ax} ${ay} Q ${(ax+bx)/2+40} ${(ay+by)/2+sag} ${bx} ${by}`;cordO.setAttribute('d',p);cordI.setAttribute('d',p);cordH.setAttribute('d',p);
-    if(first){const q=P();hint.setAttribute('d',`M${q.x-6} ${q.y-20} C ${q.x-120} ${q.y-40}, ${slotX+110} ${slotTop-10}, ${slotX+4} ${slotTop+4} L ${slotX+4} ${slotBot+20}`);}}
-  function lcdMsg(t,cls){scr.textContent=t;scr.className='bx-lcd'+(cls?' '+cls:'');}
-  function say(t){tip.textContent=t;}
-  function leds(c){ledR.className='bx-led r'+(c?' '+c:'');ledL.className='bx-led l'+(c==='ok'?' ok':'');}
-  function reset(){if(busy)return;st='idle';ent=null;lcdMsg('PASSE O CRACHÁ');leds('');hand.classList.remove('in');
-    say(first?'Arraste o crachá até a fenda e deslize de cima para baixo':'Deslize o crachá pela fenda');}
-  function fail(why){st='fail';ent=null;hand.classList.remove('in');busy=true;lcdMsg('TENTE NOVAMENTE','no');leds('no');say(why);snd('accessNo');
-    clearTimeout(msgT);msgT=setTimeout(()=>{busy=false;reset();},1100);}
-  function win(){st='ok';busy=true;lcdMsg('ACESSO LIBERADO','ok');leds('ok');say('Acesso liberado');snd('accessOk');hint.remove();
+  let cx=X0,st='idle',drag=null,busy=false,tmr=0,read=false;
+  function place(){card.style.transform=`translate(${cx}px,${CARD.y}px)`;
+    // cordão: do furo do crachá até fora do quadro, em cima, com folga
+    const ax=cx+CARD.w-22,ay=CARD.y+14,bx=STAGE.w/2+40,by=-60,sag=Math.max(20,120-Math.abs(ax-bx)*.25);
+    const p=`M${ax} ${ay} Q ${(ax+bx)/2} ${(ay+by)/2+sag} ${bx} ${by}`;cordO.setAttribute('d',p);cordI.setAttribute('d',p);
+    bar.style.width=Math.max(0,Math.min(1,(cx-X0)/(X1-X0)))*100+'%';}
+  function lcdMsg(a,b,cls){l2.textContent=a;l3.textContent=b;lcd.className='bx-lcd'+(cls?' '+cls:'');}
+  function idle(){if(busy)return;st='idle';read=false;lcdMsg('ACESSO RESTRITO','PASSE O CRACHÁ');lock.className='bx-led lock';
+    tip.textContent=first?'Arraste o crachá pela fenda, da esquerda para a direita':'Passe o crachá pela fenda';}
+  function slideBack(){card.classList.add('ret');cx=X0;place();setTimeout(()=>card.classList.remove('ret'),260);}
+  function fail(){st='fail';busy=true;read=false;lcdMsg('TENTE NOVAMENTE','PASSE ATÉ O FIM','no');lock.className='bx-led lock no';tip.textContent='Leve o crachá até o fim da fenda, sem soltar';snd('accessNo');
+    slideBack();clearTimeout(tmr);tmr=setTimeout(()=>{busy=false;idle();},1100);}
+  function win(){st='ok';busy=true;lcdMsg('ACESSO LIBERADO','BOM TRABALHO, LEMOS','ok');lock.className='bx-led lock ok';tip.textContent='Acesso liberado';hint.remove();snd('accessOk');
     try{localStorage.setItem(KEY,'1');}catch(_){/* sem armazenamento */}
-    setTimeout(()=>{hand.classList.add('away');},380);
-    setTimeout(()=>close(true),1150);}
+    setTimeout(()=>card.classList.add('away'),420);setTimeout(()=>close(true),1050);}
 
   function down(e){if(e.target===back||busy)return;e.preventDefault();try{root.setPointerCapture(e.pointerId);}catch(_){}
-    const q=o.pt(e);drag={id:e.pointerId,x:q.x,y:q.y,hx,hy};hand.classList.add('drag');}
-  function move(e){if(!drag||e.pointerId!==drag.id||busy)return;const q=o.pt(e);
-    let nx=drag.hx+(q.x-drag.x)/s,ny=drag.hy+(q.y-drag.y)/s;
-    nx=Math.max(-CARD.edge+60,Math.min(CW-120,nx));ny=Math.max(-CARD.bottom+90,Math.min(CH-90,ny));
-    if(ent){ // dentro da fenda: a borda fica presa nela; só o movimento para baixo conta
-      if(Math.abs(nx+CARD.edge-slotX)>120){hx=nx;hy=ny;place();fail('O crachá saiu da fenda');return;}
-      const py=ny+CARD.bottom;
-      if(py<slotTop-50){ent=null;hand.classList.remove('in');hx=nx;hy=ny;place();lcdMsg('PASSE O CRACHÁ');return;}
-      hx=slotX-CARD.edge;hy=ny;
-      const p=hy+CARD.bottom;
-      if(p>=slotTop&&ent.t0==null){ent.t0=performance.now();lcdMsg('LENDO…','read');snd('swipe');}
-      if(ent.t0!=null&&p>=slotBot+8){const dt=performance.now()-ent.t0;
-        if(dt<OK_MIN)return fail('Rápido demais: deslize num gesto só, sem pressa');
-        if(dt>OK_MAX)return fail('Devagar demais: deslize sem parar no meio');
-        place();return win();}
-      place();return;}
-    hx=nx;hy=ny;const p=P();
-    if(Math.abs(p.x-slotX)<48&&p.y>slotTop-80&&p.y<slotTop+30){ent={t0:null};hx=slotX-CARD.edge;hand.classList.add('in');
-      if(p.y>=slotTop){ent.t0=performance.now();lcdMsg('LENDO…','read');snd('swipe');}}
-    place();}
-  function up(e){if(!drag||e.pointerId!==drag.id)return;drag=null;hand.classList.remove('drag');
-    if(ent&&!busy){if(ent.t0!=null)fail('Vá até o fim da fenda sem soltar');else{ent=null;hand.classList.remove('in');}}}
+    drag={id:e.pointerId,x:o.pt(e).x,cx};card.classList.add('drag');}
+  function move(e){if(!drag||e.pointerId!==drag.id||busy)return;
+    cx=Math.max(X0,Math.min(X1,drag.cx+(o.pt(e).x-drag.x)/s));
+    if(!read&&cx>X0+18){read=true;st='read';lcdMsg('LENDO…','','read');snd('swipe');}
+    place();if(cx>=X1)win();}
+  function up(e){if(!drag||e.pointerId!==drag.id)return;drag=null;card.classList.remove('drag');
+    if(busy)return;if(read&&cx<X1)fail();else if(cx>X0)slideBack();}
   root.addEventListener('pointerdown',down);root.addEventListener('pointermove',move);
   root.addEventListener('pointerup',up);root.addEventListener('pointercancel',up);
   const key=e=>{if(e.key==='Escape')close(false);};addEventListener('keydown',key);
   back.addEventListener('click',()=>close(false));
   const onR=()=>fit();addEventListener('resize',onR);
   let closed=false;
-  function close(ok){if(closed)return;closed=true;clearTimeout(msgT);removeEventListener('keydown',key);removeEventListener('resize',onR);
+  function close(ok){if(closed)return;closed=true;clearTimeout(tmr);removeEventListener('keydown',key);removeEventListener('resize',onR);
     root.classList.add('out');setTimeout(()=>root.remove(),260);o.done(ok);}
 
-  fit();reset();place();requestAnimationFrame(()=>{fit();root.classList.add('on');});
-  // para os testes: posição da fenda e da borda do crachá na tela
-  root.__badge={get state(){return st;},slot:()=>({x:ox+slotX*s,top:oy+slotTop*s,bot:oy+slotBot*s}),edge:()=>{const p=P();return {x:ox+p.x*s,y:oy+p.y*s};},s:()=>s};
+  fit();idle();place();requestAnimationFrame(()=>{fit();root.classList.add('on');});
+  // para os testes: onde o crachá está e quanto ele precisa andar, na tela
+  root.__badge={get state(){return st;},card:()=>({x:ox+(cx+CARD.w/2)*s,y:oy+(CARD.y+CARD.h/2)*s}),travel:()=>(X1-X0)*s};
   return root;
 }

@@ -1,6 +1,6 @@
 ---
 id: 2026-10-12-porta-cracha-reenvio
-status: pending
+status: cancelled
 requested_by: claude
 priority: high
 character: "Porta de acesso do DHPP (close da leitora de crachá)"
@@ -41,6 +41,9 @@ Também conferir que a imagem salva no repositório é idêntica byte a byte à 
 ## Integração (Claude)
 - O jogo já procura `fundo.png` primeiro e só usa o provisório se o oficial não decodificar inteiro. Com o arquivo bom, ele entra sozinho; depois disso o provisório pode ser apagado.
 - Com a porta aberta alinhada, o close passa a mostrar a porta se abrindo antes de fechar.
+
+## Cancelado
+O usuário trocou o close ilustrado por uma leitora no estilo do rádio da varredura, desenhada em código (`src/base/badgeSwipe.js`). Não é preciso reenviar nada.
 
 ## Resposta do ChatGPT
 Preenchido pelo ChatGPT ao concluir.
