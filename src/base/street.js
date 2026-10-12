@@ -12,6 +12,7 @@
 import {GY,CURB,ROAD,NEAR,STREET_H,FG_TOP,WALK,PARK,LANES,SUN,TREES,MANHOLES,CROSSWALKS,CW_HALF,BAND_TOP,BAND_BOT,rnd,paintFacades,paintGround,paintWear} from './streetArt';
 import {paintForeground} from './streetFG';
 import {createDwellers} from './dwellers';
+import {createFront} from './streetFront';
 import {RUA_DIR,VEICULOS,PATH} from './ruaAssets';
 import {choose,eventLog,jitter} from '../world/life';
 import {CAMERA_PRIORITY,createCameraControl,createLead,damp,deadZoneTarget,drawCameraDebug} from '../camera/cameraDirector';
@@ -194,6 +195,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   const birds=Array.from({length:6},()=>({x:300+R()*(STREET_W-600),y:WALK[0]+10+R()*(WALK[1]-WALK[0]-20),z:0,dir:R()<.5?-1:1,st:'g',t:R()*40,vx:0,vz:0}));
   // poeira no ar, só visível contra a luz (qualidade alta): poucas partículas, recicladas
   const motes=Array.from({length:40},()=>({x:R(),y:R(),v:.3+R()*.7,p:R()*6.28}));
+  const front=createFront(STREET_W,BAND_BOT);
   const dwellers=createDwellers({buildings:BUILDINGS,rooms:fgRooms,looks:PED_LOOKS,personFrames,R,RM,lemos,onSound});
   const camera=createCameraControl({manualHold:2600,reducedMotion:RM});
   const lead=createLead();   // espaço à frente de Lemos (suavizado; ver cameraDirector)
@@ -596,6 +598,9 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
       for(const m of motes){const X=left+m.x*vw,Y=top+m.y*(CURB-top);const a=.25+.25*Math.sin(m.p*2);ctx.fillStyle=`rgba(255,244,220,${a})`;ctx.fillRect(Math.round(X),Math.round(Y),1,1);np++;}
       ctx.globalCompositeOperation='source-over';}
     stats.particles=np+puffs.length;
+    // primeiro plano: os prédios do lado de cá, entre a câmera e a rua (translúcidos onde algo importante passa atrás)
+    {const busy=[];if(bus&&bus.st==='stop')busy.push([bus.x,bus.x+W(bus),.35]);for(const p of peds)if(p.onRoad&&!p.hidden)busy.push([p.x-20,p.x+20,.55]);
+      front.draw(ctx,{s,top,left,vw,cw,ch},t,cameraDt,busy,RM);}
     // luz da manhã, como o clima de cor da planta (gradientes guardados por tamanho de tela)
     ctx.setTransform(1,0,0,1,0,0);
     const key=cw+'x'+ch;if(key!==gradeKey){gradeKey=key;gradeSun=ctx.createLinearGradient(0,0,cw,ch);gradeSun.addColorStop(0,'rgba(255,214,150,.34)');gradeSun.addColorStop(.6,'rgba(255,224,176,.08)');gradeSun.addColorStop(1,'rgba(90,120,170,.18)');
