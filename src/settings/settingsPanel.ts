@@ -4,15 +4,15 @@
  * na sua categoria, com a opção de desligar. Cabe inteiro na tela do celular; só a lista de opções rola, dentro
  * do painel.
  */
-import { CATEGORIES, EFFECTS, fxOn, onFxChange, resetFx, setFx } from './gameSettings'
+import { EFFECTS, categoriesOf, fxOn, onFxChange, resetFx, setFx } from './gameSettings'
 import { QUALITIES, QUALITY_LABEL, getQuality, onQualityChange, setQuality } from '../characters/quality'
 import { sfxEnabled, setSfxEnabled } from '../sfx'
 import { canFullscreen, enterFullscreen, exitFullscreen, isFullscreen, isStandalone } from '../fullscreen'
 import { SAVE_KEY } from '../case/caseSave'
 import './settingsPanel.css'
 
-type Tab = 'geral'|(typeof CATEGORIES)[number]['id']|'jogo'
-const TABS:{id:Tab;label:string}[] = [{ id:'geral', label:'Geral' },...CATEGORIES.map(c=>({ id:c.id as Tab, label:c.label })),{ id:'jogo', label:'Jogo' }]
+type Tab = 'graficos'|'som'|'tela'|'jogo'
+const TABS:{id:Tab;label:string}[] = [{ id:'graficos', label:'Gráficos' },{ id:'som', label:'Som' },{ id:'tela', label:'Tela' },{ id:'jogo', label:'Jogo' }]
 const QDESC:Record<string,string> = {
   low:'Menos efeitos e 30 quadros por segundo. Para aparelhos mais fracos ou economizar bateria.',
   medium:'Efeitos principais com bom desempenho.',
@@ -20,7 +20,7 @@ const QDESC:Record<string,string> = {
 }
 
 let root:HTMLElement|null = null
-let tab:Tab = 'geral'
+let tab:Tab = 'graficos'
 let confirmReset = false
 let self = false   // mudança feita aqui mesmo: não redesenha a lista (o interruptor já mudou)
 
@@ -42,14 +42,26 @@ function row(title:string,desc:string,ctrl:HTMLElement,tag?:string){
 
 function renderList(list:HTMLElement){
   list.innerHTML = ''; list.scrollTop = 0
-  if(tab==='geral'){
+  // efeitos de uma seção, agrupados por categoria (subtítulos)
+  const effects = (sec:'graficos'|'som')=>{ for(const c of categoriesOf(sec)){ if(sec==='graficos') list.appendChild(h('div','st-sub',c.label))
+      for(const e of EFFECTS.filter(x=>x.cat===c.id)) list.appendChild(row(e.label,e.desc,toggle(fxOn(e.id),e.label,v=>{ self = true; setFx(e.id,v); self = false }),e.where)) } }
+  if(tab==='graficos'){
     const q = getQuality(),seg = h('div','st-seg')
     for(const k of QUALITIES){ const b = h('button',k===q?'on':'',QUALITY_LABEL[k]) as HTMLButtonElement; b.onclick = ()=>{ setQuality(k); renderList(list) }; seg.appendChild(b) }
     list.appendChild(row('Qualidade gráfica',QDESC[q],seg))
+    effects('graficos')
+    if(q==='low') list.appendChild(h('p','st-note','Na qualidade baixa alguns destes efeitos ficam desligados de qualquer forma.'))
+    return
+  }
+  if(tab==='som'){
+    list.appendChild(row('Sons e vibração','Todos os sons do jogo (efeitos, ambiente) e a vibração.',toggle(sfxEnabled(),'Sons e vibração',v=>{ setSfxEnabled(v); window.dispatchEvent(new StorageEvent('storage',{ key:'invesphone.sfx' })) })))
+    effects('som')
+    return
+  }
+  if(tab==='tela'){
     if(isStandalone()) list.appendChild(row('Tela cheia','O jogo já está aberto como app, sem as barras do navegador.',h('span')))
     else if(canFullscreen()) list.appendChild(row('Tela cheia','Esconde as barras do navegador.',toggle(isFullscreen(),'Tela cheia',v=>{ void (v ? enterFullscreen() : exitFullscreen()) })))
     else list.appendChild(row('Tela cheia','No iPhone: Compartilhar → Adicionar à Tela de Início, e abra o ícone Arquivo Morto.',h('span')))
-    list.appendChild(row('Sons e vibração','Todos os sons do jogo (efeitos, ambiente) e a vibração.',toggle(sfxEnabled(),'Sons e vibração',v=>{ setSfxEnabled(v); window.dispatchEvent(new StorageEvent('storage',{ key:'invesphone.sfx' })) })))
     return
   }
   if(tab==='jogo'){
@@ -61,9 +73,6 @@ function renderList(list:HTMLElement){
     list.appendChild(row('Efeitos visuais e sonoros','Volta todos os efeitos ao padrão (ligados).',d))
     return
   }
-  const items = EFFECTS.filter(e=>e.cat===tab)
-  for(const e of items) list.appendChild(row(e.label,e.desc,toggle(fxOn(e.id),e.label,v=>{ self = true; setFx(e.id,v); self = false }),e.where))
-  if(getQuality()==='low') list.appendChild(h('p','st-note','Na qualidade baixa alguns destes efeitos ficam desligados de qualquer forma.'))
 }
 
 function build(parent:HTMLElement){
@@ -79,8 +88,8 @@ function build(parent:HTMLElement){
   parent.appendChild(root)
   if(parent!==document.body) root.classList.add('st-in')   // dentro do quadro do jogo (que gira no celular em pé)
   renderList(list)
-  onQualityChange(()=>{ if(root&&!root.hidden&&tab==='geral') renderList(list) })
-  onFxChange(()=>{ if(!self&&root&&!root.hidden&&tab!=='geral'&&tab!=='jogo') renderList(list) })
+  onQualityChange(()=>{ if(root&&!root.hidden&&tab==='graficos') renderList(list) })
+  onFxChange(()=>{ if(!self&&root&&!root.hidden&&(tab==='graficos'||tab==='som')) renderList(list) })
 }
 
 /** parent: o quadro do jogo (o painel gira junto com ele quando o celular está em pé) */

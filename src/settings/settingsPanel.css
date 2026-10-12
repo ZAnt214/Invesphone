@@ -24,6 +24,7 @@
 .st-seg button.on{background:rgba(242,194,48,.9);color:#15171b}
 .st-act{flex:none;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#e8ecef;font:700 11px/1 system-ui,sans-serif;padding:9px 12px;border-radius:4px;cursor:pointer}
 .st-act.danger{background:#b02a24;border-color:#b02a24}
+.st-sub{margin:8px 2px 0;font:700 9px/1 ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#f2c230}
 .st-note{margin:2px 2px 0;font-size:11px;color:#8d979b}
 @media (max-height:430px){.st-head{padding:8px 12px 6px}.st-tabs{padding-bottom:8px}.st-row{padding:7px 10px}.st-txt p{font-size:11px}}
 @media (prefers-reduced-motion:reduce){.st-sw,.st-sw i{transition:none}}

@@ -226,7 +226,7 @@ Rua, base e casa têm rotinas próprias: cada personagem tem função, ritmo e l
 
 ## Ajustes: todo efeito pode ser desligado
 
-Todo efeito visual ou sonoro (os que já existem e os que vierem) precisa estar em `src/settings/gameSettings.ts`, na categoria certa (Luz e sol, Atmosfera, Tela e bordas, Vida no cenário, Som — criar outra se nenhuma servir), com nome curto, descrição e a opção de desligar. O código do efeito consulta `fxOn(id)` (ou o objeto `F` em `street.js`) antes de desenhar ou tocar, e reage na hora a `onFxChange`.
+Todo efeito visual ou sonoro (os que já existem e os que vierem) precisa estar em `src/settings/gameSettings.ts`, na categoria certa — tudo o que é visual fica na seção **Gráficos**, junto da qualidade gráfica (categorias Luz e sol, Atmosfera, Bordas da tela, Vida no cenário; criar outra dentro de Gráficos se nenhuma servir), e o que é som fica na seção **Som**, com nome curto, descrição e a opção de desligar. O código do efeito consulta `fxOn(id)` (ou o objeto `F` em `street.js`) antes de desenhar ou tocar, e reage na hora a `onFxChange`.
 
 - As telas de ajustes são geradas desse registro: o botão de engrenagem no cabeçalho do jogo (`src/settings/settingsPanel.ts`, que gira junto com o jogo no celular em pé) e o app Ajustes do aparelho (`src/EffectsSettings.tsx`). Não escrever opção à mão em nenhuma das duas.
 - O aparelho será descontinuado: o que hoje só existe no app Ajustes deve ter equivalente no painel do jogo.
