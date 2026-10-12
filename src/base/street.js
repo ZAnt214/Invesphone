@@ -209,7 +209,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     {u:1.3,r:.06,k:'hex',a:.1,c:'rgba(200,160,255,1)'},{u:1.48,r:.09,a:.18,spr:ghost('255,200,140')}];
   const BEAMS=Array.from({length:9},(_,i)=>({x:120+i*(STREET_W/9)+R()*120,w:60+R()*150,a:.07+R()*.07,sp:.2+R()*.3,ph:R()*6}));
   const SUNW={x:-260,y:-520};      // o sol, no mundo: acima e à esquerda do quarteirão
-  const ORBS=BEAMS.flatMap((b,i)=>[0,1,2].map(j=>{const F=FLARE[(i*3+j)%FLARE.length];return {b,dx:(R()-.5)*b.w*.6,y:GY-260+j*110+R()*60,r:12+R()*20+(F.k==='hex'?6:F.r*200),a:F.a*2.4,spr:F.spr,hex:F.k==='hex',c:F.c,ph:R()*6.28};}));
+  const ORBS=BEAMS.flatMap((b,i)=>[0,1,2].map(j=>{const F=FLARE[(i*3+j)%FLARE.length];return {b,dx:(R()-.5)*b.w*.6,y:GY-260+j*110+R()*60,r:5+R()*9+(F.k==='hex'?2:F.r*70),a:F.a*1.1,spr:F.spr,hex:F.k==='hex',c:F.c,ph:R()*6.28};}));
   const WINS=BUILDINGS.flatMap(b=>(b.wins||[]).filter(w=>w.y>=0));
   const motes=Array.from({length:40},()=>({x:R(),y:R(),v:.3+R()*.7,p:R()*6.28}));
   const front=createFront(STREET_W,BAND_BOT);
