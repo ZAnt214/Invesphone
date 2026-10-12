@@ -9,7 +9,9 @@
    (neon, arandelas, giroflex) somadas por cima, e a luz da manhã. Escala inteira de pixel e corte do que está fora da tela.
    A qualidade escolhida pelo jogador (src/characters/quality.ts) decide o que entra: baixa = só o essencial (sem sombras
    projetadas, brilhos nem vapor); média = sombras, luzes que emitem e vapor; alta = mais os fachos de luz e a poeira no ar. */
-import {GY,CURB,ROAD,NEAR,STREET_H,WALK,PARK,LANES,SUN,TREES,MANHOLES,CROSSWALKS,CW_HALF,BAND_TOP,BAND_BOT,rnd,paintFacades,paintGround,paintWear} from './streetArt';
+import {GY,CURB,ROAD,NEAR,STREET_H,FG_TOP,WALK,PARK,LANES,SUN,TREES,MANHOLES,CROSSWALKS,CW_HALF,BAND_TOP,BAND_BOT,rnd,paintFacades,paintGround,paintWear} from './streetArt';
+import {paintForeground} from './streetFG';
+import {createDwellers} from './dwellers';
 import {RUA_DIR,VEICULOS,PATH} from './ruaAssets';
 import {choose,eventLog,jitter} from '../world/life';
 import {CAMERA_PRIORITY,createCameraControl,createLead,damp,deadZoneTarget,drawCameraDebug} from '../camera/cameraDirector';
@@ -18,7 +20,7 @@ export {STREET_H};
 /* ---------- o quarteirão, da esquerda para a direita ---------- */
 const LOT=[
   {k:'grocery',w:240,brick:'#8a3a2c',name:'GROCERY',signc:'#2f5a3a',ink:'#f1e6c8',awn:'#2f5a3a',fire:true},
-  {k:'apt',w:260,brick:'#8e4434',door:'#2f4a3a',fire:true},
+  {k:'apt',w:260,brick:'#8e4434',door:'#2f4a3a'},
   {k:'diner',w:280,brick:'#9a3f30',name:'DINER',signc:'#b02a24',ink:'#f6f0e2',awn:'#b02a24'},
   {k:'alley',w:110},
   {k:'dhpp',w:620},
@@ -34,7 +36,7 @@ export const DHPP=BUILDINGS.find(b=>b.k==='dhpp');
 export const DOOR={x:DHPP.X+DHPP.w/2,y:GY+14};          // a porta do DHPP (o pé dos degraus)
 
 /* ---------- mobiliário oficial (pé no centro da última linha), na beira da calçada, encostado nas fachadas ou nos becos ---------- */
-const cy=CURB-6,fy=GY+22,ny=STREET_H-14;
+const cy=CURB-6,fy=GY+22,ny=FG_TOP-6;
 const ALLEYS=BUILDINGS.filter(b=>b.k==='alley');
 const PROPS=[
   // calçada de lá, na beira do meio-fio: postes de luz emoldurando o DHPP, parquímetros a cada vaga, lixeiras e hidrantes
@@ -93,7 +95,7 @@ const PED_LOOKS=[
 // vagas do meio-fio de lá: a pintura do chão e os carros usam as mesmas medidas (a viatura tem a vaga dela, na porta do DHPP)
 const SLOT_WIDTH=196,SLOT_XS=[10,206,712,908,1306,1502,1885,2081,2277];
 const STALLS=[...SLOT_XS.map(x=>[x,SLOT_WIDTH]),[DOOR.x-96,192]];
-const NEAR_WALK=[NEAR+40,STREET_H-12];
+
 
 /* ---------- caches de luz e sombra (feitos uma vez por imagem) ---------- */
 const SIL=new WeakMap();      // silhueta escura de um sprite (para a sombra projetada)
@@ -112,6 +114,7 @@ const RM=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: re
 /** art: as funções de desenho da base (S2, bush…) e o letreiro e a porta dela; quality(): 'low'|'medium'|'high' */
 export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quality,onSound,hudTop}){
   const Q=()=>{const q=quality?quality():'high';return q==='low'?0:q==='medium'?1:2;};
+  let fgRooms=[];
   let layer=buildStatic();
   const ready=preloadRua().then(()=>{layer=buildStatic();});
 
@@ -121,6 +124,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     paintFacades(g,BUILDINGS,A,{sign:A.sign(),door:A.door()});
     paintGround(g,STREET_W,art,STALLS);
     paintWear(g,BUILDINGS,STREET_W);
+    fgRooms=paintForeground(g,STREET_W);
     return cv;
   }
 
@@ -137,7 +141,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
      trânsito deixa, ir embora (e voltar mais tarde por uma das pontas). Conversas surgem quando dois se cruzam. */
   const R=rnd(17);
   const lemos={x:DOOR.x-150,y:WALK[0]+40,dir:1,walk:0,moving:false,look:lemosLook,frames:personFrames(lemosLook),tx:null,ty:null,enter:false,climb:0};
-  const FAR=[GY+30,CURB-28],NEARB=[NEAR+30,STREET_H-16];
+  const FAR=[GY+30,CURB-28],NEARB=[NEAR+8,FG_TOP-4];
   const DOORS=[],PANES=[],DRUMS=[];
   for(const b of BUILDINGS){if(b.k!=='dhpp')for(const d of b.doors||[])DOORS.push({...d,shop:b.k,open:0});for(const p of b.panes||[])PANES.push({...p,shop:b.k});for(const d of b.drums||[])DRUMS.push(d);}
   const SPOTS={paper:{x:1603,y:fy+12,busy:null},phone:{x:1824,y:fy+8,busy:null},bench:[{x:1000,y:fy+5,busy:null},{x:1020,y:fy+5,busy:null}],
@@ -190,6 +194,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   const birds=Array.from({length:6},()=>({x:300+R()*(STREET_W-600),y:WALK[0]+10+R()*(WALK[1]-WALK[0]-20),z:0,dir:R()<.5?-1:1,st:'g',t:R()*40,vx:0,vz:0}));
   // poeira no ar, só visível contra a luz (qualidade alta): poucas partículas, recicladas
   const motes=Array.from({length:40},()=>({x:R(),y:R(),v:.3+R()*.7,p:R()*6.28}));
+  const dwellers=createDwellers({buildings:BUILDINGS,rooms:fgRooms,looks:PED_LOOKS,personFrames,R,RM,lemos,onSound});
   const camera=createCameraControl({manualHold:2600,reducedMotion:RM});
   const lead=createLead();   // espaço à frente de Lemos (suavizado; ver cameraDirector)
   const cameraDebug=/[?&]cameraDebug=1(?:&|$)/.test(location.search);
@@ -238,8 +243,8 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
       case 'bench':{const s=SPOTS.bench.find(free);s.busy=p;p.spot=s;go(p,s.x,s.y,'sit');break;}
       case 'bus':{const s=SPOTS.busBench.find(free);if(s){s.busy=p;p.spot=s;go(p,s.x,s.y,'busSit');}else{const q=SPOTS.busStand[Math.floor(R()*3)];go(p,q.x+(R()-.5)*8,q.y,'busWait');}break;}
       case 'cross':{let ci=-1,best=1e9;SIGS.forEach((g,i)=>{const d=Math.abs(g.x-p.x);if(d<best){best=d;ci=i;}});
-        if(ci>=0&&best<1100&&R()<.82){p.sig=ci;go(p,SIGS[ci].x+(R()-.5)*50,p.near?NEAR+24:CURB-14,'curb');}
-        else{p.sig=-1;let x=gapX();for(let i=0;i<4&&Math.abs(x-p.x)>500;i++)x=gapX();go(p,x,p.near?NEAR+24:CURB-14,'curb');}break;}
+        if(ci>=0&&best<1100&&R()<.82){p.sig=ci;go(p,SIGS[ci].x+(R()-.5)*50,p.near?NEAR+8:CURB-14,'curb');}
+        else{p.sig=-1;let x=gapX();for(let i=0;i<4&&Math.abs(x-p.x)>500;i++)x=gapX();go(p,x,p.near?NEAR+8:CURB-14,'curb');}break;}
       case 'taxi':{const x=gapX();taxiJob={p,x,st:'hail',t:0,taxi:null};go(p,x,CURB-14,'hail');life.emit(t,'taxi','alguém vai chamar um táxi');break;}
       case 'leave':{go(p,p.x<STREET_W/2?-40:STREET_W+40,p.y,'offstage');break;}
     }
@@ -289,7 +294,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
       case 'chat':p.talk+=dt;if((p.t-=dt)<=0){p.chatCD=40+R()*60;p.pose=null;decide(p);}break;
       case 'curb':p.t+=dt;{const g=p.sig>=0?SIGS[p.sig]:null;if(g&&g.st==='green'&&!g.req&&p.t>.5){g.req=true;life.emit(t,'rua','pedestre apertou o botão do semáforo');sound('beep',g.x,.4);}
         const ok=g?g.st==='red'&&g.t>1.2&&g.dur-g.t>5.5:clearToCross(p.x);
-      if(ok&&p.t>.8){p.st='cross';p.onRoad=true;p.pose=null;p.tx=p.x+(R()-.5)*20;p.ty=p.near?CURB-14:NEAR+24;p.after='cross';life.emit(t,'rua','atravessando');}
+      if(ok&&p.t>.8){p.st='cross';p.onRoad=true;p.pose=null;p.tx=p.x+(R()-.5)*20;p.ty=p.near?CURB-14:NEAR+8;p.after='cross';life.emit(t,'rua','atravessando');}
         else if(p.t>(g?60:25)){p.pose=null;p.sig=-1;decide(p);}}break;
       case 'hail':p.t+=dt;p.pose=(p.t%2.4)<.7?'stretch':null;if(!taxiJob||taxiJob.p!==p){p.pose=null;decide(p);}else if(p.t>45&&taxiJob.st==='hail'){taxiJob=null;p.pose=null;decide(p);}break;
       case 'bus':break;   // espera o ônibus (ver updBus)
@@ -444,7 +449,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     for(const p of peds){if(p.staff){if(!p.courier)updStaff(p,dt);continue;}if(p.chatCD>0)p.chatCD-=dt;updPed(p,dt);}
     if((t*2|0)!==((t-dt)*2|0))chats();
     for(const d of DOORS)if(d.open>0)d.open-=dt;
-    updBus(dt);updTaxi(dt);updSig(dt);events(dt);
+    updBus(dt);updTaxi(dt);updSig(dt);events(dt);dwellers.update(dt,t);
     for(const b of birds){b.t+=dt*30;
       if(b.st==='g'){if(Math.random()<dt*.6)b.x+=b.dir*2;if(Math.random()<dt*.2)b.dir=-b.dir;
         let near=Math.abs(lemos.x-b.x)<34&&Math.abs(lemos.y-b.y)<18;for(let i=0;!near&&i<peds.length;i++){const p=peds[i];near=!p.hidden&&Math.abs(p.x-b.x)<34&&Math.abs(p.y-b.y)<18;}
@@ -479,7 +484,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     const vw=cw/s,vh=ch/s,hudW=hud/s;
     const ctl=camera.resolve(),manual=ctl.mode==='manual';
     // alinhada embaixo (a mão de baixo do trânsito sempre entra); sem esconder o térreo sob o cabeçalho; com folga de calçada de cá em telas altas
-    const bandBot=BAND_BOT+Math.max(0,Math.min(90,(vh-585)*.35));
+    const bandBot=BAND_BOT+Math.max(0,Math.min(220,(vh-hudW-(BAND_BOT-BAND_TOP))*.6));
     let topC=Math.min(bandBot-vh,BAND_TOP-hudW);topC=Math.max(0,Math.min(topC,STREET_H-vh));
     if(!manual){
       const focus=ctl.focus,dir=lemos.moving&&Math.abs(lemos.vx)>2?Math.sign(lemos.vx):lemos.dir;
@@ -524,6 +529,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     if(doorT>0){ctx.fillStyle=`rgba(255,226,160,${.45*doorT})`;ctx.fillRect(DOOR.x-50,GY-76,100,68);}
     for(const f of DHPP.flags||[])flag(ctx,f.x,f.y,f.v);
     // portas das lojas abrindo quando alguém entra ou sai; tambores da lavanderia girando
+    dwellers.draw(ctx,x0,x1,t,q,top-60,top+ch/s+60);
     for(const d of DOORS)if(d.open>0&&d.x>x0&&d.x<x1){const k=Math.min(1,d.open/.35)*Math.min(1,(.7-d.open)/.15+.2);ctx.fillStyle=`rgba(18,14,12,${.75*k})`;ctx.fillRect(Math.round(d.dx+d.w*.35),Math.round(d.dy+2),Math.round(d.w*.62),Math.round(d.h-2));ctx.fillStyle=`rgba(255,226,170,${.25*k})`;ctx.fillRect(Math.round(d.dx+d.w*.35),Math.round(d.dy+d.h-3),Math.round(d.w*.62),3);}
     if(!RM)for(const d of DRUMS){if(d.x<x0||d.x>x1)continue;const a=t*5+d.x;ctx.fillStyle='rgba(235,242,250,.85)';ctx.fillRect(Math.round(d.x+Math.cos(a)*5)-1,Math.round(d.y+Math.sin(a)*5)-1,2,2);ctx.fillStyle='rgba(120,150,180,.6)';ctx.fillRect(Math.round(d.x+Math.cos(a+2.4)*4),Math.round(d.y+Math.sin(a+2.4)*4),2,2);}
     // ordem de desenho pelo pé
@@ -679,7 +685,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     if(points.length>1){
       const a=points[0],b=points[1],mx=(a.x+b.x)/2,my=(a.y+b.y)/2;
       if(!gesture||gesture.type!=='pinch')gestureStart(points);
-      camera.beginManual();camZoom=clamp(gesture.zoom*Math.hypot(a.x-b.x,a.y-b.y)/gesture.d,1,2.75);
+      camera.beginManual();camZoom=clamp(gesture.zoom*Math.hypot(a.x-b.x,a.y-b.y)/gesture.d,.34,2.75);
       const ns=Math.max(1,Math.round(lastView.baseS*camZoom)),vw=lastView.cw/ns,vh=lastView.ch/ns;
       camX=gesture.world.x-mx/ns+vw/2;camY=gesture.world.y-my/ns+vh/2;return;
     }
@@ -689,7 +695,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   }
   function gestureEnd(points){camera.endManual();if(points&&points.length===1)gestureStart(points);else gesture=null;}
   function zoomAt(factor,px,py){
-    if(!lastView)return;const w=worldAt(px,py),z0=camZoom;camZoom=clamp(camZoom*factor,1,2.75);if(Math.abs(z0-camZoom)<.001)return;
+    if(!lastView)return;const w=worldAt(px,py),z0=camZoom;camZoom=clamp(camZoom*factor,.34,2.75);if(Math.abs(z0-camZoom)<.001)return;
     camera.beginManual();const ns=Math.max(1,Math.round(lastView.baseS*camZoom)),vw=lastView.cw/ns,vh=lastView.ch/ns;camX=w.x-px/ns+vw/2;camY=w.y-py/ns+vh/2;
   }
 
@@ -708,5 +714,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     else{lemos.x=viatura.x+W(viatura)/2;lemos.y=WALK[1];lemos.dir=1;}
     camX=lemos.x;camY=null;camZoom=1;camera.clearManual();camera.focus({id:'street-entry',mode:'transition',priority:CAMERA_PRIORITY.critical,x:where==='porta'?(lemos.x+DOOR.x)/2:lemos.x,y:where==='porta'?GY-90:lemos.y,duration:480,hold:180,interruptible:true});
   }
-  return {lanes:LANES,update,resume,debugRows,draw,tap,place,gestureStart,gestureMove,gestureEnd,zoomAt,lemos,door:DOOR,ready,stats,shadowLayer:shc,get view(){return lastView;},get cars(){return cars;},parked,peds,birds,trees,get t(){return t;},zoom:()=>camZoom};
+  /** botão "visão geral": afasta até a escala 1 (a rua inteira, com os prédios de baixo) e volta */
+  function toggleOverview(){if(!lastView)return;const b=lastView.baseS;camera.clearManual();camZoom=camZoom<.99?1:Math.max(.34,1/b);}
+  return {toggleOverview,lanes:LANES,update,resume,debugRows,draw,tap,place,gestureStart,gestureMove,gestureEnd,zoomAt,lemos,door:DOOR,ready,stats,shadowLayer:shc,get view(){return lastView;},get cars(){return cars;},parked,peds,birds,trees,get t(){return t;},zoom:()=>camZoom};
 }
