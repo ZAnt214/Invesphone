@@ -52,12 +52,6 @@ export const sfx = {
   note(){ play([{f:300,dur:.04,vol:.03,type:'triangle'}]) },
   /** Pista registrada. */
   clue(){ play([{f:660,dur:.1,vol:.05},{f:990,at:.09,dur:.16,vol:.05}]); buzz(14) },
-  /** Crachá correndo na fenda da leitora. */
-  swipe(){ play([{f:2400,to:1300,dur:.16,vol:.012,type:'sawtooth'},{f:180,dur:.05,vol:.02,type:'triangle'}]) },
-  /** Leitora aceitou: bipe duplo e o estalo da trava magnética soltando. */
-  accessOk(){ play([{f:1760,dur:.08,vol:.03,type:'square'},{f:2350,at:.1,dur:.12,vol:.028,type:'square'},{f:120,to:70,at:.38,dur:.09,vol:.09,type:'triangle'},{f:900,at:.38,dur:.03,vol:.03,type:'square'}]); buzz([10,300,22]) },
-  /** Leitora recusou: dois bipes graves. */
-  accessNo(){ play([{f:240,dur:.12,vol:.04,type:'square'},{f:240,at:.18,dur:.16,vol:.04,type:'square'}]); buzz([30,60,30]) },
   /** Pressão passou de um estágio: pulso grave, mais forte nos estágios altos. */
   pressure(stage:number){
     play([{f:90,to:55,dur:.32,vol:.08+stage*.02},{f:70,to:45,at:.2,dur:.32,vol:.07+stage*.02}])

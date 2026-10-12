@@ -49,10 +49,23 @@ Vindo da recepção, Lemos para diante da porta (`GATE_X`, linha 13) e a leitora
   - foto 3×4 de Lemos sem rosto, com selo holográfico;
   - nome, função, matrícula e validade, assinatura, código de barras, "uso obrigatório nas dependências" e tarja magnética.
 - **Gesto:** arrastar de qualquer ponto da tela; o crachá só anda na horizontal, preso à fenda.
-  - Ao chegar ao fim: tela verde ("ACESSO LIBERADO / BOM TRABALHO, LEMOS"), trava verde, bipe e estalo. O crachá sai, a leitora fecha, a porta da planta abre e Lemos segue.
+  - Ao chegar ao fim: tela verde ("ACESSO LIBERADO / BOM TRABALHO, LEMOS"), trava verde, bipe e a trava soltando. O crachá sai, a leitora fecha, a porta da planta abre e Lemos segue.
   - Ao soltar no meio: "TENTE NOVAMENTE / PASSE ATÉ O FIM", e o crachá volta.
   - "Voltar" (ou Esc) fecha sem abrir.
   - A trilha pontilhada aparece até o primeiro acerto (`invesphone.badge.ok`).
+- **Animação:** ao arrastar, o crachá se inclina contra o movimento (o atrito da fenda) e treme de leve enquanto lê. Ao soltar no meio, ele volta como uma mola, balançando no cordão, e o terminal dá um tranco. Ao liberar, a sequência é:
+  1. o crachá dá um tranco no fim da fenda;
+  2. salta para fora, girando em volta do furo do cordão;
+  3. fica pendurado, balançando;
+  4. sobe com o cordão até sair do quadro.
+
+  Enquanto isso, a tela pisca, a luz da trava pulsa e o terminal sente o baque da trava. Com movimento reduzido, o crachá só some.
+- **Som** (`src/base/badgeAudio.js`, gerado na hora e com um eco curto de corredor):
+  - o atrito do crachá na fenda acompanha a velocidade do dedo;
+  - um tic quando a tarja chega à cabeça de leitura;
+  - bipe duplo agudo ao aceitar e zumbido grave em três pulsos ao recusar;
+  - na porta: o relé estala, a bobina da trava magnética desliga com um zumbido, a placa solta com um baque metálico que ressoa e a folha de vidro desgruda da vedação com um sopro de ar;
+  - vibração no celular junto do baque.
 - **Saída:** de dentro para fora é livre (`BADGE.out`). A equipe passa sem a leitora.
 - **Ajustes:**
   - Gráficos > Cenas rápidas > "Passar o crachá na porta" (`scene.badge`): desligado, a porta abre sozinha;
