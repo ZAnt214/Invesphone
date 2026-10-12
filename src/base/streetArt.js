@@ -70,6 +70,7 @@ export function paintFacades(g,lots,A,{sign,door}){
     else if(!lit&&k<.5){P(gx,gy,4,gh,'rgba(200,180,150,.6)');P(gx+gw-4,gy,4,gh,'rgba(200,180,150,.6)');}     // cortina
     else if(!lit&&k<.58){E(gx+gw*.3,gy+gh-5,4,5,'rgba(40,80,40,.75)');}                                   // planta
     if(lit&&R()<.5){P(gx,gy,5,gh,'#b85a4a');P(gx+gw-5,gy,5,gh,'#b85a4a');}
+    if(lit)glows.push({x:x+w/2,y:y+h/2,r:30,c:R()<.4?'#9cc4ff':'#ffd9a0',win:true,tv:R()<.5});
     // reflexo do céu: faixa diagonal clara
     for(let j=0;j<gh;j++){const rx=gx+gw-6-j*.5;if(rx>gx)P(rx,gy+j,2,1,'rgba(255,255,255,.18)');}
     P(gx+1,gy+1,7,4,lit?'rgba(255,236,190,.6)':'rgba(220,236,248,.55)');
@@ -280,4 +281,54 @@ export function paintGround(g,W,ART,stalls){
     paint(c.x+CW_HALF+10,ROAD+72,4,70,'#e8e8e0');paint(c.x-CW_HALF-14,ROAD+154,4,86,'#e8e8e0');
   }
   P(0,NEAR,W,4,'#d2ccc0');P(0,NEAR,W,1,'#ece6da');P(0,NEAR+4,W,6,'#8a857a');walk(NEAR+10,STREET_H);
+}
+
+
+/** Desgaste e sujeira (pintado uma vez, por cima das fachadas e do chão): escorridos sob peitoris e cornijas, respingo de lama no pé
+ *  das paredes, reboco soltando, trincas, calhas, cartazes e rabiscos no beco; no chão, sombra dos prédios na calçada com
+ *  manchas de sol nos becos, poças que refletem o céu, sarjeta suja, chiclete, bitucas e a sujeira das faixas. Tudo discreto. */
+export function paintWear(g,lots,W){
+  const R=rnd(31);
+  const P=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));};
+  const E=(x,y,rx,ry,c)=>{g.fillStyle=c;g.beginPath();g.ellipse(x,y,rx,ry,0,0,7);g.fill();};
+  const streak=(x,y,len,a,w=1,col='26,18,14')=>{for(let j=0;j<len;j++)P(x+(j>len*.6&&R()<.3?1:0),y+j,w,1,`rgba(${col},${a*(1-j/len)})`);};
+  const vgrad=(x,y,w,h,stops)=>{const gr=g.createLinearGradient(0,y,0,y+h);for(const [o,c] of stops)gr.addColorStop(o,c);g.fillStyle=gr;g.fillRect(x,y,w,h);};
+  const near=(x,m=70)=>CROSSWALKS.some(c=>Math.abs(c.x-x)<m);
+  for(const b of lots){const x=b.X,w=b.w;
+    if(b.k==='alley'){const d=Math.min(30,w*.3),bx=x+d,bw=w-2*d,back=GY-96;if(bw<24)continue;
+      const post=(px,py,c)=>{P(px-1,py-1,12,16,'rgba(20,14,10,.5)');P(px,py,10,14,c);for(let k=0;k<3;k++)P(px+1,py+2+k*4,8,1,'rgba(40,30,24,.55)');P(px+7,py,3,3,'rgba(255,255,255,.12)');P(px,py+13,10,1,'rgba(0,0,0,.3)');};
+      post(bx+3,back-52,'#a89a78');post(bx+bw-14,back-72,'#8aa09a');
+      for(const [c,x0,y0] of [['rgba(220,70,70,.55)',bx+6,back-18],['rgba(80,200,190,.5)',bx+bw-26,back-30]]){let px=x0,py=y0;g.fillStyle=c;for(let k=0;k<26;k++){g.fillRect(Math.round(px),Math.round(py),2,2);px+=1+R()*2;py+=Math.sin(k*1.1)*2+(R()-.5)*2;}}
+      streak(bx+bw*.3,10,back-20,.12,3);streak(bx+bw*.75,0,back-30,.1,2);continue;}
+    const dh=b.k==='dhpp',sills=[];
+    if(dh){const n=Math.floor((w-60)/70),step=(w-80)/n;for(let y=70;y<GY-170;y+=82)for(let i=0;i<n;i++)sills.push([x+40+i*step+(step-30)/2,y+42,30]);sills.push([x+40,GY-110+42,30],[x+w-70,GY-110+42,30]);}
+    else{const gTop=GY-GROUND,cols=Math.max(2,Math.round((w-30)/58)),cw=(w-30)/cols;for(let y=gTop-FLOOR;y>-50;y-=FLOOR){if(y+12<0)continue;for(let i=0;i<cols;i++)sills.push([x+15+i*cw+cw/2-13,y+14+38,26]);}}
+    for(const [sx,sy,sw] of sills){const n=3+Math.floor(R()*3);for(let k=0;k<n;k++)streak(sx+2+R()*(sw-4),sy+5,14+R()*34,(dh?.09:.12)+R()*.11,R()<.3?2:1);
+      if(R()<.3)streak(sx+R()*sw,sy+5,10+R()*18,.14,1,'236,230,216');}
+    if(!dh){for(let k=x+8;k<x+w-8;k+=14+R()*30)streak(k,28,14+R()*40,.16);
+      // calha de ferro descendo pelo canto: sombra, corpo, braçadeiras e o cotovelo no pé
+      const gx=x+w-22;P(gx+4,34,3,GY-46,'rgba(28,18,14,.28)');P(gx,32,5,GY-44,'#4f4f4c');P(gx,32,1,GY-44,'#7d7d79');P(gx+4,32,1,GY-44,'#2e2e2c');for(let y=52;y<GY-14;y+=46)P(gx-1,y,7,2,'#2a2a28');P(gx-2,GY-14,9,4,'#3c3c3a');
+      for(let i=0;i<w/80;i++){const px=x+14+R()*(w-40),py=40+R()*(GY-200),pw=8+R()*14,ph=6+R()*12,t=R();if(t<.5){P(px,py,pw,ph,'rgba(214,198,176,.13)');P(px,py+ph,pw,1,'rgba(30,20,14,.2)');}else P(px,py,pw,ph,'rgba(54,34,26,.16)');}
+      for(let i=0;i<w/130;i++){let px=x+14+R()*(w-30),py=30+R()*(GY-180);for(let k=0;k<10+R()*16;k++){P(px,py,1,1,'rgba(18,12,10,.38)');px+=R()<.5?1:0;py+=R()<.7?1:0;if(R()<.3)px-=R()<.5?1:0;}}}
+    // respingo de lama e fuligem no pé da parede
+    vgrad(x,GY-64,w,64,[[0,'rgba(30,22,16,0)'],[1,'rgba(30,22,16,.3)']]);
+    for(let i=0;i<w/2.2;i++){const t=R();P(x+R()*w,GY-3-t*t*34,1,1,`rgba(40,30,22,${.18+.3*(1-t)})`);}
+  }
+  // chão: os prédios fazem sombra na calçada de manhã; os becos deixam o sol entrar em manchas inclinadas
+  vgrad(0,GY,W,64,[[0,'rgba(24,26,40,.3)'],[.45,'rgba(24,26,40,.08)'],[1,'rgba(24,26,40,0)']]);
+  for(const b of lots)if(b.k==='alley'){const x=b.X,w=b.w;for(const [a,h] of [[.1,72],[.07,110]]){g.fillStyle=`rgba(255,238,196,${a})`;g.beginPath();g.moveTo(x+6,GY);g.lineTo(x+w-6,GY);g.lineTo(x+w-6+SUN.kx*h*1.6,GY+h);g.lineTo(x+6+SUN.kx*h*1.6,GY+h);g.closePath();g.fill();}}
+  // poças: escuras no meio, o céu refletido por cima e um fio de luz
+  const puddle=(x,y,rx,ry)=>{E(x,y,rx,ry,'rgba(30,36,48,.5)');E(x-rx*.1,y-ry*.2,rx*.82,ry*.6,'rgba(150,176,202,.34)');E(x-rx*.3,y-ry*.35,rx*.35,Math.max(.8,ry*.18),'rgba(238,246,255,.4)');};
+  for(let i=0,n=0;n<9&&i<80;i++){const x=40+R()*(W-80);if(near(x,90))continue;n++;
+    if(n<=3)puddle(x,GY+70+R()*(CURB-GY-90),12+R()*16,2.5+R()*2);else puddle(x,n%2?ROAD+10+R()*14:ROAD+60+R()*60,16+R()*26,3+R()*4);}
+  // sarjeta suja: sedimento, folhas secas e um fio de água escura
+  for(let i=0;i<W/9;i++)P(R()*W,CURB+5+R()*5,1+R()*2,1,R()<.5?'rgba(34,28,22,.5)':'rgba(70,60,44,.45)');
+  for(let i=0;i<W/46;i++)P(R()*W,CURB+5+R()*5,2+R()*2,1,['#7a5a2a','#5a6a2a','#a8742a','#6a4a22'][Math.floor(R()*4)]);
+  for(let i=0;i<W/180;i++)E(R()*W,CURB+8,8+R()*18,1.6,'rgba(24,26,34,.4)');
+  // calçada: chiclete, bitucas, manchas de gordura e nódoas de chuva
+  for(let i=0;i<W/55;i++){const x=R()*W,y=GY+14+R()*(CURB-GY-26);P(x,y,2,2,'rgba(78,70,66,.65)');P(x,y,1,1,'rgba(120,110,104,.5)');}
+  for(let i=0;i<W/80;i++){const x=R()*W,y=GY+14+R()*(CURB-GY-26);P(x,y,2,1,'#e8e2d4');P(x+2,y,1,1,R()<.5?'#c97a3a':'#9a948a');}
+  for(let i=0;i<W/45;i++)E(R()*W,GY+10+R()*(CURB-GY-20),4+R()*12,1.5+R()*3,`rgba(44,38,32,${.06+R()*.08})`);
+  // faixas e vagas gastas: a sujeira dos pneus por cima da tinta
+  for(const c of CROSSWALKS)for(let i=0;i<70;i++)P(c.x-46+R()*92,ROAD+4+R()*(NEAR-ROAD-8),1+R()*5,1,'rgba(40,40,44,.34)');
 }

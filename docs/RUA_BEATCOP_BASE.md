@@ -58,3 +58,9 @@ Feitos em 844×390, 390×844 e 375×667:
 - **Vagas** (`SLOTS`, 9 vagas + a da viatura): carros de frente para o oeste; eventos de estacionar (carro reciclado fora da tela vira estacionando, com seta) e de sair da vaga (seta, espera brecha, entra na faixa).
 - **Gente**: 30 pedestres (32 aparências), 2 guardas nos degraus, dono da mercearia, garçom, barbeiro (postos fixos com poses), entregador.
 - **Acontecimentos** (`events()`): sair/entrar de vaga, entrega do furgão (entregador leva caixa à mercearia/diner e volta), corredor, viatura com sirene. Tudo por escolha ponderada com intervalo mínimo (`EVOPTS`), registrado em `?debug=1`.
+
+## Imersão: desgaste, luz e partículas (12/10/2026)
+
+- **Desgaste** (`paintWear` em `streetArt.js`, pintado uma vez): escorridos sob peitoris e cornijas, lama no pé das paredes, reboco soltando, trincas, calhas de ferro, cartazes e rabiscos no beco; no chão, sombra dos prédios na calçada com manchas de sol nos becos, poças que refletem o céu, sarjeta suja, chiclete, bitucas e sujeira nas faixas.
+- **Luz** (`street.js`): janelas acesas brilham, algumas com TV tremulando; as vitrines jogam uma poça de luz na calçada; nuvens passam devagar e sombreiam a rua (qualidade média+).
+- **Ar**: vento em rajadas leva folhas e papéis pela calçada e sarjeta; moscas rondam o lixo; os 3 bueiros soltam vapor; fios balançam entre os postes. `prefers-reduced-motion` desliga o que se move.
