@@ -72,3 +72,8 @@ Feitos em 844×390, 390×844 e 375×667:
 - **Varandas** nos apartamentos (porta de vidro com interior, laje, vasos, varal); quem está lá usa o boneco da planta, atrás do guarda-corpo.
 - **Lojas**: garçom andando, clientes sentados, caixa, barbeiro e cliente, atrás do vidro das vitrines.
 - **Câmera**: no celular na horizontal o quadro padrão mostra só a faixa essencial (escala inteira de pixel). O botão "visão geral" no cabeçalho (ou o pinça) afasta até a escala 1 e mostra a rua inteira com os telhados dos prédios de baixo; a pinça agora vai até 0,34x.
+
+## Prédios mais realistas (12/10/2026)
+
+- **De cima (fachadas)**: cada lote tem número de andares próprio (`floors` em `LOT`, `street.js`); acima dos mais baixos aparece o céu, com caixa d'água, chaminé e antena no telhado. Alguns têm uma passagem estreita ao lado (`inset`), então os prédios não ficam todos grudados.
+- **De baixo (telhados)**: larguras sorteadas, vãos de serviço entre eles, recuos diferentes da calçada e alturas diferentes (o mais alto faz sombra no vizinho). O interior nunca aparece.

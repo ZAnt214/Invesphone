@@ -158,8 +158,13 @@ export function paintFacades(g,lots,A,{sign,door}){
       glows.push({x:px,y:gt+74,r:22,c:'#ffe6d0',pole:true});}
   };
   for(const b of lots){
-    const x=b.X,w=b.w,top=0;glows.length=0;doors.length=0;panes.length=0;drums.length=0;wins.length=0;balconies.length=0;
+    let x=b.X,w=b.w,top=0;glows.length=0;doors.length=0;panes.length=0;drums.length=0;wins.length=0;balconies.length=0;
     if(b.k==='alley'){paintAlley(g,P,E,vgrad,x,w,R);b.glows=[];continue;}
+    // prédios de alturas diferentes (o céu aparece acima dos mais baixos) e com uma passagem estreita entre alguns deles
+    if(b.k!=='dhpp'){const [il,ir]=b.inset||[0,0],roof=b.floors?Math.max(0,GY-GROUND-b.floors*FLOOR-14):0;
+      const pass=(px,pw)=>{paintAlley(g,P,E,vgrad,px,pw,R);if(roof>0){const sk=g.createLinearGradient(0,0,0,420);sk.addColorStop(0,'#8fa9c4');sk.addColorStop(1,'#d8d4cc');g.fillStyle=sk;g.fillRect(px,0,pw,roof);}};
+      if(il)pass(x,il);if(ir)pass(x+w-ir,ir);x+=il;w-=il+ir;top=roof;}
+    b.fx=x;b.fw=w;b.roofTop=top;
     if(b.k==='dhpp'){
       // a fachada bege da base em toda a altura, com calhas nas pontas, platibanda e janelas brancas com ar-condicionado
       siding(x,40,w,GY-40);P(x-1,40,1,GY-40,O);P(x+w,40,1,GY-40,O);
@@ -198,6 +203,10 @@ export function paintFacades(g,lots,A,{sign,door}){
       for(let i=0;i<cols;i++){const wx=Math.round(x+15+i*cw+cw/2-13);if(y+12<top)continue;if(b.k==='apt'&&i%2===0){balcony(wx+13,y,R()<.4);continue;}win(wx,y+14,{lit:R()<.25,ac:R()<.3,flower:R()<.18});}}
     if(b.fire)fireEscape(Math.round(x+w*.5),gTop-FLOOR+56,gTop,Math.round(w*.42));
     cornice(x,top,w,b.cor);
+    if(top>30){const rr=rnd(b.i*13+5);   // no telhado: caixa d'água de madeira, chaminé e antena recortadas contra o céu
+      const tx=x+20+rr()*(w*.5);P(tx,top-30,24,26,'#6a4a32');for(let k=0;k<24;k+=5)P(tx+k,top-30,1,26,'#4a3322');P(tx,top-30,24,2,'#8a6a4c');P(tx-2,top-34,28,5,'#3a2e26');P(tx+3,top-4,3,4,'#2a2a2c');P(tx+18,top-4,3,4,'#2a2a2c');
+      const cx2=x+w-40-rr()*30;P(cx2,top-18,12,18,b.brick);P(cx2,top-18,12,2,'#5a4a3e');P(cx2+12,top-16,2,16,'rgba(0,0,0,.25)');
+      if(rr()<.7){const ax=x+w*.7;P(ax,top-40,1,40,'#3a3a3e');P(ax-7,top-34,15,1,'#3a3a3e');P(ax-5,top-27,11,1,'#3a3a3e');}}
     pier(x,top+12,GY-top-12,8,b.brick);pier(x+w-8,top+12,GY-top-12,8,b.brick);
     // o térreo fica recuado sob a viga: a viga faz sombra no alto da loja
     P(x+8,gTop-6,w-16,6,'#3a2e26');P(x+8,gTop-6,w-16,1,'#5a4a3e');
@@ -319,16 +328,14 @@ export function paintWear(g,lots,W){
       post(bx+3,back-52,'#a89a78');post(bx+bw-14,back-72,'#8aa09a');
       for(const [c,x0,y0] of [['rgba(220,70,70,.55)',bx+6,back-18],['rgba(80,200,190,.5)',bx+bw-26,back-30]]){let px=x0,py=y0;g.fillStyle=c;for(let k=0;k<26;k++){g.fillRect(Math.round(px),Math.round(py),2,2);px+=1+R()*2;py+=Math.sin(k*1.1)*2+(R()-.5)*2;}}
       streak(bx+bw*.3,10,back-20,.12,3);streak(bx+bw*.75,0,back-30,.1,2);continue;}
-    const dh=b.k==='dhpp',sills=[];
-    if(dh){const n=Math.floor((w-60)/70),step=(w-80)/n;for(let y=70;y<GY-170;y+=82)for(let i=0;i<n;i++)sills.push([x+40+i*step+(step-30)/2,y+42,30]);sills.push([x+40,GY-110+42,30],[x+w-70,GY-110+42,30]);}
-    else{const gTop=GY-GROUND,cols=Math.max(2,Math.round((w-30)/58)),cw=(w-30)/cols;for(let y=gTop-FLOOR;y>-50;y-=FLOOR){if(y+12<0)continue;for(let i=0;i<cols;i++)sills.push([x+15+i*cw+cw/2-13,y+14+38,26]);}}
+    const dh=b.k==='dhpp',sills=(b.wins||[]).map(v=>[v.x,v.y+v.h-2,v.w]);
     for(const [sx,sy,sw] of sills){const n=3+Math.floor(R()*3);for(let k=0;k<n;k++)streak(sx+2+R()*(sw-4),sy+5,14+R()*34,(dh?.09:.12)+R()*.11,R()<.3?2:1);
       if(R()<.3)streak(sx+R()*sw,sy+5,10+R()*18,.14,1,'236,230,216');}
-    if(!dh){for(let k=x+8;k<x+w-8;k+=14+R()*30)streak(k,28,14+R()*40,.16);
+    if(!dh){const fx=b.fx??x,fw=b.fw??w,rt=b.roofTop||0;for(let k=fx+8;k<fx+fw-8;k+=14+R()*30)streak(k,rt+28,14+R()*40,.16);
       // calha de ferro descendo pelo canto: sombra, corpo, braçadeiras e o cotovelo no pé
-      const gx=x+w-22;P(gx+4,34,3,GY-46,'rgba(28,18,14,.28)');P(gx,32,5,GY-44,'#4f4f4c');P(gx,32,1,GY-44,'#7d7d79');P(gx+4,32,1,GY-44,'#2e2e2c');for(let y=52;y<GY-14;y+=46)P(gx-1,y,7,2,'#2a2a28');P(gx-2,GY-14,9,4,'#3c3c3a');
-      for(let i=0;i<w/80;i++){const px=x+14+R()*(w-40),py=40+R()*(GY-200),pw=8+R()*14,ph=6+R()*12,t=R();if(t<.5){P(px,py,pw,ph,'rgba(214,198,176,.13)');P(px,py+ph,pw,1,'rgba(30,20,14,.2)');}else P(px,py,pw,ph,'rgba(54,34,26,.16)');}
-      for(let i=0;i<w/130;i++){let px=x+14+R()*(w-30),py=30+R()*(GY-180);for(let k=0;k<10+R()*16;k++){P(px,py,1,1,'rgba(18,12,10,.38)');px+=R()<.5?1:0;py+=R()<.7?1:0;if(R()<.3)px-=R()<.5?1:0;}}}
+      const gx=fx+fw-22,gt=rt+32;P(gx+4,gt+2,3,GY-gt-14,'rgba(28,18,14,.28)');P(gx,gt,5,GY-gt-12,'#4f4f4c');P(gx,gt,1,GY-gt-12,'#7d7d79');P(gx+4,gt,1,GY-gt-12,'#2e2e2c');for(let y=gt+20;y<GY-14;y+=46)P(gx-1,y,7,2,'#2a2a28');P(gx-2,GY-14,9,4,'#3c3c3a');
+      for(let i=0;i<fw/80;i++){const px=fx+14+R()*(fw-40),py=rt+40+R()*(GY-rt-200),pw=8+R()*14,ph=6+R()*12,t=R();if(t<.5){P(px,py,pw,ph,'rgba(214,198,176,.13)');P(px,py+ph,pw,1,'rgba(30,20,14,.2)');}else P(px,py,pw,ph,'rgba(54,34,26,.16)');}
+      for(let i=0;i<fw/130;i++){let px=fx+14+R()*(fw-30),py=rt+30+R()*(GY-rt-180);for(let k=0;k<10+R()*16;k++){P(px,py,1,1,'rgba(18,12,10,.38)');px+=R()<.5?1:0;py+=R()<.7?1:0;if(R()<.3)px-=R()<.5?1:0;}}}
     // respingo de lama e fuligem no pé da parede
     vgrad(x,GY-64,w,64,[[0,'rgba(30,22,16,0)'],[1,'rgba(30,22,16,.3)']]);
     for(let i=0;i<w/2.2;i++){const t=R();P(x+R()*w,GY-3-t*t*34,1,1,`rgba(40,30,22,${.18+.3*(1-t)})`);}
