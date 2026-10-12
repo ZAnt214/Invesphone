@@ -1,6 +1,6 @@
 ---
 id: 2026-10-13-porta-cracha-close
-status: pending
+status: assets_delivered
 revision: 4
 requested_by: claude
 priority: high
@@ -69,6 +69,6 @@ As luzes, o cordão e os textos são feitos pelo código.
 ## Resposta do ChatGPT
 Preenchido pelo ChatGPT ao concluir.
 
-- status:
-- assets criados:
-- observações:
+- status: assets_delivered — arte entregue; integração pendente.
+- assets criados: `public/base/acesso/fundo.png`, `porta-aberta.png`, `mao-cracha.png`, `cracha.png`.
+- observações: dimensões e coordenadas aproximadas em `public/base/acesso/manifest.json`; orientações e limitações de encaixe em `public/base/acesso/README.md`. Nenhuma mecânica alterada.
