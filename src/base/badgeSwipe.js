@@ -8,6 +8,7 @@ import './badge.css';
 import * as SND from './badgeAudio';
 
 const KEY='invesphone.badge.ok';
+const PHOTO='/characters/lemos/cracha-foto.png';   // pedido 2026-10-12-lemos-foto-cracha
 // medidas do palco (px antes da escala): terminal, fenda e o curso do crachá
 const DEV={x:60,y:190,w:400,h:170},SLOT={x:76,y:202,w:368,h:16};
 const CARD={w:208,h:132,y:SLOT.y+SLOT.h/2+4-132},X0=-6,X1=300,STAGE={w:520,h:380};
@@ -28,7 +29,7 @@ function cardHTML(){
   </dl>
   <div class="bc-sg">${SIGN}<span>ASSINATURA</span></div>
   <div class="bc-bar" aria-hidden="true">${bars}</div>
-  <div class="bc-tag">USO OBRIGATÓRIO NAS DEPENDÊNCIAS</div>
+  <div class="bc-tag">PESSOAL E<br>INTRANSFERÍVEL</div>
   <div class="bc-mag" aria-hidden="true"></div>`;
 }
 
@@ -46,17 +47,20 @@ export function openBadge(parent,o){
   // terminal
   const dev=el('div','bx-dev',stage);Object.assign(dev.style,{left:DEV.x+'px',top:DEV.y+'px',width:DEV.w+'px',height:DEV.h+'px'});
   dev.innerHTML=`<i class="bx-screw" style="left:10px;bottom:10px"></i><i class="bx-screw" style="right:10px;bottom:10px"></i>
-    <div class="bx-lcd"><div class="l1"><span>CH 01</span><span class="bat"><i></i><i></i><i></i></span></div><b class="l2"></b><b class="l3"></b><div class="l4"><i></i></div></div>
+    <div class="bx-lcd"><div class="l1"><span class="dt"></span><span class="hr"></span></div><b class="l2"></b><b class="l3"></b><div class="l4"><i></i></div></div>
     <div class="bx-side"><span class="bx-ledrow"><i class="bx-led lock"></i>TRAVA</span><span class="bx-ledrow"><i class="bx-led pwr"></i>REDE</span>
     <div class="bx-brand"><b>DHPP</b><span>HOMICÍDIOS</span></div></div>`;
   const slot=el('div','bx-slot',stage);Object.assign(slot.style,{left:SLOT.x+'px',top:SLOT.y+'px',width:SLOT.w+'px',height:SLOT.h+'px'});
   const first=(()=>{try{return localStorage.getItem(KEY)!=='1';}catch(_){return true;}})();
   const hint=el('div','bx-hint',stage,'<i></i><b>▶</b>');Object.assign(hint.style,{left:(X0+CARD.w+8)+'px',top:(SLOT.y+SLOT.h/2-2)+'px',width:(X1-X0+8)+'px'});if(!first)hint.remove();
-  const card=el('div','bx-card',stage,cardHTML());card.setAttribute('aria-label','Crachá de Lemos, investigação, DHPP');
+  const card=el('div','bx-card',stage,cardHTML());
+  {const ph=card.querySelector('.bc-ph'),im=new Image();im.alt='';im.onload=()=>{ph.classList.add('foto');ph.prepend(im);};im.src=PHOTO;}card.setAttribute('aria-label','Crachá de Lemos, investigação, DHPP');
   // a borda de cima do terminal passa por cima da tarja: o crachá parece entrar na fenda
   const lip=el('div','bx-lip',stage);Object.assign(lip.style,{left:(SLOT.x-4)+'px',top:(SLOT.y+SLOT.h/2-1)+'px',width:(SLOT.w+8)+'px'});
   const tip=el('p','bx-tip',root);
   const back=el('button','bx-x',root,'Voltar');back.type='button';
+  {const clk=document.querySelector('#clk'),day=document.querySelector('.clk small');
+    dev.querySelector('.l1 .dt').textContent=day?day.textContent.replace('·','/'):'';dev.querySelector('.l1 .hr').textContent=clk?clk.textContent:'';}
   const l2=dev.querySelector('.l2'),l3=dev.querySelector('.l3'),bar=dev.querySelector('.l4 i'),lcd=dev.querySelector('.bx-lcd'),lock=dev.querySelector('.lock');
 
   let s=1,ox=0,oy=0;
@@ -75,17 +79,17 @@ export function openBadge(parent,o){
     const p=`M${ax} ${ay} Q ${(ax+bx)/2+sag*.3} ${(ay+by)/2+sag} ${bx} ${by}`;cordO.setAttribute('d',p);cordI.setAttribute('d',p);
     bar.style.width=(st==='ok'?1:Math.max(0,Math.min(1,(cx-X0)/(X1-X0))))*100+'%';}
   function lcdMsg(a,b,cls){l2.textContent=a;l3.textContent=b;lcd.className='bx-lcd'+(cls?' '+cls:'');}
-  function idle(){if(busy)return;st='idle';read=false;lcdMsg('ACESSO RESTRITO','PASSE O CRACHÁ');lock.className='bx-led lock';
-    tip.textContent=first?'Arraste o crachá pela fenda, da esquerda para a direita':'Passe o crachá pela fenda';}
+  function idle(){if(busy)return;st='idle';read=false;lcdMsg('ÁREA RESTRITA','PASSE O CRACHÁ');lock.className='bx-led lock';
+    tip.textContent=first?'Deslize o crachá pela leitora, sem parar no meio':'Passe o crachá';}
   // volta para o começo da fenda como uma mola, balançando no cordão
   function slideBack(){spring={x:cx,v:-Math.abs(vel)*.4,r:rot,rv:6};}
-  function fail(){st='fail';busy=true;read=false;SND.slideStop();lcdMsg('TENTE NOVAMENTE','PASSE ATÉ O FIM','no');lock.className='bx-led lock no';tip.textContent='Leve o crachá até o fim da fenda, sem soltar';SND.no();
+  function fail(){st='fail';busy=true;read=false;SND.slideStop();lcdMsg('CRACHÁ NÃO LIDO','PASSE NOVAMENTE','no');lock.className='bx-led lock no';tip.textContent='Não leu. Passe de novo, até o fim';SND.no();
     dev.classList.remove('jolt');void dev.offsetWidth;dev.classList.add('jolt');
     slideBack();clearTimeout(tmr);tmr=setTimeout(()=>{busy=false;idle();},1100);}
   // acesso: bipe; o crachá dá um tranco no fim da fenda, salta para fora, balança pendurado e sobe com o cordão.
   // a trava solta logo depois do bipe (baque e tremida do terminal) e a porta desgruda da vedação
   function win(){st='ok';busy=true;drag=null;card.classList.remove('drag');SND.slideStop();SND.ok();
-    lcdMsg('ACESSO LIBERADO','BOM TRABALHO, LEMOS','ok');lock.className='bx-led lock ok';tip.textContent='Acesso liberado';hint.remove();
+    lcdMsg('ACESSO LIBERADO','LEMOS · INVESTIGAÇÃO','ok');lock.className='bx-led lock ok';tip.textContent='Porta liberada';hint.remove();
     try{localStorage.setItem(KEY,'1');}catch(_){/* sem armazenamento */}
     exit={t0:performance.now(),x0:cx,r0:rot};
     setTimeout(()=>{SND.unlock();dev.classList.add('thunk');lcd.classList.add('flash');},260);
