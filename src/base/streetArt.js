@@ -161,12 +161,11 @@ export function paintFacades(g,lots,A,{sign,door,bg}){
     let x=b.X,w=b.w,top=0;glows.length=0;doors.length=0;panes.length=0;drums.length=0;wins.length=0;balconies.length=0;
     // beco: só da altura do prédio mais baixo dos dois lados para baixo; acima dele, o fundo da cidade
     const roofOf=o=>!o||o.k==='alley'?0:o.k==='dhpp'?28:o.floors?Math.max(0,GY-GROUND-o.floors*FLOOR-14):0;
-    const back=(px,pw,h)=>{if(h>0&&bg)g.drawImage(bg,px,0,pw,h,px,0,pw,h);};
-    if(b.k==='alley'){paintAlley(g,P,E,vgrad,x,w,R);b.alleyTop=Math.max(roofOf(lots[b.i-1]),roofOf(lots[b.i+1]));back(x,w,b.alleyTop);b.glows=[];continue;}
+    if(b.k==='alley'){b.alleyTop=Math.max(roofOf(lots[b.i-1]),roofOf(lots[b.i+1]));paintGap(g,P,E,x,w,R,b.alleyTop);b.glows=[];continue;}
     // prédios de alturas diferentes (o céu aparece acima dos mais baixos) e com uma passagem estreita entre alguns deles
     if(b.k!=='dhpp'){const [il,ir]=b.inset||[0,0],roof=b.floors?Math.max(0,GY-GROUND-b.floors*FLOOR-14):0;
-      const pass=(px,pw)=>{paintAlley(g,P,E,vgrad,px,pw,R);back(px,pw,roof);};
-      if(il)pass(x,il);if(ir)pass(x+w-ir,ir);x+=il;w-=il+ir;top=roof;}
+      const pass=(px,pw,nb)=>paintGap(g,P,E,px,pw,R,Math.max(roof,roofOf(nb)));
+      if(il)pass(x,il,lots[b.i-1]);if(ir)pass(x+w-ir,ir,lots[b.i+1]);x+=il;w-=il+ir;top=roof;}
     b.fx=x;b.fw=w;b.roofTop=top;
     if(b.k==='dhpp'){
       // a fachada bege da base em toda a altura, com calhas nas pontas, platibanda e janelas brancas com ar-condicionado
@@ -228,32 +227,34 @@ function facadeLight(g,vgrad,x,y,w,h){
   const gr=g.createLinearGradient(x+w-14,0,x+w,0);gr.addColorStop(0,'rgba(20,14,10,0)');gr.addColorStop(1,'rgba(20,14,10,.16)');g.fillStyle=gr;g.fillRect(x+w-14,y,14,h);
 }
 
-// beco com profundidade: paredes laterais em fuga (a da esquerda na sombra, a da direita pega o sol), fundo escuro com
-// porta de serviço, chão molhado refletindo o céu, fios cruzando no alto e um facho de luz entrando de cima
-function paintAlley(g,P,E,vgrad,x,w,R){
-  const d=Math.min(30,w*.3),bx=x+d,bw=w-2*d,back=GY-96;
-  P(x,0,w,GY,'#2a2420');
-  // faixa de céu no alto, entre os prédios
-  vgrad(x,0,w,back,[[0,'#7f97b0'],[.7,'#5e6c78'],[1,'#3a3836']]);
-  // paredes laterais (trapézios em fuga)
-  g.fillStyle='#3a2a22';g.beginPath();g.moveTo(x,0);g.lineTo(bx,0);g.lineTo(bx,back);g.lineTo(x,GY);g.closePath();g.fill();
-  g.fillStyle='#7a5a44';g.beginPath();g.moveTo(x+w,0);g.lineTo(bx+bw,0);g.lineTo(bx+bw,back);g.lineTo(x+w,GY);g.closePath();g.fill();
-  for(let yy=6;yy<GY;yy+=8){const t=yy/GY;P(x+w-d*(1-t*.5),yy,d*(1-t*.5),1,'rgba(30,20,16,.18)');P(x,yy,d*(1-t*.5),1,'rgba(0,0,0,.15)');}
-  // fundo: parede com porta de serviço, lâmpada de grade e caixas
-  P(bx,0,bw,back,'#2e2824');for(let yy=4;yy<back;yy+=4)P(bx,yy,bw,1,'rgba(0,0,0,.18)');
-  if(bw>24){P(bx+bw/2-9,back-34,18,34,'#1c1d20');P(bx+bw/2-9,back-34,18,1,'#3a3c42');P(bx+bw/2-2,back-46,4,4,'#d8c890');}
-  // chão do beco em fuga: escuro, com uma poça refletindo a faixa de céu
-  g.fillStyle='#34302c';g.beginPath();g.moveTo(bx,back);g.lineTo(bx+bw,back);g.lineTo(x+w,GY);g.lineTo(x,GY);g.closePath();g.fill();
-  for(let yy=back;yy<GY;yy+=6)P(x,yy,w,1,'rgba(0,0,0,.08)');
-  E(x+w*.55,GY-30,Math.min(22,w*.25),4,'rgba(127,151,176,.35)');E(x+w*.55,GY-31,Math.min(14,w*.15),1.5,'rgba(220,236,248,.3)');
-  // escurece para o fundo
-  vgrad(x,0,w,GY,[[0,'rgba(10,8,8,.05)'],[.6,'rgba(10,8,8,.35)'],[1,'rgba(10,8,8,.1)']]);
-  // facho de sol entrando pelo alto, batendo na parede da direita
-  g.save();g.globalCompositeOperation='screen';for(const [a,f] of [[.05,1],[.05,.55]]){g.fillStyle=`rgba(255,226,170,${a})`;g.beginPath();g.moveTo(x+w*(.5-.25*f),0);g.lineTo(x+w*(.5+.1*f),0);g.lineTo(x+w,GY*(.55+.2*f));g.lineTo(x+w-d*.5*f,GY*(.62+.25*f));g.closePath();g.fill();}g.restore();
-  // fios no alto
-  for(const [y0,sag] of [[70,10],[110,14]]){for(let k=0;k<=w;k++){const t=k/w;P(x+k,y0+Math.sin(t*Math.PI)*sag,1,1,'#141414');}}
-  // escada de incêndio vista de lado na parede da esquerda
-  for(let yy=120;yy<GY-120;yy+=70){P(x+2,yy,d-6,2,'#141518');for(let k=0;k<d-6;k+=4)P(x+2+k,yy-10,1,10,'#141518');}
+// vão entre dois prédios, visto de frente: não se vê a parede lateral dos vizinhos (só a sombra que o da esquerda joga),
+// e sim o que está atrás — o prédio do fundo do quarteirão, mais baixo, apagado pela distância — e, embaixo, o chão da
+// passagem recuando até ele, fechado na calçada por um muro com portão (vão estreito) ou por uma tela de arame (vão largo).
+// Acima do prédio do fundo fica o céu com a cidade (já pintado).
+function paintGap(g,P,E,x,w,R,top){
+  const vg=(x,y,w,h,a,b)=>{const gr=g.createLinearGradient(x,0,x+w,0);gr.addColorStop(0,a);gr.addColorStop(1,b);g.fillStyle=gr;g.fillRect(x,y,w,h);};
+  const bt=Math.round(top+20+R()*90),col=['#5e4a3e','#6a4f40','#55504a','#7a6450'][Math.floor(R()*4)],fl=GY-24;
+  // prédio do fundo
+  P(x,bt,w,fl-bt,col);P(x,bt,w,3,'#3a2e26');P(x,bt,w,1,'#6a5a4e');
+  for(let y=bt+5;y<fl;y+=4)P(x,y,w,1,'rgba(214,196,176,.1)');
+  const cols=w>=26?Math.floor((w-6)/20):w>=14?1:0;
+  for(let y=bt+14;y<fl-30;y+=34)for(let i=0;i<cols;i++){const wx=Math.round(cols===1?x+w/2-5:x+6+i*((w-12)/cols)+((w-12)/cols-10)/2);
+    P(wx-1,y-1,12,16,'#a89e8c');P(wx,y,10,14,R()<.15?'#9a7a4a':'#2e3640');P(wx,y+6,10,1,'#a89e8c');P(wx+1,y+1,3,2,'rgba(200,220,236,.25)');}
+  if(w>=50)for(let y=bt+34;y<fl-34;y+=34){const fx=x+w*.55,fw=Math.min(30,w*.35);P(fx,y,fw,2,'#1c1d20');for(let j=0;j<fw;j+=3)P(fx+j,y-7,1,7,'#1c1d20');P(fx,y-7,fw,1,'#1c1d20');for(let j=0;j<26;j+=3)P(fx+fw-8+Math.round(j*6/26),y+2+j,3,1,'#2a2b2e');}
+  P(x,bt,w,fl-bt,'rgba(110,122,140,.22)');                                  // a distância apaga as cores
+  // chão da passagem, recuando até o fundo, com uma poça e sujeira
+  P(x,fl,w,GY-fl,'#4a4642');for(let y=fl;y<GY;y+=5)P(x,y,w,1,'rgba(0,0,0,.16)');P(x,fl,w,2,'rgba(0,0,0,.4)');
+  for(let i=0;i<w/4;i++)P(x+R()*w,fl+R()*(GY-fl),1,1,'rgba(0,0,0,.3)');
+  if(w>=30)E(x+w*.6,GY-10,Math.min(12,w*.25),2,'rgba(140,165,190,.3)');
+  // sombra do prédio da esquerda (sol do alto à esquerda) e um pouco de escuro no canto direito
+  vg(x,top,Math.min(w,34),GY-top,'rgba(16,10,8,.55)','rgba(16,10,8,0)');P(x+w-2,top,2,GY-top,'rgba(0,0,0,.25)');
+  // fechamento na calçada
+  if(w>=34){const h=40;P(x,GY-h,w,2,'#4a4c50');for(let px=x+2;px<x+w-1;px+=28)P(px,GY-h,2,h,'#3a3c40');P(x+w-3,GY-h,2,h,'#3a3c40');
+    for(let yy=GY-h+3;yy<GY;yy+=3)for(let xx=x+((yy>>1)%2?1:2);xx<x+w;xx+=3)P(xx,yy,1,1,'rgba(170,176,184,.45)');}
+  else{const h=46;P(x,GY-h,w,h,'rgba(20,20,24,.15)');P(x,GY-h,w,2,'#2a2b2e');for(let xx=x+1;xx<x+w;xx+=3)P(xx,GY-h,1,h,'#2a2b2e');P(x,GY-h+20,w,1,'#2a2b2e');P(x+w-4,GY-h+24,2,3,'#c9a24a');}
+  // varal ou fios cruzando o vão, presos nas paredes dos vizinhos
+  if(w>=40){const y=top+30+Math.floor(R()*60);for(let k=0;k<=w;k++){const t=k/w;P(x+k,y+Math.sin(t*Math.PI)*6,1,1,'#1a1a1c');}
+    for(let k=0;k<3;k++){const t=(k+1)/4,cx=x+w*t,cy=y+Math.sin(t*Math.PI)*6;P(cx-3,cy,6,8,['#e8e2d4','#c0392b','#2f5aa8','#f2c230'][Math.floor(R()*4)]);P(cx-3,cy,6,1,'rgba(255,255,255,.3)');}}
 }
 
 /** chão: calçada de lá (vista de cima), meio-fio, asfalto com vagas e faixas, calçada de cá.
@@ -326,11 +327,9 @@ export function paintWear(g,lots,W){
   const vgrad=(x,y,w,h,stops)=>{const gr=g.createLinearGradient(0,y,0,y+h);for(const [o,c] of stops)gr.addColorStop(o,c);g.fillStyle=gr;g.fillRect(x,y,w,h);};
   const near=(x,m=70)=>CROSSWALKS.some(c=>Math.abs(c.x-x)<m);
   for(const b of lots){const x=b.X,w=b.w;
-    if(b.k==='alley'){const d=Math.min(30,w*.3),bx=x+d,bw=w-2*d,back=GY-96;if(bw<24)continue;
+    if(b.k==='alley'){if(w<40)continue;   // cartazes e rabiscos no muro/portão da frente do vão
       const post=(px,py,c)=>{P(px-1,py-1,12,16,'rgba(20,14,10,.5)');P(px,py,10,14,c);for(let k=0;k<3;k++)P(px+1,py+2+k*4,8,1,'rgba(40,30,24,.55)');P(px+7,py,3,3,'rgba(255,255,255,.12)');P(px,py+13,10,1,'rgba(0,0,0,.3)');};
-      post(bx+3,back-52,'#a89a78');post(bx+bw-14,back-72,'#8aa09a');
-      for(const [c,x0,y0] of [['rgba(220,70,70,.55)',bx+6,back-18],['rgba(80,200,190,.5)',bx+bw-26,back-30]]){let px=x0,py=y0;g.fillStyle=c;for(let k=0;k<26;k++){g.fillRect(Math.round(px),Math.round(py),2,2);px+=1+R()*2;py+=Math.sin(k*1.1)*2+(R()-.5)*2;}}
-      {const at=(b.alleyTop||0)+10;streak(bx+bw*.3,at,back-at,.12,3);streak(bx+bw*.75,at,back-at-10,.1,2);}continue;}
+      post(x+8,GY-92,'#a89a78');post(x+w-20,GY-104,'#8aa09a');continue;}
     const dh=b.k==='dhpp',sills=(b.wins||[]).map(v=>[v.x,v.y+v.h-2,v.w]);
     for(const [sx,sy,sw] of sills){const n=3+Math.floor(R()*3);for(let k=0;k<n;k++)streak(sx+2+R()*(sw-4),sy+5,14+R()*34,(dh?.09:.12)+R()*.11,R()<.3?2:1);
       if(R()<.3)streak(sx+R()*sw,sy+5,10+R()*18,.14,1,'236,230,216');}
