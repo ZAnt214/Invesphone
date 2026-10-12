@@ -165,7 +165,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   const SLOT_W=196;
   const SLOTS=[10,205,722,915,1305,1500,1885,2080,2275].map(x=>({x,car:null,busy:null}));
   const parked=[];
-  const viatura={id:'viatura-dhpp',x:DOOR.x-W({id:'viatura-dhpp'})/2,y:PARK,dir:1,v:0,brake:0};parked.push(viatura);
+  const viatura={id:'viatura-dhpp',x:DOOR.x-W({id:'viatura-dhpp'})/2,y:PARK,dir:-1,v:0,brake:0};parked.push(viatura);
   const placeCar=(k,sl)=>{k.slot=sl;sl.car=k;k.y=PARK;k.dir=-1;k.lane=null;k.yo=null;k.x=sl.x+(SLOT_W-W(k))/2+(R()-.5)*6;k.v=0;k.blink=false;k.park=null;};
   const FIRST=['sedan-bordo','perua-madeira','sedan-bege','sedan-azul','sedan-verde','furgao-marrom'];
   [0,1,3,4,6,8].forEach((si,n)=>{const k={id:FIRST[n],v:0,pv:0,puff:R(),brake:0,dist:0};placeCar(k,SLOTS[si]);parked.push(k);});
@@ -174,7 +174,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   const POOL=[['sedan-azul',3],['sedan-bordo',3],['sedan-verde',3],['sedan-bege',3],['perua-madeira',2],['taxi',2.2],['furgao-marrom',1.5],['viatura-dhpp',.25]];
   const poolId=()=>{let t=0;for(const [,w] of POOL)t+=w;let r=R()*t;for(const [id,w] of POOL){r-=w;if(r<=0)return id;}return POOL[0][0];};
   const cars=[];
-  for(let l=0;l<LANES.length;l++){const n=7;for(let i=0;i<n;i++){const id=poolId(),v=LANES[l].v*(0.85+R()*0.3);cars.push({id,lane:l,x:i*(STREET_W+500)/n-150+R()*120,v,v0:v,pv:v,puff:R(),brake:0,dist:R()*40});}}
+  for(let l=0;l<LANES.length;l++){const n=7;for(let i=0;i<n;i++){const id=poolId(),v=LANES[l].v*(0.72+R()*0.6);cars.push({id,lane:l,x:i*(STREET_W+500)/n-150+R()*120,v,v0:v,base:v,pv:v,puff:R(),brake:0,dist:R()*40,aggr:R(),yj:(R()-.5)*8,dr:R()*8});}}
   const puffs=[];
   const birds=Array.from({length:6},()=>({x:300+R()*(STREET_W-600),y:WALK[0]+10+R()*(WALK[1]-WALK[0]-20),z:0,dir:R()<.5?-1:1,st:'g',t:R()*40,vx:0,vz:0}));
   // poeira no ar, só visível contra a luz (qualidade alta): poucas partículas, recicladas
@@ -336,11 +336,11 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   function parkDone(k){const dv=k.park.delivery,sl=k.park.slot;cars.splice(cars.indexOf(k),1);placeCar(k,sl);sl.busy=null;parked.push(k);sound('brake',k.x+W(k)/2,.35);
     life.emit(t,'rua','carro estacionou');if(dv&&dlv){dlv.st='unload';dlv.t=0;dlv.van=k;}}
   function unparkCar(k){const i=parked.indexOf(k);if(i>=0)parked.splice(i,1);if(k.slot){k.slot.car=null;k.slot=null;}
-    k.lane=0;k.yo=PARK;k.v=0;k.pv=0;k.v0=LANES[0].v*(.85+R()*.3);k.unpark={st:'blink',t:0};k.blink=true;k.dist=0;k.siren=false;k.target=null;cars.push(k);life.emit(t,'rua','carro saindo da vaga');}
+    k.lane=0;k.yo=PARK;k.v=0;k.pv=0;k.v0=k.base=LANES[0].v*(.8+R()*.4);k.aggr=R();k.yj=(R()-.5)*8;k.pass=null;k.unpark={st:'blink',t:0};k.blink=true;k.dist=0;k.siren=false;k.target=null;cars.push(k);life.emit(t,'rua','carro saindo da vaga');}
   const lane0=()=>cars.filter(k=>k.lane===0);
   const freeSlots=()=>SLOTS.filter(s=>!s.car&&!s.busy);
   const canUnpark=k=>k!==viatura&&k.slot&&!(dlv&&dlv.van===k)&&!peds.some(p=>!p.hidden&&p.onRoad&&Math.abs(p.x-k.x-W(k)/2)<120);
-  const mergeClear=(k,w)=>!lane0().some(o=>o!==k&&(o.yo==null||Math.abs(o.yo-LANES[0].y)<40)&&o.x>k.x-W(o)-50&&o.x<k.x+w+330+o.v*1.4);
+  const mergeClear=(k,w)=>!lane0().some(o=>o!==k&&!o.pass&&(o.yo==null||Math.abs(o.yo-LANES[0].y)<40)&&o.x>k.x-W(o)-50&&o.x<k.x+w+330+o.v*1.4);
   function startDelivery(){const sl=freeSlots().filter(s=>s.x<900);if(!sl.length)return false;const sx=sl[Math.floor(R()*sl.length)];sx.busy=true;
     pendingPark={slot:sx,id:'furgao-marrom',delivery:true};dlv={st:'wait',t:0,van:null,door:null,wp:0};life.emit(t,'entrega','furgão a caminho de uma entrega');return true;}
   function updDlv(dt){const d=dlv;if(!d)return;d.t+=dt;const c=courier;
@@ -353,7 +353,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     else if(d.st==='back'){const done=d.wp===0?stepTo(c,xw,640,dt):stepTo(c,xw,PARK+2,dt);if(done){if(d.wp===0)d.wp=1;else{c.hidden=true;sound('cardoor',van.x,.5);d.st='go';d.t=0;}}}
     else if(d.st==='go'&&d.t>.8){unparkCar(van);dlv=null;}}
   function startJog(){const p=peds.find(q=>q.st==='off'&&!q.staff);if(!p)return false;const east=R()<.5;p.near=false;p.v=46+R()*10;p.x=east?STREET_W+30:-30;p.y=FAR[0]+R()*(FAR[1]-FAR[0]);p.hidden=false;go(p,east?-40:STREET_W+40,p.y,'offstage');life.emit(t,'rua','alguém correndo pela calçada');return true;}
-  function startSiren(){const vx=lastView?lastView.left+lastView.vw+80:STREET_W,k=lane0().find(o=>!o.job&&!o.park&&!o.unpark&&!o.bus&&o.yo==null&&o.x>vx);if(!k)return false;k.id='viatura-dhpp';k.siren=true;k.v0=LANES[0].v*1.3;life.emit(t,'rua','viatura passando com a sirene');return true;}
+  function startSiren(){const vx=lastView?lastView.left+lastView.vw+80:STREET_W,k=lane0().find(o=>!o.job&&!o.park&&!o.unpark&&!o.bus&&o.yo==null&&o.x>vx);if(!k)return false;k.id='viatura-dhpp';k.siren=true;k.v0=k.base=LANES[0].v*1.3;life.emit(t,'rua','viatura passando com a sirene');return true;}
   const EVOPTS=[
     {id:'unpark',w:()=>!pendingPark&&lane0().length<9&&parked.some(canUnpark)&&SLOTS.filter(s=>s.car).length>4?1.1:0,cool:45},
     {id:'park',w:()=>!pendingPark&&freeSlots().length&&lane0().length>4?(SLOTS.filter(s=>s.car).length<5?1.8:.8):0,cool:45},
@@ -367,12 +367,34 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     else if(o.id==='delivery')startDelivery();else if(o.id==='jog')startJog();else if(o.id==='siren')startSiren();}
 
   /* ---------- um carro: segue o da frente, para na linha do semáforo, cede a quem atravessa, estaciona e sai da vaga ---------- */
-  function recycle(k,L,ln){const dir=L.dir;
+  function recycle(k,L,ln){const dir=L.dir;if(!k.job){k.yo=null;k.pass=null;}
     if(L===LANES[0]&&pendingPark&&!k.job&&!k.park){k.id=pendingPark.id||poolId();k.park={slot:pendingPark.slot,delivery:pendingPark.delivery};pendingPark=null;}
     else if(!k.job)k.id=poolId();
     k.siren=false;k.blink=false;const w=W(k),gap=140+R()*420;
     if(dir>0){const back=Math.min(...ln.map(o=>o.x));k.x=Math.min(-w-60,back-w-gap);}else{const back=Math.max(...ln.map(o=>o.x+W(o)));k.x=Math.max(STREET_W+60,back+gap);}
-    k.v0=L.v*(0.85+R()*0.3);}
+    k.v0=k.base=L.v*(0.72+R()*0.6);k.aggr=R();k.yj=(R()-.5)*8;k.pass=null;}
+  /* ultrapassagem: quem chega rápido atrás de um carro lento (ônibus, parado no trânsito, motorista devagar) entra na faixa do meio,
+     passa e volta quando há espaço; só com a faixa do meio livre, longe da faixa de pedestres e sem semáforo fechado na frente */
+  const nearCW=(x,m)=>CROSSWALKS.some(c=>Math.abs(c.x-x)<m);
+  function tryPass(k,L,w,lead,ln,dt){
+    const dir=L.dir,gap=dir>0?lead.x-(k.x+w):k.x-(lead.x+W(lead));
+    if(gap>100||gap<-10||lead.pass||k.brake>.5&&k.v<5)return;
+    const slowLead=lead.bus||lead.v0<k.v0*.88||lead.v<k.v0*.6;if(!slowLead||k.aggr<.25)return;
+    if(R()>dt*(.6+k.aggr*1.8))return;
+    if(nearCW(k.x,300)||nearCW(lead.x,300)||SIGS.some(g=>g.st!=='green'&&Math.abs(g.x-k.x)<650))return;
+    if(k.x<60||k.x>STREET_W-60)return;
+    const ahead=ln[ln.indexOf(k)-2];if(ahead){const g2=dir>0?ahead.x-(lead.x+W(lead)):lead.x-(ahead.x+W(ahead));if(g2<260)return;}
+    if(cars.some(o=>o!==k&&o.pass&&Math.abs(o.x-k.x)<420))return;
+    if(peds.some(p=>p.onRoad&&!p.hidden&&Math.abs(p.x-k.x)<300))return;
+    k.pass={st:'out',t:0,lead};k.blink=true;}
+  function passStep(k,L,w,dt,v,ln){
+    const P=k.pass,off=L.dir<0?40:-40,lead=P.lead,dir=L.dir;P.t+=dt;
+    if(P.st==='out'){k.yo=L.y+off*Math.min(1,P.t/.8);v=Math.min(v,k.v);if(P.t>.8){P.st='on';P.t=0;k.blink=false;}return Math.max(v,k.v0*.9);}
+    if(P.st==='on'){k.yo=L.y+off;const clear=dir>0?k.x>lead.x+W(lead)+30:k.x+w<lead.x-30;
+      if(clear||P.t>14){const next=dir>0?ln.find(o=>o.x>k.x):ln.find(o=>o.x<k.x),g=next?(dir>0?next.x-(k.x+w):k.x-(next.x+W(next))):999;
+        if(g>110||P.t>14){P.st='in';P.t=0;k.blink=true;}}
+      return k.v0*1.22;}
+    k.yo=L.y+off*(1-Math.min(1,P.t/.8));if(P.t>.8){k.yo=null;k.pass=null;k.blink=false;}return Math.min(v,k.v0);}
   function stepCar(k,L,lead,ln,dt){
     const dir=L.dir,w=W(k);let v=k.target!=null?k.target:k.v0;const inLane=k.yo==null||Math.abs(k.yo-L.y)<=40,ly=k.yo??L.y;
     if(k.park){const sx=k.park.slot.x+(SLOT_W-w)/2,dd=k.x-sx;
@@ -382,7 +404,10 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     if(k.unpark){const U=k.unpark;U.t+=dt;
       if(U.st==='blink'){v=0;k.blink=true;if(U.t>1.6&&mergeClear(k,w)){U.st='merge';U.t=0;}}
       else{const pr=Math.min(1,U.t/2.2);k.yo=PARK+(L.y-PARK)*pr;v=Math.min(v,k.v0*Math.min(1,.25+U.t/1.6));if(pr>=1){k.yo=null;k.unpark=null;k.blink=false;}}}
-    if(lead&&inLane){const gap=dir>0?lead.x-(k.x+w):k.x-(lead.x+W(lead));if(gap<70)v=Math.min(v,lead.v*(gap<28?0.6:1),gap<14?0:99);}
+    if(!k.bus&&!k.job&&!k.park&&!k.unpark){k.dr=(k.dr||0)-dt;if(k.dr<=0){k.dr=4+R()*9;k.base=k.base||k.v0;k.v0=Math.max(L.v*.6,Math.min(L.v*1.35,k.base*(.88+R()*.24)));}}
+    if(k.pass)v=passStep(k,L,w,dt,v,ln);
+    else if(lead&&k.yo==null&&!k.bus&&!k.job&&!k.park&&!k.unpark)tryPass(k,L,w,lead,ln,dt);
+    if(lead&&inLane&&!k.pass){const gap=dir>0?lead.x-(k.x+w):k.x-(lead.x+W(lead));if(gap<70)v=Math.min(v,lead.v*(gap<28?0.6:1),gap<14?0:99);}
     if(inLane)v=sigLimit(k,w,L,v);
     for(const p of peds){if(!p.onRoad||p.hidden||p.y<ly-46||p.y>ly+14)continue;const ahead=dir>0?p.x-(k.x+w):k.x-p.x;
       if(ahead>-12&&ahead<170){v=Math.min(v,ahead<46?0:(ahead-46)*.5);if(ahead<60&&k.v<2){k.wait=(k.wait||0)+dt;if(k.wait>2.5&&!k.honked&&R()<.3){k.honked=true;sound('honk',k.x,.5);}}}}
@@ -417,7 +442,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
         if(b.vz<0&&b.z<=0){b.st='g';b.z=0;b.y=WALK[0]+10+Math.random()*(WALK[1]-WALK[0]-20);}}}
     // trânsito: cada um segue o da frente na mesma faixa, para na linha do semáforo, cede a quem atravessa e acelera com a pista livre;
     // fumacinha do escapamento atrás; luz de freio quando desacelera; seta quando entra ou sai da vaga
-    for(let l=0;l<LANES.length;l++){const L=LANES[l],dir=L.dir,all=cars.filter(k=>k.lane===l),ln=all.filter(k=>k.yo==null||Math.abs(k.yo-L.y)<=40).sort((a,b)=>dir>0?b.x-a.x:a.x-b.x);
+    for(let l=0;l<LANES.length;l++){const L=LANES[l],dir=L.dir,all=cars.filter(k=>k.lane===l),ln=all.filter(k=>!k.pass&&(k.yo==null||Math.abs(k.yo-L.y)<=40)).sort((a,b)=>dir>0?b.x-a.x:a.x-b.x);
       for(const k of all){if(k.lane!==l)continue;const i=ln.indexOf(k);stepCar(k,L,i>0?ln[i-1]:null,ln,dt);}}
     for(const p of puffs){p.t+=dt;p.x+=p.vx*dt;p.y-=dt*5;}while(puffs.length&&puffs[0].t>1)puffs.shift();
     if(!RM)for(const m of motes){m.p+=dt*m.v;m.x+=dt*.004*m.v;m.y+=Math.sin(m.p)*dt*.004;if(m.x>1)m.x-=1;}
@@ -485,7 +510,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     for(const d of DOORS)if(d.open>0&&d.x>x0&&d.x<x1){const k=Math.min(1,d.open/.35)*Math.min(1,(.7-d.open)/.15+.2);ctx.fillStyle=`rgba(18,14,12,${.75*k})`;ctx.fillRect(Math.round(d.dx+d.w*.35),Math.round(d.dy+2),Math.round(d.w*.62),Math.round(d.h-2));ctx.fillStyle=`rgba(255,226,170,${.25*k})`;ctx.fillRect(Math.round(d.dx+d.w*.35),Math.round(d.dy+d.h-3),Math.round(d.w*.62),3);}
     if(!RM)for(const d of DRUMS){if(d.x<x0||d.x>x1)continue;const a=t*5+d.x;ctx.fillStyle='rgba(235,242,250,.85)';ctx.fillRect(Math.round(d.x+Math.cos(a)*5)-1,Math.round(d.y+Math.sin(a)*5)-1,2,2);ctx.fillStyle='rgba(120,150,180,.6)';ctx.fillRect(Math.round(d.x+Math.cos(a+2.4)*4),Math.round(d.y+Math.sin(a+2.4)*4),2,2);}
     // ordem de desenho pelo pé
-    for(const e of ENTS){const r=e.ref;if(e.k==='car'){if(r.lane!=null)e.y=r.yo??LANES[r.lane].y;}else e.y=r.y;}
+    for(const e of ENTS){const r=e.ref;if(e.k==='car'){if(r.lane!=null)e.y=(r.yo??LANES[r.lane].y)+(r.yj||0);}else e.y=r.y;}
     for(let i=1;i<ENTS.length;i++){const e=ENTS[i];let j=i-1;while(j>=0&&ENTS[j].y>e.y){ENTS[j+1]=ENTS[j];j--;}ENTS[j+1]=e;}
     // sombras projetadas (média e alta): silhuetas inclinadas na direção do sol, numa camada só (não somam escuro)
     if(q>=1){const hs=s/2,sw=Math.ceil(cw/2),sh=Math.ceil(ch/2);if(shc.width!==sw||shc.height!==sh){shc.width=sw;shc.height=sh;}
@@ -522,9 +547,10 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
       let a=gl.neon?.34:gl.lamp?.3:.12;if(gl.neon&&!RM&&q>=1){const ph=Math.sin(t*1.3+gl.x)*Math.sin(t*7.1+gl.y);if(ph>.93)a*=.35;}
       const sp=glowSprite(rgba(gl.c,1));ctx.globalAlpha=a;const r=gl.r;ctx.drawImage(sp,gl.x-r,gl.y-r*.7,r*2,r*1.4);
       if(gl.lamp){ctx.globalAlpha=a*.5;ctx.drawImage(sp,gl.x-r*.8,GY-6,r*1.6,r*.5);}}}
-    if(q>=1&&viatura.x+200>x0&&viatura.x<x1){const red=(2+Math.floor(t*2.5)%2)===2,m=meta(viatura.id),cx=viatura.x+(red?67:85)*CAR_S,cyy=viatura.y-m.h*CAR_S+6*CAR_S;
-      const sp=glowSprite(red?'rgba(255,60,50,1)':'rgba(60,110,255,1)');ctx.globalAlpha=.5;ctx.drawImage(sp,cx-18,cyy-14,36,28);
-      ctx.globalAlpha=.16;ctx.drawImage(sp,cx-130,viatura.y-90,260,110);ctx.globalAlpha=.08;ctx.drawImage(sp,cx-160,GY-130,320,190);}
+    if(q>=1){const flash=(k,yy)=>{if(k.x+200<x0||k.x>x1)return;const red=(2+Math.floor(t*(k.siren?4:2.5))%2)===2,m=meta(k.id),sx=(red?67:85)*CAR_S,cx=k.x+((k.dir||(k.lane!=null?LANES[k.lane].dir:1))<0?W(k)-sx:sx),cyy=yy-m.h*CAR_S+6*CAR_S;
+        const sp=glowSprite(red?'rgba(255,60,50,1)':'rgba(60,110,255,1)');ctx.globalAlpha=.5;ctx.drawImage(sp,cx-18,cyy-14,36,28);
+        ctx.globalAlpha=.16;ctx.drawImage(sp,cx-130,yy-90,260,110);if(k===viatura){ctx.globalAlpha=.08;ctx.drawImage(sp,cx-160,GY-130,320,190);}};
+      flash(viatura,viatura.y);for(const k of cars)if(k.siren)flash(k,(k.yo??LANES[k.lane].y)+(k.yj||0));}
     ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
     // retorno do toque: um anel no chão onde o Lemos vai
     if(tapFx){const k=tapFx.t/.7;ctx.strokeStyle=`rgba(242,194,48,${.9*(1-k)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(tapFx.x,tapFx.y,6+k*14,2+k*5,0,0,7);ctx.stroke();}
@@ -565,13 +591,21 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     const sway=RM?0:Math.round(Math.sin(t*.9+r.ph)*1.2);ctx.drawImage(r.crown,Math.round(r.x-r.crown.width/2+sway),Math.round(r.y-150));
   }
   // carro oficial (rodas girando; a viatura parada com o giroflex alternando), ampliado sem suavizar, com volume e sombra
+  // roda girando: o PNG oficial só tem as rodas paradas, então o miolo ganha raios que giram conforme a distância andada (desenhados por cima, sem mexer no resto)
+  const WHEELS={'viatura-dhpp':{r:7.5,p:[[35,40],[125,40]]},taxi:{r:7.5,p:[[34,41],[122,41]]},'sedan-azul':{r:7,p:[[34,38],[124,38]]},'sedan-bordo':{r:7,p:[[34,37],[122,37]]},'sedan-verde':{r:7,p:[[34,37],[122,37]]},
+    'sedan-bege':{r:7,p:[[31,37],[116,37]]},'perua-madeira':{r:7.5,p:[[37,38],[128,39]]},'furgao-marrom':{r:8,p:[[31,46],[112,46]]},onibus:{r:12,p:[[68,70],[219,70]]}};
+  function wheels(ctx,k,w){const W_=WHEELS[k.id];if(!W_)return;const rr=W_.r*CAR_S,a0=(k.dist||0)/rr,hub=Math.round(rr*.62);
+    for(const [wx,wy] of W_.p){const cx=Math.round(wx*CAR_S),cy=Math.round(wy*CAR_S);
+      ctx.fillStyle='#26282c';ctx.beginPath();ctx.arc(cx,cy,hub,0,7);ctx.fill();ctx.fillStyle='#b9bdc6';
+      for(let j=0;j<4;j++){const a=a0+j*Math.PI/2,c=Math.cos(a),sn=Math.sin(a);for(let d=1;d<=hub-1;d++)ctx.fillRect(Math.round(cx+c*d),Math.round(cy+sn*d),1,1);}
+      ctx.fillStyle='#8a8e96';ctx.fillRect(cx-1,cy-1,2,2);}}
   function car(ctx,k,x,y,dir,isViatura){
     const m=meta(k.id),im=art(PATH.veiculo(k.id));const w=m.w*CAR_S,h=m.h*CAR_S;
     contact(ctx,x+w/2,y-3,w*.44,4,.42);contact(ctx,x+w/2,y-2,w*.36,2,.3);
     if(!im)return;
     const f=isViatura||k.siren?2+Math.floor(t*(k.siren?4:2.5))%2:(k.v>1?Math.floor((k.dist||0)/11)%2:0);
     ctx.save();ctx.translate(Math.round(dir<0?x+w:x),Math.round(y-h));if(dir<0)ctx.scale(-1,1);
-    ctx.drawImage(Q()>=1?shaded(im):im,f*m.w,0,m.w,m.h,0,0,Math.round(w),Math.round(h));ctx.restore();
+    ctx.drawImage(Q()>=1?shaded(im):im,f*m.w,0,m.w,m.h,0,0,Math.round(w),Math.round(h));if(k.lane!=null)wheels(ctx,k,w);ctx.restore();
     // seta ao entrar ou sair da vaga: pisca na frente e atrás, do lado do meio-fio
     if(k.blink&&Math.floor(t*3)%2===0){const fx=dir>0?x+w-7:x+3,rx=dir>0?x+3:x+w-7,by=y-h*.5;ctx.fillStyle='#ffb52e';ctx.fillRect(Math.round(fx),Math.round(by),4,4);ctx.fillRect(Math.round(rx),Math.round(by),4,4);
       ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.4;const sp=glowSprite('rgba(255,170,40,1)');ctx.drawImage(sp,fx-10,by-8,24,20);ctx.drawImage(sp,rx-10,by-8,24,20);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}
