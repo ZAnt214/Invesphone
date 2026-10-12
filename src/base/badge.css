@@ -1,0 +1,51 @@
+/* Close da leitora de crachá (src/base/badgeSwipe.js). Fica embaixo do cabeçalho do jogo e gira junto com ele. */
+.bx{position:absolute;inset:0;z-index:4;overflow:hidden;background:#1d1e22;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;
+  opacity:0;transition:opacity .22s ease;cursor:grab}
+.bx.on{opacity:1}
+.bx.out{opacity:0;pointer-events:none}
+.bx-stage{position:absolute;left:0;top:0;transform-origin:0 0}
+.bx-bg{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
+.bx-svg{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+
+/* plaquinha e visor: o texto é do jogo, a arte só tem as áreas lisas */
+.bx-plq{position:absolute;display:grid;place-items:center;font:800 17px/1 system-ui,-apple-system,'Segoe UI',sans-serif;letter-spacing:.16em;color:#f1e3cf;text-shadow:0 1px 0 rgba(40,8,6,.7);pointer-events:none}
+.bx-lcd{position:absolute;display:grid;place-items:center;box-sizing:border-box;padding:0 6px;white-space:nowrap;overflow:hidden;
+  font:700 12.5px/1 'Courier New',ui-monospace,monospace;letter-spacing:0;color:rgba(18,30,20,.82);text-shadow:1px 1px 0 rgba(160,190,160,.18);pointer-events:none;transition:background-color .2s}
+.bx-lcd.read{animation:bx-blink .5s steps(2) infinite}
+.bx-lcd.ok{background:rgba(150,230,140,.28);color:rgba(10,40,12,.92)}
+.bx-lcd.no{background:rgba(230,120,90,.18)}
+@keyframes bx-blink{50%{color:rgba(18,30,20,.35)}}
+
+/* LEDs: vermelho parado (porta trancada), pisca no erro, verde com o acesso */
+.bx-led{position:absolute;transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;background:transparent;transition:background .12s,box-shadow .12s}
+.bx-led.r{background:radial-gradient(circle at 40% 35%,#ff8a7a,#b02a24 60%,#5a1210);box-shadow:0 0 6px 2px rgba(255,70,50,.55),0 0 22px 6px rgba(255,60,40,.22)}
+.bx-led.r.ok,.bx-led.l.ok{background:radial-gradient(circle at 40% 35%,#c8ffb0,#38c24a 60%,#145a1c);box-shadow:0 0 6px 2px rgba(90,255,110,.6),0 0 26px 8px rgba(70,240,90,.25)}
+.bx-led.r.no{animation:bx-err .22s steps(2) 4}
+.bx-led.l{background:radial-gradient(circle at 40% 35%,#ff8a7a,#b02a24 60%,#5a1210);box-shadow:0 0 5px 2px rgba(255,70,50,.45)}
+@keyframes bx-err{50%{background:#3a0e0c;box-shadow:none}}
+
+/* cordão: contorno escuro, fita vermelha, um fio de luz */
+.bx-cord{fill:none;stroke-linecap:round}
+.bx-cord.o{stroke:#2a0b0a;stroke-width:17}
+.bx-cord.i{stroke:#9e2622;stroke-width:12}
+.bx-cord.h{stroke:#d0574a;stroke-width:2.5;opacity:.7;transform:translate(-2px,-1px)}
+.bx-hint{fill:none;stroke:rgba(242,194,48,.85);stroke-width:5;stroke-dasharray:2 14;stroke-linecap:round;animation:bx-dash 1s linear infinite}
+@keyframes bx-dash{to{stroke-dashoffset:-32}}
+
+/* mão: respira parada; segue o dedo sem atraso; some para baixo depois do acesso */
+.bx-hand{position:absolute;left:0;top:0;width:560px;height:560px;pointer-events:none;will-change:transform}
+.bx-hin{position:absolute;left:0;top:0;animation:bx-breathe 3.6s ease-in-out infinite}
+.bx-hand canvas{position:absolute;left:0;top:0}
+.bx-hand.drag .bx-hin,.bx-hand.in .bx-hin{animation:none}
+.bx-hand.away{transition:translate .6s cubic-bezier(.5,0,.8,.4);translate:60px 520px}
+@keyframes bx-breathe{50%{transform:translate(0,4px) rotate(.4deg)}}
+.bx-card{position:absolute;display:flex;align-items:center;white-space:nowrap;overflow:hidden;pointer-events:none;font-family:system-ui,-apple-system,'Segoe UI',sans-serif}
+.bx-card.org{justify-content:center;font-weight:900;font-size:24px;letter-spacing:.14em;color:#e9dcc0}
+.bx-card.nm{font-weight:800;font-size:17px;letter-spacing:.08em;color:#1b2a44}
+.bx-card.fn{font-weight:700;font-size:11px;letter-spacing:.06em;color:#4a5466}
+
+.bx-tip{position:absolute;left:50%;bottom:calc(var(--sb,env(safe-area-inset-bottom,0px)) + 12px);transform:translateX(-50%);margin:0;max-width:calc(100% - 140px);box-sizing:border-box;
+  padding:7px 12px;background:rgba(5,6,7,.72);border:1px solid rgba(242,194,48,.35);color:#efe6d4;font:600 13px/1.25 system-ui,-apple-system,'Segoe UI',sans-serif;text-align:center;pointer-events:none}
+.bx-x{position:absolute;left:12px;bottom:calc(var(--sb,env(safe-area-inset-bottom,0px)) + 12px);padding:8px 14px;background:rgba(5,6,7,.78);color:#efe6d4;border:1px solid rgba(255,255,255,.22);
+  font:700 13px/1 system-ui,-apple-system,'Segoe UI',sans-serif;letter-spacing:.04em;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.bx-hin,.bx-hint,.bx-lcd.read{animation:none}.bx-hand.away{transition:none}}

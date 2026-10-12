@@ -5,7 +5,7 @@ Cena 2D navegável, feita na mesma técnica da Varredura das Acácias: pixel art
 ## Como funciona
 - Tela deitada como na Varredura: com o celular em pé o app gira 90° (botão de girar na barra para voltar ao modo em pé).
 - Móveis desenhados em pé na câmera oblíqua, luz por cômodo multiplicada sobre a cena (ambiente × lâmpadas), brilho nas lâmpadas, sol das janelas com poeira e vapor do café.
-- Atmosfera: sombras das pessoas a partir da lâmpada mais próxima (e do sol lá fora), reflexo no piso encerado da recepção e da perícia, luz dos monitores, ventilador de teto da delegada, nuvens passando, poeira no ar, cigarro com fumaça na sala de depoimentos, bandeiras tremulando, carros na rua, pombos que voam quando Lemos chega perto, folhas caindo, faxineira com rodo e piso molhado, porta de vidro automática e gradação de cor.
+- Atmosfera: sombras das pessoas a partir da lâmpada mais próxima (e do sol lá fora), reflexo no piso encerado da recepção e da perícia, luz dos monitores, ventilador de teto da delegada, nuvens passando, poeira no ar, cigarro com fumaça na sala de depoimentos, bandeiras tremulando, carros na rua, pombos que voam quando Lemos chega perto, folhas caindo, faxineira com rodo e piso molhado, porta de vidro automática, porta de acesso com o close da leitora de crachá e gradação de cor.
 - Pós-processamento (estilo HD-2D), por padrão **sem ler o quadro de volta**, porque no Safari copiar o canvas a cada quadro (para o WebGL ou para outro canvas) trava a GPU — ao minimizar e voltar, o iOS derrubava o WebGL e o jogo ficava mais leve, o que denunciou o gargalo. A profundidade de campo usa versões desfocadas, feitas uma vez, do chão, das paredes, dos móveis e das pessoas (`blurOf`), desenhadas no lugar das nítidas acima e abaixo da faixa de Lemos (`dofW`; o chão em tiras recortadas com opacidade crescente, `dofGround`) — o `backdrop-filter` foi descartado porque no iPhone ele não acompanha o canvas e deixava um fantasma atrasado ao mover o mapa; o brilho são halos somados nas fontes de luz (`glowPass`, incluindo as janelas); o clima de cor de cada sala (`GRADE` em `base.js`: interrogatório frio, delegada quente, arquivo amarelado) é um preenchimento em `soft-light`; a vinheta é o `#vig` em CSS, com intensidade por sala. Os personagens ganham luz de contorno da lâmpada mais próxima (ou do sol). `?fx=0` desliga tudo; `?fx=gl` liga a versão em WebGL (`src/base/post.js`: bloom por shader, desfoque gaussiano, aberração, desenho em 2x com ampliação nítida e resolução dinâmica), mantida para comparação. `__base.prof()` mostra os tempos. O laço de desenho não cria listas novas por quadro (fileiras, partículas, gradientes e luz de contorno são reaproveitados) para evitar engasgos do coletor de memória.
 - Zoom por pinça, roda ou toque duplo, com níveis de detalhe: de longe aparecem os nomes das salas; de perto, nomes da equipe, rostos finos, piscar e textos miúdos. A conversa aproxima a câmera sozinha. O acompanhamento usa dead zone, antecipação do próximo tile, carência após gesto manual e perfis próprios para delegada, equipe, perícia, depoimentos, hall e arquivo (`docs/CAMERA_DIRECTION_SYSTEM.md`).
 - Lemos anda tocando no chão (BFS em tiles). Arrastar move a câmera. Tocar numa pessoa ou objeto com `hot` leva até lá e abre a conversa.
@@ -32,7 +32,30 @@ A mesa da sala de depoimentos lista quem a investigação já descobriu e o que 
 O Invesphone está sendo trazido para dentro das cenas por etapas, cada mecânica no seu lugar físico: Equipe nas mesas (feito), depoimentos na sala de depoimentos (feito), pistas no quadro, arquivo no Arquivo Morto, relatório na sala da delegada. O celular fica com o que é de celular: mensagens, ligações e notificações.
 
 ## Salas e organização (aprovada em 13/10/2026)
-Uma só entrada, pela **Recepção** (área pública): atendimento, espera (sofá, cadeira, bebedouro) e o painel de senha. A separação acontece lá dentro, numa divisória de vidro: o balcão do **Plantão** (atrás do vidro), uma **porta de vidro com leitor de crachá** (abre só para os agentes, com bipe e luz verde; o **Guarda**, `guarda` em `NPCDEF`/`RT`, fica ao lado) e a placa "Área restrita · só agentes". Essa porta (`GATE_X`) é a única passagem para o **Corredor restrito** (`acesso` em `ROOM_RECT`), que liga a Sala da equipe (Renata, Denise, Paulo, quadro do caso, mesa de Lemos; dela se chega à Sala da delegada e à Perícia, com a gaiola de provas), a Sala de depoimentos (com espelho de observação) e o Arquivo Morto. Quem vem depor espera na recepção. Lá fora, a Rua do DHPP; a fachada (rua e planta) é de concreto aparente com térreo de granito e a faixa institucional azul-marinho.
+Uma só entrada, pela **Recepção** (área pública): atendimento, espera (sofá, cadeira, bebedouro) e o painel de senha. A separação acontece lá dentro, numa divisória de vidro: o balcão do **Plantão** (atrás do vidro), uma **porta de vidro com leitor de crachá** (abre só para os agentes, com bipe e luz verde; o **Guarda**, `guarda` em `NPCDEF`/`RT`, fica ao lado) e a placa "Área restrita · só agentes". Essa porta (`GATE_X`) é a única passagem para o **Corredor restrito** (`acesso` em `ROOM_RECT`), que liga a Sala da equipe (Renata, Denise, Paulo, quadro do caso, mesa de Lemos; dela se chega à Sala da delegada e à Perícia, com a gaiola de provas), a Sala de depoimentos (com espelho de observação) e o Arquivo Morto. Quem vem depor espera na recepção.
+
+### Porta de acesso: passar o crachá
+Vindo da recepção, Lemos para diante da porta (`GATE_X`, linha 13) e abre um close na leitora (`src/base/badgeSwipe.js` e `badge.css`, chamado por `openGate()` em `base.js`). O mundo fica pausado enquanto o close está aberto.
+
+- **Arte:** oficial, em `public/base/acesso/` (pedido `2026-10-13-porta-cracha-close`, revisão 4, no traço do Lemos de costas do quadro). São o fundo, a mão com o crachá e o `manifest.json` com as coordenadas da fenda, dos LEDs, do visor, da plaquinha, da porta e da mão.
+- **Feito no código:**
+  - os LEDs: vermelho parado, pisca no erro, verde no acesso;
+  - o texto do visor ("PASSE O CRACHÁ", "LENDO…", "ACESSO LIBERADO", "TENTE NOVAMENTE"), da plaquinha ("SÓ AGENTES") e do crachá ("DHPP", "LEMOS", "INVESTIGAÇÃO");
+  - o cordão;
+  - a respiração da mão;
+  - o prolongamento da manga, para o corte da imagem não aparecer quando a mão sobe. A manga é prolongada repetindo as últimas fileiras de pixels da arte na direção do braço.
+- **Gesto:** arrastar de qualquer ponto da tela move a mão (não precisa mirar no crachá). A borda da tarja encaixa na fenda e precisa descer até o fim em 0,11 a 1,8 s, sem soltar.
+  - Se der certo: luz verde, bipe duplo e o estalo da trava; a mão sai, o close fecha, a porta da planta abre e Lemos segue o caminho.
+  - Se der errado (rápido demais, devagar demais, soltar no meio ou sair da fenda): "TENTE NOVAMENTE" e uma dica embaixo.
+  - "Voltar" (ou Esc) fecha sem abrir, e Lemos fica na recepção.
+  - A trilha pontilhada aparece até o primeiro acerto (`invesphone.badge.ok`).
+- **Saída:** de dentro para fora é livre (`BADGE.out`). A equipe passa sem o close.
+- **Ajustes:**
+  - Gráficos > Cenas rápidas > "Passar o crachá na porta" (`scene.badge`): desligado, a porta abre sozinha, como antes;
+  - Som > "Leitora de crachá" (`sfx.badge`).
+
+  Sem a arte carregada, a porta também abre sozinha.
+- **Fundo provisório:** o `fundo.png` oficial chegou corrompido (só as 314 primeiras linhas decodificam). O jogo confere se a imagem decodificou inteira e, se não, usa `fundo-provisorio.png`: o topo oficial com a parte de baixo completada. O reenvio está pedido em `creative-requests/inbox/2026-10-12-porta-cracha-reenvio.md`. A `porta-aberta.png` não encaixa no fundo e ainda não é usada. Lá fora, a Rua do DHPP; a fachada (rua e planta) é de concreto aparente com térreo de granito e a faixa institucional azul-marinho.
 
 ## Regras de conteúdo
 Falas só usam fatos do início do Caso 01 (cena lida, painel, Thor, valores, log pedido). Nenhum nome de envolvido é citado antes de ser descoberto. Novos textos seguem `docs/CASE01_STORY_BIBLE.md` e `docs/TEAM_MATERIAL_REQUESTS.md`.
