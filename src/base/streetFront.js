@@ -60,7 +60,7 @@ export function createFront(W,A){
     const gr=g.createLinearGradient(0,y+20,0,H);gr.addColorStop(0,'rgba(12,10,18,.08)');gr.addColorStop(Math.max(.05,(H-64-(y+20))/(H-y-20)),'rgba(12,10,18,.55)');gr.addColorStop(1,'rgba(12,10,18,.55)');g.fillStyle=gr;g.fillRect(x,y,w,H-y);
   }
   /** desenha por cima da rua. V: {s,top,left,vw,cw,ch}; busy: trechos [x0,x1] (mundo) com algo importante atrás */
-  function draw(ctx,V,t,dt,busy,RM){
+  function draw(ctx,V,t,dt,busy,RM,wind=.5){
     const s=V.s,fs=s+1,cx=V.left+V.vw/2,ox=V.cw/2,oy=(A-V.top)*s;
     const sx=u=>Math.round((u-cx)*fs+ox),k=1.5*s;
     // o topo de cada prédio fica na mesma altura de tela em qualquer escala (1,5x a escala da rua acima da linha A)
@@ -74,9 +74,9 @@ export function createFront(W,A){
       for(let yy=yb+H*fs;yy<V.ch;yy+=64*fs)ctx.drawImage(cv,b.x+OX,H-64,b.w,64,x0,yy,x1-x0,64*fs);}
     // varais entre prédios, balançando de leve
     ctx.globalAlpha=1;
-    for(const l of lines){const x0=sx(l.x0),x1=sx(l.x1);if(x1<0||x0>V.cw)continue;const y=y0(l.b)+l.y*fs,sag=3*fs,sw=RM?0:Math.sin(t*1.3+l.x0)*fs;
+    for(const l of lines){const x0=sx(l.x0),x1=sx(l.x1);if(x1<0||x0>V.cw)continue;const y=y0(l.b)+l.y*fs,sag=3*fs,sw=RM?0:Math.sin(t*(1+wind)+l.x0)*fs*(.5+wind*1.5);
       ctx.strokeStyle='rgba(30,30,32,.9)';ctx.lineWidth=Math.max(1,fs/2);ctx.beginPath();ctx.moveTo(x0,y);ctx.quadraticCurveTo((x0+x1)/2,y+sag*2+sw,x1,y);ctx.stroke();
-      l.cl.forEach((c,i)=>{const u=(i+1)/(l.cl.length+1),X=x0+(x1-x0)*u,Y=y+4*u*(1-u)*(sag*2+sw);ctx.fillStyle=c;ctx.fillRect(Math.round(X-3*fs/2+(RM?0:Math.sin(t*2+i)*fs*.5)),Math.round(Y),3*fs,4*fs);});}
+      l.cl.forEach((c,i)=>{const u=(i+1)/(l.cl.length+1),X=x0+(x1-x0)*u,Y=y+4*u*(1-u)*(sag*2+sw);ctx.fillStyle=c;ctx.fillRect(Math.round(X-3*fs/2+(RM?0:(Math.sin(t*2+i)*.5+wind*.8)*fs)),Math.round(Y),3*fs,4*fs);});}
     ctx.restore();
   }
   return {draw,buildings:bl};

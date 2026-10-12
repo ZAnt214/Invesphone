@@ -191,6 +191,13 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   const debris=Array.from({length:18},(_,i)=>({x:R()*STREET_W,y:i<12?GY+50+R()*(CURB-GY-64):CURB+6+R()*4,vx:0,ph:R()*6.28,k:i%3,g:R()}));
   const flies=PROPS.filter(p=>p.k==='sacos-lixo'||p.k==='cacamba').flatMap(p=>[0,1,2].map(i=>({x:p.x,y:p.y-10,i})));
   const POLES=PROPS.filter(p=>p.k==='poste-luz'&&p.y===cy).map(p=>p.x).sort((a,b)=>a-b);
+  // névoa: faixas largas e macias que atravessam a rua devagar, empurradas pelo vento (mais baixas sobre o asfalto e a calçada,
+  // mais altas e ralas diante das fachadas); folhas soltas no ar nas rajadas
+  const fogSpr=(()=>{const c=document.createElement('canvas');c.width=512;c.height=128;const g=c.getContext('2d');
+    for(let i=0;i<9;i++){const x=60+R()*392,y=40+R()*48,r=50+R()*80,gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,'rgba(232,236,242,.5)');gr.addColorStop(1,'rgba(232,236,242,0)');g.fillStyle=gr;g.fillRect(0,0,512,128);}return c;})();
+  const fogs=Array.from({length:9},(_,i)=>({x:R()*STREET_W,y:i<5?GY+30+R()*(NEAR-GY):120+R()*(GY-200),w:500+R()*500,h:110+R()*90,a:i<5?.18+R()*.1:.1+R()*.08,v:.6+R()*.8}));
+  const airLeaves=Array.from({length:10},()=>({x:R()*STREET_W,y:GY-220+R()*260,ph:R()*6.28,c:['#7a5a2a','#a8742a','#5a6a2a','#c08a3a'][Math.floor(R()*4)]}));
+  let wv=.5,flagPh=0;
   const cloudSpr=(()=>{const c=document.createElement('canvas');c.width=256;c.height=96;const g=c.getContext('2d'),gr=g.createRadialGradient(128,48,4,128,48,128);gr.addColorStop(0,'rgba(96,112,150,.5)');gr.addColorStop(.55,'rgba(96,112,150,.22)');gr.addColorStop(1,'rgba(96,112,150,0)');g.setTransform(1,0,0,.375,0,0);g.fillStyle=gr;g.fillRect(0,0,256,256);return c;})();
   const birds=Array.from({length:6},()=>({x:300+R()*(STREET_W-600),y:WALK[0]+10+R()*(WALK[1]-WALK[0]-20),z:0,dir:R()<.5?-1:1,st:'g',t:R()*40,vx:0,vz:0}));
   // poeira no ar, só visível contra a luz (qualidade alta): poucas partículas, recicladas
@@ -462,8 +469,11 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     // fumacinha do escapamento atrás; luz de freio quando desacelera; seta quando entra ou sai da vaga
     for(let l=0;l<LANES.length;l++){const L=LANES[l],dir=L.dir,all=cars.filter(k=>k.lane===l),ln=all.filter(k=>!k.pass&&(k.yo==null||Math.abs(k.yo-L.y)<=40)).sort((a,b)=>dir>0?b.x-a.x:a.x-b.x);
       for(const k of all){if(k.lane!==l)continue;const i=ln.indexOf(k);stepCar(k,L,i>0?ln[i-1]:null,ln,dt);}}
+    wv+=(wind()-wv)*Math.min(1,dt*.8);flagPh+=dt*(5.5+wv*6);
+    if(!RM){for(const f of fogs){f.x+=(5+wv*16)*f.v*dt;if(f.x-f.w/2>STREET_W+200)f.x=-f.w/2-200;}
+      for(const l of airLeaves){l.ph+=dt*(3+wv*4);l.x+=(8+wv*wv*110)*dt;l.y+=Math.sin(l.ph)*dt*14+(wv<.45?16:-2)*dt;if(l.x>STREET_W+40||l.y>GY+60){l.x=-30;l.y=GY-240+R()*200;}}}
     {const gust=wind(),tv=4+gust*gust*70;for(const d of debris){d.vx+=(tv*(d.k===2?1.15:.8)-d.vx)*Math.min(1,dt*.8);d.x+=d.vx*dt;d.ph+=dt*(2+d.vx*.12);if(d.x>STREET_W+30){d.x=-30;d.y=d.g<.66?GY+50+R()*(CURB-GY-64):CURB+6+R()*4;}}}
-    for(const p of puffs){p.t+=dt;p.x+=p.vx*dt;p.y-=dt*5;}while(puffs.length&&puffs[0].t>1)puffs.shift();
+    for(const p of puffs){p.t+=dt;p.x+=(p.vx+wv*22)*dt;p.y-=dt*5;}while(puffs.length&&puffs[0].t>1)puffs.shift();
     if(!RM)for(const m of motes){m.p+=dt*m.v;m.x+=dt*.004*m.v;m.y+=Math.sin(m.p)*dt*.004;if(m.x>1)m.x-=1;}
     if(tapFx&&(tapFx.t+=dt)>.7)tapFx=null;
   }
@@ -600,7 +610,12 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     stats.particles=np+puffs.length;
     // primeiro plano: os prédios do lado de cá, entre a câmera e a rua (translúcidos onde algo importante passa atrás)
     {const busy=[];if(bus&&bus.st==='stop')busy.push([bus.x,bus.x+W(bus),.35]);for(const p of peds)if(p.onRoad&&!p.hidden)busy.push([p.x-20,p.x+20,.55]);
-      front.draw(ctx,{s,top,left,vw,cw,ch},t,cameraDt,busy,RM);}
+      // névoa e folhas no ar (por baixo do primeiro plano, que está perto da câmera e fica limpo)
+      ctx.setTransform(s,0,0,s,ox,oyr);
+      if(q>=1){for(const f of fogs){if(f.x+f.w/2<x0||f.x-f.w/2>x1)continue;ctx.globalAlpha=f.a;ctx.drawImage(fogSpr,f.x-f.w/2,f.y-f.h/2,f.w,f.h);}ctx.globalAlpha=1;
+        if(!RM)for(const l of airLeaves){if(l.x<x0||l.x>x1)continue;const fl=Math.abs(Math.sin(l.ph*1.7));ctx.globalAlpha=Math.min(1,.3+wv);ctx.fillStyle=l.c;ctx.fillRect(Math.round(l.x),Math.round(l.y),1+Math.round(fl*2),2);}ctx.globalAlpha=1;}
+      ctx.setTransform(1,0,0,1,0,0);{const hz=ctx.createLinearGradient(0,0,0,(GY-top)*s);hz.addColorStop(0,'rgba(214,222,232,.16)');hz.addColorStop(1,'rgba(214,222,232,0)');ctx.fillStyle=hz;ctx.fillRect(0,0,cw,Math.max(0,(GY-top)*s));}
+      front.draw(ctx,{s,top,left,vw,cw,ch},t,cameraDt,busy,RM,wv);}
     // luz da manhã, como o clima de cor da planta (gradientes guardados por tamanho de tela)
     ctx.setTransform(1,0,0,1,0,0);
     const key=cw+'x'+ch;if(key!==gradeKey){gradeKey=key;gradeSun=ctx.createLinearGradient(0,0,cw,ch);gradeSun.addColorStop(0,'rgba(255,214,150,.34)');gradeSun.addColorStop(.6,'rgba(255,224,176,.08)');gradeSun.addColorStop(1,'rgba(90,120,170,.18)');
@@ -618,14 +633,14 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   function flag(ctx,X,Y,v){let cl=cloths[v];
     if(!cl)cl=cloths[v]=A.S2(17,12,(P)=>{if(v==='br'){P(0,0,17,12,'#2f7a3a');for(let k=0;k<5;k++)P(8-k*2,3+k-2,1+k*4,1,'#e8c63a');for(let k=0;k<4;k++)P(4+k*2,6+k,9-k*4,1,'#e8c63a');P(5,4,7,4,'#e8c63a');P(6,4,5,4,'#2f4f9a');P(6,6,5,1,'#e8ecef');}
       else{P(0,0,17,12,'#1e2a3a');P(0,0,17,1,'#3a4f6a');P(4,3,9,1,'#e8ecef');P(4,6,9,1,'#c9a24a');P(4,9,9,1,'#e8ecef');}});
-    const S=2;for(let i=0;i<17;i++){const ph=t*8.6-i*0.5,dy=Math.round(Math.sin(ph)*2*(i/16));
+    const S=2;for(let i=0;i<17;i++){const ph=flagPh-i*0.5,dy=Math.round(Math.sin(ph)*2*(i/16));
       ctx.fillStyle='rgba(28,18,14,.18)';ctx.fillRect(X+i*S+6,Y+dy+10,S,12*S);              // sombra do pano na fachada
       ctx.drawImage(cl,i,0,1,12,X+i*S,Y+dy,S,12*S);
       if(Math.cos(ph)<-0.3){ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillRect(X+i*S,Y+dy,S,12*S);}else if(Math.cos(ph)>0.7){ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(X+i*S,Y+dy,S,12*S);}}}
   // árvore: tronco parado, copa balançando 1 px com o vento
   function tree(ctx,r){
     contact(ctx,r.x,r.y-2,9,3,.35);ctx.drawImage(r.trunk,Math.round(r.x-10),Math.round(r.y-80));
-    const sway=RM?0:Math.round(Math.sin(t*.9+r.ph)*1.2);ctx.drawImage(r.crown,Math.round(r.x-r.crown.width/2+sway),Math.round(r.y-150));
+    const sway=RM?0:Math.round(Math.sin(t*(.8+wv*.8)+r.ph)*(.8+wv*1.6)+wv*1.2);ctx.drawImage(r.crown,Math.round(r.x-r.crown.width/2+sway),Math.round(r.y-150));
   }
   // carro oficial (rodas girando; a viatura parada com o giroflex alternando), ampliado sem suavizar, com volume e sombra
   // roda girando: o PNG oficial só tem as rodas paradas, então o miolo ganha raios que giram conforme a distância andada (desenhados por cima, sem mexer no resto)
@@ -669,7 +684,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     contact(ctx,sp.x+1,sp.y,6,2.2,.3);ctx.drawImage(im,f*18,0,18,96,Math.round(sp.x-w/2),Math.round(sp.y-h),Math.round(w),Math.round(h));
     if(Q()>=1){ctx.globalCompositeOperation='lighter';ctx.globalAlpha=f===1?.5:.42;ctx.drawImage(glowSprite(f===0?'rgba(70,255,120,1)':f===1?'rgba(255,200,60,1)':'rgba(255,60,50,1)'),sp.x-12,sp.y-h+10,24,22);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}}
   // vapor do bueiro (efeito oficial, 6 quadros), subindo devagar
-  function steam(ctx,m){const im=art(PATH.efeito('vapor-bueiro'));if(!im)return;const f=Math.floor(t*7+m.x%5)%6;ctx.globalAlpha=m===MANHOLES[0]?.75:.5;ctx.drawImage(im,f*24,0,24,40,Math.round(m.x-16),Math.round(m.y-50),31,52);ctx.globalAlpha=1;}
+  function steam(ctx,m){const im=art(PATH.efeito('vapor-bueiro'));if(!im)return;const f=Math.floor(t*7+m.x%5)%6;ctx.globalAlpha=m===MANHOLES[0]?.75:.5;for(let k=0;k<4;k++){const lean=RM?0:Math.round(wv*10*(1-k/4));ctx.drawImage(im,f*24,k*10,24,10,Math.round(m.x-16+lean),Math.round(m.y-50+k*13),31,13);}ctx.globalAlpha=1;}
   function bird(ctx,b){
     const X=Math.round(b.x),Y=Math.round(b.y),z=Math.round(b.z),d=b.dir;
     ctx.globalAlpha=0.28*Math.max(0.2,1-b.z/90);ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(X+z*SUN.kx,Y+z*SUN.ky,5,1.6,0,0,7);ctx.fill();ctx.globalAlpha=1;
