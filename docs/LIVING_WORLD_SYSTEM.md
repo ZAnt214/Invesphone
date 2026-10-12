@@ -228,3 +228,7 @@ Pedestres carregando sacolas ou guarda-chuva, ou acenando com um braço só, ser
 ## Rua: eventos espontâneos (12/10/2026)
 
 O diretor de eventos da rua (`events()` em `street.js`) sorteia a cada ~15 s: sair da vaga, estacionar, entrega (furgão + entregador), corredor, viatura com sirene. Pedestres usam os semáforos (botão → vermelho dos carros → travessia). Postos fixos (guardas, comerciantes) ficam em `staff` e só trocam de pose. Detalhes em `docs/RUA_BEATCOP_BASE.md`.
+
+## Névoa e vento (12/10/2026)
+
+Na rua (`street.js`): um vento suave com rajadas (`wv`) empurra faixas largas de névoa leve (baixas sobre a rua e a calçada, ralas diante das fachadas), folhas soltas no ar, a fumaça dos escapamentos e o vapor dos bueiros; as árvores, as bandeiras e os varais do primeiro plano balançam conforme ele. Uma bruma clara no alto das fachadas dá distância. Qualidade baixa e `prefers-reduced-motion` deixam só a bruma parada.
