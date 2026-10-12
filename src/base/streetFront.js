@@ -42,7 +42,7 @@ export function createFront(W,A){
     P(x-1,y,w+2,3,'#a39684');P(x-1,y,w+2,1,'#e0d4bc');P(x-1,y+3,w+2,1,O);P(x,y+4,w,4,'#8f8474');for(let k=x+2;k<x+w-2;k+=5)P(k,y+8,3,2,'#7a6e5e');P(x,y+10,w,2,'rgba(20,14,10,.3)');
     // janelas dos fundos (só vidro, cortina, persiana ou escuro), algumas com ar-condicionado ou floreira
     const cols=Math.max(2,Math.floor((w-14)/30)),cwid=(w-14)/cols,fire=R()<.45,fc=Math.floor(R()*cols);
-    for(let row=0,wy=y+18;wy<H-10;row++,wy+=32)for(let i=0;i<cols;i++){const wx=Math.round(x+7+i*cwid+cwid/2-6);
+    for(let row=0,wy=y+18;wy<H+40;row++,wy+=32)for(let i=0;i<cols;i++){const wx=Math.round(x+7+i*cwid+cwid/2-6);
       P(wx-2,wy-2,16,2,'#cfc6b4');P(wx-1,wy-1,14,20,O);P(wx,wy,12,18,'#e6e0d2');
       const gx=wx+1,gy=wy+1,t=R();const glass=t<.12?'#c99a5a':t<.55?'#3a4652':'#566a7c';P(gx,gy,10,16,glass);
       if(t>=.12){P(gx+6,gy+1,2,6,'rgba(255,255,255,.18)');P(gx+1,gy+1,3,2,'rgba(220,236,248,.3)');}
@@ -52,12 +52,12 @@ export function createFront(W,A){
       else if(R()<.15){P(wx-1,wy+20,14,3,'#5a3a24');for(let j=0;j<12;j+=2)P(wx+j,wy+18,2,2,j%4?'#3a6a2e':'#c0392b');}
       // escada de incêndio numa coluna: plataforma de grade, guarda-corpo e a escada para a de baixo
       if(fire&&i===fc){const fx=wx-12,fw=36,py=wy+22;P(fx+3,py+3,fw,2,'rgba(20,14,10,.3)');P(fx,py,fw,2,'#1c1d20');P(fx,py,fw,1,'#3a3c42');for(let j=0;j<fw;j+=3)P(fx+j,py-8,1,8,'#1c1d20');P(fx,py-8,fw,1,'#1c1d20');
-        if(py+32<H)for(let j=0;j<30;j+=3)P(fx+fw-10+Math.round(j*8/30),py+2+j,4,1,'#2a2b2e');}}
+        for(let j=0;j<30;j+=3)P(fx+fw-10+Math.round(j*8/30),py+2+j,4,1,'#2a2b2e');}}
     // cano de descida e luz de borda (esquerda acesa, direita na sombra)
     const px=x+w-6;P(px,y+12,3,H-y,'#4f4f4c');P(px,y+12,1,H-y,'#7d7d79');for(let yy=y+30;yy<H;yy+=34)P(px-1,yy,5,2,'#2a2a28');
     P(x,y,1,H-y,'rgba(255,236,206,.35)');P(x+w-3,y,3,H-y,'rgba(0,0,0,.28)');
     // primeiro plano: mais escuro embaixo (perto da câmera, longe da luz da rua)
-    const gr=g.createLinearGradient(0,y+20,0,H);gr.addColorStop(0,'rgba(12,10,18,.08)');gr.addColorStop(1,'rgba(12,10,18,.6)');g.fillStyle=gr;g.fillRect(x,y,w,H-y);
+    const gr=g.createLinearGradient(0,y+20,0,H);gr.addColorStop(0,'rgba(12,10,18,.08)');gr.addColorStop(Math.max(.05,(H-64-(y+20))/(H-y-20)),'rgba(12,10,18,.55)');gr.addColorStop(1,'rgba(12,10,18,.55)');g.fillStyle=gr;g.fillRect(x,y,w,H-y);
   }
   /** desenha por cima da rua. V: {s,top,left,vw,cw,ch}; busy: trechos [x0,x1] (mundo) com algo importante atrás */
   function draw(ctx,V,t,dt,busy,RM){
@@ -69,7 +69,9 @@ export function createFront(W,A){
     for(const b of bl){const x0=sx(b.x),x1=sx(b.x+b.w);if(x1<0||x0>V.cw){b.a=b.ta;continue;}
       let ta=1;for(const r of busy){const r0=(r[0]-V.left)*s,r1=(r[1]-V.left)*s;if(r1>x0&&r0<x1){ta=r[2]??.4;break;}}
       b.ta=ta;b.a+=(ta-b.a)*Math.min(1,dt*5);
-      ctx.globalAlpha=b.a;ctx.drawImage(cv,b.x+OX,0,b.w,H,x0,y0(b),x1-x0,H*fs);}
+      ctx.globalAlpha=b.a;const yb=y0(b);ctx.drawImage(cv,b.x+OX,0,b.w,H,x0,yb,x1-x0,H*fs);
+      // com zoom ou a câmera mais baixa, o prédio continua até o pé da tela (repete os dois últimos andares)
+      for(let yy=yb+H*fs;yy<V.ch;yy+=64*fs)ctx.drawImage(cv,b.x+OX,H-64,b.w,64,x0,yy,x1-x0,64*fs);}
     // varais entre prédios, balançando de leve
     ctx.globalAlpha=1;
     for(const l of lines){const x0=sx(l.x0),x1=sx(l.x1);if(x1<0||x0>V.cw)continue;const y=y0(l.b)+l.y*fs,sag=3*fs,sw=RM?0:Math.sin(t*1.3+l.x0)*fs;
