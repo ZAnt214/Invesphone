@@ -49,3 +49,12 @@ Feitos em 844×390, 390×844 e 375×667:
 - Becos com profundidade; DHPP com pórtico recuado, embasamento e arandelas acesas.
 - Câmera em escala inteira de pixel.
 - O que entra em cada qualidade e as medições: `docs/GRAPHICS_UPGRADE.md`.
+
+## Rua viva (12/10/2026): trânsito visível, vagas, semáforos e gente
+
+- **Câmera/composição** (`view()` em `src/base/street.js`): a escala inteira é a maior em que a faixa essencial (`BAND_TOP..BAND_BOT` em `streetArt.js`: térreo das lojas até a mão de baixo do trânsito) cabe abaixo do cabeçalho (`hudTop` vem de `base.js`). A vertical da câmera é fixa na composição, só o X segue o Lemos. Via compacta (`NEAR=ROAD+262`, faixas em `ROAD+116` e `ROAD+230`), para o trânsito aparecer no iPhone 3x também.
+- **Trânsito**: 7 carros por mão (~112–120 px/s), mix ponderado (`POOL`), um seguindo o outro, luz de freio, roda girando pela distância andada, ônibus e táxi. Faixa de cima vai para o oeste, a de baixo para o leste.
+- **Semáforos** (`SIGS`, `CROSSWALKS`): verde/amarelo/vermelho oficiais (`semaforo.png`), linha de retenção, pedestre aperta o botão e o verde fecha depois de 7 s; bipe no vermelho. Pedestres atravessam na faixa (82%) ou no meio-fio livre; carros cedem a quem está na pista.
+- **Vagas** (`SLOTS`, 9 vagas + a da viatura): carros de frente para o oeste; eventos de estacionar (carro reciclado fora da tela vira estacionando, com seta) e de sair da vaga (seta, espera brecha, entra na faixa).
+- **Gente**: 30 pedestres (32 aparências), 2 guardas nos degraus, dono da mercearia, garçom, barbeiro (postos fixos com poses), entregador.
+- **Acontecimentos** (`events()`): sair/entrar de vaga, entrega do furgão (entregador leva caixa à mercearia/diner e volta), corredor, viatura com sirene. Tudo por escolha ponderada com intervalo mínimo (`EVOPTS`), registrado em `?debug=1`.

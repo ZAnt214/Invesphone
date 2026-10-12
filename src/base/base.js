@@ -1695,7 +1695,7 @@ function isSeat(n){const i=ti(n);return objs.some(o=>o.nocc&&idx(o.x,o.y)===i);}
 let lastRoom='',lastClk='';
 /* ---------- Rua (lado de fora) ⇄ planta (lado de dentro) ---------- */
 let SCENE='rua',STREET=null;
-const street=()=>STREET||(STREET=createStreet({lemosLook:LOOK.lemos,personFrames,getZoom:()=>cam.z,onEnter:()=>enterBase(),art:{S2,refine,outlined,bush,hash,mulberry32,txt,txtW,sign:()=>SIGN,door:()=>DOORSPR},quality:()=>QUAL,onSound:(k,x,a)=>ambStreet(k,x,a)}));
+const street=()=>STREET||(STREET=createStreet({lemosLook:LOOK.lemos,personFrames,getZoom:()=>cam.z,onEnter:()=>enterBase(),art:{S2,refine,outlined,bush,hash,mulberry32,txt,txtW,sign:()=>SIGN,door:()=>DOORSPR},quality:()=>QUAL,onSound:(k,x,a)=>ambStreet(k,x,a),hudTop:()=>HUDT}));
 // a rua (street.js) vem da direção americana aprovada; a arte oficial de public/base/rua/ entra quando chega
 const streetView=()=>street();
 const FADE=document.createElement('div');FADE.id='fade';FADE.setAttribute('aria-hidden','true');appEl.appendChild(FADE);
@@ -1717,8 +1717,8 @@ function ambStreet(k,x,a){const v=STREET&&STREET.view;if(!v||SCENE!=='rua')retur
 let ambT=0,stepW=0;
 function streetAmbience(st,dt){
   if((ambT+=dt)<.25)return;ambT=0;const v=st.view;if(!v)return;const cx=v.left+v.vw/2;let lv=0;
-  for(const k of st.cars){const w=k.id==='onibus'?360:180,d=Math.abs(k.x+w/2-cx);lv+=Math.max(0,1-d/700)*Math.min(1,k.v/70)*(k.id==='onibus'?1.6:1);}
-  AMB.traffic(Math.min(1,lv*.6));
+  for(const k of st.cars){const w=k.id==='onibus'?360:180,d=Math.abs(k.x+w/2-cx);lv+=Math.max(0,1-d/700)*Math.min(1,k.v/110)*(k.id==='onibus'?1.6:1);}
+  AMB.traffic(Math.min(1,lv*.4));
   const L=st.lemos;if(L.moving&&Math.floor(L.walk*2)!==stepW){stepW=Math.floor(L.walk*2);AMB.fx('step',0,.5);}
   if(Math.random()<.025)AMB.fx('bird',Math.random()*1.6-.8,.5);
 }

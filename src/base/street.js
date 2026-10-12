@@ -9,7 +9,7 @@
    (neon, arandelas, giroflex) somadas por cima, e a luz da manhã. Escala inteira de pixel e corte do que está fora da tela.
    A qualidade escolhida pelo jogador (src/characters/quality.ts) decide o que entra: baixa = só o essencial (sem sombras
    projetadas, brilhos nem vapor); média = sombras, luzes que emitem e vapor; alta = mais os fachos de luz e a poeira no ar. */
-import {GY,CURB,ROAD,NEAR,STREET_H,WALK,PARK,LANES,SUN,TREES,MANHOLES,rnd,paintFacades,paintGround} from './streetArt';
+import {GY,CURB,ROAD,NEAR,STREET_H,WALK,PARK,LANES,SUN,TREES,MANHOLES,CROSSWALKS,CW_HALF,BAND_TOP,BAND_BOT,rnd,paintFacades,paintGround} from './streetArt';
 import {RUA_DIR,VEICULOS,PATH} from './ruaAssets';
 import {choose,eventLog,jitter} from '../world/life';
 import {CAMERA_PRIORITY,createCameraControl,createLead,damp,deadZoneTarget,drawCameraDebug} from '../camera/cameraDirector';
@@ -37,16 +37,26 @@ export const DOOR={x:DHPP.X+DHPP.w/2,y:GY+14};          // a porta do DHPP (o p�
 const cy=CURB-6,fy=GY+22,ny=STREET_H-14;
 const ALLEYS=BUILDINGS.filter(b=>b.k==='alley');
 const PROPS=[
-  {k:'poste-luz',x:200,y:cy},{k:'poste-luz',x:780,y:cy},{k:'poste-luz',x:1560,y:cy},{k:'poste-luz',x:2140,y:cy},
-  {k:'parquimetro',x:90,y:cy},{k:'parquimetro',x:470,y:cy},{k:'parquimetro',x:640,y:cy},{k:'parquimetro',x:1430,y:cy},{k:'parquimetro',x:1700,y:cy},{k:'parquimetro',x:1980,y:cy},{k:'parquimetro',x:2380,y:cy},
-  {k:'hidrante',x:1240,y:cy},{k:'caixa-correio',x:330,y:cy-2},{k:'lixeira',x:560,y:cy-4},{k:'placa-proibido',x:930,y:cy},{k:'placa-proibido',x:1500,y:cy},
-  {k:'sacos-lixo',x:820,y:fy},{k:'lixeira-cheia',x:868,y:fy},{k:'sacos-lixo',x:1540,y:fy},{k:'telefone-publico',x:1810,y:fy+2},
-  {k:'jornal-azul',x:1592,y:fy+8},{k:'jornal-vermelho',x:1614,y:fy+8},{k:'banco',x:1010,y:fy+4},{k:'caixa-papelao',x:236,y:fy+6},
+  // calçada de lá, na beira do meio-fio: postes de luz emoldurando o DHPP, parquímetros a cada vaga, lixeiras e hidrantes
+  {k:'poste-luz',x:200,y:cy},{k:'poste-luz',x:780,y:cy},{k:'poste-luz',x:1040,y:cy},{k:'poste-luz',x:1370,y:cy},{k:'poste-luz',x:1890,y:cy},{k:'poste-luz',x:2150,y:cy},
+  {k:'parquimetro',x:90,y:cy},{k:'parquimetro',x:300,y:cy},{k:'parquimetro',x:470,y:cy},{k:'parquimetro',x:720,y:cy},{k:'parquimetro',x:900,y:cy},{k:'parquimetro',x:1110,y:cy},{k:'parquimetro',x:1300,y:cy},{k:'parquimetro',x:1480,y:cy},{k:'parquimetro',x:1660,y:cy},{k:'parquimetro',x:1960,y:cy},{k:'parquimetro',x:2090,y:cy},{k:'parquimetro',x:2300,y:cy},{k:'parquimetro',x:2430,y:cy},
+  {k:'hidrante',x:1240,y:cy},{k:'hidrante',x:330,y:cy},{k:'hidrante',x:2010,y:cy},
+  {k:'caixa-correio',x:360,y:cy-2},{k:'caixa-correio',x:1720,y:cy-2},
+  {k:'lixeira',x:560,y:cy-4},{k:'lixeira',x:1150,y:cy-4},{k:'lixeira',x:1850,y:cy-4},{k:'lixeira',x:2340,y:cy-4},
+  {k:'placa-proibido',x:930,y:cy},{k:'placa-proibido',x:1500,y:cy},{k:'placa-proibido',x:130,y:cy},
+  // encostado nas fachadas
+  {k:'sacos-lixo',x:820,y:fy},{k:'lixeira-cheia',x:868,y:fy},{k:'sacos-lixo',x:1540,y:fy},{k:'sacos-lixo',x:2330,y:fy+4},{k:'lixeira-cheia',x:520,y:fy+4},{k:'lixeira-cheia',x:1985,y:fy+2},
+  {k:'telefone-publico',x:1810,y:fy+2},{k:'jornal-azul',x:1592,y:fy+8},{k:'jornal-vermelho',x:1614,y:fy+8},{k:'jornal-azul',x:590,y:fy+8},{k:'jornal-vermelho',x:612,y:fy+8},
+  {k:'banco',x:1010,y:fy+4},{k:'banco',x:1400,y:fy+4},{k:'banco',x:470,y:fy+10},
+  {k:'caixa-papelao',x:236,y:fy+6},{k:'caixa-papelao',x:204,y:fy+10},{k:'caixa-papelao',x:2060,y:fy+8},{k:'pallet',x:1862,y:fy+10},
+  {k:'alarme-incendio',x:2072,y:fy-4},
   // dentro dos becos
   {k:'cacamba',x:ALLEYS[0].X+ALLEYS[0].w/2+6,y:GY-16,dark:.35},{k:'pallet',x:ALLEYS[1].X+ALLEYS[1].w/2,y:GY-24,dark:.45},{k:'alarme-incendio',x:ALLEYS[0].X+14,y:GY-4,dark:.2},
-  // calçada de cá (embaixo)
-  {k:'placa-onibus',x:300,y:ny},{k:'banco',x:370,y:ny-4},{k:'poste-luz',x:1100,y:ny+8},{k:'lixeira-cheia',x:1460,y:ny-2},{k:'jornal-vermelho',x:1800,y:ny-2}
+  // calçada de cá (embaixo): ponto de ônibus, postes, bancos e lixeiras
+  {k:'placa-onibus',x:300,y:ny},{k:'banco',x:370,y:ny-4},{k:'poste-luz',x:640,y:ny+8},{k:'poste-luz',x:1100,y:ny+8},{k:'poste-luz',x:1700,y:ny+8},{k:'poste-luz',x:2230,y:ny+8},
+  {k:'lixeira-cheia',x:1460,y:ny-2},{k:'lixeira',x:760,y:ny-2},{k:'lixeira',x:2010,y:ny-2},{k:'jornal-vermelho',x:1800,y:ny-2},{k:'caixa-correio',x:930,y:ny-2},{k:'hidrante',x:1900,y:ny-2},{k:'banco',x:1300,y:ny-4},{k:'placa-proibido',x:540,y:ny}
 ];
+const SIGNAL_POLES=CROSSWALKS.flatMap((c,i)=>[{x:c.x-CW_HALF-30,y:cy+2,sig:i},{x:c.x+CW_HALF+34,y:ny+10,sig:i}]);
 const PROP_S=1.3,CAR_S=1.2;
 
 /* ---------- arte oficial (carros, mobiliário, chão e efeitos) ---------- */
@@ -54,7 +64,7 @@ const PROP_S=1.3,CAR_S=1.2;
 const HAS=new Set(typeof __RUA_ART__!=='undefined'?__RUA_ART__:[]);
 const IMG=new Map();
 function art(path){if(!HAS.has(path))return null;let im=IMG.get(path);if(!im){im=new Image();im.decoding='async';im.src=RUA_DIR+path;IMG.set(path,im);}return im.complete&&im.naturalWidth?im:null;}
-const NEED=[...PROPS.map(p=>PATH.prop(p.k)),...Object.keys(VEICULOS).map(PATH.veiculo),PATH.efeito('vapor-bueiro'),PATH.efeito('fumaca-escape'),PATH.efeito('pombo'),
+const NEED=[...PROPS.map(p=>PATH.prop(p.k)),PATH.semaforo(),'chao/faixa-pedestres.png',...Object.keys(VEICULOS).map(PATH.veiculo),PATH.efeito('vapor-bueiro'),PATH.efeito('fumaca-escape'),PATH.efeito('pombo'),
   'chao/manchas.png','chao/lixo-chao.png','chao/bueiro.png','chao/boca-de-lobo.png'];
 export function preloadRua(){return Promise.all([...new Set(NEED)].filter(p=>HAS.has(p)).map(p=>new Promise(r=>{art(p);const im=IMG.get(p);if(!im||im.complete)return r();im.onload=im.onerror=()=>r();})));}
 
@@ -73,6 +83,13 @@ const PED_LOOKS=[
   {skin:'#e0b48c',hair:'#4a2f1d',style:'short',kind:'rua',top:'#8a2a2a',pants:'#2b2f36',shoes:'#e8e4da'},
   {skin:'#d9a273',hair:'#2a1d18',style:'bun',kind:'rua',top:'#2e4a8a',pants:'#2e4a8a',shoes:'#222'}
 ];
+{ // mais gente: combinações de cores e cabelos (determinísticas), para a rua não ter rostos repetidos
+  const RL=rnd(5),pick=a=>a[Math.floor(RL()*a.length)];
+  const SK=['#f0c9a0','#e8b58e','#e0b48c','#d9a273','#c98e64','#b67c52','#a8714a','#8a5a3a','#6e4630'],HR=['#1f1a18','#2a1d18','#4a2f1d','#7a4a2a','#d8b860','#b8302a'],
+    ST=['short','long','cap','bun','side','curly'],TP=['#5a5e66','#e8e4da','#3b5a8a','#2f6a4a','#8a2a2a','#c9a24a','#6a4a6a','#1c1d20','#d08a3a','#4a7a8a','#a8a29a','#7a3a4a'],
+    PT=['#3a3e46','#3b5a8a','#2b2f36','#5a4a3a','#3a4a5a','#4a4a3a','#6a6a70'],SH=['#222','#e8e4da','#3a2416','#111'];
+  for(let i=0;i<20;i++){const st=pick(ST);PED_LOOKS.push({skin:pick(SK),hair:pick(HR),style:st,kind:'rua',top:pick(TP),pants:pick(PT),shoes:pick(SH),glasses:RL()<.15?1:undefined});}
+}
 const NEAR_WALK=[NEAR+40,STREET_H-12];
 
 /* ---------- caches de luz e sombra (feitos uma vez por imagem) ---------- */
@@ -90,7 +107,7 @@ const rgba=(hex,a)=>{const h=hex.replace('#','');return `rgba(${parseInt(h.slice
 const RM=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** art: as funções de desenho da base (S2, bush…) e o letreiro e a porta dela; quality(): 'low'|'medium'|'high' */
-export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quality,onSound}){
+export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quality,onSound,hudTop}){
   const Q=()=>{const q=quality?quality():'high';return q==='low'?0:q==='medium'?1:2;};
   let layer=buildStatic();
   const ready=preloadRua().then(()=>{layer=buildStatic();});
@@ -122,20 +139,42 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   const SPOTS={paper:{x:1603,y:fy+12,busy:null},phone:{x:1824,y:fy+8,busy:null},bench:[{x:1000,y:fy+5,busy:null},{x:1020,y:fy+5,busy:null}],
     busBench:[{x:360,y:ny-3,busy:null},{x:380,y:ny-3,busy:null}],busStand:[{x:300,y:ny-8},{x:318,y:ny-6},{x:336,y:ny-9}]};
   const STOP_X=330;                                   // ponto de ônibus (calçada de cá)
-  const GAPS=[[380,930],[1420,1490],[1930,1990]];     // trechos de meio-fio sem carro estacionado (táxi e travessia)
-  const gapX=()=>{const g=GAPS[Math.floor(R()*GAPS.length)];return g[0]+R()*(g[1]-g[0]);};
   const life=eventLog(16);
-  const peds=Array.from({length:16},(_,i)=>{const look=PED_LOOKS[i%PED_LOOKS.length],near=i>=12,band=near?NEARB:FAR;
+  const NPED=30;
+  const peds=Array.from({length:NPED},(_,i)=>{const look=PED_LOOKS[i%PED_LOOKS.length],near=i>=NPED-6,band=near?NEARB:FAR;
     const rush=i%7===3;
     return {id:i,x:R()*STREET_W,y:band[0]+R()*(band[1]-band[0]),near,dir:R()<.5?-1:1,v:rush?30+R()*6:14+R()*10,walk:R()*10,look,frames:personFrames(look),
       st:'idle',t:R()*4,after:'decide',tx:null,ty:null,pose:null,sit:false,hidden:false,off:0,mem:{},social:.2+R()*.8,curious:R(),
-      chatCD:20+R()*40,glanceCD:0,talk:0,spot:null,shop:null,door:null,dodge:0};});
+      chatCD:20+R()*40,glanceCD:0,talk:0,spot:null,shop:null,door:null,dodge:0,sig:-1};});
+  for(const p of peds)p.v0=p.v;
+  /* quem trabalha na rua: os dois guardas dos degraus do DHPP, o dono da mercearia, o garçom do diner e o barbeiro ficam
+     por perto do seu posto, mudando de pose de tempos em tempos (nunca saem de lá); e o entregador, que só aparece na entrega */
+  const doorOf=k=>DOORS.find(d=>d.shop===k);
+  const mkStaff=(id,look,x,y,dir,poses)=>{const p={id,x,y,near:false,dir,v:0,v0:0,walk:0,look,frames:personFrames(look),st:'staff',t:2+R()*5,after:'',tx:null,ty:null,pose:null,sit:false,hidden:false,off:0,mem:{},social:0,curious:0,chatCD:999,glanceCD:0,talk:0,spot:null,shop:null,door:null,dodge:0,sig:-1,staff:true,poses,moving:false};peds.push(p);return p;};
+  const GUARD={skin:'#c98e64',hair:'#2a1d18',style:'cap',kind:'pm',top:'#7d8187',pants:'#2b2f36',shoes:'#111'},GUARD2={skin:'#f0c9a0',hair:'#3a2416',style:'cap',kind:'pm',top:'#7d8187',pants:'#2b2f36',shoes:'#111'};
+  mkStaff(200,GUARD,DOOR.x-88,GY+32,1,['watch','chin','watch',null]);mkStaff(201,GUARD2,DOOR.x+92,GY+34,-1,['watch','phone','scratch',null]);
+  {const g=doorOf('grocery'),d=doorOf('diner'),b=doorOf('barber');
+   if(g)mkStaff(202,{skin:'#b67c52',hair:'#9a9a9a',style:'grey',kind:'rua',top:'#e8e2d4',pants:'#3a3a40',shoes:'#222'},g.x+46,GY+26,-1,['stretch','watch','scratch',null]);
+   if(d)mkStaff(203,{skin:'#e0b48c',hair:'#4a2f1d',style:'bun',kind:'rua',top:'#e8e4da',pants:'#1c1d20',shoes:'#111'},d.x-44,GY+26,1,['drink','watch','stretch',null]);
+   if(b)mkStaff(204,{skin:'#8a5a3a',hair:'#1f1a18',style:'curly',kind:'rua',top:'#1c1d20',pants:'#2b2f36',shoes:'#111'},b.x-40,GY+26,1,['watch','phone','chin',null]);}
+  const courier=mkStaff(205,{skin:'#d9a273',hair:'#2a1d18',style:'cap',kind:'rua',top:'#8a5a2a',pants:'#3a3e46',shoes:'#222'},0,PARK,1,[]);
+  courier.st='cour';courier.hidden=true;courier.courier=true;courier.v=34;courier.carry=false;
   const meta=id=>VEICULOS[id];
   const W=k=>meta(k.id).w*CAR_S;
-  const parked=[{id:'viatura-dhpp',x:DOOR.x-W({id:'viatura-dhpp'})/2,y:PARK},{id:'sedan-bordo',x:40,y:PARK},{id:'perua-madeira',x:1620,y:PARK},{id:'sedan-bege',x:2120,y:PARK}];
-  const viatura=parked[0];
-  const cars=[];const moving=['taxi','sedan-azul','furgao-marrom','sedan-verde','taxi','sedan-bordo','onibus','sedan-bege'];
-  for(let l=0;l<LANES.length;l++)for(let i=0;i<3;i++){const id=moving[(l*3+i)%moving.length],v=LANES[l].v*(0.85+R()*0.3);cars.push({id,lane:l,x:i*STREET_W/3+R()*200,v,v0:v,pv:v,puff:R(),brake:0});}
+  /* vagas do meio-fio de lá (carros de frente para o oeste, como a mão da faixa de cima); a viatura tem a dela, na porta */
+  const SLOT_W=196;
+  const SLOTS=[10,205,722,915,1305,1500,1885,2080,2275].map(x=>({x,car:null,busy:null}));
+  const parked=[];
+  const viatura={id:'viatura-dhpp',x:DOOR.x-W({id:'viatura-dhpp'})/2,y:PARK,dir:1,v:0,brake:0};parked.push(viatura);
+  const placeCar=(k,sl)=>{k.slot=sl;sl.car=k;k.y=PARK;k.dir=-1;k.lane=null;k.yo=null;k.x=sl.x+(SLOT_W-W(k))/2+(R()-.5)*6;k.v=0;k.blink=false;k.park=null;};
+  const FIRST=['sedan-bordo','perua-madeira','sedan-bege','sedan-azul','sedan-verde','furgao-marrom'];
+  [0,1,3,4,6,8].forEach((si,n)=>{const k={id:FIRST[n],v:0,pv:0,puff:R(),brake:0,dist:0};placeCar(k,SLOTS[si]);parked.push(k);});
+  const GAPS=[[410,555],[575,705],[1735,1865]];       // trechos de meio-fio sem vaga (táxi e travessia)
+  const gapX=()=>{const g=GAPS[Math.floor(R()*GAPS.length)];return g[0]+R()*(g[1]-g[0]);};
+  const POOL=[['sedan-azul',3],['sedan-bordo',3],['sedan-verde',3],['sedan-bege',3],['perua-madeira',2],['taxi',2.2],['furgao-marrom',1.5],['viatura-dhpp',.25]];
+  const poolId=()=>{let t=0;for(const [,w] of POOL)t+=w;let r=R()*t;for(const [id,w] of POOL){r-=w;if(r<=0)return id;}return POOL[0][0];};
+  const cars=[];
+  for(let l=0;l<LANES.length;l++){const n=7;for(let i=0;i<n;i++){const id=poolId(),v=LANES[l].v*(0.85+R()*0.3);cars.push({id,lane:l,x:i*(STREET_W+500)/n-150+R()*120,v,v0:v,pv:v,puff:R(),brake:0,dist:R()*40});}}
   const puffs=[];
   const birds=Array.from({length:6},()=>({x:300+R()*(STREET_W-600),y:WALK[0]+10+R()*(WALK[1]-WALK[0]-20),z:0,dir:R()<.5?-1:1,st:'g',t:R()*40,vx:0,vz:0}));
   // poeira no ar, só visível contra a luz (qualidade alta): poucas partículas, recicladas
@@ -156,6 +195,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   for(const k of cars)ENTS.push(ent('car',k,LANES[k.lane].y));
   for(const b of birds)ENTS.push(ent('bird',b,b.y));
   for(const m of MANHOLES.slice(0,1))ENTS.push(ent('steam',m,m.y));
+  for(const sp of SIGNAL_POLES)ENTS.push(ent('signal',sp,sp.y));
 
   /* ---------- pedestres ---------- */
   const go=(p,x,y,after)=>{p.tx=x;p.ty=y;p.st='walk';p.after=after;p.pose=null;p.sit=false;};
@@ -172,7 +212,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     {id:'phone',w:c=>c.near||SPOTS.phone.busy||!close(c,SPOTS.phone.x)?0:.5,cool:150},
     {id:'bench',w:c=>c.near||!SPOTS.bench.some(free)||!close(c,1010)?0:.7,cool:100},
     {id:'bus',w:c=>!c.near||bus&&bus.st!=='run'||!close(c,STOP_X,900)?0:1.6,cool:60},
-    {id:'cross',w:.45,cool:80},
+    {id:'cross',w:.5,cool:70},
     {id:'taxi',w:c=>c.near||taxiJob||t<20?0:.22,cool:240},
     {id:'leave',w:.25,cool:30}];
   function decide(p){
@@ -186,7 +226,9 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
       case 'phone':SPOTS.phone.busy=p;p.spot=SPOTS.phone;go(p,SPOTS.phone.x,SPOTS.phone.y,'phone');break;
       case 'bench':{const s=SPOTS.bench.find(free);s.busy=p;p.spot=s;go(p,s.x,s.y,'sit');break;}
       case 'bus':{const s=SPOTS.busBench.find(free);if(s){s.busy=p;p.spot=s;go(p,s.x,s.y,'busSit');}else{const q=SPOTS.busStand[Math.floor(R()*3)];go(p,q.x+(R()-.5)*8,q.y,'busWait');}break;}
-      case 'cross':{let x=gapX();for(let i=0;i<4&&Math.abs(x-p.x)>500;i++)x=gapX();go(p,x,p.near?NEAR+24:CURB-14,'curb');break;}
+      case 'cross':{let ci=-1,best=1e9;SIGS.forEach((g,i)=>{const d=Math.abs(g.x-p.x);if(d<best){best=d;ci=i;}});
+        if(ci>=0&&best<1100&&R()<.82){p.sig=ci;go(p,SIGS[ci].x+(R()-.5)*50,p.near?NEAR+24:CURB-14,'curb');}
+        else{p.sig=-1;let x=gapX();for(let i=0;i<4&&Math.abs(x-p.x)>500;i++)x=gapX();go(p,x,p.near?NEAR+24:CURB-14,'curb');}break;}
       case 'taxi':{const x=gapX();taxiJob={p,x,st:'hail',t:0,taxi:null};go(p,x,CURB-14,'hail');life.emit(t,'taxi','alguém vai chamar um táxi');break;}
       case 'leave':{go(p,p.x<STREET_W/2?-40:STREET_W+40,p.y,'offstage');break;}
     }
@@ -205,8 +247,8 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
       case 'busWait':idle(p,999,R()<.5?'watch':'cross','bus');p.st='bus';p.dir=-1;break;
       case 'curb':p.dir=R()<.5?-1:1;p.st='curb';p.t=0;p.pose='watch';break;
       case 'hail':p.st='hail';p.t=0;p.dir=1;break;
-      case 'offstage':p.hidden=true;p.st='off';p.off=jitter(R,30);break;
-      case 'cross':p.near=!p.near;p.onRoad=false;decide(p);break;
+      case 'offstage':p.v=p.v0||p.v;p.hidden=true;p.st='off';p.off=jitter(R,30);break;
+      case 'cross':p.near=!p.near;p.onRoad=false;p.sig=-1;decide(p);break;
       case 'board':p.hidden=true;p.st='off';p.off=jitter(R,45);break;
       default:decide(p);
     }
@@ -221,7 +263,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     if(p.glanceCD>0)p.glanceCD-=dt;
     if(p.st==='walk'||p.st==='cross'){
       // abre passagem: se o Lemos (ou outro pedestre) vem de frente, desvia um pouco para o lado
-      let sp=p.v*(p.st==='cross'?1.15:1);
+      let sp=p.v*(p.st==='cross'?2.4:1);
       const dL=Math.abs(lemos.x-p.x),near=dL<70&&Math.abs(lemos.y-p.y)<26;if(near&&lemos.moving&&Math.sign(lemos.x-p.x)===p.dir)p.dodge=lemos.y>p.y?-10:10;else p.dodge*=.97;
       if(near)sp*=.8;
       const ty=p.after==='pause'?clamp(p.ty+p.dodge,band(p)[0],band(p)[1]):p.ty;
@@ -234,8 +276,10 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     switch(p.st){
       case 'idle':if((p.t-=dt)<=0){if(p.after==='free')release(p);p.pose=null;p.sit=false;decide(p);}break;
       case 'chat':p.talk+=dt;if((p.t-=dt)<=0){p.chatCD=40+R()*60;p.pose=null;decide(p);}break;
-      case 'curb':p.t+=dt;if(clearToCross(p.x)&&p.t>.8){p.st='cross';p.onRoad=true;p.pose=null;p.tx=p.x+(R()-.5)*20;p.ty=p.near?CURB-14:NEAR+24;p.after='cross';life.emit(t,'rua','atravessando');}
-        else if(p.t>25){p.pose=null;decide(p);}break;
+      case 'curb':p.t+=dt;{const g=p.sig>=0?SIGS[p.sig]:null;if(g&&g.st==='green'&&!g.req&&p.t>.5){g.req=true;life.emit(t,'rua','pedestre apertou o botão do semáforo');sound('beep',g.x,.4);}
+        const ok=g?g.st==='red'&&g.t>1.2&&g.dur-g.t>5.5:clearToCross(p.x);
+      if(ok&&p.t>.8){p.st='cross';p.onRoad=true;p.pose=null;p.tx=p.x+(R()-.5)*20;p.ty=p.near?CURB-14:NEAR+24;p.after='cross';life.emit(t,'rua','atravessando');}
+        else if(p.t>(g?60:25)){p.pose=null;p.sig=-1;decide(p);}}break;
       case 'hail':p.t+=dt;p.pose=(p.t%2.4)<.7?'stretch':null;if(!taxiJob||taxiJob.p!==p){p.pose=null;decide(p);}else if(p.t>45&&taxiJob.st==='hail'){taxiJob=null;p.pose=null;decide(p);}break;
       case 'bus':break;   // espera o ônibus (ver updBus)
     }
@@ -249,7 +293,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
 
   /* ---------- ônibus: passa de tempos em tempos, para no ponto, quem espera embarca e às vezes alguém desce ---------- */
   function updBus(dt){
-    if(!bus){if((busT-=dt)<=0){const w=meta('onibus').w*CAR_S;bus={id:'onibus',lane:1,x:-w-80,v:58,v0:58,pv:58,puff:0,brake:0,st:'run',bus:true,t:0};cars.push(bus);ENTS.push(ent('car',bus,LANES[1].y));life.emit(t,'ônibus','ônibus chegando');}return;}
+    if(!bus){if((busT-=dt)<=0){const w=meta('onibus').w*CAR_S;bus={id:'onibus',lane:1,x:-w-80,v:76,v0:76,pv:76,puff:0,brake:0,st:'run',bus:true,t:0};cars.push(bus);ENTS.push(ent('car',bus,LANES[1].y));life.emit(t,'ônibus','ônibus chegando');}return;}
     const w=W(bus),front=bus.x+w;
     if(bus.st==='run'&&front>STOP_X-60&&front<STOP_X+260){const left=STOP_X+170-front;bus.target=left<6?0:Math.min(bus.v0,left*.9+6);if(left<6){bus.st='stop';bus.t=0;bus.v=0;sound('brake',bus.x+w/2,.6);life.emit(t,'ônibus','parado no ponto');}}
     else if(bus.st==='stop'){bus.t+=dt;bus.target=0;
@@ -258,7 +302,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
         if(R()<.6){const q=peds.find(p=>p.st==='off');if(q){q.hidden=false;q.near=true;q.x=bus.x+w*.72;q.y=NEARB[0]+6;q.dir=R()<.5?-1:1;decide(q);life.emit(t,'ônibus','alguém desceu');}}}
       if(bus.t>6&&!peds.some(p=>p.after==='board'&&!p.hidden)){bus.st='go';bus.target=null;sound('bus',bus.x+w/2,.6);}}
     else bus.target=null;
-    if(bus.x>STREET_W+80){cars.splice(cars.indexOf(bus),1);const i=ENTS.findIndex(e=>e.ref===bus);if(i>=0)ENTS.splice(i,1);bus=null;busT=jitter(R,80,.4);}
+    if(bus.x>STREET_W+80){cars.splice(cars.indexOf(bus),1);const i=ENTS.findIndex(e=>e.ref===bus);if(i>=0)ENTS.splice(i,1);bus=null;busT=jitter(R,60,.4);}
   }
   /* ---------- táxi: alguém acena no meio-fio; um táxi livre da faixa de cima encosta, a pessoa entra e ele segue ---------- */
   function updTaxi(dt){
@@ -269,6 +313,85 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     else if(j.st==='load'){j.t+=dt;k.target=0;if(j.p.hidden&&j.t>1.5){j.st='leave';j.t=0;sound('cardoor',cx,.6);life.emit(t,'táxi','passageiro embarcou');}}
     else if(j.st==='leave'){j.t+=dt;k.target=j.t<.6?0:null;k.yo=PARK+(LANES[0].y-PARK)*Math.min(1,j.t/1.6);if(j.t>1.6){k.yo=null;k.job=null;taxiJob=null;}}
   }
+
+  /* ---------- semáforos das faixas de pedestres: o pedestre aperta o botão, o verde dos carros fecha depois de um tempo mínimo ---------- */
+  const SIGS=CROSSWALKS.map((c,i)=>({x:c.x,st:'green',t:i*9,hold:16+i*8,dur:0,req:false,beep:0}));
+  function updSig(dt){for(const g of SIGS){g.t+=dt;
+    if(g.st==='green'){if((g.req&&g.t>7)||g.t>g.hold){g.st='yellow';g.t=0;}}
+    else if(g.st==='yellow'){if(g.t>2.2){g.st='red';g.t=0;g.dur=13;g.req=false;life.emit(t,'semáforo','carros parados, pedestres atravessam');}}
+    else{g.beep-=dt;if(g.beep<=0){g.beep=.9;sound('beep',g.x,.3);}if(g.t>g.dur){g.st='green';g.t=0;g.hold=20+R()*14;}}}}
+  // faixa de pedestres à frente de quem dirige: precisa parar na linha (amarelo só para quem ainda consegue frear)
+  function sigLimit(k,w,L,v){for(const g of SIGS){if(g.st==='green')continue;
+    const line=L.dir<0?g.x+CW_HALF+12:g.x-CW_HALF-12,dist=L.dir<0?k.x-line:line-(k.x+w);if(dist<-2)continue;
+    const brakeD=k.v*k.v/120;if(g.st==='red'||dist>brakeD+10)v=Math.min(v,dist<3?0:dist*1.1);}return v;}
+
+  /* ---------- quem trabalha na rua e o entregador ---------- */
+  function updStaff(p,dt){p.moving=false;if(p.glanceCD>0)p.glanceCD-=dt;
+    if((p.t-=dt)<=0){p.pose=p.poses.length&&R()<.7?p.poses[Math.floor(R()*p.poses.length)]:null;p.t=jitter(R,6,.5);if(R()<.15)p.dir=-p.dir;}
+    if(p.glanceCD<=0&&Math.abs(lemos.x-p.x)<70&&Math.abs(lemos.y-p.y)<50){p.dir=lemos.x>p.x?1:-1;p.glanceCD=10;p.pose=null;}}
+  const stepTo=(p,tx,ty,dt)=>{const dx=tx-p.x,dy=ty-p.y,d=Math.hypot(dx,dy),st=p.v*dt;p.moving=true;if(d<=st){p.x=tx;p.y=ty;p.moving=false;return true;}p.x+=dx/d*st;p.y+=dy/d*st;p.walk+=st/32;if(Math.abs(dx)>.5)p.dir=dx>0?1:-1;return false;};
+
+  /* ---------- estacionar, sair da vaga, entrega e outros acontecimentos espontâneos ---------- */
+  let evT=10,pendingPark=null,dlv=null;const evMem={};
+  function parkDone(k){const dv=k.park.delivery,sl=k.park.slot;cars.splice(cars.indexOf(k),1);placeCar(k,sl);sl.busy=null;parked.push(k);sound('brake',k.x+W(k)/2,.35);
+    life.emit(t,'rua','carro estacionou');if(dv&&dlv){dlv.st='unload';dlv.t=0;dlv.van=k;}}
+  function unparkCar(k){const i=parked.indexOf(k);if(i>=0)parked.splice(i,1);if(k.slot){k.slot.car=null;k.slot=null;}
+    k.lane=0;k.yo=PARK;k.v=0;k.pv=0;k.v0=LANES[0].v*(.85+R()*.3);k.unpark={st:'blink',t:0};k.blink=true;k.dist=0;k.siren=false;k.target=null;cars.push(k);life.emit(t,'rua','carro saindo da vaga');}
+  const lane0=()=>cars.filter(k=>k.lane===0);
+  const freeSlots=()=>SLOTS.filter(s=>!s.car&&!s.busy);
+  const canUnpark=k=>k!==viatura&&k.slot&&!(dlv&&dlv.van===k)&&!peds.some(p=>!p.hidden&&p.onRoad&&Math.abs(p.x-k.x-W(k)/2)<120);
+  const mergeClear=(k,w)=>!lane0().some(o=>o!==k&&(o.yo==null||Math.abs(o.yo-LANES[0].y)<40)&&o.x>k.x-W(o)-50&&o.x<k.x+w+330+o.v*1.4);
+  function startDelivery(){const sl=freeSlots().filter(s=>s.x<900);if(!sl.length)return false;const sx=sl[Math.floor(R()*sl.length)];sx.busy=true;
+    pendingPark={slot:sx,id:'furgao-marrom',delivery:true};dlv={st:'wait',t:0,van:null,door:null,wp:0};life.emit(t,'entrega','furgão a caminho de uma entrega');return true;}
+  function updDlv(dt){const d=dlv;if(!d)return;d.t+=dt;const c=courier;
+    if(d.st==='wait'){if(d.t>150&&pendingPark){pendingPark.slot.busy=null;pendingPark=null;dlv=null;}return;}
+    const van=d.van,xw=van?van.x-12:0;
+    if(d.st==='unload'){if(d.t>1.4){sound('cardoor',van.x,.5);c.hidden=false;c.carry=true;c.x=xw;c.y=PARK+2;c.dir=-1;c.moving=false;
+        const ds=[doorOf('grocery'),doorOf('diner')].filter(Boolean).sort((a,b)=>Math.abs(a.x-van.x)-Math.abs(b.x-van.x));d.door=ds[0];d.st='to';d.wp=0;life.emit(t,'entrega','entregador levando caixas');}}
+    else if(d.st==='to'){const done=d.wp===0?stepTo(c,xw,640,dt):stepTo(c,d.door.x,GY+16,dt);if(done){if(d.wp===0)d.wp=1;else{c.hidden=true;d.door.open=.7;sound('door',c.x,.5);d.st='in';d.t=0;}}}
+    else if(d.st==='in'){if(d.t>jitter(R,6)){c.hidden=false;c.carry=false;c.x=d.door.x;c.y=GY+16;d.door.open=.7;sound('door',c.x,.5);d.st='back';d.wp=0;}}
+    else if(d.st==='back'){const done=d.wp===0?stepTo(c,xw,640,dt):stepTo(c,xw,PARK+2,dt);if(done){if(d.wp===0)d.wp=1;else{c.hidden=true;sound('cardoor',van.x,.5);d.st='go';d.t=0;}}}
+    else if(d.st==='go'&&d.t>.8){unparkCar(van);dlv=null;}}
+  function startJog(){const p=peds.find(q=>q.st==='off'&&!q.staff);if(!p)return false;const east=R()<.5;p.near=false;p.v=46+R()*10;p.x=east?STREET_W+30:-30;p.y=FAR[0]+R()*(FAR[1]-FAR[0]);p.hidden=false;go(p,east?-40:STREET_W+40,p.y,'offstage');life.emit(t,'rua','alguém correndo pela calçada');return true;}
+  function startSiren(){const vx=lastView?lastView.left+lastView.vw+80:STREET_W,k=lane0().find(o=>!o.job&&!o.park&&!o.unpark&&!o.bus&&o.yo==null&&o.x>vx);if(!k)return false;k.id='viatura-dhpp';k.siren=true;k.v0=LANES[0].v*1.3;life.emit(t,'rua','viatura passando com a sirene');return true;}
+  const EVOPTS=[
+    {id:'unpark',w:()=>!pendingPark&&lane0().length<9&&parked.some(canUnpark)&&SLOTS.filter(s=>s.car).length>4?1.1:0,cool:45},
+    {id:'park',w:()=>!pendingPark&&freeSlots().length&&lane0().length>4?(SLOTS.filter(s=>s.car).length<5?1.8:.8):0,cool:45},
+    {id:'delivery',w:()=>!dlv&&!pendingPark&&freeSlots().some(s=>s.x<900)?.8:0,cool:150},
+    {id:'jog',w:()=>peds.some(q=>q.st==='off'&&!q.staff)?.8:0,cool:80},
+    {id:'siren',w:()=>.4,cool:170}];
+  function events(dt){updDlv(dt);if((evT-=dt)>0)return;evT=jitter(R,15,.5);
+    const o=choose(R,EVOPTS,null,evMem,t);if(!o)return;
+    if(o.id==='unpark'){const c=parked.filter(canUnpark);if(c.length)unparkCar(c[Math.floor(R()*c.length)]);}
+    else if(o.id==='park'){const f=freeSlots();if(f.length){const sl=f[Math.floor(R()*f.length)];sl.busy=true;pendingPark={slot:sl,id:null,delivery:false};}}
+    else if(o.id==='delivery')startDelivery();else if(o.id==='jog')startJog();else if(o.id==='siren')startSiren();}
+
+  /* ---------- um carro: segue o da frente, para na linha do semáforo, cede a quem atravessa, estaciona e sai da vaga ---------- */
+  function recycle(k,L,ln){const dir=L.dir;
+    if(L===LANES[0]&&pendingPark&&!k.job&&!k.park){k.id=pendingPark.id||poolId();k.park={slot:pendingPark.slot,delivery:pendingPark.delivery};pendingPark=null;}
+    else if(!k.job)k.id=poolId();
+    k.siren=false;k.blink=false;const w=W(k),gap=140+R()*420;
+    if(dir>0){const back=Math.min(...ln.map(o=>o.x));k.x=Math.min(-w-60,back-w-gap);}else{const back=Math.max(...ln.map(o=>o.x+W(o)));k.x=Math.max(STREET_W+60,back+gap);}
+    k.v0=L.v*(0.85+R()*0.3);}
+  function stepCar(k,L,lead,ln,dt){
+    const dir=L.dir,w=W(k);let v=k.target!=null?k.target:k.v0;const inLane=k.yo==null||Math.abs(k.yo-L.y)<=40,ly=k.yo??L.y;
+    if(k.park){const sx=k.park.slot.x+(SLOT_W-w)/2,dd=k.x-sx;
+      if(dd<300){k.blink=true;v=Math.min(v,Math.max(0,dd)*.8+8);k.yo=L.y+(PARK-L.y)*Math.max(0,Math.min(1,(300-dd)/240));}
+      if(dd<=1.5&&k.v<14){parkDone(k);return;}
+      if(dd<0)k.x=sx;}
+    if(k.unpark){const U=k.unpark;U.t+=dt;
+      if(U.st==='blink'){v=0;k.blink=true;if(U.t>1.6&&mergeClear(k,w)){U.st='merge';U.t=0;}}
+      else{const pr=Math.min(1,U.t/2.2);k.yo=PARK+(L.y-PARK)*pr;v=Math.min(v,k.v0*Math.min(1,.25+U.t/1.6));if(pr>=1){k.yo=null;k.unpark=null;k.blink=false;}}}
+    if(lead&&inLane){const gap=dir>0?lead.x-(k.x+w):k.x-(lead.x+W(lead));if(gap<70)v=Math.min(v,lead.v*(gap<28?0.6:1),gap<14?0:99);}
+    if(inLane)v=sigLimit(k,w,L,v);
+    for(const p of peds){if(!p.onRoad||p.hidden||p.y<ly-46||p.y>ly+14)continue;const ahead=dir>0?p.x-(k.x+w):k.x-p.x;
+      if(ahead>-12&&ahead<170){v=Math.min(v,ahead<46?0:(ahead-46)*.5);if(ahead<60&&k.v<2){k.wait=(k.wait||0)+dt;if(k.wait>2.5&&!k.honked&&R()<.3){k.honked=true;sound('honk',k.x,.5);}}}}
+    k.pv=k.v;k.v+=(v-k.v)*Math.min(1,dt*(v<k.v?4:2));if(k.v<.5&&v===0)k.v=0;k.x+=dir*k.v*dt;k.dist=(k.dist||0)+k.v*dt;
+    k.brake=k.v<k.pv-.05||(k.v<8&&v<k.v0*.5)?Math.min(1,k.brake+dt*6):Math.max(0,k.brake-dt*3);
+    if(k.v>3)k.honked=false,k.wait=0;
+    k.puff+=dt;if(k.puff>.45){k.puff=0;if(puffs.length<40&&k.v>3)puffs.push({x:dir>0?k.x+4:k.x+w-4,y:ly-10,vx:-dir*12,t:0});}
+    if(k.bus)return;
+    if(dir>0&&k.x>STREET_W+60||dir<0&&k.x<-w-60)recycle(k,L,ln);}
 
   function update(dt){
     cameraDt=dt;
@@ -282,30 +405,20 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
       else{lemos.vx=dx/d*96;lemos.vy=dy/d*96;lemos.x+=dx/d*sp;lemos.y+=dy/d*sp;lemos.walk+=sp/32;lemos.moving=true;if(Math.abs(dx)>0.5)lemos.dir=dx>0?1:-1;}}
     if(lemos.enter&&Math.abs(lemos.x-DOOR.x)<260&&!doorFocus){doorFocus=true;camera.focus({id:'dhpp-arrival',mode:'context',priority:CAMERA_PRIORITY.context,x:(lemos.x+DOOR.x)/2,y:GY-120,duration:700,hold:400,interruptible:true});}
     if(!lemos.enter&&Math.abs(lemos.x-DOOR.x)>340)doorFocus=false;
-    for(const p of peds){if(p.chatCD>0)p.chatCD-=dt;updPed(p,dt);}
+    for(const p of peds){if(p.staff){if(!p.courier)updStaff(p,dt);continue;}if(p.chatCD>0)p.chatCD-=dt;updPed(p,dt);}
     if((t*2|0)!==((t-dt)*2|0))chats();
     for(const d of DOORS)if(d.open>0)d.open-=dt;
-    updBus(dt);updTaxi(dt);
+    updBus(dt);updTaxi(dt);updSig(dt);events(dt);
     for(const b of birds){b.t+=dt*30;
       if(b.st==='g'){if(Math.random()<dt*.6)b.x+=b.dir*2;if(Math.random()<dt*.2)b.dir=-b.dir;
         let near=Math.abs(lemos.x-b.x)<34&&Math.abs(lemos.y-b.y)<18;for(let i=0;!near&&i<peds.length;i++){const p=peds[i];near=!p.hidden&&Math.abs(p.x-b.x)<34&&Math.abs(p.y-b.y)<18;}
         if(near){b.st='f';b.vx=(Math.random()<.5?-1:1)*(70+Math.random()*50);b.vz=70;b.dir=Math.sign(b.vx);b.tx=Math.max(60,Math.min(STREET_W-60,b.x+b.vx*2.4));sound('flap',b.x,.3);}}
       else{b.x+=b.vx*dt;b.z=Math.max(0,b.z+b.vz*dt);if(Math.abs(b.x-b.tx)<60)b.vz=-60;else if(b.z>60)b.vz=0;
         if(b.vz<0&&b.z<=0){b.st='g';b.z=0;b.y=WALK[0]+10+Math.random()*(WALK[1]-WALK[0]-20);}}}
-    // trânsito: cada um segue o da frente na mesma faixa, freia para quem atravessa e para o ônibus/táxi parado;
-    // fumacinha do escapamento atrás; luz de freio quando desacelera
-    for(let l=0;l<LANES.length;l++){const L=LANES[l],dir=L.dir,ln=cars.filter(k=>k.lane===l&&!(k.yo!=null&&Math.abs(k.yo-L.y)>40)).sort((a,b)=>dir>0?b.x-a.x:a.x-b.x);
-      for(let i=0;i<ln.length;i++){const k=ln[i],lead=ln[i-1],w=W(k);let v=k.target!=null?k.target:k.v0;
-        if(lead){const gap=dir>0?lead.x-(k.x+w):k.x-(lead.x+W(lead));if(gap<70)v=Math.min(v,lead.v*(gap<28?0.6:1),gap<14?0:99);}
-        for(const p of peds){if(!p.onRoad||p.hidden||p.y<L.y-46||p.y>L.y+14)continue;const ahead=dir>0?p.x-(k.x+w):k.x-p.x;
-          if(ahead>-12&&ahead<170){v=Math.min(v,ahead<46?0:(ahead-46)*.5);if(ahead<60&&k.v<2){k.wait=(k.wait||0)+dt;if(k.wait>2.5&&!k.honked&&R()<.3){k.honked=true;sound('honk',k.x,.5);}}}}
-        k.pv=k.v;k.v+=(v-k.v)*Math.min(1,dt*(v<k.v?4:2));if(k.v<.5&&v===0)k.v=0;k.x+=dir*k.v*dt;
-        k.brake=k.v<k.pv-.05||(k.v<8&&v<k.v0*.5)?Math.min(1,k.brake+dt*6):Math.max(0,k.brake-dt*3);
-        if(k.v>3)k.honked=false,k.wait=0;
-        k.puff+=dt;if(k.puff>.45){k.puff=0;if(puffs.length<40)puffs.push({x:dir>0?k.x+4:k.x+w-4,y:(k.yo??L.y)-10,vx:-dir*12,t:0});}
-        if(k.bus)continue;
-        if(dir>0&&k.x>STREET_W+60){const back=Math.min(...ln.map(o=>o.x));k.x=Math.min(-w-60,back-w-120)-R()*300;k.v0=L.v*(0.85+R()*0.3);}
-        if(dir<0&&k.x<-w-60){const back=Math.max(...ln.map(o=>o.x+W(o)));k.x=Math.max(STREET_W+60,back+120)+R()*300;k.v0=L.v*(0.85+R()*0.3);}}}
+    // trânsito: cada um segue o da frente na mesma faixa, para na linha do semáforo, cede a quem atravessa e acelera com a pista livre;
+    // fumacinha do escapamento atrás; luz de freio quando desacelera; seta quando entra ou sai da vaga
+    for(let l=0;l<LANES.length;l++){const L=LANES[l],dir=L.dir,all=cars.filter(k=>k.lane===l),ln=all.filter(k=>k.yo==null||Math.abs(k.yo-L.y)<=40).sort((a,b)=>dir>0?b.x-a.x:a.x-b.x);
+      for(const k of all){if(k.lane!==l)continue;const i=ln.indexOf(k);stepCar(k,L,i>0?ln[i-1]:null,ln,dt);}}
     for(const p of puffs){p.t+=dt;p.x+=p.vx*dt;p.y-=dt*5;}while(puffs.length&&puffs[0].t>1)puffs.shift();
     if(!RM)for(const m of motes){m.p+=dt*m.v;m.x+=dt*.004*m.v;m.y+=Math.sin(m.p)*dt*.004;if(m.x>1)m.x-=1;}
     if(tapFx&&(tapFx.t+=dt)>.7)tapFx=null;
@@ -314,36 +427,39 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   function resume(sec){const n=Math.min(480,Math.round(Math.max(0,sec)/.25));for(let i=0;i<n;i++)update(.25);}
   /** linhas do painel ?debug=1 */
   function debugRows(){const vis=peds.filter(p=>!p.hidden).length;
-    return [`RUA · pedestres ${vis}/${peds.length} · carros ${cars.length}${bus?' · ônibus '+bus.st:''}${taxiJob?' · táxi '+taxiJob.st:''}`,
+    return [`RUA · pedestres ${vis}/${peds.length} · carros ${cars.length} (+${parked.length} estacionados)${SIGS.map((g,i)=>' · sem'+i+' '+g.st).join('')}${dlv?' · entrega '+dlv.st:''}${bus?' · ônibus '+bus.st:''}${taxiJob?' · táxi '+taxiJob.st:''}`,
       ...peds.map(p=>`#${p.id} ${p.near?'cá':'lá'} ${p.st}${p.after&&p.st==='walk'?'→'+p.after:''}${p.pose?' ('+p.pose+')':''} x${p.x|0}`),
       '— acontecimentos —',...life.list.slice(-8).map(e=>`${e.t.toFixed(0)}s ${e.type}: ${e.txt}`)];}
 
-  // enquadramento Beat Cop: ~760 px de mundo na altura (fachadas até o topo, calçada e as faixas);
-  // a escala é inteira (cada pixel da arte vira um bloco igual de pixels da tela: nada tremendo nem com pixel torto).
-  // No retrato a rua inteira cabe na altura. A câmera segue o Lemos.
-  const VIEWH=760;
+  // Enquadramento Beat Cop. A escala é inteira (cada pixel da arte vira um bloco igual de pixels da tela) e é a maior em que a
+  // faixa essencial — do térreo das lojas até a mão de baixo do trânsito — cabe abaixo do cabeçalho. Assim o trânsito aparece em
+  // qualquer aparelho (no iPhone, de tela 3x, a escala 2 mostra ~585 px de mundo na altura). A câmera alinha essa faixa embaixo:
+  // o que sobra de altura vira fachada, e nunca o contrário. Na horizontal ela segue Lemos (com espaço à frente).
   function view(cw,ch,rs){
-    let baseS=Math.max(1,Math.round(Math.min(ch/VIEWH,cw/760)));if(ch/baseS>STREET_H)baseS=Math.ceil(ch/STREET_H);
+    const hud=(hudTop?hudTop():56)*rs;
+    let baseS=Math.max(1,Math.min(3,Math.floor((ch-hud)/(BAND_BOT-BAND_TOP))));if(ch/baseS>STREET_H)baseS=Math.ceil(ch/STREET_H);
     let s=Math.max(1,Math.round(baseS*camZoom));
-    const vw=cw/s,vh=ch/s;
+    const vw=cw/s,vh=ch/s,hudW=hud/s;
     const ctl=camera.resolve(),manual=ctl.mode==='manual';
+    // alinhada embaixo (a mão de baixo do trânsito sempre entra); sem esconder o térreo sob o cabeçalho; com folga de calçada de cá em telas altas
+    const bandBot=BAND_BOT+Math.max(0,Math.min(90,(vh-585)*.35));
+    let topC=Math.min(bandBot-vh,BAND_TOP-hudW);topC=Math.max(0,Math.min(topC,STREET_H-vh));
     if(!manual){
       const focus=ctl.focus,dir=lemos.moving&&Math.abs(lemos.vx)>2?Math.sign(lemos.vx):lemos.dir;
       const near=Math.abs(lemos.x-DOOR.x)<330,biasX=near?(DOOR.x-lemos.x)*.22:0;
       // espaço à frente: o centro da câmera fica adiante de Lemos (até ~14% da largura visível), com o deslocamento
       // crescendo e invertendo devagar; parado, a câmera guarda um terço dele em vez de voltar ao centro
-      const A=RM?0:Math.min(230,vw*.14),AY=RM?0:Math.min(28,vh*.04);
-      const ld=focus?{x:0,y:0}:lead.update(dir,Math.sign(lemos.vy||0),lemos.moving,cameraDt,A,AY,lemos.dir);
-      const subject={x:(focus?.x??lemos.x)+ld.x,y:(focus?.y??lemos.y)+ld.y};
-      const dz=deadZoneTarget({x:camX,y:camY==null?lemos.y:camY},subject,{viewportW:vw,viewportH:vh,zoneX:vw*(RM ? .1 : .04),zoneY:vh*(RM ? .18 : .1),biasX});
-      let tx=dz.x,ty=dz.y-vh*(near ? 0.06 : 0);
-      if(!lemos.moving&&!focus)ty+=(lemos.y-vh*.04-ty)*.12;
+      const A=RM?0:Math.min(230,vw*.14);
+      const ld=focus?{x:0,y:0}:lead.update(dir,0,lemos.moving,cameraDt,A,0,lemos.dir);
+      const subject={x:(focus?.x??lemos.x)+ld.x,y:camY==null?topC+vh/2:camY};
+      const dz=deadZoneTarget({x:camX,y:subject.y},subject,{viewportW:vw,viewportH:vh,zoneX:vw*(RM ? .1 : .04),zoneY:vh,biasX});
+      const tx=dz.x,ty=topC+vh/2-(near?Math.min(vh*.03,18):0);
       const rate=focus?(RM?18:4.8):(lemos.moving?6.8:2.1);
-      camX=damp(camX,tx,rate,cameraDt);camY=camY==null?ty:damp(camY,ty,rate,cameraDt);
-      cameraInfo={mode:ctl.mode,priority:ctl.priority,zoneX:dz.zoneX*s/rs,zoneY:dz.zoneY*s/rs,targetX:(dz.desiredX-(camX-vw/2))*s/rs,targetY:(dz.desiredY-(camY-vh/2))*s/rs};
+      camX=damp(camX,tx,rate,cameraDt);camY=camY==null?ty:damp(camY,ty,Math.max(rate,3),cameraDt);
+      cameraInfo={mode:ctl.mode,priority:ctl.priority,zoneX:dz.zoneX*s/rs,zoneY:dz.zoneY*s/rs,targetX:(dz.desiredX-(camX-vw/2))*s/rs,targetY:(ty-(camY-vh/2))*s/rs};
     }
     camX=clamp(camX,vw/2,STREET_W-vw/2);
-    let top;if(vh>=STREET_H){top=STREET_H-vh;camY=top+vh/2;}else{const want=clamp((camY==null?lemos.y:camY)-vh/2,0,STREET_H-vh);top=want;camY=top+vh/2;}
+    let top;if(vh>=STREET_H){top=STREET_H-vh;camY=top+vh/2;}else{const want=clamp((camY==null?topC+vh/2:camY)-vh/2,0,STREET_H-vh);top=want;camY=top+vh/2;}
     return {s,baseS,left:camX-vw/2,top,rs,vw,vh};
   }
   const clamp=(v,a,b)=>a>b?(a+b)/2:v<a?a:v>b?b:v;
@@ -379,8 +495,9 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
       for(const e of ENTS){const r=e.ref;
         if(e.k==='prop'){const im=art(PATH.prop(r.k));if(!im||r.x<x0||r.x>x1||r.dark)continue;const w=im.width*PROP_S,h=im.height*PROP_S;cast(im,r.x,r.y,-w/2,-h,w,h);}
         else if(e.k==='ped'){if(r.hidden||r.x<x0||r.x>x1)continue;const im=r.frames[pedFrame(r)];cast(im,Math.round(r.x),Math.round(r.y),-14,-45,im.width,im.height,r.dir<0);}
+        else if(e.k==='signal'){const im=art(PATH.semaforo());if(!im||r.x<x0||r.x>x1)continue;cast(im,r.x,r.y,-12,-96*PROP_S+0,18*PROP_S,96*PROP_S,false,SIGF[SIGS[r.sig].st]*18,0,18,96);}
         else if(e.k==='tree'){if(r.x<x0||r.x>x1)continue;cast(r.trunk,r.x,r.y,-10,-80,20,80);cast(r.crown,r.x,r.y,-r.crown.width/2,-150,r.crown.width,r.crown.height);}
-        else if(e.k==='car'){const x=r.x;if(x+300<x0||x>x1)continue;const m=meta(r.id),im=art(PATH.veiculo(r.id));if(!im)continue;const w=m.w*CAR_S,h=m.h*CAR_S,dir=r.lane!=null?LANES[r.lane].dir:1;
+        else if(e.k==='car'){const x=r.x;if(x+300<x0||x>x1)continue;const m=meta(r.id),im=art(PATH.veiculo(r.id));if(!im)continue;const w=m.w*CAR_S,h=m.h*CAR_S,dir=r.lane!=null?LANES[r.lane].dir:(r.dir||1);
           shx.setTransform(hs,0,0,hs,ox/2,oyr/2);shx.transform(1,0,-SUN.kx*.7,-SUN.ky*.8,Math.round(dir<0?x+w:x),Math.round(e.y));if(dir<0)shx.scale(-1,1);shx.drawImage(silhouette(im),0,0,m.w,m.h,0,-h,w,h);n++;}}
       ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=true;ctx.globalAlpha=.36;ctx.drawImage(shc,0,0,sw*2,sh*2);ctx.restore();ctx.imageSmoothingEnabled=false;stats.shadows=n;}
     let drawn=0;
@@ -389,8 +506,9 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
         case 'prop':{if(r.x<x0||r.x>x1)break;const im=art(PATH.prop(r.k));if(!im)break;const w=im.width*PROP_S,h=im.height*PROP_S;
           contact(ctx,r.x+1,r.y,Math.max(4,w*.42),2.5,.3);ctx.drawImage(r.dark?dimmed(im,r.dark):im,Math.round(r.x-w/2),Math.round(r.y-h),Math.round(w),Math.round(h));drawn++;break;}
         case 'tree':{if(r.x<x0||r.x>x1)break;tree(ctx,r);drawn++;break;}
+        case 'signal':{if(r.x<x0||r.x>x1)break;signal(ctx,r);drawn++;break;}
         case 'ped':{if(r.hidden||r.x<x0||r.x>x1)break;person(ctx,r);drawn++;break;}
-        case 'car':{const x=r.x;if(x+300<x0||x>x1)break;if(r.lane!=null){const L=LANES[r.lane];car(ctx,r,x,e.y,L.dir,false);}else car(ctx,r,x,r.y,1,r===viatura);drawn++;break;}
+        case 'car':{const x=r.x;if(x+300<x0||x>x1)break;if(r.lane!=null){const L=LANES[r.lane];car(ctx,r,x,e.y,L.dir,false);}else car(ctx,r,x,r.y,r.dir||1,r===viatura);drawn++;break;}
         case 'bird':{if(r.x<x0||r.x>x1)break;bird(ctx,r);drawn++;break;}
         case 'steam':{if(q>=1&&r.x>x0&&r.x<x1)steam(ctx,r);break;}
       }}
@@ -451,9 +569,12 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     const m=meta(k.id),im=art(PATH.veiculo(k.id));const w=m.w*CAR_S,h=m.h*CAR_S;
     contact(ctx,x+w/2,y-3,w*.44,4,.42);contact(ctx,x+w/2,y-2,w*.36,2,.3);
     if(!im)return;
-    const f=isViatura?2+Math.floor(t*2.5)%2:(k.v>1?Math.floor(t*10)%2:0);
+    const f=isViatura||k.siren?2+Math.floor(t*(k.siren?4:2.5))%2:(k.v>1?Math.floor((k.dist||0)/11)%2:0);
     ctx.save();ctx.translate(Math.round(dir<0?x+w:x),Math.round(y-h));if(dir<0)ctx.scale(-1,1);
     ctx.drawImage(Q()>=1?shaded(im):im,f*m.w,0,m.w,m.h,0,0,Math.round(w),Math.round(h));ctx.restore();
+    // seta ao entrar ou sair da vaga: pisca na frente e atrás, do lado do meio-fio
+    if(k.blink&&Math.floor(t*3)%2===0){const fx=dir>0?x+w-7:x+3,rx=dir>0?x+3:x+w-7,by=y-h*.5;ctx.fillStyle='#ffb52e';ctx.fillRect(Math.round(fx),Math.round(by),4,4);ctx.fillRect(Math.round(rx),Math.round(by),4,4);
+      ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.4;const sp=glowSprite('rgba(255,170,40,1)');ctx.drawImage(sp,fx-10,by-8,24,20);ctx.drawImage(sp,rx-10,by-8,24,20);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}
     // luz de freio na traseira quando desacelera ou está parado no trânsito
     if(k.brake>.05){const rx=dir>0?x+3:x+w-7,ry=y-h*.52;ctx.fillStyle=`rgba(255,40,30,${.9*k.brake})`;ctx.fillRect(Math.round(rx),Math.round(ry),4,4);
       ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.45*k.brake;ctx.drawImage(glowSprite('rgba(255,50,40,1)'),rx-12,ry-8,28,20);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}
@@ -468,8 +589,14 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     const talking=p.st==='chat'&&Math.floor(p.talk/1.6)%2===0,bob=!p.moving&&!RM&&(talking?((t*6+p.id)|0)%2:Math.sin(t*1.6+p.id*1.7)>.85)?1:0;
     contact(ctx,X+2,Y-1,9,2.6,.34);
     if(p.dir<0){ctx.save();ctx.translate(X,0);ctx.scale(-1,1);ctx.drawImage(img,-14,Y-45+bob);ctx.restore();}else ctx.drawImage(img,X-14,Y-45+bob);
+    if(p.carry){const bx=art(PATH.prop('caixa-papelao'));if(bx){const bw=bx.width*1.1,bh=bx.height*1.1;ctx.drawImage(bx,Math.round(X+p.dir*6-bw/2),Math.round(Y-26-bh/2+bob),Math.round(bw),Math.round(bh));}}
     if(talking&&(p.talk%1.6)>.25){const bx=X+p.dir*6,by=Y-54;ctx.fillStyle='#1e1611';ctx.fillRect(bx-7,by-5,14,9);ctx.fillStyle='#f3f1ea';ctx.fillRect(bx-6,by-4,12,7);ctx.fillRect(bx-1,by+3,2,2);ctx.fillStyle='#14181b';const n=1+((p.talk*3)|0)%3;for(let i=0;i<n;i++)ctx.fillRect(bx-4+i*3,by-1,2,2);}
   }
+  // semáforo oficial (3 quadros de 18 px: verde, amarelo, vermelho) na quina da faixa de pedestres; o vermelho dos carros é o verde de quem atravessa
+  const SIGF={green:0,yellow:1,red:2};
+  function signal(ctx,sp){const im=art(PATH.semaforo());if(!im)return;const w=18*PROP_S,h=96*PROP_S,f=SIGF[SIGS[sp.sig].st];
+    contact(ctx,sp.x+1,sp.y,6,2.2,.3);ctx.drawImage(im,f*18,0,18,96,Math.round(sp.x-w/2),Math.round(sp.y-h),Math.round(w),Math.round(h));
+    if(Q()>=1){ctx.globalCompositeOperation='lighter';ctx.globalAlpha=f===1?.5:.42;ctx.drawImage(glowSprite(f===0?'rgba(70,255,120,1)':f===1?'rgba(255,200,60,1)':'rgba(255,60,50,1)'),sp.x-12,sp.y-h+10,24,22);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}}
   // vapor do bueiro (efeito oficial, 6 quadros), subindo devagar
   function steam(ctx,m){const im=art(PATH.efeito('vapor-bueiro'));if(!im)return;const f=Math.floor(t*7)%6;ctx.globalAlpha=.75;ctx.drawImage(im,f*24,0,24,40,Math.round(m.x-16),Math.round(m.y-50),31,52);ctx.globalAlpha=1;}
   function bird(ctx,b){
@@ -521,5 +648,5 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     else{lemos.x=viatura.x+W(viatura)/2;lemos.y=WALK[1];lemos.dir=1;}
     camX=lemos.x;camY=null;camZoom=1;camera.clearManual();camera.focus({id:'street-entry',mode:'transition',priority:CAMERA_PRIORITY.critical,x:where==='porta'?(lemos.x+DOOR.x)/2:lemos.x,y:where==='porta'?GY-90:lemos.y,duration:480,hold:180,interruptible:true});
   }
-  return {update,resume,debugRows,draw,tap,place,gestureStart,gestureMove,gestureEnd,zoomAt,lemos,door:DOOR,ready,stats,shadowLayer:shc,get view(){return lastView;},get cars(){return cars;},parked,peds,birds,trees,get t(){return t;},zoom:()=>camZoom};
+  return {lanes:LANES,update,resume,debugRows,draw,tap,place,gestureStart,gestureMove,gestureEnd,zoomAt,lemos,door:DOOR,ready,stats,shadowLayer:shc,get view(){return lastView;},get cars(){return cars;},parked,peds,birds,trees,get t(){return t;},zoom:()=>camZoom};
 }
