@@ -1,0 +1,73 @@
+{
+  "canvas": {
+    "width": 1600,
+    "height": 740
+  },
+  "coordinates": "Pixels do fundo; medidas aproximadas para integração.",
+  "slot": {
+    "x": 848,
+    "y": 301,
+    "width": 19,
+    "height": 146
+  },
+  "readerLed": {
+    "x": 905,
+    "y": 322,
+    "radius": 8
+  },
+  "lockLed": {
+    "x": 607,
+    "y": 78,
+    "radius": 8
+  },
+  "display": {
+    "x": 806,
+    "y": 231,
+    "width": 113,
+    "height": 31
+  },
+  "plaque": {
+    "x": 790,
+    "y": 140,
+    "width": 147,
+    "height": 45
+  },
+  "door": {
+    "x": 27,
+    "y": 0,
+    "width": 634,
+    "height": 696
+  },
+  "hand": {
+    "suggestedX": 1040,
+    "suggestedY": 180,
+    "width": 560,
+    "height": 560,
+    "gripLocal": {
+      "x": 220,
+      "y": 298
+    }
+  },
+  "assets": {
+    "porta-aberta.png": {
+      "width": 634,
+      "height": 696,
+      "mode": "RGBA"
+    },
+    "mao-cracha.png": {
+      "width": 560,
+      "height": 560,
+      "mode": "RGBA"
+    },
+    "fundo.png": {
+      "width": 1600,
+      "height": 740,
+      "mode": "RGB"
+    },
+    "cracha.png": {
+      "width": 193,
+      "height": 284,
+      "mode": "RGBA"
+    }
+  }
+}
