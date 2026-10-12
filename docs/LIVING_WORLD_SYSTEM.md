@@ -229,6 +229,6 @@ Pedestres carregando sacolas ou guarda-chuva, ou acenando com um braço só, ser
 
 O diretor de eventos da rua (`events()` em `street.js`) sorteia a cada ~15 s: sair da vaga, estacionar, entrega (furgão + entregador), corredor, viatura com sirene. Pedestres usam os semáforos (botão → vermelho dos carros → travessia). Postos fixos (guardas, comerciantes) ficam em `staff` e só trocam de pose. Detalhes em `docs/RUA_BEATCOP_BASE.md`.
 
-## Névoa e vento (12/10/2026)
+## Vento e sol (12/10/2026)
 
-Na rua (`street.js`): um vento suave com rajadas (`wv`) empurra faixas largas de névoa leve (baixas sobre a rua e a calçada, ralas diante das fachadas), folhas soltas no ar, a fumaça dos escapamentos e o vapor dos bueiros; as árvores, as bandeiras e os varais do primeiro plano balançam conforme ele. Uma bruma clara no alto das fachadas dá distância. Qualidade baixa e `prefers-reduced-motion` deixam só a bruma parada.
+Na rua (`street.js`) não há névoa. Um vento suave com rajadas (`wv`) mexe nas árvores, bandeiras, varais do primeiro plano, vapor dos bueiros e fumaça dos escapamentos, e leva folhas soltas no ar. O sol da manhã é baixo e dourado, vindo do alto à esquerda: correção de cor quente/fria mais forte, brilho atmosférico perto do sol, fachos de luz entre os prédios (`BEAMS`, com poeira dentro), brilho correndo pelas janelas conforme a câmera anda, poças refletindo, faísca no cromado dos carros e sombras projetadas frias (roxo-azuladas). Reflexos de lente leves só na qualidade alta; média tem fachos, brilhos e glow; baixa, só a cor.

@@ -319,6 +319,8 @@ export function paintGround(g,W,ART,stalls){
 /** Desgaste e sujeira (pintado uma vez, por cima das fachadas e do chão): escorridos sob peitoris e cornijas, respingo de lama no pé
  *  das paredes, reboco soltando, trincas, calhas, cartazes e rabiscos no beco; no chão, sombra dos prédios na calçada com
  *  manchas de sol nos becos, poças que refletem o céu, sarjeta suja, chiclete, bitucas e a sujeira das faixas. Tudo discreto. */
+/** poças pintadas no chão (street.js faz o sol brilhar nelas) */
+export const PUDDLES=[];
 export function paintWear(g,lots,W){
   const R=rnd(31);
   const P=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));};
@@ -346,7 +348,8 @@ export function paintWear(g,lots,W){
   vgrad(0,GY,W,64,[[0,'rgba(24,26,40,.3)'],[.45,'rgba(24,26,40,.08)'],[1,'rgba(24,26,40,0)']]);
   for(const b of lots)if(b.k==='alley'){const x=b.X,w=b.w;for(const [a,h] of [[.1,72],[.07,110]]){g.fillStyle=`rgba(255,238,196,${a})`;g.beginPath();g.moveTo(x+6,GY);g.lineTo(x+w-6,GY);g.lineTo(x+w-6+SUN.kx*h*1.6,GY+h);g.lineTo(x+6+SUN.kx*h*1.6,GY+h);g.closePath();g.fill();}}
   // poças: escuras no meio, o céu refletido por cima e um fio de luz
-  const puddle=(x,y,rx,ry)=>{E(x,y,rx,ry,'rgba(30,36,48,.5)');E(x-rx*.1,y-ry*.2,rx*.82,ry*.6,'rgba(150,176,202,.34)');E(x-rx*.3,y-ry*.35,rx*.35,Math.max(.8,ry*.18),'rgba(238,246,255,.4)');};
+  PUDDLES.length=0;
+  const puddle=(x,y,rx,ry)=>{PUDDLES.push({x,y,rx,ry});E(x,y,rx,ry,'rgba(30,36,48,.5)');E(x-rx*.1,y-ry*.2,rx*.82,ry*.6,'rgba(150,176,202,.34)');E(x-rx*.3,y-ry*.35,rx*.35,Math.max(.8,ry*.18),'rgba(238,246,255,.4)');};
   for(let i=0,n=0;n<9&&i<80;i++){const x=40+R()*(W-80);if(near(x,90))continue;n++;
     if(n<=3)puddle(x,GY+70+R()*(CURB-GY-90),12+R()*16,2.5+R()*2);else puddle(x,n%2?ROAD+10+R()*14:ROAD+60+R()*60,16+R()*26,3+R()*4);}
   // sarjeta suja: sedimento, folhas secas e um fio de água escura
