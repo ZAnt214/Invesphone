@@ -13,18 +13,23 @@ export const GY=560;                 // pé das fachadas = começo da calçada
 export const SIDE=130;               // fundura da calçada vista de cima
 export const CURB=GY+SIDE;           // meio-fio
 export const ROAD=CURB+12;           // começo do asfalto
-export const NEAR=ROAD+300;          // calçada de cá (embaixo)
+export const NEAR=ROAD+262;          // calçada de cá (embaixo): via compacta, para o trânsito caber no quadro de qualquer aparelho
 export const STREET_H=NEAR+115;
 export const WALK=[GY+14,CURB-10];   // onde dá para andar
-export const PARK=CURB+76;           // rodas dos carros estacionados
-export const LANES=[{y:ROAD+214,dir:-1,v:70},{y:ROAD+290,dir:1,v:78}];
+export const PARK=CURB+62;           // rodas dos carros estacionados
+export const LANES=[{y:ROAD+116,dir:-1,v:112},{y:ROAD+230,dir:1,v:120}];   // a de cima vai para a esquerda, a de baixo para a direita (mão americana)
+// faixas de pedestres com semáforo (o x é o centro da faixa; ver street.js: o sinal fecha para os carros quando alguém espera)
+export const CROSSWALKS=[{x:640},{x:1800}];
+export const CW_HALF=46;             // meia largura da faixa (px de mundo)
+// altura mínima que sempre precisa aparecer na tela: do térreo das lojas até a faixa de baixo do trânsito
+export const BAND_TOP=GY-70,BAND_BOT=ROAD+230+26;
 export const FLOOR=70,GROUND=118;    // andar e térreo
 // sombra no chão: por pixel de altura, quanto ela anda para a direita (kx) e para cá (ky)
 export const SUN={kx:.6,ky:.42};
 // árvores da calçada (o pé do tronco); a copa é desenhada em street.js, balançando
 export const TREES=[{x:446,y:CURB-16},{x:1880,y:CURB-16},{x:2262,y:CURB-16}];
 // bueiros no asfalto (um solta vapor)
-export const MANHOLES=[{x:744,y:ROAD+122},{x:1786,y:ROAD+122}];
+export const MANHOLES=[{x:744,y:ROAD+172},{x:1450,y:ROAD+172},{x:2230,y:ROAD+172}];
 
 export function rnd(seed){let s=seed%2147483647||7;return ()=>(s=s*16807%2147483647)/2147483647;}
 export const O='#1e1611';
@@ -260,9 +265,18 @@ export function paintGround(g,W,ART){
   P(0,ROAD,W,2,'#3a3c40');
   // pintura gasta: as faixas perdem pixels onde os carros passam
   const paint=(x,y,w,h,c)=>{P(x,y,w,h,c);for(let k=0;k<w*h/16;k++)P(x+R()*w,y+R()*h,1,1,'rgba(74,76,82,.6)');};
-  for(let x=0;x<W;x+=200)paint(x,ROAD+8,3,70,'rgba(232,232,224,.55)');
-  for(let x=20;x<W;x+=110)paint(x,ROAD+150,50,4,'#d8d8d0');paint(0,ROAD+232,W,3,'#d8b43a');paint(0,ROAD+238,W,3,'#d8b43a');
+  // vagas ao longo do meio-fio de cima (ficam sem marca perto das faixas de pedestres) e linha lateral da faixa de estacionamento
+  for(let x=0;x<W;x+=200){if(CROSSWALKS.some(c=>Math.abs(x-c.x)<110))continue;paint(x,ROAD+6,3,58,'rgba(232,232,224,.55)');}
+  paint(0,ROAD+68,W,2,'rgba(232,232,224,.5)');
+  paint(0,ROAD+142,W,3,'#d8b43a');paint(0,ROAD+148,W,3,'#d8b43a');   // faixa dupla amarela, entre as duas mãos
   for(const m of MANHOLES){E(m.x+2,m.y+2,16,6,'rgba(0,0,0,.3)');if(!img('chao/bueiro.png',0,0,20,8,m.x-15,m.y-6,30,12)){E(m.x,m.y,16,6,'#2e3034');E(m.x,m.y,13,5,'#55575d');for(let k=-9;k<=9;k+=3)P(m.x+k,m.y-3,2,6,'#3e4044');}E(m.x-4,m.y-3,8,1.5,'rgba(255,255,255,.08)');}
   // calçada de cá: o meio-fio visto de cima e as lajotas
+  // faixas de pedestres: a peça oficial (listras empilhadas, 3x) de meio-fio a meio-fio, com a linha de retenção dos carros
+  for(const c of CROSSWALKS){
+    const im=ART&&ART('chao/faixa-pedestres.png'),bw=30*3,x0=c.x-bw/2;
+    for(let y=ROAD+4;y<NEAR-6;y+=48){if(im){g.imageSmoothingEnabled=false;g.drawImage(im,0,0,30,16,Math.round(x0),y,bw,48);}else{P(x0+3,y,bw-6,22,'#d8d3bd');}}
+    // linha de retenção: de cima (mão para a esquerda) à direita da faixa; de baixo (mão para a direita) à esquerda dela
+    paint(c.x+CW_HALF+10,ROAD+72,4,70,'#e8e8e0');paint(c.x-CW_HALF-14,ROAD+154,4,86,'#e8e8e0');
+  }
   P(0,NEAR,W,4,'#d2ccc0');P(0,NEAR,W,1,'#ece6da');P(0,NEAR+4,W,6,'#8a857a');walk(NEAR+10,STREET_H);
 }

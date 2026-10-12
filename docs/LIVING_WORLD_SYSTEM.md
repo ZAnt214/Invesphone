@@ -224,3 +224,7 @@ Pedestres carregando sacolas ou guarda-chuva, ou acenando com um braço só, ser
 - Na base, o telefone tocando numa mesa vazia e alguém atravessando a sala para atender.
 - Reações da equipe na casa a cada achado (alguém se aproxima para olhar), sem atrasar a perícia.
 - Quadros de boneco com sacola ou guarda-chuva para a rua.
+
+## Rua: eventos espontâneos (12/10/2026)
+
+O diretor de eventos da rua (`events()` em `street.js`) sorteia a cada ~15 s: sair da vaga, estacionar, entrega (furgão + entregador), corredor, viatura com sirene. Pedestres usam os semáforos (botão → vermelho dos carros → travessia). Postos fixos (guardas, comerciantes) ficam em `staff` e só trocam de pose. Detalhes em `docs/RUA_BEATCOP_BASE.md`.

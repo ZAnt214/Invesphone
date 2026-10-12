@@ -46,6 +46,7 @@ export function fx(kind,p=0,a=1){
     case 'brake':if(!gate(kind,1.5))return;burst({f:v(2900,.1),to:2400,dur:.5,vol:.03*a,q:8,pan:p});break;
     case 'busdoor':if(!gate(kind,3))return;burst({type:'highpass',f:3000,dur:.9,vol:.04*a,attack:.03,pan:p});burst({f:180,dur:.25,at:t+.85,vol:.05*a,pan:p});break;
     case 'bus':if(!gate(kind,3))return;tone({f:55,to:85,dur:1.8,vol:.05*a,type:'sawtooth',pan:p,attack:.3});burst({type:'lowpass',f:200,dur:1.6,vol:.06*a,attack:.2,pan:p});break;
+    case 'beep':if(!gate(kind,.5))return;tone({f:1480,dur:.07,vol:.012*a,type:'square',pan:p});break;
     case 'cardoor':if(!gate(kind,1))return;burst({type:'lowpass',f:260,dur:.18,vol:.08*a,pan:p});break;
     case 'honk':if(!gate(kind,4))return;tone({f:v(415,.03),dur:.28,vol:.03*a,type:'square',pan:p});tone({f:v(520,.03),dur:.28,vol:.022*a,type:'square',pan:p});break;
     case 'flap':if(!gate(kind,.8))return;for(let i=0;i<4;i++)burst({f:v(1300),dur:.06,at:t+i*.07,vol:.012*a,pan:p});break;
