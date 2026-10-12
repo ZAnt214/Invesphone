@@ -589,7 +589,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
       for(let i=0;i<3;i++){const cx=((t*8+i*span/3)%span)-500,w=900+i*160,h=w*.375,cy=GY+90+i*150;if(cx+w/2<x0||cx-w/2>x1)continue;ctx.globalAlpha=.55;ctx.drawImage(cloudSpr,cx-w/2,cy-h/2,w,h);}
       ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}
     // fios entre os postes de luz da calçada de lá, com sombra e balanço leve
-    ctx.lineWidth=1;for(let i=0;i<POLES.length-1;i++){const a=POLES[i],b=POLES[i+1];if(b<x0||a>x1||b-a>760)continue;const sag=(b-a)*.035,sw=RM?0:Math.sin(t*.8+i)*.8,ay=cy-146;
+    ctx.lineWidth=1;for(let i=0;i<POLES.length-1;i++){const a=POLES[i],b=POLES[i+1];if(b<x0||a>x1||b-a>760)continue;const sag=(b-a)*.035,sw=RM||!F.wind?0:Math.sin(t*.8+i)*.8,ay=cy-146;
       for(const [off,al] of [[0,.8],[7,.7]]){ctx.strokeStyle=`rgba(14,12,16,${al})`;ctx.beginPath();ctx.moveTo(a+3,ay+off);ctx.quadraticCurveTo((a+b)/2,ay+off+sag*2+sw,b+3,ay+off);ctx.stroke();
         ctx.strokeStyle='rgba(20,16,12,.16)';ctx.beginPath();ctx.moveTo(a+9,ay+off+9);ctx.quadraticCurveTo((a+b)/2+6,ay+off+9+sag*2+sw,b+9,ay+off+9);ctx.stroke();}}
     if(q>=1&&!RM&&F.flies){ctx.fillStyle='rgba(18,16,16,.85)';for(const f of flies){if(f.x<x0||f.x>x1)continue;const a=t*(7+f.i*2.3)+f.i*2,b=t*(5+f.i*1.7);ctx.fillRect(Math.round(f.x+Math.cos(a)*(7+f.i*3)),Math.round(f.y+Math.sin(b)*(4+f.i)),1,1);}}
@@ -655,7 +655,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
       // folhas soltas no ar (vento)
       ctx.setTransform(s,0,0,s,ox,oyr);
       if(q>=1){if(!RM&&F.wind)for(const l of airLeaves){if(l.x<x0||l.x>x1)continue;const fl=Math.abs(Math.sin(l.ph*1.7));ctx.globalAlpha=Math.min(1,.3+wv);ctx.fillStyle=l.c;ctx.fillRect(Math.round(l.x),Math.round(l.y),1+Math.round(fl*2),2);}ctx.globalAlpha=1;}
-      if(F.front)front.draw(ctx,{s,top,left,vw,cw,ch},t,cameraDt,busy,RM,wv);}
+      if(F.front)front.draw(ctx,{s,top,left,vw,cw,ch},t,cameraDt,busy,RM||!F.wind,wv);}
     ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='source-over';
     edges(ctx,cw,ch,rs,q,s,left,top,ox,oyr);
     ctx.restore();
@@ -726,14 +726,14 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   function flag(ctx,X,Y,v){let cl=cloths[v];
     if(!cl)cl=cloths[v]=A.S2(17,12,(P)=>{if(v==='br'){P(0,0,17,12,'#2f7a3a');for(let k=0;k<5;k++)P(8-k*2,3+k-2,1+k*4,1,'#e8c63a');for(let k=0;k<4;k++)P(4+k*2,6+k,9-k*4,1,'#e8c63a');P(5,4,7,4,'#e8c63a');P(6,4,5,4,'#2f4f9a');P(6,6,5,1,'#e8ecef');}
       else{P(0,0,17,12,'#1e2a3a');P(0,0,17,1,'#3a4f6a');P(4,3,9,1,'#e8ecef');P(4,6,9,1,'#c9a24a');P(4,9,9,1,'#e8ecef');}});
-    const S=2;for(let i=0;i<17;i++){const ph=flagPh-i*0.5,dy=Math.round(Math.sin(ph)*2*(i/16));
+    const S=2;for(let i=0;i<17;i++){const ph=flagPh-i*0.5,dy=F.wind?Math.round(Math.sin(ph)*2*(i/16)):0;
       ctx.fillStyle='rgba(28,18,14,.18)';ctx.fillRect(X+i*S+6,Y+dy+10,S,12*S);              // sombra do pano na fachada
       ctx.drawImage(cl,i,0,1,12,X+i*S,Y+dy,S,12*S);
       if(Math.cos(ph)<-0.3){ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillRect(X+i*S,Y+dy,S,12*S);}else if(Math.cos(ph)>0.7){ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(X+i*S,Y+dy,S,12*S);}}}
   // árvore: tronco parado, copa balançando 1 px com o vento
   function tree(ctx,r){
     contact(ctx,r.x,r.y-2,9,3,.35);ctx.drawImage(r.trunk,Math.round(r.x-10),Math.round(r.y-80));
-    const sway=RM?0:Math.round(Math.sin(t*(.8+wv*.8)+r.ph)*(.8+wv*1.6)+wv*1.2);ctx.drawImage(r.crown,Math.round(r.x-r.crown.width/2+sway),Math.round(r.y-150));
+    const sway=RM||!F.wind?0:Math.round(Math.sin(t*(.8+wv*.8)+r.ph)*(.8+wv*1.6)+wv*1.2);ctx.drawImage(r.crown,Math.round(r.x-r.crown.width/2+sway),Math.round(r.y-150));
   }
   // carro oficial (rodas girando; a viatura parada com o giroflex alternando), ampliado sem suavizar, com volume e sombra
   // roda girando: o PNG oficial só tem as rodas paradas, então o miolo ganha raios que giram conforme a distância andada (desenhados por cima, sem mexer no resto)
@@ -777,7 +777,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     contact(ctx,sp.x+1,sp.y,6,2.2,.3);ctx.drawImage(im,f*18,0,18,96,Math.round(sp.x-w/2),Math.round(sp.y-h),Math.round(w),Math.round(h));
     if(Q()>=1){ctx.globalCompositeOperation='lighter';ctx.globalAlpha=f===1?.5:.42;ctx.drawImage(glowSprite(f===0?'rgba(70,255,120,1)':f===1?'rgba(255,200,60,1)':'rgba(255,60,50,1)'),sp.x-12,sp.y-h+10,24,22);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}}
   // vapor do bueiro (efeito oficial, 6 quadros), subindo devagar
-  function steam(ctx,m){const im=art(PATH.efeito('vapor-bueiro'));if(!im)return;const f=Math.floor(t*7+m.x%5)%6;ctx.globalAlpha=m===MANHOLES[0]?.75:.5;for(let k=0;k<4;k++){const lean=RM?0:Math.round(wv*10*(1-k/4));ctx.drawImage(im,f*24,k*10,24,10,Math.round(m.x-16+lean),Math.round(m.y-50+k*13),31,13);}ctx.globalAlpha=1;}
+  function steam(ctx,m){const im=art(PATH.efeito('vapor-bueiro'));if(!im)return;const f=Math.floor(t*7+m.x%5)%6;ctx.globalAlpha=m===MANHOLES[0]?.75:.5;for(let k=0;k<4;k++){const lean=RM||!F.wind?0:Math.round(wv*10*(1-k/4));ctx.drawImage(im,f*24,k*10,24,10,Math.round(m.x-16+lean),Math.round(m.y-50+k*13),31,13);}ctx.globalAlpha=1;}
   function bird(ctx,b){
     const X=Math.round(b.x),Y=Math.round(b.y),z=Math.round(b.z),d=b.dir;
     ctx.globalAlpha=0.28*Math.max(0.2,1-b.z/90);ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(X+z*SUN.kx,Y+z*SUN.ky,5,1.6,0,0,7);ctx.fill();ctx.globalAlpha=1;
