@@ -100,7 +100,9 @@ const STALLS=[...SLOT_XS.map(x=>[x,SLOT_WIDTH]),[DOOR.x-96,192]];
 
 /* ---------- caches de luz e sombra (feitos uma vez por imagem) ---------- */
 const SIL=new WeakMap();      // silhueta escura de um sprite (para a sombra projetada)
-function silhouette(im){let c=SIL.get(im);if(c)return c;c=document.createElement('canvas');c.width=im.width;c.height=im.height;const g=c.getContext('2d');g.drawImage(im,0,0);g.globalCompositeOperation='source-in';g.fillStyle='#000';g.fillRect(0,0,c.width,c.height);SIL.set(im,c);return c;}
+const SOFT=new WeakMap();      // a mesma silhueta em meia resolução: ampliada com suavização, a sombra sai de borda macia
+function softSil(im){let c=SOFT.get(im);if(c)return c;const sl=silhouette(im);c=document.createElement('canvas');c.width=Math.ceil(im.width/2);c.height=Math.ceil(im.height/2);const g=c.getContext('2d');g.imageSmoothingEnabled=true;g.drawImage(sl,0,0,c.width,c.height);SOFT.set(im,c);return c;}
+function silhouette(im){let c=SIL.get(im);if(c)return c;c=document.createElement('canvas');c.width=im.width;c.height=im.height;const g=c.getContext('2d');g.drawImage(im,0,0);g.globalCompositeOperation='source-in';g.fillStyle='#241a3a';g.fillRect(0,0,c.width,c.height);SIL.set(im,c);return c;}
 const SHADED=new WeakMap();   // carro oficial com volume: o teto pega o céu, a parte de baixo escurece (sem mudar o desenho)
 function shaded(im){let c=SHADED.get(im);if(c)return c;c=document.createElement('canvas');c.width=im.width;c.height=im.height;const g=c.getContext('2d');g.drawImage(im,0,0);g.globalCompositeOperation='source-atop';
   const gr=g.createLinearGradient(0,0,0,c.height);gr.addColorStop(0,'rgba(255,250,240,.16)');gr.addColorStop(.35,'rgba(255,250,240,0)');gr.addColorStop(.7,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(10,10,20,.26)');g.fillStyle=gr;g.fillRect(0,0,c.width,c.height);SHADED.set(im,c);return c;}
@@ -117,7 +119,8 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   const Q=()=>{const q=quality?quality():'high';return q==='low'?0:q==='medium'?1:2;};
   let fgRooms=[];
   let layer=buildStatic();
-  const ready=preloadRua().then(()=>{layer=buildStatic();});
+  let needBake=false;
+  const ready=preloadRua().then(()=>{layer=buildStatic();needBake=true;});
 
   function buildStatic(){
     const cv=document.createElement('canvas');cv.width=STREET_W;cv.height=STREET_H;const g=cv.getContext('2d');g.imageSmoothingEnabled=false;
@@ -528,8 +531,6 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   const clamp=(v,a,b)=>a>b?(a+b)/2:v<a?a:v>b?b:v;
 
   // camada de sombras projetadas, em meia resolução (as bordas saem macias ao ampliar)
-  const shc=document.createElement('canvas'),shx=shc.getContext('2d');
-  let gradeKey='',gradeSun=null,sunGlow=null;   // a vinheta é a mesma da base (#vig, em CSS): nada de pintar outra aqui
   const stats={ents:0,drawn:0,shadows:0,particles:0};
 
   function draw(ctx,cw,ch,rs,marker){
@@ -557,18 +558,15 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     for(const e of ENTS){const r=e.ref;if(e.k==='car'){if(r.lane!=null)e.y=(r.yo??LANES[r.lane].y)+(r.yj||0);}else e.y=r.y;}
     for(let i=1;i<ENTS.length;i++){const e=ENTS[i];let j=i-1;while(j>=0&&ENTS[j].y>e.y){ENTS[j+1]=ENTS[j];j--;}ENTS[j+1]=e;}
     // sombras projetadas (média e alta): silhuetas inclinadas na direção do sol, numa camada só (não somam escuro)
-    if(q>=1){const hs=s/2,sw=Math.ceil(cw/2),sh=Math.ceil(ch/2);if(shc.width!==sw||shc.height!==sh){shc.width=sw;shc.height=sh;}
-      shx.setTransform(1,0,0,1,0,0);shx.clearRect(0,0,sw,sh);shx.imageSmoothingEnabled=false;let n=0;
-      const cast=(im,fx,fyy,u0,v0,dw,dh,flip,sx,sy,sww,shh)=>{shx.setTransform(hs,0,0,hs,ox/2,oyr/2);shx.transform(1,0,-SUN.kx,-SUN.ky,fx,fyy);if(flip)shx.scale(-1,1);
-        if(sx!=null)shx.drawImage(silhouette(im),sx,sy,sww,shh,u0,v0,dw,dh);else shx.drawImage(silhouette(im),u0,v0,dw,dh);n++;};
+    if(needBake){needBake=false;bakeShadows();}
+    // sombras projetadas de quem se move (média e alta), direto na tela: silhuetas macias guardadas em meia resolução,
+    // inclinadas na direção do sol (as do que não se move já estão na camada fixa)
+    if(q>=1){let n=0;ctx.save();ctx.globalAlpha=.42;ctx.imageSmoothingEnabled=true;
       for(const e of ENTS){const r=e.ref;
-        if(e.k==='prop'){const im=art(PATH.prop(r.k));if(!im||r.x<x0||r.x>x1||r.dark)continue;const w=im.width*PROP_S,h=im.height*PROP_S;cast(im,r.x,r.y,-w/2,-h,w,h);}
-        else if(e.k==='ped'){if(r.hidden||r.x<x0||r.x>x1)continue;const im=r.frames[pedFrame(r)];cast(im,Math.round(r.x),Math.round(r.y),-14,-45,im.width,im.height,r.dir<0);}
-        else if(e.k==='signal'){const im=art(PATH.semaforo());if(!im||r.x<x0||r.x>x1)continue;cast(im,r.x,r.y,-12,-96*PROP_S+0,18*PROP_S,96*PROP_S,false,SIGF[SIGS[r.sig].st]*18,0,18,96);}
-        else if(e.k==='tree'){if(r.x<x0||r.x>x1)continue;cast(r.trunk,r.x,r.y,-10,-80,20,80);cast(r.crown,r.x,r.y,-r.crown.width/2,-150,r.crown.width,r.crown.height);}
+        if(e.k==='ped'){if(r.hidden||r.x<x0||r.x>x1)continue;const im=r.frames[pedFrame(r)];ctx.setTransform(s,0,0,s,ox,oyr);ctx.transform(1,0,-SUN.kx,-SUN.ky,Math.round(r.x),Math.round(r.y));if(r.dir<0)ctx.scale(-1,1);ctx.drawImage(softSil(im),-14,-45,im.width,im.height);n++;}
         else if(e.k==='car'){const x=r.x;if(x+300<x0||x>x1)continue;const m=meta(r.id),im=art(PATH.veiculo(r.id));if(!im)continue;const w=m.w*CAR_S,h=m.h*CAR_S,dir=r.lane!=null?LANES[r.lane].dir:(r.dir||1);
-          shx.setTransform(hs,0,0,hs,ox/2,oyr/2);shx.transform(1,0,-SUN.kx*.7,-SUN.ky*.8,Math.round(dir<0?x+w:x),Math.round(e.y));if(dir<0)shx.scale(-1,1);shx.drawImage(silhouette(im),0,0,m.w,m.h,0,-h,w,h);n++;}}
-      ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=true;shx.setTransform(1,0,0,1,0,0);shx.globalCompositeOperation='source-in';shx.fillStyle='#241a3a';shx.fillRect(0,0,sw,sh);shx.globalCompositeOperation='source-over';ctx.globalAlpha=.42;ctx.drawImage(shc,0,0,sw*2,sh*2);ctx.restore();ctx.imageSmoothingEnabled=false;stats.shadows=n;}
+          ctx.setTransform(s,0,0,s,ox,oyr);ctx.transform(1,0,-SUN.kx*.7,-SUN.ky*.8,Math.round(dir<0?x+w:x),Math.round(e.y));if(dir<0)ctx.scale(-1,1);ctx.drawImage(softSil(im),0,0,Math.ceil(m.w/2),Math.ceil(m.h/2),0,-h,w,h);n++;}}
+      ctx.restore();ctx.imageSmoothingEnabled=false;stats.shadows=n;}
     let drawn=0;
     for(const e of ENTS){const r=e.ref;
       switch(e.k){
@@ -612,7 +610,12 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     // o sol da manhã, baixo e dourado, vindo do alto à esquerda: fachos de luz entre os prédios, poeira dentro deles,
     // brilho nas janelas, nas poças e no cromado dos carros
     let np=0;
-    if(q>=1){ctx.globalCompositeOperation='screen';
+    // tudo o que é luz macia (fachos, raios, bolhas, brilho do sol, luz do canto, partículas) vai para uma camada de 1/4 da
+    // resolução, somada lá e aplicada na tela numa passada só (no iPhone, cada passada de tela cheia com mistura custa caro)
+    const LQ=4,lw=Math.ceil(cw/LQ),lh=Math.ceil(ch/LQ);if(LT.width!==lw||LT.height!==lh){LT.width=lw;LT.height=lh;}
+    lx.setTransform(1,0,0,1,0,0);lx.globalCompositeOperation='source-over';lx.globalAlpha=1;lx.clearRect(0,0,lw,lh);
+    if(q>=1){lx.setTransform(s/LQ,0,0,s/LQ,ox/LQ,oyr/LQ);lx.globalCompositeOperation='lighter';
+      {const ctx=lx;
       // fachos com bordas macias: um sprite com degradê nas laterais e no pé, inclinado na direção do sol
       for(const B of BEAMS){if(B.x+B.w+800<x0||B.x-300>x1)continue;const br=RM?1:.8+.2*Math.sin(t*B.sp+B.ph),y0=top-60,y1=CURB+20,sh=.62;
         ctx.save();ctx.transform(1,0,sh,1,-sh*y0,0);ctx.globalAlpha=Math.min(1,B.a*br*4);ctx.drawImage(beamSpr,B.x-B.w/2,y0,B.w,y1-y0);
@@ -627,7 +630,8 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
           if(xx+rr<x0||xx-rr>x1)continue;ctx.globalAlpha=Math.min(1,O.a*k*(.8+.2*Math.sin(t*.9+O.ph)));
           if(O.hex){ctx.fillStyle=O.c;ctx.beginPath();for(let j=0;j<6;j++){const an=j*Math.PI/3+.3;ctx.lineTo(xx+Math.cos(an)*rr,yy+Math.sin(an)*rr);}ctx.closePath();ctx.fill();ctx.globalAlpha*=1.6;ctx.strokeStyle=O.c;ctx.lineWidth=1;ctx.stroke();}
           else ctx.drawImage(O.spr,xx-rr,yy-rr,rr*2,rr*2);}
-        ctx.globalAlpha=1;}
+        ctx.globalAlpha=1;}}
+      ctx.globalCompositeOperation='screen';
       // brilho do sol batendo nas janelas: uma faixa clara que corre pelo vidro conforme a câmera anda
       for(const wn of WINS){if(wn.x<x0||wn.x>x1)continue;const ph=wn.x*.011+wn.y*.017-camX*.006-t*.05,v=ph-Math.floor(ph);if(v>.07)continue;const k=Math.sin(v/.07*Math.PI);
         ctx.fillStyle=`rgba(255,240,205,${.75*k})`;for(let j=0;j<wn.h-6;j++){const xx=wn.x+3+((j*.6+v*60)%(wn.w-6));ctx.fillRect(Math.round(xx),wn.y+3+j,2,1);}
@@ -647,55 +651,45 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
       ctx.setTransform(s,0,0,s,ox,oyr);
       if(q>=1){if(!RM)for(const l of airLeaves){if(l.x<x0||l.x>x1)continue;const fl=Math.abs(Math.sin(l.ph*1.7));ctx.globalAlpha=Math.min(1,.3+wv);ctx.fillStyle=l.c;ctx.fillRect(Math.round(l.x),Math.round(l.y),1+Math.round(fl*2),2);}ctx.globalAlpha=1;}
       front.draw(ctx,{s,top,left,vw,cw,ch},t,cameraDt,busy,RM,wv);}
-    // luz da manhã, como o clima de cor da planta (gradientes guardados por tamanho de tela)
-    ctx.setTransform(1,0,0,1,0,0);
-    const key=cw+'x'+ch;if(key!==gradeKey){gradeKey=key;gradeSun=ctx.createLinearGradient(0,0,cw,ch);gradeSun.addColorStop(0,'rgba(255,184,96,.55)');gradeSun.addColorStop(.5,'rgba(255,214,150,.16)');gradeSun.addColorStop(1,'rgba(70,96,160,.26)');
-      
-}
-    ctx.globalCompositeOperation='soft-light';ctx.fillStyle=gradeSun;ctx.fillRect(0,0,cw,ch);
-    // a atmosfera dourada perto do sol e reflexos de lente leves na diagonal (qualidade alta)
-    if(q>=1){ctx.globalCompositeOperation='screen';{const gx=(SUNW.x-left)*s,gy=(SUNW.y-top)*s,gr=ctx.createRadialGradient(gx,gy,0,gx,gy,Math.max(cw,ch)*1.1);
-        gr.addColorStop(0,'rgba(255,214,140,.6)');gr.addColorStop(.35,'rgba(255,190,110,.2)');gr.addColorStop(1,'rgba(255,190,110,0)');ctx.fillStyle=gr;ctx.fillRect(0,0,cw,ch);}
-      }
-    ctx.globalCompositeOperation='source-over';
+    ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='source-over';
     edges(ctx,cw,ch,rs,q,s,left,top,ox,oyr);
     ctx.restore();
     lastView={...V,oy:oyr,ox,cw,ch};
     if(cameraDebug&&cameraInfo)drawCameraDebug(ctx,{width:cw,height:ch,dpr:rs,deadZone:{x:cw/rs/2-cameraInfo.zoneX,y:ch/rs/2-cameraInfo.zoneY,w:cameraInfo.zoneX*2,h:cameraInfo.zoneY*2},target:{x:cameraInfo.targetX,y:cameraInfo.targetY},lines:[`RUA · ${cameraInfo.mode}`,`prioridade ${cameraInfo.priority} · zoom ${camZoom.toFixed(2)} (${V.s}x)`,`cam ${camX.toFixed(1)}, ${camY.toFixed(1)}`]});
   }
   let lastView=null;
+  // sombras do que não sai do lugar (mobiliário, semáforos, árvores): pintadas uma vez na camada fixa, em meia resolução
+  // (bordas macias), com a mesma cor e força das sombras dos carros e das pessoas, que continuam sendo feitas a cada quadro
+  function bakeShadows(){const c=document.createElement('canvas');c.width=Math.ceil(STREET_W/2);c.height=Math.ceil(STREET_H/2);const g=c.getContext('2d');g.imageSmoothingEnabled=false;
+    const cast=(im,fx,fy,u0,v0,dw,dh,sx,sy,sw,sh)=>{g.setTransform(.5,0,0,.5,0,0);g.transform(1,0,-SUN.kx,-SUN.ky,fx,fy);if(sx!=null)g.drawImage(silhouette(im),sx,sy,sw,sh,u0,v0,dw,dh);else g.drawImage(silhouette(im),u0,v0,dw,dh);};
+    for(const r of PROPS){const im=art(PATH.prop(r.k));if(!im||r.dark)continue;const w=im.width*PROP_S,h=im.height*PROP_S;cast(im,r.x,r.y,-w/2,-h,w,h);}
+    {const im=art(PATH.semaforo());if(im)for(const r of SIGNAL_POLES)cast(im,r.x,r.y,-12,-96*PROP_S,18*PROP_S,96*PROP_S,0,0,18,96);}
+    for(const r of trees){cast(r.trunk,r.x,r.y,-10,-80,20,80);cast(r.crown,r.x,r.y,-r.crown.width/2,-150,r.crown.width,r.crown.height);}
+    g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-in';g.fillStyle='#241a3a';g.fillRect(0,0,c.width,c.height);
+    const lg=layer.getContext('2d');lg.save();lg.imageSmoothingEnabled=true;lg.globalAlpha=.42;lg.drawImage(c,0,0,STREET_W,STREET_H);lg.restore();}
   /* Bordas da tela (direção L, aprovada em 12/10/2026): desfoque leve que cresce para as bordas, cantos um pouco mais escuros
      e quentes, poucas partículas de luz desfocadas flutuando perto das bordas (andam com a câmera e o vento) e a luz do sol
-     vazando do canto de cima à esquerda. O centro fica limpo. Desfoque por reduções sucessivas pela metade (1/2, 1/4, 1/8) (barato no iPhone). */
-  const EB={key:'',small:null,tiny:null,mask:null,vig:null,leak:null};
+     vazando do canto de cima à esquerda. O centro fica limpo. O desfoque em si é do compositor do navegador (#eblur, backdrop-filter em base.css), sem ler o canvas de volta. */
+  const EB={key:'',warm:null};
+  const LT=document.createElement('canvas'),lx=LT.getContext('2d');
   const dust=Array.from({length:22},()=>({u:R(),v:R(),r:.5+R(),a:.25+R()*.45,ph:R()*6.28,sp:.4+R()*.8}));
   const dustSpr=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);
     gr.addColorStop(0,'rgba(255,230,180,.9)');gr.addColorStop(.45,'rgba(255,214,150,.45)');gr.addColorStop(.8,'rgba(255,200,130,.12)');gr.addColorStop(1,'rgba(255,200,130,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);return c;})();
   const edgeW=(u,v)=>{const dx=(u-.5)*2,dy=(v-.5)*2;return Math.min(1,Math.max(0,(Math.sqrt(dx*dx*.75+dy*dy)-.6)/.55));};
   function edges(ctx,cw,ch,rs,q,s,left,top,ox,oy){
     const key=cw+'x'+ch;
-    if(key!==EB.key){EB.key=key;const mk=(w,h)=>{const c=document.createElement('canvas');c.width=Math.max(1,w);c.height=Math.max(1,h);return c;};
-      EB.half=mk(Math.ceil((cw+8)/2),Math.ceil((ch+8)/2));EB.small=mk(Math.ceil((cw+8)/4),Math.ceil((ch+8)/4));EB.tiny=mk(Math.ceil((cw+8)/8),Math.ceil((ch+8)/8));
-      // máscara: transparente no centro, opaca nas bordas (elipse achatada)
-      EB.mask=mk(EB.small.width+4,EB.small.height+4);{const g=EB.mask.getContext('2d'),w=EB.mask.width,h=EB.mask.height;g.save();g.translate(w/2,h/2);g.scale(1,h/w*1.15);
-        const r=w/2,gr=g.createRadialGradient(0,0,r*.55,0,0,r*1.12);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(.55,'rgba(0,0,0,.6)');gr.addColorStop(1,'rgba(0,0,0,1)');g.fillStyle=gr;g.fillRect(-r*2,-r*2,r*4,r*4);g.restore();}
-      EB.vig=ctx.createRadialGradient(cw/2,ch/2,Math.min(cw,ch)*.42,cw/2,ch/2,Math.hypot(cw,ch)*.6);EB.vig.addColorStop(0,'rgba(30,20,14,0)');EB.vig.addColorStop(1,'rgba(30,20,14,.34)');}
+    if(key!==EB.key){EB.key=key;
+      const w=Math.ceil(cw/4),h=Math.ceil(ch/4);
+      // o lado do sol esquenta (somado na camada de luz)
+      const wm=document.createElement('canvas');wm.width=w;wm.height=h;const wg=wm.getContext('2d'),gr=wg.createLinearGradient(0,0,w,h);gr.addColorStop(0,'rgba(255,170,80,.26)');gr.addColorStop(.5,'rgba(255,200,130,.06)');gr.addColorStop(1,'rgba(255,200,130,0)');wg.fillStyle=gr;wg.fillRect(0,0,w,h);EB.warm=wm;}
     ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;
-    // desfoque nas bordas
-    // reduz pela metade a cada passo (cada pixel vira a média de 4: um filtro estável, sem tremer quando a câmera anda)
-    if(q>=1){const hf=EB.half,sm=EB.small,tn=EB.tiny,gh=hf.getContext('2d'),gs=sm.getContext('2d'),gt=tn.getContext('2d');
-      gh.imageSmoothingEnabled=gs.imageSmoothingEnabled=gt.imageSmoothingEnabled=true;gh.imageSmoothingQuality=gs.imageSmoothingQuality=gt.imageSmoothingQuality='high';
-      // a grade da redução fica presa ao mundo (não à tela): o desfoque anda junto com a cena em vez de "ferver"
-      const dx=(8-((Math.round(ox)%8)+8)%8)%8,dy=(8-((Math.round(oy)%8)+8)%8)%8;
-      gh.globalCompositeOperation='copy';gh.drawImage(ctx.canvas,0,0,cw,ch,dx/2,dy/2,cw/2,ch/2);
-      gs.globalCompositeOperation='copy';gs.drawImage(hf,0,0,sm.width,sm.height);
-      gt.globalCompositeOperation='copy';gt.drawImage(sm,0,0,tn.width,tn.height);
-      gs.globalCompositeOperation='copy';gs.drawImage(tn,0,0,sm.width,sm.height);
-      gs.globalCompositeOperation='destination-in';gs.drawImage(EB.mask,dx/4-2,dy/4-2);gs.globalCompositeOperation='source-over';
-      ctx.imageSmoothingEnabled=true;ctx.drawImage(sm,-dx,-dy,sm.width*4,sm.height*4);ctx.imageSmoothingEnabled=false;}
+    // o desfoque das bordas é do compositor (#eblur, backdrop-filter em base.css): nada de ler o canvas de volta aqui
     // cantos mais escuros e quentes
-    ctx.fillStyle=EB.vig;ctx.fillRect(0,0,cw,ch);
-    if(q>=1){ctx.globalCompositeOperation='screen';
+    // (a cor das bordas e os cantos escuros são do #etint, em base.css: compositor, sem passada no canvas)
+    if(q>=1){const ctx=lx,LQ=cw/LT.width;lx.setTransform(1,0,0,1,0,0);lx.globalCompositeOperation='lighter';lx.drawImage(EB.warm,0,0,LT.width,LT.height);lx.setTransform(1/LQ,0,0,1/LQ,0,0);
+      // a atmosfera dourada perto do sol (presa ao sol do mundo)
+      {const gx=(SUNW.x-left)*s,gy=(SUNW.y-top)*s,gr=ctx.createRadialGradient(gx,gy,0,gx,gy,Math.max(cw,ch)*1.1);
+        gr.addColorStop(0,'rgba(255,214,140,.6)');gr.addColorStop(.35,'rgba(255,190,110,.2)');gr.addColorStop(1,'rgba(255,190,110,0)');ctx.fillStyle=gr;ctx.fillRect(0,0,cw,ch);}
       // luz do sol vazando do canto (segue o sol do mundo: some aos poucos quando a câmera vai para a direita)
       {const gx=Math.max(-cw*.25,(SUNW.x-left)*s*.35),gy=-ch*.15,k=Math.max(.35,1-Math.max(0,camX-900)/2400),R0=Math.max(cw,ch)*.55,gr=ctx.createRadialGradient(gx,gy,0,gx,gy,R0);
         gr.addColorStop(0,`rgba(255,176,96,${.42*k})`);gr.addColorStop(.5,`rgba(255,190,110,${.14*k})`);gr.addColorStop(1,'rgba(255,190,110,0)');ctx.fillStyle=gr;ctx.fillRect(0,0,cw,ch);}
@@ -704,6 +698,8 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
       for(const d of dust){const px=((d.u*cw-sh*.6*d.r+(RM?0:t*(6+wv*30)*d.sp*rs))%cw+cw)%cw,py=((d.v*ch+(RM?0:Math.sin(t*.3*d.sp+d.ph)*14*rs))%ch+ch)%ch,e=edgeW(px/cw,py/ch);if(e<.05)continue;
         const rr=ws*(.008+.014*d.r)*(.7+e*.6);ctx.globalAlpha=d.a*e*(RM?1:.6+.4*Math.sin(t*d.sp+d.ph));ctx.drawImage(dustSpr,px-rr,py-rr,rr*2,rr*2);}
       ctx.globalAlpha=1;}
+    // a camada de luz entra na tela de uma vez, ampliada e macia
+    if(q>=1){ctx.globalCompositeOperation='screen';ctx.imageSmoothingEnabled=true;ctx.drawImage(LT,0,0,LT.width*(cw/LT.width),LT.height*(ch/LT.height));ctx.imageSmoothingEnabled=false;}
     ctx.restore();
   }
   const contact=(ctx,x,y,rx,ry,a)=>{ctx.fillStyle=`rgba(16,12,20,${a})`;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,7);ctx.fill();};
@@ -816,5 +812,5 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   }
   /** botão "visão geral": afasta até a escala 1 (a rua inteira, com os prédios de baixo) e volta */
   function toggleOverview(){if(!lastView)return;const b=lastView.baseS;camera.clearManual();camZoom=camZoom<.99?1:Math.max(.34,1/b);}
-  return {toggleOverview,lanes:LANES,update,resume,debugRows,draw,tap,place,gestureStart,gestureMove,gestureEnd,zoomAt,lemos,door:DOOR,ready,stats,shadowLayer:shc,get view(){return lastView;},get cars(){return cars;},parked,peds,birds,trees,get t(){return t;},zoom:()=>camZoom};
+  return {toggleOverview,lanes:LANES,update,resume,debugRows,draw,tap,place,gestureStart,gestureMove,gestureEnd,zoomAt,lemos,door:DOOR,ready,stats,get view(){return lastView;},get cars(){return cars;},parked,peds,birds,trees,get t(){return t;},zoom:()=>camZoom};
 }
