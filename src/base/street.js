@@ -9,7 +9,7 @@
    (neon, arandelas, giroflex) somadas por cima, e a luz da manhã. Escala inteira de pixel e corte do que está fora da tela.
    A qualidade escolhida pelo jogador (src/characters/quality.ts) decide o que entra: baixa = só o essencial (sem sombras
    projetadas, brilhos nem vapor); média = sombras, luzes que emitem e vapor; alta = mais os fachos de luz e a poeira no ar. */
-import {GY,CURB,ROAD,NEAR,STREET_H,WALK,PARK,LANES,SUN,TREES,MANHOLES,CROSSWALKS,CW_HALF,BAND_TOP,BAND_BOT,rnd,paintFacades,paintGround} from './streetArt';
+import {GY,CURB,ROAD,NEAR,STREET_H,WALK,PARK,LANES,SUN,TREES,MANHOLES,CROSSWALKS,CW_HALF,BAND_TOP,BAND_BOT,rnd,paintFacades,paintGround,paintWear} from './streetArt';
 import {RUA_DIR,VEICULOS,PATH} from './ruaAssets';
 import {choose,eventLog,jitter} from '../world/life';
 import {CAMERA_PRIORITY,createCameraControl,createLead,damp,deadZoneTarget,drawCameraDebug} from '../camera/cameraDirector';
@@ -120,6 +120,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     const sky=g.createLinearGradient(0,0,0,200);sky.addColorStop(0,'#8fa9c4');sky.addColorStop(1,'#d8d4cc');g.fillStyle=sky;g.fillRect(0,0,STREET_W,GY);
     paintFacades(g,BUILDINGS,A,{sign:A.sign(),door:A.door()});
     paintGround(g,STREET_W,art,STALLS);
+    paintWear(g,BUILDINGS,STREET_W);
     return cv;
   }
 
@@ -179,9 +180,16 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   const cars=[];
   for(let l=0;l<LANES.length;l++){const n=7;for(let i=0;i<n;i++){const id=poolId(),v=LANES[l].v*(0.72+R()*0.6);cars.push({id,lane:l,x:i*(STREET_W+500)/n-150+R()*120,v,v0:v,base:v,pv:v,puff:R(),brake:0,dist:R()*40,aggr:R(),yj:(R()-.5)*8,dr:R()*8});}}
   const puffs=[];
+  /* ar da rua: o vento sopra em rajadas e leva folhas e papéis pela calçada e pela sarjeta; moscas rondam o lixo; nuvens passam e
+     sombreiam a rua devagar; fios entre os postes balançam */
+  const wind=()=>RM?.2:.5+.5*Math.sin(t*.11)*Math.sin(t*.37+1);
+  const debris=Array.from({length:18},(_,i)=>({x:R()*STREET_W,y:i<12?GY+50+R()*(CURB-GY-64):CURB+6+R()*4,vx:0,ph:R()*6.28,k:i%3,g:R()}));
+  const flies=PROPS.filter(p=>p.k==='sacos-lixo'||p.k==='cacamba').flatMap(p=>[0,1,2].map(i=>({x:p.x,y:p.y-10,i})));
+  const POLES=PROPS.filter(p=>p.k==='poste-luz'&&p.y===cy).map(p=>p.x).sort((a,b)=>a-b);
+  const cloudSpr=(()=>{const c=document.createElement('canvas');c.width=256;c.height=96;const g=c.getContext('2d'),gr=g.createRadialGradient(128,48,4,128,48,128);gr.addColorStop(0,'rgba(96,112,150,.5)');gr.addColorStop(.55,'rgba(96,112,150,.22)');gr.addColorStop(1,'rgba(96,112,150,0)');g.setTransform(1,0,0,.375,0,0);g.fillStyle=gr;g.fillRect(0,0,256,256);return c;})();
   const birds=Array.from({length:6},()=>({x:300+R()*(STREET_W-600),y:WALK[0]+10+R()*(WALK[1]-WALK[0]-20),z:0,dir:R()<.5?-1:1,st:'g',t:R()*40,vx:0,vz:0}));
   // poeira no ar, só visível contra a luz (qualidade alta): poucas partículas, recicladas
-  const motes=Array.from({length:28},()=>({x:R(),y:R(),v:.3+R()*.7,p:R()*6.28}));
+  const motes=Array.from({length:40},()=>({x:R(),y:R(),v:.3+R()*.7,p:R()*6.28}));
   const camera=createCameraControl({manualHold:2600,reducedMotion:RM});
   const lead=createLead();   // espaço à frente de Lemos (suavizado; ver cameraDirector)
   const cameraDebug=/[?&]cameraDebug=1(?:&|$)/.test(location.search);
@@ -197,7 +205,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   for(const p of parked)ENTS.push(ent('car',p,p.y));
   for(const k of cars)ENTS.push(ent('car',k,LANES[k.lane].y));
   for(const b of birds)ENTS.push(ent('bird',b,b.y));
-  for(const m of MANHOLES.slice(0,1))ENTS.push(ent('steam',m,m.y));
+  for(const m of MANHOLES)ENTS.push(ent('steam',m,m.y));
   for(const sp of SIGNAL_POLES)ENTS.push(ent('signal',sp,sp.y));
 
   /* ---------- pedestres ---------- */
@@ -447,6 +455,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     // fumacinha do escapamento atrás; luz de freio quando desacelera; seta quando entra ou sai da vaga
     for(let l=0;l<LANES.length;l++){const L=LANES[l],dir=L.dir,all=cars.filter(k=>k.lane===l),ln=all.filter(k=>!k.pass&&(k.yo==null||Math.abs(k.yo-L.y)<=40)).sort((a,b)=>dir>0?b.x-a.x:a.x-b.x);
       for(const k of all){if(k.lane!==l)continue;const i=ln.indexOf(k);stepCar(k,L,i>0?ln[i-1]:null,ln,dt);}}
+    {const gust=wind(),tv=4+gust*gust*70;for(const d of debris){d.vx+=(tv*(d.k===2?1.15:.8)-d.vx)*Math.min(1,dt*.8);d.x+=d.vx*dt;d.ph+=dt*(2+d.vx*.12);if(d.x>STREET_W+30){d.x=-30;d.y=d.g<.66?GY+50+R()*(CURB-GY-64):CURB+6+R()*4;}}}
     for(const p of puffs){p.t+=dt;p.x+=p.vx*dt;p.y-=dt*5;}while(puffs.length&&puffs[0].t>1)puffs.shift();
     if(!RM)for(const m of motes){m.p+=dt*m.v;m.x+=dt*.004*m.v;m.y+=Math.sin(m.p)*dt*.004;if(m.x>1)m.x-=1;}
     if(tapFx&&(tapFx.t+=dt)>.7)tapFx=null;
@@ -506,6 +515,11 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     ctx.setTransform(s,0,0,s,ox,oyr);
     ctx.drawImage(layer,0,0);
     const x0=left-200,x1=left+vw+200;
+    for(const d of debris){if(d.x<x0||d.x>x1)continue;const hop=Math.max(0,Math.sin(d.ph))*Math.min(5,d.vx*.08),X=Math.round(d.x),Y=Math.round(d.y-hop);
+      ctx.fillStyle='rgba(20,16,14,.22)';ctx.fillRect(X,Math.round(d.y),3,1);
+      if(d.k===0){ctx.fillStyle=Math.sin(d.ph*.7)>0?'#7a5a2a':'#a8742a';ctx.fillRect(X,Y-1,3,2);}
+      else if(d.k===1){ctx.fillStyle='#5a6a2a';ctx.fillRect(X,Y-1,2+(Math.sin(d.ph)>0?1:0),2);}
+      else{const fw=2+Math.round(Math.abs(Math.sin(d.ph))*3);ctx.fillStyle='#e6e1d2';ctx.fillRect(X,Y-2,fw,3);ctx.fillStyle='rgba(120,110,96,.5)';ctx.fillRect(X,Y,fw,1);}}
     // porta do DHPP acesa quando o Lemos entra
     if(doorT>0){ctx.fillStyle=`rgba(255,226,160,${.45*doorT})`;ctx.fillRect(DOOR.x-50,GY-76,100,68);}
     for(const f of DHPP.flags||[])flag(ctx,f.x,f.y,f.v);
@@ -541,14 +555,23 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
         case 'steam':{if(q>=1&&r.x>x0&&r.x<x1)steam(ctx,r);break;}
       }}
     stats.ents=ENTS.length;stats.drawn=drawn;
+    if(q>=1&&!RM){ctx.globalCompositeOperation='multiply';const span=STREET_W+1000;
+      for(let i=0;i<3;i++){const cx=((t*8+i*span/3)%span)-500,w=900+i*160,h=w*.375,cy=GY+90+i*150;if(cx+w/2<x0||cx-w/2>x1)continue;ctx.globalAlpha=.55;ctx.drawImage(cloudSpr,cx-w/2,cy-h/2,w,h);}
+      ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}
+    // fios entre os postes de luz da calçada de lá, com sombra e balanço leve
+    ctx.lineWidth=1;for(let i=0;i<POLES.length-1;i++){const a=POLES[i],b=POLES[i+1];if(b<x0||a>x1||b-a>760)continue;const sag=(b-a)*.035,sw=RM?0:Math.sin(t*.8+i)*.8,ay=cy-146;
+      for(const [off,al] of [[0,.8],[7,.7]]){ctx.strokeStyle=`rgba(14,12,16,${al})`;ctx.beginPath();ctx.moveTo(a+3,ay+off);ctx.quadraticCurveTo((a+b)/2,ay+off+sag*2+sw,b+3,ay+off);ctx.stroke();
+        ctx.strokeStyle='rgba(20,16,12,.16)';ctx.beginPath();ctx.moveTo(a+9,ay+off+9);ctx.quadraticCurveTo((a+b)/2+6,ay+off+9+sag*2+sw,b+9,ay+off+9);ctx.stroke();}}
+    if(q>=1&&!RM){ctx.fillStyle='rgba(18,16,16,.85)';for(const f of flies){if(f.x<x0||f.x>x1)continue;const a=t*(7+f.i*2.3)+f.i*2,b=t*(5+f.i*1.7);ctx.fillRect(Math.round(f.x+Math.cos(a)*(7+f.i*3)),Math.round(f.y+Math.sin(b)*(4+f.i)),1,1);}}
     const fum=art(PATH.efeito('fumaca-escape'));
     for(const p of puffs){if(p.x<x0||p.x>x1)continue;const u=p.t;if(fum){const f=Math.min(3,Math.floor(u*4));ctx.globalAlpha=1-u;ctx.drawImage(fum,f*12,0,12,8,p.x-9,p.y-6,18,12);ctx.globalAlpha=1;}
       else{ctx.fillStyle=`rgba(210,210,214,${.45*(1-u)})`;ctx.beginPath();ctx.ellipse(p.x,p.y,3+u*6,2+u*4,0,0,7);ctx.fill();}}
     // luzes que emitem: neon das lojas (com tremida rara), arandelas do DHPP, vitrines e o giroflex da viatura parada
     ctx.globalCompositeOperation='lighter';
     for(const b of BUILDINGS){if(!b.glows||b.X+b.w<x0||b.X>x1)continue;for(const gl of b.glows){
-      let a=gl.neon?.34:gl.lamp?.3:.12;if(gl.neon&&!RM&&q>=1){const ph=Math.sin(t*1.3+gl.x)*Math.sin(t*7.1+gl.y);if(ph>.93)a*=.35;}
+      let a=gl.neon?.34:gl.lamp?.3:.12;if(gl.win)a=gl.tv&&!RM?.2*(.6+.4*Math.sin(t*12+gl.x)*Math.sin(t*4.1+gl.y)):.15;if(gl.neon&&!RM&&q>=1){const ph=Math.sin(t*1.3+gl.x)*Math.sin(t*7.1+gl.y);if(ph>.93)a*=.35;}
       const sp=glowSprite(rgba(gl.c,1));ctx.globalAlpha=a;const r=gl.r;ctx.drawImage(sp,gl.x-r,gl.y-r*.7,r*2,r*1.4);
+      if(!gl.neon&&!gl.lamp&&!gl.win&&!gl.pole&&q>=1){ctx.globalAlpha=.1;ctx.drawImage(sp,gl.x-r*1.2,GY+2,r*2.4,34);}
       if(gl.lamp){ctx.globalAlpha=a*.5;ctx.drawImage(sp,gl.x-r*.8,GY-6,r*1.6,r*.5);}}}
     if(q>=1){const flash=(k,yy)=>{if(k.x+200<x0||k.x>x1)return;const red=(2+Math.floor(t*(k.siren?4:2.5))%2)===2,m=meta(k.id),sx=(red?67:85)*CAR_S,cx=k.x+((k.dir||(k.lane!=null?LANES[k.lane].dir:1))<0?W(k)-sx:sx),cyy=yy-m.h*CAR_S+6*CAR_S;
         const sp=glowSprite(red?'rgba(255,60,50,1)':'rgba(60,110,255,1)');ctx.globalAlpha=.5;ctx.drawImage(sp,cx-18,cyy-14,36,28);
@@ -635,7 +658,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     contact(ctx,sp.x+1,sp.y,6,2.2,.3);ctx.drawImage(im,f*18,0,18,96,Math.round(sp.x-w/2),Math.round(sp.y-h),Math.round(w),Math.round(h));
     if(Q()>=1){ctx.globalCompositeOperation='lighter';ctx.globalAlpha=f===1?.5:.42;ctx.drawImage(glowSprite(f===0?'rgba(70,255,120,1)':f===1?'rgba(255,200,60,1)':'rgba(255,60,50,1)'),sp.x-12,sp.y-h+10,24,22);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}}
   // vapor do bueiro (efeito oficial, 6 quadros), subindo devagar
-  function steam(ctx,m){const im=art(PATH.efeito('vapor-bueiro'));if(!im)return;const f=Math.floor(t*7)%6;ctx.globalAlpha=.75;ctx.drawImage(im,f*24,0,24,40,Math.round(m.x-16),Math.round(m.y-50),31,52);ctx.globalAlpha=1;}
+  function steam(ctx,m){const im=art(PATH.efeito('vapor-bueiro'));if(!im)return;const f=Math.floor(t*7+m.x%5)%6;ctx.globalAlpha=m===MANHOLES[0]?.75:.5;ctx.drawImage(im,f*24,0,24,40,Math.round(m.x-16),Math.round(m.y-50),31,52);ctx.globalAlpha=1;}
   function bird(ctx,b){
     const X=Math.round(b.x),Y=Math.round(b.y),z=Math.round(b.z),d=b.dir;
     ctx.globalAlpha=0.28*Math.max(0.2,1-b.z/90);ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(X+z*SUN.kx,Y+z*SUN.ky,5,1.6,0,0,7);ctx.fill();ctx.globalAlpha=1;
