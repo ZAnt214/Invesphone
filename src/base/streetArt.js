@@ -226,7 +226,7 @@ function paintAlley(g,P,E,vgrad,x,w,R){
 
 /** chão: calçada de lá (vista de cima), meio-fio, asfalto com vagas e faixas, calçada de cá.
  *  ART(path) devolve a imagem oficial já carregada (ou null): manchas, lixo, bueiros e bocas de lobo entram quando chegam. */
-export function paintGround(g,W,ART){
+export function paintGround(g,W,ART,stalls){
   const R=rnd(9);const P=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));};
   const E=(x,y,rx,ry,c)=>{g.fillStyle=c;g.beginPath();g.ellipse(x,y,rx,ry,0,0,7);g.fill();};
   const grain=(x,y,w,h,a=.06,n)=>{for(let i=0;i<(n??w*h/14);i++)P(x+R()*w,y+R()*h,1,1,R()<.5?`rgba(0,0,0,${a})`:`rgba(255,255,255,${a*.8})`);};
@@ -266,7 +266,8 @@ export function paintGround(g,W,ART){
   // pintura gasta: as faixas perdem pixels onde os carros passam
   const paint=(x,y,w,h,c)=>{P(x,y,w,h,c);for(let k=0;k<w*h/16;k++)P(x+R()*w,y+R()*h,1,1,'rgba(74,76,82,.6)');};
   // vagas ao longo do meio-fio de cima (ficam sem marca perto das faixas de pedestres) e linha lateral da faixa de estacionamento
-  for(let x=0;x<W;x+=200){if(CROSSWALKS.some(c=>Math.abs(x-c.x)<110))continue;paint(x,ROAD+6,3,58,'rgba(232,232,224,.55)');}
+  const edges=new Set();for(const [x0,w] of stalls||[]){edges.add(Math.round(x0));edges.add(Math.round(x0+w));}
+  for(const x of edges)paint(x-1,ROAD+6,3,58,'rgba(232,232,224,.55)');
   paint(0,ROAD+68,W,2,'rgba(232,232,224,.5)');
   paint(0,ROAD+142,W,3,'#d8b43a');paint(0,ROAD+148,W,3,'#d8b43a');   // faixa dupla amarela, entre as duas mãos
   for(const m of MANHOLES){E(m.x+2,m.y+2,16,6,'rgba(0,0,0,.3)');if(!img('chao/bueiro.png',0,0,20,8,m.x-15,m.y-6,30,12)){E(m.x,m.y,16,6,'#2e3034');E(m.x,m.y,13,5,'#55575d');for(let k=-9;k<=9;k+=3)P(m.x+k,m.y-3,2,6,'#3e4044');}E(m.x-4,m.y-3,8,1.5,'rgba(255,255,255,.08)');}

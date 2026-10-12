@@ -90,6 +90,9 @@ const PED_LOOKS=[
     PT=['#3a3e46','#3b5a8a','#2b2f36','#5a4a3a','#3a4a5a','#4a4a3a','#6a6a70'],SH=['#222','#e8e4da','#3a2416','#111'];
   for(let i=0;i<20;i++){const st=pick(ST);PED_LOOKS.push({skin:pick(SK),hair:pick(HR),style:st,kind:'rua',top:pick(TP),pants:pick(PT),shoes:pick(SH),glasses:RL()<.15?1:undefined});}
 }
+// vagas do meio-fio de lá: a pintura do chão e os carros usam as mesmas medidas (a viatura tem a vaga dela, na porta do DHPP)
+const SLOT_WIDTH=196,SLOT_XS=[10,206,712,908,1306,1502,1885,2081,2277];
+const STALLS=[...SLOT_XS.map(x=>[x,SLOT_WIDTH]),[DOOR.x-96,192]];
 const NEAR_WALK=[NEAR+40,STREET_H-12];
 
 /* ---------- caches de luz e sombra (feitos uma vez por imagem) ---------- */
@@ -116,7 +119,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     const cv=document.createElement('canvas');cv.width=STREET_W;cv.height=STREET_H;const g=cv.getContext('2d');g.imageSmoothingEnabled=false;
     const sky=g.createLinearGradient(0,0,0,200);sky.addColorStop(0,'#8fa9c4');sky.addColorStop(1,'#d8d4cc');g.fillStyle=sky;g.fillRect(0,0,STREET_W,GY);
     paintFacades(g,BUILDINGS,A,{sign:A.sign(),door:A.door()});
-    paintGround(g,STREET_W,art);
+    paintGround(g,STREET_W,art,STALLS);
     return cv;
   }
 
@@ -162,11 +165,11 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   const meta=id=>VEICULOS[id];
   const W=k=>meta(k.id).w*CAR_S;
   /* vagas do meio-fio de lá (carros de frente para o oeste, como a mão da faixa de cima); a viatura tem a dela, na porta */
-  const SLOT_W=196;
-  const SLOTS=[10,205,722,915,1305,1500,1885,2080,2275].map(x=>({x,car:null,busy:null}));
+  const SLOTS=SLOT_XS.map(x=>({x,car:null,busy:null}));
   const parked=[];
   const viatura={id:'viatura-dhpp',x:DOOR.x-W({id:'viatura-dhpp'})/2,y:PARK,dir:-1,v:0,brake:0};parked.push(viatura);
-  const placeCar=(k,sl)=>{k.slot=sl;sl.car=k;k.y=PARK;k.dir=-1;k.lane=null;k.yo=null;k.x=sl.x+(SLOT_W-W(k))/2+(R()-.5)*6;k.v=0;k.blink=false;k.park=null;};
+  const SLOT_W=SLOT_WIDTH;
+  const placeCar=(k,sl)=>{k.slot=sl;sl.car=k;k.y=PARK;k.dir=-1;k.lane=null;k.yo=null;k.x=sl.x+(SLOT_W-W(k))/2+(R()-.5)*3;k.v=0;k.blink=false;k.park=null;};
   const FIRST=['sedan-bordo','perua-madeira','sedan-bege','sedan-azul','sedan-verde','furgao-marrom'];
   [0,1,3,4,6,8].forEach((si,n)=>{const k={id:FIRST[n],v:0,pv:0,puff:R(),brake:0,dist:0};placeCar(k,SLOTS[si]);parked.push(k);});
   const GAPS=[[410,555],[575,705],[1735,1865]];       // trechos de meio-fio sem vaga (táxi e travessia)
