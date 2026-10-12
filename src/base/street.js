@@ -208,6 +208,8 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     {u:.78,r:.045,k:'hex',a:.12,c:'rgba(140,220,200,1)'},{u:.95,r:.02,a:.5,spr:ghost('255,250,230')},{u:1.12,r:.13,a:.16,spr:ghost('170,210,255',true)},
     {u:1.3,r:.06,k:'hex',a:.1,c:'rgba(200,160,255,1)'},{u:1.48,r:.09,a:.18,spr:ghost('255,200,140')}];
   const BEAMS=Array.from({length:9},(_,i)=>({x:120+i*(STREET_W/9)+R()*120,w:60+R()*150,a:.07+R()*.07,sp:.2+R()*.3,ph:R()*6}));
+  const SUNW={x:-260,y:-520};      // o sol, no mundo: acima e à esquerda do quarteirão
+  const ORBS=BEAMS.flatMap((b,i)=>[0,1,2].map(j=>{const F=FLARE[(i*3+j)%FLARE.length];return {b,dx:(R()-.5)*b.w*.6,y:GY-260+j*110+R()*60,r:12+R()*20+(F.k==='hex'?6:F.r*200),a:F.a*2.4,spr:F.spr,hex:F.k==='hex',c:F.c,ph:R()*6.28};}));
   const WINS=BUILDINGS.flatMap(b=>(b.wins||[]).filter(w=>w.y>=0));
   const motes=Array.from({length:40},()=>({x:R(),y:R(),v:.3+R()*.7,p:R()*6.28}));
   const front=createFront(STREET_W,BAND_BOT);
@@ -616,6 +618,16 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
         ctx.save();ctx.transform(1,0,sh,1,-sh*y0,0);ctx.globalAlpha=Math.min(1,B.a*br*4);ctx.drawImage(beamSpr,B.x-B.w/2,y0,B.w,y1-y0);
         ctx.globalAlpha=Math.min(1,B.a*br*2.5);ctx.drawImage(beamSpr,B.x-B.w*.22,y0,B.w*.44,(y1-y0)*.85);ctx.restore();}
       ctx.globalAlpha=1;
+      // raios do sol (fora do quadro, no alto à esquerda do quarteirão) e bolhas de luz presas no ar dentro dos fachos:
+      // fazem parte da rua (andam com ela), pulsam e flutuam devagar
+      {const k=RM?1:.85+.15*Math.sin(t*.5);
+        for(let i=0;i<8;i++){const a=.42+i*.075,L=2600,w2=34+i%3*20;if(SUNW.x+Math.cos(a)*L<x0-400&&SUNW.x>x1)continue;ctx.globalAlpha=.06*k;ctx.fillStyle='rgba(255,226,170,1)';ctx.beginPath();ctx.moveTo(SUNW.x,SUNW.y);
+          ctx.lineTo(SUNW.x+Math.cos(a)*L-Math.sin(a)*w2,SUNW.y+Math.sin(a)*L+Math.cos(a)*w2);ctx.lineTo(SUNW.x+Math.cos(a)*L+Math.sin(a)*w2,SUNW.y+Math.sin(a)*L-Math.cos(a)*w2);ctx.closePath();ctx.fill();}
+        for(const O of ORBS){const B=O.b,y0=top-60;if(B.x+900<x0||B.x-300>x1)continue;const yy=O.y+(RM?0:Math.sin(t*.4+O.ph)*6),xx=B.x+O.dx+.62*(yy-y0)+(RM?0:Math.cos(t*.3+O.ph)*4),rr=O.r*(RM?1:.9+.1*Math.sin(t*.7+O.ph));
+          if(xx+rr<x0||xx-rr>x1)continue;ctx.globalAlpha=Math.min(1,O.a*k*(.8+.2*Math.sin(t*.9+O.ph)));
+          if(O.hex){ctx.fillStyle=O.c;ctx.beginPath();for(let j=0;j<6;j++){const an=j*Math.PI/3+.3;ctx.lineTo(xx+Math.cos(an)*rr,yy+Math.sin(an)*rr);}ctx.closePath();ctx.fill();ctx.globalAlpha*=1.6;ctx.strokeStyle=O.c;ctx.lineWidth=1;ctx.stroke();}
+          else ctx.drawImage(O.spr,xx-rr,yy-rr,rr*2,rr*2);}
+        ctx.globalAlpha=1;}
       // brilho do sol batendo nas janelas: uma faixa clara que corre pelo vidro conforme a câmera anda
       for(const wn of WINS){if(wn.x<x0||wn.x>x1)continue;const ph=wn.x*.011+wn.y*.017-camX*.006-t*.05,v=ph-Math.floor(ph);if(v>.07)continue;const k=Math.sin(v/.07*Math.PI);
         ctx.fillStyle=`rgba(255,240,205,${.75*k})`;for(let j=0;j<wn.h-6;j++){const xx=wn.x+3+((j*.6+v*60)%(wn.w-6));ctx.fillRect(Math.round(xx),wn.y+3+j,2,1);}
@@ -638,20 +650,13 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     // luz da manhã, como o clima de cor da planta (gradientes guardados por tamanho de tela)
     ctx.setTransform(1,0,0,1,0,0);
     const key=cw+'x'+ch;if(key!==gradeKey){gradeKey=key;gradeSun=ctx.createLinearGradient(0,0,cw,ch);gradeSun.addColorStop(0,'rgba(255,184,96,.55)');gradeSun.addColorStop(.5,'rgba(255,214,150,.16)');gradeSun.addColorStop(1,'rgba(70,96,160,.26)');
-      sunGlow=ctx.createRadialGradient(-cw*.08,-ch*.35,0,-cw*.08,-ch*.35,Math.max(cw,ch)*1.05);sunGlow.addColorStop(0,'rgba(255,214,140,.55)');sunGlow.addColorStop(.35,'rgba(255,190,110,.18)');sunGlow.addColorStop(1,'rgba(255,190,110,0)');
+      
 }
     ctx.globalCompositeOperation='soft-light';ctx.fillStyle=gradeSun;ctx.fillRect(0,0,cw,ch);
     // a atmosfera dourada perto do sol e reflexos de lente leves na diagonal (qualidade alta)
-    if(q>=1){ctx.globalCompositeOperation='screen';ctx.fillStyle=sunGlow;ctx.fillRect(0,0,cw,ch);
-      // reflexo de lente: o sol fora do quadro, no alto à esquerda, e os fantasmas (discos, anéis e hexágonos coloridos) na reta
-      // que passa pelo centro da tela; deslizam um pouco quando a câmera anda, como numa lente de verdade
-      {const sx=-cw*.08-((camX/STREET_W)-.5)*cw*.3,sy=-ch*.32,dx=cw*.5-sx,dy=ch*.5-sy,R0=Math.min(cw,ch),k=RM?1:.85+.15*Math.sin(t*.5);
-        for(let i=0;i<7;i++){const a=.35+i*.13,L=R0*(1.6+i%3*.4),w2=R0*.018;ctx.globalAlpha=.07*k;ctx.fillStyle='rgba(255,226,170,1)';ctx.beginPath();ctx.moveTo(sx,sy);
-          ctx.lineTo(sx+Math.cos(a)*L-Math.sin(a)*w2,sy+Math.sin(a)*L+Math.cos(a)*w2);ctx.lineTo(sx+Math.cos(a)*L+Math.sin(a)*w2,sy+Math.sin(a)*L-Math.cos(a)*w2);ctx.closePath();ctx.fill();}
-        for(const G of FLARE){const fx=sx+dx*G.u,fy=sy+dy*G.u,rr=R0*G.r;ctx.globalAlpha=Math.min(1,G.a*k*1.5);
-          if(G.k==='hex'){ctx.fillStyle=G.c;ctx.beginPath();for(let j=0;j<6;j++){const an=j*Math.PI/3+.3;ctx.lineTo(fx+Math.cos(an)*rr,fy+Math.sin(an)*rr);}ctx.closePath();ctx.fill();ctx.globalAlpha=G.a*k*1.6;ctx.strokeStyle=G.c;ctx.lineWidth=Math.max(1,rr*.06);ctx.stroke();}
-          else ctx.drawImage(G.spr,fx-rr,fy-rr,rr*2,rr*2);}
-        ctx.globalAlpha=1;}}
+    if(q>=1){ctx.globalCompositeOperation='screen';{const gx=(SUNW.x-left)*s,gy=(SUNW.y-top)*s,gr=ctx.createRadialGradient(gx,gy,0,gx,gy,Math.max(cw,ch)*1.1);
+        gr.addColorStop(0,'rgba(255,214,140,.6)');gr.addColorStop(.35,'rgba(255,190,110,.2)');gr.addColorStop(1,'rgba(255,190,110,0)');ctx.fillStyle=gr;ctx.fillRect(0,0,cw,ch);}
+      }
     ctx.globalCompositeOperation='source-over';
     ctx.restore();
     lastView={...V,oy:oyr,ox,cw,ch};
