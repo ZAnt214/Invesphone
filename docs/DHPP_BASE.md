@@ -46,7 +46,7 @@ Vindo da recepção, Lemos para diante da porta (`GATE_X`, linha 13) e a leitora
   - fundo de segurança com linhas finas e uma estrela em marca d'água;
   - faixa azul-marinho com o brasão dourado, "DHPP" e o nome do departamento por extenso;
   - furo do cordão;
-  - foto 3×4 de Lemos com selo holográfico. A foto oficial (`public/characters/lemos/cracha-foto.png`, pedido `2026-10-12-lemos-foto-cracha`) entra sozinha quando o arquivo existir; até lá, uma silhueta;
+  - a foto 3×4 oficial de Lemos (`public/characters/lemos/cracha-foto.png`, pedido `2026-10-12-lemos-foto-cracha`), com selo holográfico. Se ela não carregar, aparece uma silhueta;
   - nome, função, matrícula e validade, assinatura, código de barras, "pessoal e intransferível" e tarja magnética.
 - **Gesto:** arrastar de qualquer ponto da tela; o crachá só anda na horizontal, preso à fenda.
   - Ao chegar ao fim: tela verde ("ACESSO LIBERADO / LEMOS · INVESTIGAÇÃO"), trava verde, bipe e a trava soltando. O crachá sai, a leitora fecha, a porta da planta abre e Lemos segue.
