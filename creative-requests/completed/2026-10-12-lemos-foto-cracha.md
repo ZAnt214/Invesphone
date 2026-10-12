@@ -1,6 +1,6 @@
 ---
 id: 2026-10-12-lemos-foto-cracha
-status: pending
+status: completed
 requested_by: claude
 priority: high
 character: "Lemos (investigação do DHPP, o personagem do jogador)"
@@ -44,6 +44,6 @@ Ao entrar na área restrita do DHPP, o jogador passa o crachá do Lemos na leito
 ## Resposta do ChatGPT
 Preenchido pelo ChatGPT ao concluir.
 
-- status:
-- assets criados:
-- observações:
+- status: completed
+- assets criados: `public/characters/lemos/cracha-foto.png` (600×800, PNG RGB opaco).
+- observações: Gerado com image_gen usando back.png e os retratos de Jorge e Caio como referências. Foto frontal séria, cabelo escuro com risca, paletó grafite, camisa clara, gravata vinho e fundo azul-acinzentado. Sem texto ou moldura. O carregamento automático já existe em src/base/badgeSwipe.js; nenhuma mudança de lógica necessária.
