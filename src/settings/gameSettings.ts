@@ -48,7 +48,7 @@ export const EFFECTS:Effect[] = [
   // vida
   { id:'dwellers', cat:'vida', label:'Gente nas janelas e lojas', desc:'Moradores nas janelas e varandas, funcionários e clientes nas vitrines.', def:true, where:'Rua' },
   // cenas rápidas
-  { id:'scene.badge', cat:'cenas', label:'Passar o crachá na porta', desc:'Close na leitora para passar o crachá ao entrar na área restrita. Desligado, a porta abre sozinha.', def:true, where:'DHPP' },
+  { id:'scene.badge', cat:'cenas', label:'Passar o crachá na porta', desc:'A leitora aparece e você passa o crachá pela fenda para entrar na área restrita. Desligado, a porta abre sozinha.', def:true, where:'DHPP' },
   // som
   { id:'ambient', cat:'som', label:'Som ambiente', desc:'O ar da cidade, o trânsito, o burburinho e o ar-condicionado do DHPP.', def:true, where:'Rua e DHPP' },
   { id:'sfx.badge', cat:'som', label:'Leitora de crachá', desc:'O bipe da leitora e o estalo da trava ao passar o crachá.', def:true, where:'DHPP' }

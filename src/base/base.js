@@ -9,7 +9,7 @@ import { applyQuality, getQuality, onQualityChange } from '../characters/quality
 import { perfHud } from '../perfHud';
 import * as AMB from '../world/ambientAudio';
 import { openSettings } from '../settings/settingsPanel';
-import { badgeReady, openBadge, preloadBadge } from './badgeSwipe';
+import { badgeReady, openBadge } from './badgeSwipe';
 import { fxOn } from '../settings/gameSettings';
 import { choose, eventLog, jitter, lifeDebug, lineBank } from '../world/life';
 import { CAMERA_PRIORITY, createCameraControl, createLead, damp, deadZoneTarget, drawCameraDebug } from '../camera/cameraDirector';
@@ -1915,7 +1915,7 @@ $('#b-view').addEventListener('click',()=>{if(SCENE==='rua')streetView().toggleO
 $('#rot').addEventListener('click',()=>{ROT=ROT===0?90:ROT===90?-90:0;userVert=(ROT===0);lastL=null;applyLayout(true);});
 addEventListener('resize',()=>applyLayout(false));
 
-preloadBadge();newGame();initArt();buildTraffic();buildVisitors();applyLayout(true);cam.x=16*T;cam.y=15*TH;clampCam();
+newGame();initArt();buildTraffic();buildVisitors();applyLayout(true);cam.x=16*T;cam.y=15*TH;clampCam();
 setTimeout(()=>{framesHDFor(P1);for(const n of NPCS)framesHDFor(n);},300);
 $('#b-start').addEventListener('click',()=>{
   AMB.unlock();AMB.setScene(SCENE==='rua'?'rua':'base');
