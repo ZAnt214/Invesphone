@@ -9,6 +9,8 @@ import * as SND from './badgeAudio';
 
 const KEY='invesphone.badge.ok';
 const PHOTO='/characters/lemos/cracha-foto.png';   // pedido 2026-10-12-lemos-foto-cracha
+// já carrega a foto com o jogo, para ela não aparecer atrasada no crachá
+if(typeof Image!=='undefined')new Image().src=PHOTO;
 // medidas do palco (px antes da escala): terminal, fenda e o curso do crachá
 const DEV={x:60,y:190,w:400,h:170},SLOT={x:76,y:202,w:368,h:16};
 const CARD={w:208,h:132,y:SLOT.y+SLOT.h/2+4-132},X0=-6,X1=300,STAGE={w:520,h:380};
