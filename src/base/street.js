@@ -658,7 +658,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
         gr.addColorStop(0,'rgba(255,214,140,.6)');gr.addColorStop(.35,'rgba(255,190,110,.2)');gr.addColorStop(1,'rgba(255,190,110,0)');ctx.fillStyle=gr;ctx.fillRect(0,0,cw,ch);}
       }
     ctx.globalCompositeOperation='source-over';
-    edges(ctx,cw,ch,rs,q,s,left,top);
+    edges(ctx,cw,ch,rs,q,s,left,top,ox,oyr);
     ctx.restore();
     lastView={...V,oy:oyr,ox,cw,ch};
     if(cameraDebug&&cameraInfo)drawCameraDebug(ctx,{width:cw,height:ch,dpr:rs,deadZone:{x:cw/rs/2-cameraInfo.zoneX,y:ch/rs/2-cameraInfo.zoneY,w:cameraInfo.zoneX*2,h:cameraInfo.zoneY*2},target:{x:cameraInfo.targetX,y:cameraInfo.targetY},lines:[`RUA · ${cameraInfo.mode}`,`prioridade ${cameraInfo.priority} · zoom ${camZoom.toFixed(2)} (${V.s}x)`,`cam ${camX.toFixed(1)}, ${camY.toFixed(1)}`]});
@@ -666,27 +666,33 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   let lastView=null;
   /* Bordas da tela (direção L, aprovada em 12/10/2026): desfoque leve que cresce para as bordas, cantos um pouco mais escuros
      e quentes, poucas partículas de luz desfocadas flutuando perto das bordas (andam com a câmera e o vento) e a luz do sol
-     vazando do canto de cima à esquerda. O centro fica limpo. Desfoque em 1/4 e 1/6 da resolução (barato no iPhone). */
+     vazando do canto de cima à esquerda. O centro fica limpo. Desfoque por reduções sucessivas pela metade (1/2, 1/4, 1/8) (barato no iPhone). */
   const EB={key:'',small:null,tiny:null,mask:null,vig:null,leak:null};
   const dust=Array.from({length:22},()=>({u:R(),v:R(),r:.5+R(),a:.25+R()*.45,ph:R()*6.28,sp:.4+R()*.8}));
   const dustSpr=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);
     gr.addColorStop(0,'rgba(255,230,180,.9)');gr.addColorStop(.45,'rgba(255,214,150,.45)');gr.addColorStop(.8,'rgba(255,200,130,.12)');gr.addColorStop(1,'rgba(255,200,130,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);return c;})();
   const edgeW=(u,v)=>{const dx=(u-.5)*2,dy=(v-.5)*2;return Math.min(1,Math.max(0,(Math.sqrt(dx*dx*.75+dy*dy)-.6)/.55));};
-  function edges(ctx,cw,ch,rs,q,s,left,top){
+  function edges(ctx,cw,ch,rs,q,s,left,top,ox,oy){
     const key=cw+'x'+ch;
     if(key!==EB.key){EB.key=key;const mk=(w,h)=>{const c=document.createElement('canvas');c.width=Math.max(1,w);c.height=Math.max(1,h);return c;};
-      EB.small=mk(Math.ceil(cw/4),Math.ceil(ch/4));EB.tiny=mk(Math.ceil(cw/6),Math.ceil(ch/6));
+      EB.half=mk(Math.ceil((cw+8)/2),Math.ceil((ch+8)/2));EB.small=mk(Math.ceil((cw+8)/4),Math.ceil((ch+8)/4));EB.tiny=mk(Math.ceil((cw+8)/8),Math.ceil((ch+8)/8));
       // máscara: transparente no centro, opaca nas bordas (elipse achatada)
-      EB.mask=mk(EB.small.width,EB.small.height);{const g=EB.mask.getContext('2d'),w=EB.mask.width,h=EB.mask.height;g.save();g.translate(w/2,h/2);g.scale(1,h/w*1.15);
+      EB.mask=mk(EB.small.width+4,EB.small.height+4);{const g=EB.mask.getContext('2d'),w=EB.mask.width,h=EB.mask.height;g.save();g.translate(w/2,h/2);g.scale(1,h/w*1.15);
         const r=w/2,gr=g.createRadialGradient(0,0,r*.55,0,0,r*1.12);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(.55,'rgba(0,0,0,.6)');gr.addColorStop(1,'rgba(0,0,0,1)');g.fillStyle=gr;g.fillRect(-r*2,-r*2,r*4,r*4);g.restore();}
       EB.vig=ctx.createRadialGradient(cw/2,ch/2,Math.min(cw,ch)*.42,cw/2,ch/2,Math.hypot(cw,ch)*.6);EB.vig.addColorStop(0,'rgba(30,20,14,0)');EB.vig.addColorStop(1,'rgba(30,20,14,.34)');}
     ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;
     // desfoque nas bordas
-    if(q>=1){const sm=EB.small,tn=EB.tiny,gs=sm.getContext('2d'),gt=tn.getContext('2d');
-      gt.imageSmoothingEnabled=true;gt.globalCompositeOperation='copy';gt.drawImage(ctx.canvas,0,0,cw,ch,0,0,tn.width,tn.height);
-      gs.imageSmoothingEnabled=true;gs.globalCompositeOperation='copy';gs.drawImage(tn,0,0,sm.width,sm.height);
-      gs.globalCompositeOperation='destination-in';gs.drawImage(EB.mask,0,0);gs.globalCompositeOperation='source-over';
-      ctx.imageSmoothingEnabled=true;ctx.drawImage(sm,0,0,cw,ch);ctx.imageSmoothingEnabled=false;}
+    // reduz pela metade a cada passo (cada pixel vira a média de 4: um filtro estável, sem tremer quando a câmera anda)
+    if(q>=1){const hf=EB.half,sm=EB.small,tn=EB.tiny,gh=hf.getContext('2d'),gs=sm.getContext('2d'),gt=tn.getContext('2d');
+      gh.imageSmoothingEnabled=gs.imageSmoothingEnabled=gt.imageSmoothingEnabled=true;gh.imageSmoothingQuality=gs.imageSmoothingQuality=gt.imageSmoothingQuality='high';
+      // a grade da redução fica presa ao mundo (não à tela): o desfoque anda junto com a cena em vez de "ferver"
+      const dx=(8-((Math.round(ox)%8)+8)%8)%8,dy=(8-((Math.round(oy)%8)+8)%8)%8;
+      gh.globalCompositeOperation='copy';gh.drawImage(ctx.canvas,0,0,cw,ch,dx/2,dy/2,cw/2,ch/2);
+      gs.globalCompositeOperation='copy';gs.drawImage(hf,0,0,sm.width,sm.height);
+      gt.globalCompositeOperation='copy';gt.drawImage(sm,0,0,tn.width,tn.height);
+      gs.globalCompositeOperation='copy';gs.drawImage(tn,0,0,sm.width,sm.height);
+      gs.globalCompositeOperation='destination-in';gs.drawImage(EB.mask,dx/4-2,dy/4-2);gs.globalCompositeOperation='source-over';
+      ctx.imageSmoothingEnabled=true;ctx.drawImage(sm,-dx,-dy,sm.width*4,sm.height*4);ctx.imageSmoothingEnabled=false;}
     // cantos mais escuros e quentes
     ctx.fillStyle=EB.vig;ctx.fillRect(0,0,cw,ch);
     if(q>=1){ctx.globalCompositeOperation='screen';
