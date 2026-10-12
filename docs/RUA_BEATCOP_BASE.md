@@ -84,11 +84,11 @@ Feitos em 844×390, 390×844 e 375×667:
 
 ## Bordas da tela — direção L (aprovada em 12/10/2026)
 
-`#eblur`/`#etint` (base.css) e `edges()` em `street.js`, por cima da cena e por baixo do cabeçalho: desfoque leve crescendo para as bordas (`backdrop-filter`, no compositor), cantos um pouco mais escuros e quentes, luz do sol vazando do canto de cima à esquerda (enfraquece quando a câmera vai para a direita) e ~20 partículas de luz desfocadas perto das bordas, que andam com a câmera e com o vento. Qualidade baixa: só os cantos escuros; `prefers-reduced-motion`: partículas paradas.
+`edgeBlur()` e `edges()` em `street.js` e `#etint` (base.css): desfoque leve crescendo para as bordas só no cenário fixo (cópia desfocada da camada fixa, presa ao mundo; carros, pessoas e primeiro plano ficam nítidos por cima), cantos um pouco mais escuros e quentes, luz do sol vazando do canto de cima à esquerda (enfraquece quando a câmera vai para a direita) e ~20 partículas de luz desfocadas perto das bordas, que andam com a câmera e com o vento. Qualidade baixa: só os cantos escuros; `prefers-reduced-motion`: partículas paradas.
 
 ## Desempenho da rua (13/10/2026)
 
 Medido com Chromium, CPU 4x mais lenta, tela 844×390 @3x, desenho de um quadro com a câmera andando: **613 ms → 167 ms** (3,7× mais rápido), sem mudar o visual.
-- O desfoque das bordas deixou de ler o canvas de volta: é `#eblur` (`backdrop-filter`, compositor). A cor das bordas (cantos âmbar, canto frio) é `#etint`, em CSS.
+- O desfoque das bordas não lê a tela de volta: usa uma cópia já desfocada do cenário fixo (`edgeBlur`). O `backdrop-filter` foi descartado porque no Safari chegava um quadro atrasado e deixava um fantasma da cena ao andar. A cor das bordas (cantos âmbar, canto frio) é `#etint`, em CSS.
 - Luz macia (fachos, raios, bolhas, brilho do sol, luz do canto, calor do lado do sol, partículas) é somada numa camada de 1/4 da resolução e entra na tela numa passada só (`LT`). A passada `soft-light` de tela cheia saiu.
 - Sombras do que não se move (mobiliário, semáforos, árvores) são pintadas uma vez na camada fixa (`bakeShadows`); as de carros e pessoas vão direto para a tela com silhuetas macias guardadas (`softSil`), sem a camada intermediária de tela cheia.

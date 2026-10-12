@@ -33,7 +33,7 @@ const FX={dof:0.6,fy:0.6,ms:0,n:0,tint:[1,1,1],soft:[255,216,168,0.12],bloom:0.5
 // qualidade gráfica escolhida pelo jogador (Ajustes): vale para a rua, a planta e os efeitos
 // baixa: resolução até 2x (pixels nítidos ampliados), sem profundidade de campo, poeira, reflexos nem luz de contorno;
 // média: sem profundidade de campo e metade da poeira; alta: tudo. Ver docs/GRAPHICS_UPGRADE.md.
-const EBL=document.getElementById('eblur'),ETN=document.getElementById('etint');
+const ETN=document.getElementById('etint');
 let QUAL=getQuality();applyQuality(QUAL);
 const QLOW=()=>QUAL==='low',QHIGH=()=>QUAL==='high';
 onQualityChange(q=>{QUAL=q;if(typeof applyLayout==='function')applyLayout(false);});
@@ -1740,7 +1740,7 @@ function loop(now){
   if(depoOpen){last=now;requestAnimationFrame(loop);return;}
   // o relógio pode ser reiniciado fora do quadro (passagem rua ⇄ planta): o passo nunca anda para trás
   const raw=Math.max(0,now-last),dt=Math.min(0.1,raw/1000);last=now;adaptRS(raw);
-  {const eb=SCENE!=='rua'||QUAL==='low';if(EBL.hidden!==eb)EBL.hidden=eb;const et=SCENE!=='rua';if(ETN.hidden!==et)ETN.hidden=et;}
+  {const et=SCENE!=='rua';if(ETN.hidden!==et)ETN.hidden=et;}
   if(SCENE==='rua'){if(FX.vigS!==0.5){FX.vigS=0.5;VIG.style.opacity=0.5;}const st=street();st.update(dt);streetAmbience(st,dt);streetView().draw(ctx,cv.width,cv.height,RS,started);frame++;if(frame%6===0){const c=clockStr();if(c!==lastClk){lastClk=c;$('#clk').textContent=c;}}
     lastClock+=dt;if(lastClock>3){lastClock=0;gameMin++;}requestAnimationFrame(loop);return;}
   update(dt);updFX();updAtmo();stepZoom();followCam(dt);if(started)primeBlur();frame++;const r0=performance.now();render();PROF.r2d+=(performance.now()-r0-PROF.r2d)*0.05;postFX(dt);

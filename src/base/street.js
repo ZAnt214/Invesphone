@@ -541,6 +541,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     const ox=Math.round(-left*s),oyr=Math.round(-top*s);
     ctx.setTransform(s,0,0,s,ox,oyr);
     ctx.drawImage(layer,0,0);
+    if(Q()>=1)edgeBlur(ctx,cw,ch,s,ox,oyr);
     const x0=left-200,x1=left+vw+200;
     for(const d of debris){if(d.x<x0||d.x>x1)continue;const hop=Math.max(0,Math.sin(d.ph))*Math.min(5,d.vx*.08),X=Math.round(d.x),Y=Math.round(d.y-hop);
       ctx.fillStyle='rgba(20,16,14,.22)';ctx.fillRect(X,Math.round(d.y),3,1);
@@ -660,16 +661,28 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   let lastView=null;
   // sombras do que não sai do lugar (mobiliário, semáforos, árvores): pintadas uma vez na camada fixa, em meia resolução
   // (bordas macias), com a mesma cor e força das sombras dos carros e das pessoas, que continuam sendo feitas a cada quadro
+  /* Desfoque das bordas sem ler a tela de volta (nem atrasar um quadro): uma cópia já desfocada do cenário fixo, em 1/4 da
+     resolução do mundo, presa ao mundo; nas bordas ela cobre o cenário fixo, e carros, pessoas e o primeiro plano vêm por
+     cima, nítidos. Nada de cópia atrasada da tela por cima (que deixava a cena "fantasma" ao andar). */
+  let blurLayer=null;const BS=document.createElement('canvas'),bsx=BS.getContext('2d');let bsMask=null,bsKey='';
+  function makeBlurLayer(){const half=(src,w,h)=>{const c=document.createElement('canvas');c.width=Math.ceil(w);c.height=Math.ceil(h);const g=c.getContext('2d');g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(src,0,0,c.width,c.height);return c;};
+    const a=half(layer,STREET_W/2,STREET_H/2),b=half(a,STREET_W/4,STREET_H/4),c=half(b,STREET_W/8,STREET_H/8);blurLayer=half(c,STREET_W/4,STREET_H/4);}
+  function edgeBlur(ctx,cw,ch,s,ox,oy){if(!blurLayer)return;const w=Math.ceil(cw/4),h=Math.ceil(ch/4),key=w+'x'+h;
+    if(key!==bsKey){bsKey=key;BS.width=w;BS.height=h;bsMask=document.createElement('canvas');bsMask.width=w;bsMask.height=h;const g=bsMask.getContext('2d');g.save();g.translate(w/2,h*.52);g.scale(1,h/w*1.15);
+      const r=w/2,gr=g.createRadialGradient(0,0,r*.58,0,0,r*1.12);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(.5,'rgba(0,0,0,.55)');gr.addColorStop(1,'rgba(0,0,0,.9)');g.fillStyle=gr;g.fillRect(-r*2,-r*2,r*4,r*4);g.restore();}
+    bsx.setTransform(1,0,0,1,0,0);bsx.globalCompositeOperation='copy';bsx.drawImage(bsMask,0,0);
+    bsx.globalCompositeOperation='source-in';bsx.imageSmoothingEnabled=true;bsx.setTransform(s/4,0,0,s/4,ox/4,oy/4);bsx.drawImage(blurLayer,0,0,STREET_W,STREET_H);
+    ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.imageSmoothingEnabled=true;ctx.drawImage(BS,0,0,cw,ch);ctx.restore();ctx.imageSmoothingEnabled=false;}
   function bakeShadows(){const c=document.createElement('canvas');c.width=Math.ceil(STREET_W/2);c.height=Math.ceil(STREET_H/2);const g=c.getContext('2d');g.imageSmoothingEnabled=false;
     const cast=(im,fx,fy,u0,v0,dw,dh,sx,sy,sw,sh)=>{g.setTransform(.5,0,0,.5,0,0);g.transform(1,0,-SUN.kx,-SUN.ky,fx,fy);if(sx!=null)g.drawImage(silhouette(im),sx,sy,sw,sh,u0,v0,dw,dh);else g.drawImage(silhouette(im),u0,v0,dw,dh);};
     for(const r of PROPS){const im=art(PATH.prop(r.k));if(!im||r.dark)continue;const w=im.width*PROP_S,h=im.height*PROP_S;cast(im,r.x,r.y,-w/2,-h,w,h);}
     {const im=art(PATH.semaforo());if(im)for(const r of SIGNAL_POLES)cast(im,r.x,r.y,-12,-96*PROP_S,18*PROP_S,96*PROP_S,0,0,18,96);}
     for(const r of trees){cast(r.trunk,r.x,r.y,-10,-80,20,80);cast(r.crown,r.x,r.y,-r.crown.width/2,-150,r.crown.width,r.crown.height);}
     g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='source-in';g.fillStyle='#241a3a';g.fillRect(0,0,c.width,c.height);
-    const lg=layer.getContext('2d');lg.save();lg.imageSmoothingEnabled=true;lg.globalAlpha=.42;lg.drawImage(c,0,0,STREET_W,STREET_H);lg.restore();}
+    const lg=layer.getContext('2d');lg.save();lg.imageSmoothingEnabled=true;lg.globalAlpha=.42;lg.drawImage(c,0,0,STREET_W,STREET_H);lg.restore();makeBlurLayer();}
   /* Bordas da tela (direção L, aprovada em 12/10/2026): desfoque leve que cresce para as bordas, cantos um pouco mais escuros
      e quentes, poucas partículas de luz desfocadas flutuando perto das bordas (andam com a câmera e o vento) e a luz do sol
-     vazando do canto de cima à esquerda. O centro fica limpo. O desfoque em si é do compositor do navegador (#eblur, backdrop-filter em base.css), sem ler o canvas de volta. */
+     vazando do canto de cima à esquerda. O centro fica limpo. O desfoque é do cenário fixo (edgeBlur), sem ler a tela de volta. */
   const EB={key:'',warm:null};
   const LT=document.createElement('canvas'),lx=LT.getContext('2d');
   const dust=Array.from({length:22},()=>({u:R(),v:R(),r:.5+R(),a:.25+R()*.45,ph:R()*6.28,sp:.4+R()*.8}));
@@ -683,7 +696,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
       // o lado do sol esquenta (somado na camada de luz)
       const wm=document.createElement('canvas');wm.width=w;wm.height=h;const wg=wm.getContext('2d'),gr=wg.createLinearGradient(0,0,w,h);gr.addColorStop(0,'rgba(255,170,80,.26)');gr.addColorStop(.5,'rgba(255,200,130,.06)');gr.addColorStop(1,'rgba(255,200,130,0)');wg.fillStyle=gr;wg.fillRect(0,0,w,h);EB.warm=wm;}
     ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;
-    // o desfoque das bordas é do compositor (#eblur, backdrop-filter em base.css): nada de ler o canvas de volta aqui
+    // o desfoque das bordas é do cenário fixo (edgeBlur, logo depois da camada fixa): nada de ler a tela de volta aqui
     // cantos mais escuros e quentes
     // (a cor das bordas e os cantos escuros são do #etint, em base.css: compositor, sem passada no canvas)
     if(q>=1){const ctx=lx,LQ=cw/LT.width;lx.setTransform(1,0,0,1,0,0);lx.globalCompositeOperation='lighter';lx.drawImage(EB.warm,0,0,LT.width,LT.height);lx.setTransform(1/LQ,0,0,1/LQ,0,0);
