@@ -1,6 +1,7 @@
 ---
 id: 2026-10-13-porta-cracha-close
 status: pending
+revision: 2
 requested_by: claude
 priority: high
 character: "Lemos (só a mão e o crachá) e a porta de acesso do DHPP"
@@ -8,50 +9,66 @@ asset_type: interactive_closeup
 destination: public/base/acesso/
 ---
 
-# Pedido — close da porta de acesso do DHPP (passar o crachá)
+# Pedido (revisão 2): close da porta de acesso do DHPP, simples e no estilo dos bonecos
 
-## Objetivo
-Na recepção do DHPP, a única passagem para a área restrita é uma porta de vidro com **leitora de cartão de tarja magnética**. Quando o Lemos chega nela, abre uma tela em **close na tranca**: o jogador arrasta o crachá do Lemos e o desliza pela fenda da leitora. Se der certo, o LED fica verde, a trava magnética solta e a porta abre; se falhar, o LED pisca vermelho e o visor pede para tentar de novo.
+## Por que a revisão
+A primeira versão saiu **com cara de IA e com cenário demais**: textura pintada, degradês, desfoque, reflexos, extintor, corredor, muitos detalhes. O usuário pediu **algo simples, com o mesmo visual dos personagens do jogo**. Esta revisão substitui o pedido anterior por completo.
 
-Os esboços feitos em código ficaram pobres. O usuário pediu arte de verdade para esta tela. O código cuida do gesto, das animações (crachá seguindo o dedo, cordão esticando, LED, visor, trava) e do som; a arte precisa vir em **camadas separadas** para poder animar.
+## Objetivo no jogo
+Quando o Lemos chega à porta de vidro da recepção, abre uma tela em close na leitora de crachá. O jogador arrasta o crachá e o passa pela fenda, de cima para baixo. Se der certo, a luz fica verde e a porta abre. Se der errado, a luz fica vermelha e o jogador tenta de novo. O código cuida do gesto, das luzes, dos textos, do cordão e do som. A arte só precisa das peças abaixo.
 
-## O que gerar
-- Quantidade: 1 cenário de fundo + 9 camadas/sprites (lista em "Arquivos esperados").
-- Personagem: Lemos, **só a mão e a manga** (o jogador é "o investigador ou a investigadora Lemos": não mostrar rosto; mão e punho neutros, paletó escuro como no boneco do jogo).
-- Expressão/pose: mão segurando o crachá pela borda de baixo, polegar na frente; o crachá preso a um cordão vermelho que sai de cima (do pescoço, fora do quadro).
-- Enquadramento: **close na tranca**, câmera na altura do peito, olhando de frente para a parede ao lado da porta. Da esquerda para a direita: a borda da porta de vidro (batente de aço, vidro jateado com a faixa "DHPP · ACESSO RESTRITO", puxador vertical), no alto a **trava eletromagnética** (barra metálica com LED), o batente/coluna, e na parede a **leitora de tarja** (caixa metálica com visor pequeno de LCD verde, fenda vertical, LED). Acima da leitora, plaquinha vermelha "SÓ AGENTES". Ao fundo, parede de reboco institucional, rodapé, um extintor e placa de saída (discretos, desfocados ou mais escuros).
-- Fundo: o cenário é o próprio fundo (a cena do jogo fica escondida por trás).
-- Estilo: **pixel art no mesmo estilo da planta da base e da rua do DHPP** (paleta, contorno escuro, luz de cima, sombras projetadas), com mais detalhe por estar em close. Iluminação fria de corredor, reflexo no vidro, metal escovado.
-- Resolução: cenário em **1280×592 px** (proporção da tela deitada do jogo, ~2,16:1), pensado para ampliação inteira sem suavizar; sprites na mesma escala do cenário.
-- Formato: PNG com transparência nas camadas (o fundo pode ser opaco).
+## Estilo: igual aos bonecos (o mais importante)
+Referência obrigatória: `creative-requests/refs/2026-10-13-porta-cracha/estilo-personagens-x8.png`. A folha mostra os bonecos do jogo (Lemos, Sônia, guarda e Maurício) e a porta de vidro da planta, ampliados 8 vezes. O close tem de parecer **feito pela mesma mão**:
 
-## Consistência obrigatória
-- Órgão: **DHPP** (Homicídios). Nada de "Polícia Civil" ou "Polícia de São Paulo"; marca "DHPP | HOMICÍDIOS" igual à do letreiro da base.
-- Época: **2002** (cartão de tarja magnética, LCD de segmentos/caracteres, nada de QR code, NFC moderno ou tela touch).
-- Crachá: azul-marinho `#1b2a44` no topo com "DHPP" e "DEPARTAMENTO DE HOMICÍDIOS", foto 3×4 compatível com o boneco do Lemos (cabelo escuro, terno escuro, gravata vinho — ver `src/base/base.js`, `LOOK.lemos`), nome **"LEMOS"** (sem primeiro nome), função "INVESTIGAÇÃO", matrícula com **números neutros/ilegíveis**, tarja magnética preta no verso/borda e um holograma dourado pequeno.
-- Cores do DHPP já usadas: azul-marinho `#1b2a44`, dourado `#c9a24a`, vermelho de aviso `#b02a24`.
-- Referências oficiais: letreiro e porta da base (desenhados em `base.js`, `buildSign`/`buildDoor`), a fachada do DHPP na rua (`src/base/streetArt.js`) e o boneco do Lemos (`public/base/rua/personagens/lemos-rua.png`).
+- **Resolução baixa de verdade.** A cena inteira tem **320×148 pixels de arte**. O jogo amplia 4 vezes, sem suavizar. Cada pixel precisa ser um quadrado visível, sem meio-tom entre pixels.
+- **Cores chapadas.** Cada material usa a cor base, um tom de sombra e no máximo um de luz, como no paletó do Lemos. **Proibido:** degradê, desfoque, granulado, textura, brilho espalhado, profundidade de campo, reflexo realista, luz volumétrica e ruído.
+- **Contorno escuro** de 1 pixel em volta de cada peça, como nos bonecos.
+- **Paleta curta, de no máximo 24 cores.** Usar as do jogo:
+  - paletó do Lemos `#2b2f36`;
+  - punho da camisa `#e8e4da`;
+  - pele `#d9a273`;
+  - gravata e cordão vermelho `#7a2a2a` / `#b02a24`;
+  - azul-marinho do DHPP `#1b2a44`;
+  - dourado `#c9a24a`;
+  - aço da porta `#8a9099` / `#5a6068`;
+  - vidro `#c4d0d8`;
+  - parede `#d8d4c8`;
+  - rodapé `#4a4a4a`.
+- **Formas simples e legíveis**, do jeito que os bonecos são: blocos retos, poucos detalhes, nada de realismo.
+- **Sem texto na arte.** O código escreve "DHPP", "SÓ AGENTES", "LEMOS", "INVESTIGAÇÃO" e o visor ("PASSE O CRACHÁ", "ACESSO LIBERADO", "TENTE NOVAMENTE") com a fonte de pixel do jogo. Deixar só as áreas lisas onde o texto vai.
 
-## Contexto da cena
-Acontece sempre que o Lemos passa da recepção para o corredor restrito (e na volta, se quisermos). Tom: rotina de trabalho de um investigador, sem drama; a sensação é de "estou entrando num lugar controlado". O momento de sucesso precisa ser satisfatório (LED verde, clac da trava, porta destravando).
+## Cenário: o mínimo
+Esquema de posições: `creative-requests/refs/2026-10-13-porta-cracha/esquema-posicoes.png`. O esquema só mostra onde fica cada peça. Não é referência de estilo.
+
+- Parede lisa, de uma cor só, com rodapé.
+- À esquerda, a borda da porta de vidro: batente de aço, vidro liso com a faixa vermelha e o puxador, igual à porta da planta.
+- No alto do batente, a trava magnética: uma barrinha de metal com um quadradinho para o LED.
+- No meio da parede, a leitora: uma caixa de metal com área lisa para o visor, **fenda vertical bem visível** e quadradinho para o LED. Acima dela, uma plaquinha lisa vermelha sem texto.
+- **Nada além disso:** sem extintor, placa de saída, corredor, câmera, piso em perspectiva ou pessoas.
 
 ## Arquivos esperados
-- `public/base/acesso/fundo.png` — cenário completo sem mão, crachá, LEDs acesos nem textos do visor (1280×592).
-- `public/base/acesso/porta-aberta.png` — mesma porta já entreaberta (folha deslocada uns 20%), para o momento do sucesso (pode ser só a área da porta, com transparência).
-- `public/base/acesso/leitora-led-vermelho.png`, `leitora-led-verde.png`, `leitora-led-apagado.png` — só o LED aceso, com brilho, recortado na posição dele.
-- `public/base/acesso/trava-led-vermelho.png`, `trava-led-verde.png` — LED da trava magnética.
-- `public/base/acesso/visor-vazio.png` — o LCD apagado (o texto "PASSE O CRACHÁ" / "ACESSO LIBERADO" / "TENTE NOVAMENTE" o código escreve por cima com fonte de pixel).
-- `public/base/acesso/mao-cracha.png` — mão + punho + manga segurando o crachá (transparente), com o **ponto do crachá** e o ponto do cordão marcados no `manifest.json`.
-- `public/base/acesso/cracha.png` — o crachá sozinho, de frente, alta qualidade (para o momento em que ele entra na fenda e para reuso em outras telas).
-- `public/base/acesso/cordao.png` — um trecho reto do cordão vermelho (o código estica e curva).
-- `public/base/acesso/manifest.json` — coordenadas (no sistema do `fundo.png`) de: centro da fenda (topo e base), LED da leitora, LED da trava, retângulo do visor, área da porta, ponto de pega do crachá na mão e ponto de saída do cordão.
+Entregar em **320×148** ou exatamente 4 vezes maior (**1280×592**), sempre com pixels quadrados e sem suavização. PNG com fundo transparente nas peças.
 
-## Observações técnicas para integração
-- Ampliação por inteiro (pixel art nítida), então nada de antialias suave nas bordas dos sprites; contorno escuro igual ao do jogo.
-- Deixar ~8% de margem segura nas bordas (o cabeçalho do jogo fica por cima, no alto).
-- A fenda deve ser **vertical e bem visível** (é o alvo do gesto); o crachá passa de cima para baixo.
-- A mão deve funcionar espelhada? Não: a leitora fica sempre à direita da porta.
-- Sem pessoas além da mão do Lemos.
+- `public/base/acesso/fundo.png`: parede, borda da porta fechada, trava e leitora. Sem a mão e sem o crachá. Os LEDs ficam apagados (cinza escuro); o código acende.
+- `public/base/acesso/porta-aberta.png`: só a área da porta, já entreaberta, com o vão escuro, como a "Porta (aberta)" da referência.
+- `public/base/acesso/mao-cracha.png`: a mão do Lemos segurando o crachá pela borda de baixo, com a manga do paletó e o punho da camisa entrando pela borda direita ou de baixo. A mão fica no mesmo estilo de bloco dos bonecos.
+- `public/base/acesso/cracha.png`: o crachá sozinho, de frente, com uns 40×26 pixels de arte:
+  - faixa azul-marinho no topo, lisa, para o código escrever "DHPP";
+  - foto 3×4 com a cabeça do boneco do Lemos (a mesma da referência);
+  - linhas lisas onde vão o nome e a função;
+  - tarja magnética preta na borda;
+  - um pontinho dourado.
+
+As luzes, o cordão e os textos são feitos pelo código.
+
+## Consistência
+- O órgão é o **DHPP**. A época é **2002**: cartão de tarja magnética e visor de cristal líquido simples, nada de touch, QR code ou aproximação.
+- O Lemos não mostra rosto nem tem primeiro nome. No crachá, só a cabeça do boneco, que já é a oficial.
+
+## Observações técnicas
+- A fenda é o alvo do gesto: precisa ter pelo menos 4×40 pixels de arte e contraste forte com a caixa.
+- Manter uns 12 pixels de arte de margem livre no alto, porque o cabeçalho do jogo fica por cima.
+- Se der, informar na resposta as coordenadas (em pixels de arte) da fenda, dos dois LEDs, do visor, da área da porta e do ponto onde a mão segura o crachá. Se não der, eu meço.
 
 ## Resposta do ChatGPT
 Preenchido pelo ChatGPT ao concluir.
