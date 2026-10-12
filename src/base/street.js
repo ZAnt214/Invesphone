@@ -13,6 +13,7 @@ import {GY,CURB,ROAD,NEAR,STREET_H,FG_TOP,WALK,PARK,LANES,SUN,TREES,MANHOLES,CRO
 import {paintForeground} from './streetFG';
 import {createDwellers} from './dwellers';
 import {createFront} from './streetFront';
+import {EFFECTS,fxOn,onFxChange} from '../settings/gameSettings';
 import {RUA_DIR,VEICULOS,PATH} from './ruaAssets';
 import {choose,eventLog,jitter} from '../world/life';
 import {CAMERA_PRIORITY,createCameraControl,createLead,damp,deadZoneTarget,drawCameraDebug} from '../camera/cameraDirector';
@@ -120,7 +121,10 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   let fgRooms=[];
   let layer=buildStatic();
   let needBake=false;
-  const ready=preloadRua().then(()=>{layer=buildStatic();needBake=true;});
+  // o que o jogador deixou ligado em Ajustes (src/settings/gameSettings.ts); muda na hora, sem recarregar
+  const F={};const readF=()=>{for(const e of EFFECTS)F[e.id]=fxOn(e.id);};readF();
+  onFxChange(()=>{const sh=F.shadows;readF();if(sh!==F.shadows&&blurLayer!==undefined){layer=buildStatic();if(F.shadows)needBake=true;else makeBlurLayer();}});
+  const ready=preloadRua().then(()=>{layer=buildStatic();if(F.shadows)needBake=true;else makeBlurLayer();});
 
   function buildStatic(){
     const cv=document.createElement('canvas');cv.width=STREET_W;cv.height=STREET_H;const g=cv.getContext('2d');g.imageSmoothingEnabled=false;
@@ -471,7 +475,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     for(const p of peds){if(p.staff){if(!p.courier)updStaff(p,dt);continue;}if(p.chatCD>0)p.chatCD-=dt;updPed(p,dt);}
     if((t*2|0)!==((t-dt)*2|0))chats();
     for(const d of DOORS)if(d.open>0)d.open-=dt;
-    updBus(dt);updTaxi(dt);updSig(dt);events(dt);dwellers.update(dt,t);
+    updBus(dt);updTaxi(dt);updSig(dt);events(dt);if(F.dwellers)dwellers.update(dt,t);
     for(const b of birds){b.t+=dt*30;
       if(b.st==='g'){if(Math.random()<dt*.6)b.x+=b.dir*2;if(Math.random()<dt*.2)b.dir=-b.dir;
         let near=Math.abs(lemos.x-b.x)<34&&Math.abs(lemos.y-b.y)<18;for(let i=0;!near&&i<peds.length;i++){const p=peds[i];near=!p.hidden&&Math.abs(p.x-b.x)<34&&Math.abs(p.y-b.y)<18;}
@@ -482,8 +486,8 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     // fumacinha do escapamento atrás; luz de freio quando desacelera; seta quando entra ou sai da vaga
     for(let l=0;l<LANES.length;l++){const L=LANES[l],dir=L.dir,all=cars.filter(k=>k.lane===l),ln=all.filter(k=>!k.pass&&(k.yo==null||Math.abs(k.yo-L.y)<=40)).sort((a,b)=>dir>0?b.x-a.x:a.x-b.x);
       for(const k of all){if(k.lane!==l)continue;const i=ln.indexOf(k);stepCar(k,L,i>0?ln[i-1]:null,ln,dt);}}
-    wv+=(wind()-wv)*Math.min(1,dt*.8);flagPh+=dt*(5.5+wv*6);
-    if(!RM){for(const l of airLeaves){l.ph+=dt*(3+wv*4);l.x+=(8+wv*wv*110)*dt;l.y+=Math.sin(l.ph)*dt*14+(wv<.45?16:-2)*dt;if(l.x>STREET_W+40||l.y>GY+60){l.x=-30;l.y=GY-240+R()*200;}}}
+    wv+=((F.wind?wind():0)-wv)*Math.min(1,dt*.8);flagPh+=dt*(5.5+wv*6);
+    if(!RM&&F.wind){for(const l of airLeaves){l.ph+=dt*(3+wv*4);l.x+=(8+wv*wv*110)*dt;l.y+=Math.sin(l.ph)*dt*14+(wv<.45?16:-2)*dt;if(l.x>STREET_W+40||l.y>GY+60){l.x=-30;l.y=GY-240+R()*200;}}}
     {const gust=wind(),tv=4+gust*gust*70;for(const d of debris){d.vx+=(tv*(d.k===2?1.15:.8)-d.vx)*Math.min(1,dt*.8);d.x+=d.vx*dt;d.ph+=dt*(2+d.vx*.12);if(d.x>STREET_W+30){d.x=-30;d.y=d.g<.66?GY+50+R()*(CURB-GY-64):CURB+6+R()*4;}}}
     for(const p of puffs){p.t+=dt;p.x+=(p.vx+wv*22)*dt;p.y-=dt*5;}while(puffs.length&&puffs[0].t>1)puffs.shift();
     if(!RM)for(const m of motes){m.p+=dt*m.v;m.x+=dt*.004*m.v;m.y+=Math.sin(m.p)*dt*.004;if(m.x>1)m.x-=1;}
@@ -541,9 +545,9 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     const ox=Math.round(-left*s),oyr=Math.round(-top*s);
     ctx.setTransform(s,0,0,s,ox,oyr);
     ctx.drawImage(layer,0,0);
-    if(Q()>=1)edgeBlur(ctx,cw,ch,s,ox,oyr);
+    if(Q()>=1&&F['edge.blur'])edgeBlur(ctx,cw,ch,s,ox,oyr);
     const x0=left-200,x1=left+vw+200;
-    for(const d of debris){if(d.x<x0||d.x>x1)continue;const hop=Math.max(0,Math.sin(d.ph))*Math.min(5,d.vx*.08),X=Math.round(d.x),Y=Math.round(d.y-hop);
+    if(F.debris)for(const d of debris){if(d.x<x0||d.x>x1)continue;const hop=Math.max(0,Math.sin(d.ph))*Math.min(5,d.vx*.08),X=Math.round(d.x),Y=Math.round(d.y-hop);
       ctx.fillStyle='rgba(20,16,14,.22)';ctx.fillRect(X,Math.round(d.y),3,1);
       if(d.k===0){ctx.fillStyle=Math.sin(d.ph*.7)>0?'#7a5a2a':'#a8742a';ctx.fillRect(X,Y-1,3,2);}
       else if(d.k===1){ctx.fillStyle='#5a6a2a';ctx.fillRect(X,Y-1,2+(Math.sin(d.ph)>0?1:0),2);}
@@ -552,7 +556,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     if(doorT>0){ctx.fillStyle=`rgba(255,226,160,${.45*doorT})`;ctx.fillRect(DOOR.x-50,GY-76,100,68);}
     for(const f of DHPP.flags||[])flag(ctx,f.x,f.y,f.v);
     // portas das lojas abrindo quando alguém entra ou sai; tambores da lavanderia girando
-    dwellers.draw(ctx,x0,x1,t,q,top-60,top+ch/s+60);
+    if(F.dwellers)dwellers.draw(ctx,x0,x1,t,q,top-60,top+ch/s+60);
     for(const d of DOORS)if(d.open>0&&d.x>x0&&d.x<x1){const k=Math.min(1,d.open/.35)*Math.min(1,(.7-d.open)/.15+.2);ctx.fillStyle=`rgba(18,14,12,${.75*k})`;ctx.fillRect(Math.round(d.dx+d.w*.35),Math.round(d.dy+2),Math.round(d.w*.62),Math.round(d.h-2));ctx.fillStyle=`rgba(255,226,170,${.25*k})`;ctx.fillRect(Math.round(d.dx+d.w*.35),Math.round(d.dy+d.h-3),Math.round(d.w*.62),3);}
     if(!RM)for(const d of DRUMS){if(d.x<x0||d.x>x1)continue;const a=t*5+d.x;ctx.fillStyle='rgba(235,242,250,.85)';ctx.fillRect(Math.round(d.x+Math.cos(a)*5)-1,Math.round(d.y+Math.sin(a)*5)-1,2,2);ctx.fillStyle='rgba(120,150,180,.6)';ctx.fillRect(Math.round(d.x+Math.cos(a+2.4)*4),Math.round(d.y+Math.sin(a+2.4)*4),2,2);}
     // ordem de desenho pelo pé
@@ -562,7 +566,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     if(needBake){needBake=false;bakeShadows();}
     // sombras projetadas de quem se move (média e alta), direto na tela: silhuetas macias guardadas em meia resolução,
     // inclinadas na direção do sol (as do que não se move já estão na camada fixa)
-    if(q>=1){let n=0;ctx.save();ctx.globalAlpha=.42;ctx.imageSmoothingEnabled=true;
+    if(q>=1&&F.shadows){let n=0;ctx.save();ctx.globalAlpha=.42;ctx.imageSmoothingEnabled=true;
       for(const e of ENTS){const r=e.ref;
         if(e.k==='ped'){if(r.hidden||r.x<x0||r.x>x1)continue;const im=r.frames[pedFrame(r)];ctx.setTransform(s,0,0,s,ox,oyr);ctx.transform(1,0,-SUN.kx,-SUN.ky,Math.round(r.x),Math.round(r.y));if(r.dir<0)ctx.scale(-1,1);ctx.drawImage(softSil(im),-14,-45,im.width,im.height);n++;}
         else if(e.k==='car'){const x=r.x;if(x+300<x0||x>x1)continue;const m=meta(r.id),im=art(PATH.veiculo(r.id));if(!im)continue;const w=m.w*CAR_S,h=m.h*CAR_S,dir=r.lane!=null?LANES[r.lane].dir:(r.dir||1);
@@ -578,19 +582,19 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
         case 'ped':{if(r.hidden||r.x<x0||r.x>x1)break;person(ctx,r);drawn++;break;}
         case 'car':{const x=r.x;if(x+300<x0||x>x1)break;if(r.lane!=null){const L=LANES[r.lane];car(ctx,r,x,e.y,L.dir,false);}else car(ctx,r,x,r.y,r.dir||1,r===viatura);drawn++;break;}
         case 'bird':{if(r.x<x0||r.x>x1)break;bird(ctx,r);drawn++;break;}
-        case 'steam':{if(q>=1&&r.x>x0&&r.x<x1)steam(ctx,r);break;}
+        case 'steam':{if(q>=1&&F.steam&&r.x>x0&&r.x<x1)steam(ctx,r);break;}
       }}
     stats.ents=ENTS.length;stats.drawn=drawn;
-    if(q>=1&&!RM){ctx.globalCompositeOperation='multiply';const span=STREET_W+1000;
+    if(q>=1&&!RM&&F.clouds){ctx.globalCompositeOperation='multiply';const span=STREET_W+1000;
       for(let i=0;i<3;i++){const cx=((t*8+i*span/3)%span)-500,w=900+i*160,h=w*.375,cy=GY+90+i*150;if(cx+w/2<x0||cx-w/2>x1)continue;ctx.globalAlpha=.55;ctx.drawImage(cloudSpr,cx-w/2,cy-h/2,w,h);}
       ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}
     // fios entre os postes de luz da calçada de lá, com sombra e balanço leve
     ctx.lineWidth=1;for(let i=0;i<POLES.length-1;i++){const a=POLES[i],b=POLES[i+1];if(b<x0||a>x1||b-a>760)continue;const sag=(b-a)*.035,sw=RM?0:Math.sin(t*.8+i)*.8,ay=cy-146;
       for(const [off,al] of [[0,.8],[7,.7]]){ctx.strokeStyle=`rgba(14,12,16,${al})`;ctx.beginPath();ctx.moveTo(a+3,ay+off);ctx.quadraticCurveTo((a+b)/2,ay+off+sag*2+sw,b+3,ay+off);ctx.stroke();
         ctx.strokeStyle='rgba(20,16,12,.16)';ctx.beginPath();ctx.moveTo(a+9,ay+off+9);ctx.quadraticCurveTo((a+b)/2+6,ay+off+9+sag*2+sw,b+9,ay+off+9);ctx.stroke();}}
-    if(q>=1&&!RM){ctx.fillStyle='rgba(18,16,16,.85)';for(const f of flies){if(f.x<x0||f.x>x1)continue;const a=t*(7+f.i*2.3)+f.i*2,b=t*(5+f.i*1.7);ctx.fillRect(Math.round(f.x+Math.cos(a)*(7+f.i*3)),Math.round(f.y+Math.sin(b)*(4+f.i)),1,1);}}
+    if(q>=1&&!RM&&F.flies){ctx.fillStyle='rgba(18,16,16,.85)';for(const f of flies){if(f.x<x0||f.x>x1)continue;const a=t*(7+f.i*2.3)+f.i*2,b=t*(5+f.i*1.7);ctx.fillRect(Math.round(f.x+Math.cos(a)*(7+f.i*3)),Math.round(f.y+Math.sin(b)*(4+f.i)),1,1);}}
     const fum=art(PATH.efeito('fumaca-escape'));
-    for(const p of puffs){if(p.x<x0||p.x>x1)continue;const u=p.t;if(fum){const f=Math.min(3,Math.floor(u*4));ctx.globalAlpha=1-u;ctx.drawImage(fum,f*12,0,12,8,p.x-9,p.y-6,18,12);ctx.globalAlpha=1;}
+    if(F.steam)for(const p of puffs){if(p.x<x0||p.x>x1)continue;const u=p.t;if(fum){const f=Math.min(3,Math.floor(u*4));ctx.globalAlpha=1-u;ctx.drawImage(fum,f*12,0,12,8,p.x-9,p.y-6,18,12);ctx.globalAlpha=1;}
       else{ctx.fillStyle=`rgba(210,210,214,${.45*(1-u)})`;ctx.beginPath();ctx.ellipse(p.x,p.y,3+u*6,2+u*4,0,0,7);ctx.fill();}}
     // luzes que emitem: neon das lojas (com tremida rara), arandelas do DHPP, vitrines e o giroflex da viatura parada
     ctx.globalCompositeOperation='lighter';
@@ -618,13 +622,13 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     if(q>=1){lx.setTransform(s/LQ,0,0,s/LQ,ox/LQ,oyr/LQ);lx.globalCompositeOperation='lighter';
       {const ctx=lx;
       // fachos com bordas macias: um sprite com degradê nas laterais e no pé, inclinado na direção do sol
-      for(const B of BEAMS){if(B.x+B.w+800<x0||B.x-300>x1)continue;const br=RM?1:.8+.2*Math.sin(t*B.sp+B.ph),y0=top-60,y1=CURB+20,sh=.62;
+      if(F['sun.beams'])for(const B of BEAMS){if(B.x+B.w+800<x0||B.x-300>x1)continue;const br=RM?1:.8+.2*Math.sin(t*B.sp+B.ph),y0=top-60,y1=CURB+20,sh=.62;
         ctx.save();ctx.transform(1,0,sh,1,-sh*y0,0);ctx.globalAlpha=Math.min(1,B.a*br*4);ctx.drawImage(beamSpr,B.x-B.w/2,y0,B.w,y1-y0);
         ctx.globalAlpha=Math.min(1,B.a*br*2.5);ctx.drawImage(beamSpr,B.x-B.w*.22,y0,B.w*.44,(y1-y0)*.85);ctx.restore();}
       ctx.globalAlpha=1;
       // raios do sol (fora do quadro, no alto à esquerda do quarteirão) e bolhas de luz presas no ar dentro dos fachos:
       // fazem parte da rua (andam com ela), pulsam e flutuam devagar
-      {const k=RM?1:.85+.15*Math.sin(t*.5);
+      if(F['sun.flare']){const k=RM?1:.85+.15*Math.sin(t*.5);
         for(let i=0;i<8;i++){const a=.42+i*.075,L=2600,w2=34+i%3*20;if(SUNW.x+Math.cos(a)*L<x0-400&&SUNW.x>x1)continue;ctx.globalAlpha=.06*k;ctx.fillStyle='rgba(255,226,170,1)';ctx.beginPath();ctx.moveTo(SUNW.x,SUNW.y);
           ctx.lineTo(SUNW.x+Math.cos(a)*L-Math.sin(a)*w2,SUNW.y+Math.sin(a)*L+Math.cos(a)*w2);ctx.lineTo(SUNW.x+Math.cos(a)*L+Math.sin(a)*w2,SUNW.y+Math.sin(a)*L-Math.cos(a)*w2);ctx.closePath();ctx.fill();}
         for(const O of ORBS){const B=O.b,y0=top-60;if(B.x+900<x0||B.x-300>x1)continue;const yy=O.y+(RM?0:Math.sin(t*.4+O.ph)*6),xx=B.x+O.dx+.62*(yy-y0)+(RM?0:Math.cos(t*.3+O.ph)*4),rr=O.r*(RM?1:.9+.1*Math.sin(t*.7+O.ph));
@@ -634,24 +638,24 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
         ctx.globalAlpha=1;}}
       ctx.globalCompositeOperation='screen';
       // brilho do sol batendo nas janelas: uma faixa clara que corre pelo vidro conforme a câmera anda
-      for(const wn of WINS){if(wn.x<x0||wn.x>x1)continue;const ph=wn.x*.011+wn.y*.017-camX*.006-t*.05,v=ph-Math.floor(ph);if(v>.07)continue;const k=Math.sin(v/.07*Math.PI);
+      if(F['sun.glints'])for(const wn of WINS){if(wn.x<x0||wn.x>x1)continue;const ph=wn.x*.011+wn.y*.017-camX*.006-t*.05,v=ph-Math.floor(ph);if(v>.07)continue;const k=Math.sin(v/.07*Math.PI);
         ctx.fillStyle=`rgba(255,240,205,${.75*k})`;for(let j=0;j<wn.h-6;j++){const xx=wn.x+3+((j*.6+v*60)%(wn.w-6));ctx.fillRect(Math.round(xx),wn.y+3+j,2,1);}
         if(k>.7){ctx.fillStyle=`rgba(255,250,230,${k})`;ctx.fillRect(wn.x+wn.w-6,wn.y+3,1,5);ctx.fillRect(wn.x+wn.w-8,wn.y+5,5,1);}}
       // poças refletindo o céu e o sol
-      for(const pd of PUDDLES){if(pd.x<x0||pd.x>x1)continue;const k=.5+.5*Math.sin(t*1.6+pd.x*.1);ctx.fillStyle=`rgba(255,226,170,${.18+.22*k})`;ctx.beginPath();ctx.ellipse(pd.x-pd.rx*.25,pd.y-pd.ry*.3,pd.rx*.45,Math.max(.8,pd.ry*.25),0,0,7);ctx.fill();}
+      if(F['sun.glints'])for(const pd of PUDDLES){if(pd.x<x0||pd.x>x1)continue;const k=.5+.5*Math.sin(t*1.6+pd.x*.1);ctx.fillStyle=`rgba(255,226,170,${.18+.22*k})`;ctx.beginPath();ctx.ellipse(pd.x-pd.rx*.25,pd.y-pd.ry*.3,pd.rx*.45,Math.max(.8,pd.ry*.25),0,0,7);ctx.fill();}
       // reflexo no cromado e no para-brisa dos carros que passam
-      for(const k of cars){if(k.lane==null||k.x+200<x0||k.x>x1)continue;const ph=(k.dist||0)/240+k.x*.0007,v=ph-Math.floor(ph);if(v>.05)continue;const m=meta(k.id),w=W(k),h=m.h*CAR_S,dir=LANES[k.lane].dir,
+      if(F['sun.glints'])for(const k of cars){if(k.lane==null||k.x+200<x0||k.x>x1)continue;const ph=(k.dist||0)/240+k.x*.0007,v=ph-Math.floor(ph);if(v>.05)continue;const m=meta(k.id),w=W(k),h=m.h*CAR_S,dir=LANES[k.lane].dir,
           cx=k.x+(dir>0?w*.62:w*.38),cy=(k.yo??LANES[k.lane].y)+(k.yj||0)-h*.62,a=Math.sin(v/.05*Math.PI);
         ctx.fillStyle=`rgba(255,248,226,${a})`;ctx.fillRect(Math.round(cx)-5,Math.round(cy),11,1);ctx.fillRect(Math.round(cx),Math.round(cy)-5,1,11);ctx.fillRect(Math.round(cx)-1,Math.round(cy)-1,3,3);}
-      for(const m of motes){const X=left+m.x*vw,Y=top+m.y*(CURB-top);const a=.3+.3*Math.sin(m.p*2);ctx.fillStyle=`rgba(255,236,196,${a})`;ctx.fillRect(Math.round(X),Math.round(Y),1,1);np++;}
+      if(F['sun.beams'])for(const m of motes){const X=left+m.x*vw,Y=top+m.y*(CURB-top);const a=.3+.3*Math.sin(m.p*2);ctx.fillStyle=`rgba(255,236,196,${a})`;ctx.fillRect(Math.round(X),Math.round(Y),1,1);np++;}
       ctx.globalCompositeOperation='source-over';}
     stats.particles=np+puffs.length;
     // primeiro plano: os prédios do lado de cá, entre a câmera e a rua (translúcidos onde algo importante passa atrás)
     {const busy=[];if(bus&&bus.st==='stop')busy.push([bus.x,bus.x+W(bus),.35]);for(const p of peds)if(p.onRoad&&!p.hidden)busy.push([p.x-20,p.x+20,.55]);
       // folhas soltas no ar (vento)
       ctx.setTransform(s,0,0,s,ox,oyr);
-      if(q>=1){if(!RM)for(const l of airLeaves){if(l.x<x0||l.x>x1)continue;const fl=Math.abs(Math.sin(l.ph*1.7));ctx.globalAlpha=Math.min(1,.3+wv);ctx.fillStyle=l.c;ctx.fillRect(Math.round(l.x),Math.round(l.y),1+Math.round(fl*2),2);}ctx.globalAlpha=1;}
-      front.draw(ctx,{s,top,left,vw,cw,ch},t,cameraDt,busy,RM,wv);}
+      if(q>=1){if(!RM&&F.wind)for(const l of airLeaves){if(l.x<x0||l.x>x1)continue;const fl=Math.abs(Math.sin(l.ph*1.7));ctx.globalAlpha=Math.min(1,.3+wv);ctx.fillStyle=l.c;ctx.fillRect(Math.round(l.x),Math.round(l.y),1+Math.round(fl*2),2);}ctx.globalAlpha=1;}
+      if(F.front)front.draw(ctx,{s,top,left,vw,cw,ch},t,cameraDt,busy,RM,wv);}
     ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='source-over';
     edges(ctx,cw,ch,rs,q,s,left,top,ox,oyr);
     ctx.restore();
@@ -699,16 +703,16 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     // o desfoque das bordas é do cenário fixo (edgeBlur, logo depois da camada fixa): nada de ler a tela de volta aqui
     // cantos mais escuros e quentes
     // (a cor das bordas e os cantos escuros são do #etint, em base.css: compositor, sem passada no canvas)
-    if(q>=1){const ctx=lx,LQ=cw/LT.width;lx.setTransform(1,0,0,1,0,0);lx.globalCompositeOperation='lighter';lx.drawImage(EB.warm,0,0,LT.width,LT.height);lx.setTransform(1/LQ,0,0,1/LQ,0,0);
+    if(q>=1){const ctx=lx,LQ=cw/LT.width;lx.setTransform(1,0,0,1,0,0);lx.globalCompositeOperation='lighter';if(F['sun.color'])lx.drawImage(EB.warm,0,0,LT.width,LT.height);lx.setTransform(1/LQ,0,0,1/LQ,0,0);
       // a atmosfera dourada perto do sol (presa ao sol do mundo)
-      {const gx=(SUNW.x-left)*s,gy=(SUNW.y-top)*s,gr=ctx.createRadialGradient(gx,gy,0,gx,gy,Math.max(cw,ch)*1.1);
+      if(F['sun.color']){const gx=(SUNW.x-left)*s,gy=(SUNW.y-top)*s,gr=ctx.createRadialGradient(gx,gy,0,gx,gy,Math.max(cw,ch)*1.1);
         gr.addColorStop(0,'rgba(255,214,140,.6)');gr.addColorStop(.35,'rgba(255,190,110,.2)');gr.addColorStop(1,'rgba(255,190,110,0)');ctx.fillStyle=gr;ctx.fillRect(0,0,cw,ch);}
       // luz do sol vazando do canto (segue o sol do mundo: some aos poucos quando a câmera vai para a direita)
-      {const gx=Math.max(-cw*.25,(SUNW.x-left)*s*.35),gy=-ch*.15,k=Math.max(.35,1-Math.max(0,camX-900)/2400),R0=Math.max(cw,ch)*.55,gr=ctx.createRadialGradient(gx,gy,0,gx,gy,R0);
+      if(F['edge.glow']){const gx=Math.max(-cw*.25,(SUNW.x-left)*s*.35),gy=-ch*.15,k=Math.max(.35,1-Math.max(0,camX-900)/2400),R0=Math.max(cw,ch)*.55,gr=ctx.createRadialGradient(gx,gy,0,gx,gy,R0);
         gr.addColorStop(0,`rgba(255,176,96,${.42*k})`);gr.addColorStop(.5,`rgba(255,190,110,${.14*k})`);gr.addColorStop(1,'rgba(255,190,110,0)');ctx.fillStyle=gr;ctx.fillRect(0,0,cw,ch);}
       // partículas de luz perto das bordas: andam com a câmera (paralaxe) e com o vento, piscam devagar
       const sh=camX*s*.5,ws=Math.min(cw,ch);
-      for(const d of dust){const px=((d.u*cw-sh*.6*d.r+(RM?0:t*(6+wv*30)*d.sp*rs))%cw+cw)%cw,py=((d.v*ch+(RM?0:Math.sin(t*.3*d.sp+d.ph)*14*rs))%ch+ch)%ch,e=edgeW(px/cw,py/ch);if(e<.05)continue;
+      if(F['edge.glow'])for(const d of dust){const px=((d.u*cw-sh*.6*d.r+(RM?0:t*(6+wv*30)*d.sp*rs))%cw+cw)%cw,py=((d.v*ch+(RM?0:Math.sin(t*.3*d.sp+d.ph)*14*rs))%ch+ch)%ch,e=edgeW(px/cw,py/ch);if(e<.05)continue;
         const rr=ws*(.008+.014*d.r)*(.7+e*.6);ctx.globalAlpha=d.a*e*(RM?1:.6+.4*Math.sin(t*d.sp+d.ph));ctx.drawImage(dustSpr,px-rr,py-rr,rr*2,rr*2);}
       ctx.globalAlpha=1;}
     // a camada de luz entra na tela de uma vez, ampliada e macia

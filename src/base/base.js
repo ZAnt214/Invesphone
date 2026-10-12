@@ -8,6 +8,8 @@ import { createStreet } from './street';
 import { applyQuality, getQuality, onQualityChange } from '../characters/quality';
 import { perfHud } from '../perfHud';
 import * as AMB from '../world/ambientAudio';
+import { openSettings } from '../settings/settingsPanel';
+import { fxOn } from '../settings/gameSettings';
 import { choose, eventLog, jitter, lifeDebug, lineBank } from '../world/life';
 import { CAMERA_PRIORITY, createCameraControl, createLead, damp, deadZoneTarget, drawCameraDebug } from '../camera/cameraDirector';
 (() => {
@@ -1740,7 +1742,7 @@ function loop(now){
   if(depoOpen){last=now;requestAnimationFrame(loop);return;}
   // o relógio pode ser reiniciado fora do quadro (passagem rua ⇄ planta): o passo nunca anda para trás
   const raw=Math.max(0,now-last),dt=Math.min(0.1,raw/1000);last=now;adaptRS(raw);
-  {const et=SCENE!=='rua';if(ETN.hidden!==et)ETN.hidden=et;}
+  {const et=SCENE!=='rua'||!fxOn('edge.tint');if(ETN.hidden!==et)ETN.hidden=et;const vg=fxOn('edge.tint')?'':'none';if(VIG.style.display!==vg)VIG.style.display=vg;}
   if(SCENE==='rua'){if(FX.vigS!==0.5){FX.vigS=0.5;VIG.style.opacity=0.5;}const st=street();st.update(dt);streetAmbience(st,dt);streetView().draw(ctx,cv.width,cv.height,RS,started);frame++;if(frame%6===0){const c=clockStr();if(c!==lastClk){lastClk=c;$('#clk').textContent=c;}}
     lastClock+=dt;if(lastClock>3){lastClock=0;gameMin++;}requestAnimationFrame(loop);return;}
   update(dt);updFX();updAtmo();stepZoom();followCam(dt);if(started)primeBlur();frame++;const r0=performance.now();render();PROF.r2d+=(performance.now()-r0-PROF.r2d)*0.05;postFX(dt);
@@ -1840,6 +1842,7 @@ function fitCard(){
   const cs=getComputedStyle(m),avH=m.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom),avW=m.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
   const k=Math.min(1,avH/c.offsetHeight,avW/c.offsetWidth);if(k<1)c.style.transform=`scale(${k.toFixed(3)})`;
 }
+$('#b-set').addEventListener('click',()=>openSettings(appEl));
 $('#b-view').addEventListener('click',()=>{if(SCENE==='rua')streetView().toggleOverview();});
 $('#rot').addEventListener('click',()=>{ROT=ROT===0?90:ROT===90?-90:0;userVert=(ROT===0);lastL=null;applyLayout(true);});
 addEventListener('resize',()=>applyLayout(false));

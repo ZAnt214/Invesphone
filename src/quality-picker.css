@@ -23,3 +23,5 @@
 .qp.dg dl div{display:flex;justify-content:space-between;gap:10px;font:600 10px var(--mono,monospace);letter-spacing:.03em}
 .qp.dg dt{color:#7d878c}
 .qp.dg dd{margin:0;color:#dfe5e7;text-align:right}
+
+.fx-row{align-items:flex-start}.fx-row p{flex:1}.fx-row b{color:#e8ecef}.fx-row .fs-btn{flex:none;min-width:92px;justify-content:center}
