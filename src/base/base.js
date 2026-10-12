@@ -1700,10 +1700,10 @@ const street=()=>STREET||(STREET=createStreet({lemosLook:LOOK.lemos,personFrames
 const streetView=()=>street();
 const FADE=document.createElement('div');FADE.id='fade';FADE.setAttribute('aria-hidden','true');appEl.appendChild(FADE);
 function fadeTo(fn){FADE.classList.add('on');setTimeout(()=>{fn();requestAnimationFrame(()=>FADE.classList.remove('on'));},200);}
-function setWhere(t){lastRoom=null;$('#where-n').textContent=t;}
+function setWhere(t){lastRoom=null;$('#where-n').textContent=t;$('#b-view').hidden=t!=='Rua do DHPP';}
 // entrou pela porta do DHPP: aparece na recepção, logo depois da porta
 function enterBase(instant){
-  const go=()=>{SCENE='base';AMB.setScene('base');streetLeft=performance.now();resumeBase();P1.x=16;P1.y=17;P1.path=[];P1.pend=null;P1.dir=1;
+  const go=()=>{SCENE='base';$('#b-view').hidden=true;AMB.setScene('base');streetLeft=performance.now();resumeBase();P1.x=16;P1.y=17;P1.path=[];P1.pend=null;P1.dir=1;
     const e=bfs(ti(P1),i=>i===idx(16,15),walkPass);if(e>=0)P1.path=pathTo(e);
     cam.x=P1.x*T+16;cam.y=P1.y*TH;clampCam();CAMCTRL.focus({id:'enter-base',mode:'transition',priority:CAMERA_PRIORITY.critical,x:16*T+16,y:14.5*TH,duration:420,hold:220,interruptible:true});follow=true;last=performance.now();updateUI();};
   if(instant)go();else fadeTo(go);
@@ -1711,7 +1711,7 @@ function enterBase(instant){
 // saiu pela porta da frente: volta para a calçada, na porta do DHPP
 // a rua não congela enquanto Lemos está lá dentro: ao voltar, ela avança o tempo que passou (e a base, ao entrar)
 let streetLeft=0,baseLeft=0;
-function toStreet(){fadeTo(()=>{SCENE='rua';AMB.setScene('rua');baseLeft=performance.now();if(streetLeft)street().resume((performance.now()-streetLeft)/1000);street().place('porta');setWhere('Rua do DHPP');});}
+function toStreet(){fadeTo(()=>{SCENE='rua';$('#b-view').hidden=false;AMB.setScene('rua');baseLeft=performance.now();if(streetLeft)street().resume((performance.now()-streetLeft)/1000);street().place('porta');setWhere('Rua do DHPP');});}
 // som pontual da rua: lado e volume pela distância até o centro da câmera
 function ambStreet(k,x,a){const v=STREET&&STREET.view;if(!v||SCENE!=='rua')return;const cx=v.left+v.vw/2,d=(x-cx)/(v.vw/2);AMB.fx(k,Math.max(-1,Math.min(1,d*.8)),a*Math.max(0,1-Math.abs(d)*.55));}
 let ambT=0,stepW=0;
@@ -1838,6 +1838,7 @@ function fitCard(){
   const cs=getComputedStyle(m),avH=m.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom),avW=m.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
   const k=Math.min(1,avH/c.offsetHeight,avW/c.offsetWidth);if(k<1)c.style.transform=`scale(${k.toFixed(3)})`;
 }
+$('#b-view').addEventListener('click',()=>{if(SCENE==='rua')streetView().toggleOverview();});
 $('#rot').addEventListener('click',()=>{ROT=ROT===0?90:ROT===90?-90:0;userVert=(ROT===0);lastL=null;applyLayout(true);});
 addEventListener('resize',()=>applyLayout(false));
 

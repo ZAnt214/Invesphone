@@ -64,3 +64,11 @@ Feitos em 844×390, 390×844 e 375×667:
 - **Desgaste** (`paintWear` em `streetArt.js`, pintado uma vez): escorridos sob peitoris e cornijas, lama no pé das paredes, reboco soltando, trincas, calhas de ferro, cartazes e rabiscos no beco; no chão, sombra dos prédios na calçada com manchas de sol nos becos, poças que refletem o céu, sarjeta suja, chiclete, bitucas e sujeira nas faixas.
 - **Luz** (`street.js`): janelas acesas brilham, algumas com TV tremulando; as vitrines jogam uma poça de luz na calçada; nuvens passam devagar e sombreiam a rua (qualidade média+).
 - **Ar**: vento em rajadas leva folhas e papéis pela calçada e sarjeta; moscas rondam o lixo; os 3 bueiros soltam vapor; fios balançam entre os postes. `prefers-reduced-motion` desliga o que se move.
+
+## Vida dentro dos prédios (12/10/2026)
+
+- **Prédios de baixo** (`src/base/streetFG.js`): primeiro plano cortado, com a platibanda logo depois da calçada de cá, a face de dentro da parede da frente com janelas e o facho de sol no piso, e cômodos (sala, cozinha, quarto, escritório, lavanderia, café) com móveis. Cada pessoa circula pelos cômodos do seu prédio (`src/base/dwellers.js`: sofá, mesa, fogão, cama com o "z" de quem dorme).
+- **Janelas**: bustos em código atrás do vidro (olhando para fora, ao telefone, tomando café, vendo TV com luz azul, regando planta, digitando no DHPP, acenando para o Lemos quando ele para perto). Algumas janelas ficam vazias ou com cortina.
+- **Varandas** nos apartamentos (porta de vidro com interior, laje, vasos, varal); quem está lá usa o boneco da planta, atrás do guarda-corpo.
+- **Lojas**: garçom andando, clientes sentados, caixa, barbeiro e cliente, atrás do vidro das vitrines.
+- **Câmera**: no celular na horizontal o quadro padrão mostra só a faixa essencial (escala inteira de pixel). O botão "visão geral" no cabeçalho (ou o pinça) afasta até a escala 1 e mostra a rua inteira com os prédios de baixo; a pinça agora vai até 0,34x.
