@@ -1,6 +1,6 @@
 ---
 id: 2026-10-13-porta-cracha-close
-status: assets_delivered
+status: completed
 revision: 4
 requested_by: claude
 priority: high
@@ -72,3 +72,10 @@ Preenchido pelo ChatGPT ao concluir.
 - status: assets_delivered — arte entregue; integração pendente.
 - assets criados: `public/base/acesso/fundo.png`, `porta-aberta.png`, `mao-cracha.png`, `cracha.png`.
 - observações: dimensões e coordenadas aproximadas em `public/base/acesso/manifest.json`; orientações e limitações de encaixe em `public/base/acesso/README.md`. Nenhuma mecânica alterada.
+
+## Integração (Claude)
+- **No jogo:** `mao-cracha.png` e as coordenadas do `manifest.json` (`src/base/badgeSwipe.js`, ver `docs/DHPP_BASE.md`, "Porta de acesso").
+- **`fundo.png`:** chegou corrompido (só 314 linhas decodificam). Por enquanto o jogo usa `fundo-provisorio.png`: o topo oficial com a parte de baixo completada.
+- **`porta-aberta.png`:** não encaixa no fundo (outro batente e outra escala) e ainda não é usada.
+- **Reenvio:** pedido em `creative-requests/inbox/2026-10-12-porta-cracha-reenvio.md`.
+- **`cracha.png`:** guardado para outras telas.

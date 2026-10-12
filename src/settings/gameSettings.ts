@@ -10,7 +10,7 @@
  * o que a qualidade baixa desliga.
  */
 
-export type CategoryId = 'luz'|'atmosfera'|'tela'|'vida'|'som'
+export type CategoryId = 'luz'|'atmosfera'|'tela'|'vida'|'cenas'|'som'
 export type SectionId = 'graficos'|'som'
 /** cada categoria pertence a uma seção dos Ajustes: tudo o que é visual fica em Gráficos, junto da qualidade */
 export type Category = { id:CategoryId; label:string; section:SectionId }
@@ -21,6 +21,7 @@ export const CATEGORIES:Category[] = [
   { id:'atmosfera', label:'Atmosfera', section:'graficos' },
   { id:'tela', label:'Bordas da tela', section:'graficos' },
   { id:'vida', label:'Vida no cenário', section:'graficos' },
+  { id:'cenas', label:'Cenas rápidas', section:'graficos' },
   { id:'som', label:'Som', section:'som' }
 ]
 export const SECTIONS:{ id:SectionId; label:string }[] = [{ id:'graficos', label:'Gráficos' },{ id:'som', label:'Som' }]
@@ -46,8 +47,11 @@ export const EFFECTS:Effect[] = [
   { id:'front', cat:'tela', label:'Prédios em primeiro plano', desc:'Os prédios do lado de cá, entre a câmera e a rua.', def:true, where:'Rua' },
   // vida
   { id:'dwellers', cat:'vida', label:'Gente nas janelas e lojas', desc:'Moradores nas janelas e varandas, funcionários e clientes nas vitrines.', def:true, where:'Rua' },
+  // cenas rápidas
+  { id:'scene.badge', cat:'cenas', label:'Passar o crachá na porta', desc:'Close na leitora para passar o crachá ao entrar na área restrita. Desligado, a porta abre sozinha.', def:true, where:'DHPP' },
   // som
-  { id:'ambient', cat:'som', label:'Som ambiente', desc:'O ar da cidade, o trânsito, o burburinho e o ar-condicionado do DHPP.', def:true, where:'Rua e DHPP' }
+  { id:'ambient', cat:'som', label:'Som ambiente', desc:'O ar da cidade, o trânsito, o burburinho e o ar-condicionado do DHPP.', def:true, where:'Rua e DHPP' },
+  { id:'sfx.badge', cat:'som', label:'Leitora de crachá', desc:'O bipe da leitora e o estalo da trava ao passar o crachá.', def:true, where:'DHPP' }
 ]
 
 const KEY = 'invesphone.fx'

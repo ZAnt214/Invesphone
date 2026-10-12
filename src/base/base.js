@@ -9,6 +9,7 @@ import { applyQuality, getQuality, onQualityChange } from '../characters/quality
 import { perfHud } from '../perfHud';
 import * as AMB from '../world/ambientAudio';
 import { openSettings } from '../settings/settingsPanel';
+import { badgeReady, openBadge, preloadBadge } from './badgeSwipe';
 import { fxOn } from '../settings/gameSettings';
 import { choose, eventLog, jitter, lifeDebug, lineBank } from '../world/life';
 import { CAMERA_PRIORITY, createCameraControl, createLead, damp, deadZoneTarget, drawCameraDebug } from '../camera/cameraDirector';
@@ -746,6 +747,9 @@ const CHATS=[
 const POSE_DUR={phone:420,drink:200,cross:360,stretch:110,read:400,chin:300,watch:110,scratch:120};
 let chatT=900;
 const DOORA={t:0,open:false};
+// leitora de crachá: Lemos para na porta vindo da recepção até passar o crachá (src/base/badgeSwipe.js)
+const BADGE={ok:false,open:false,out:false};   // out: vem de dentro (a saída é livre até ele chegar à recepção)
+const badgeOn=()=>fxOn('scene.badge')&&badgeReady();
 let BG=null,WALLROWS=null,SIGN=null,DOORSPR=null,SHADOW=null,LAMP=null;
 let P1,NPCS=[],frame=0,started=false,follow=true,talkOpen=false;
 let SEEN=safe(()=>JSON.parse(localStorage.getItem('base.seen')||'{}'),{});
@@ -1142,8 +1146,17 @@ function stepAgent(a,sp,pass){
   if(d<=sp){a.x=tx;a.y=ty;a.path.shift();}else{a.x+=dx/d*sp;a.y+=dy/d*sp;}
   if(Math.abs(dx)>0.01)a.dir=dx>0?1:-1;a.walk+=sp;a.moving=true;
 }
+function openGate(){
+  BADGE.open=true;P1.moving=false;
+  openBadge(appEl,{pt:e=>({x:PX(e),y:PY(e)}),done:ok=>{BADGE.open=false;last=performance.now();follow=true;
+    if(ok)BADGE.ok=true;else{P1.path=[];P1.pend=null;}}});
+}
 function update(dt){
-  if(talkOpen)return;
+  if(talkOpen||BADGE.open)return;
+  // vindo da recepção, a porta só abre com o crachá
+  if(P1.path.length&&!BADGE.ok&&P1.path[0]===idx(GATE_X,13)&&P1.y>13.5&&badgeOn()){openGate();return;}
+  if(BADGE.ok&&(P1.y<12.6||P1.y>15.5||Math.abs(P1.x-GATE_X)>2))BADGE.ok=false;
+  if(P1.y<12.9)BADGE.out=true;else if(P1.y>14.4)BADGE.out=false;
   stepAgent(P1,3.3*dt,i=>passable(i)&&!NPCS.some(n=>ti(n)===i));
   if(!P1.path.length&&P1.pend){const p=P1.pend;P1.pend=null;if(p.kind==='exit')toStreet();else if(started)goTalk(p.kind,p.id,p.depo);}
   idleChats(dt);
@@ -1542,8 +1555,9 @@ function updAtmo(){
   if(frame%7===0)FXP.push({k:'smoke',x:4*T+77,y:12*TH+26,z:2,vz:0.16,t:0,life:240,sz:0.8,ph:Math.random()*6});
   // passos levantam poeira lá fora
   if(P1.moving&&!INSIDE(roomOf(P1))&&frame%10===0)for(let k=0;k<2;k++)FXP.push({k:'puff',x:P1.x*T+16+(Math.random()-0.5)*6,y:P1.y*TH+TH-3,z:1,vz:0.1,vx:(Math.random()-0.5)*0.2,t:0,life:28,sz:1.4});
-  // porta de acesso: abre quando alguém da casa (Lemos ou a equipe) chega com o crachá; bipa e o leitor fica verde
-  {const near=[P1,...NPCS.filter(n=>n.id!=='guarda')].some(a=>Math.abs(a.x-GATE_X)<.7&&a.y>11.8&&a.y<14.2);DOORA.t=near?Math.min(1,DOORA.t+.12):Math.max(0,DOORA.t-.05);const op=DOORA.t>.5;
+  // porta de acesso: abre quando alguém da casa chega com o crachá; bipa e o leitor fica verde.
+  // Lemos, vindo da recepção, só depois de passar o crachá no close (por dentro, a saída é livre)
+  {const p1=BADGE.ok||BADGE.out||!badgeOn();const near=[...(p1?[P1]:[]),...NPCS.filter(n=>n.id!=='guarda')].some(a=>Math.abs(a.x-GATE_X)<.7&&a.y>11.8&&a.y<14.2);DOORA.t=near?Math.min(1,DOORA.t+.12):Math.max(0,DOORA.t-.05);const op=DOORA.t>.5;
     if(op!==DOORA.open){DOORA.open=op;for(const o of objs)if(o.sprO)o.spr=op?o.sprO:o.sprC;if(op)soundAt({x:GATE_X,y:13},'beep',.8);}}
   // rodo da faxineira
   for(const n of NPCS)if(n.mop&&n.moving&&frame%8===0&&WETS.length<70)WETS.push({x:n.x*T+16+n.dir*9,y:n.y*TH+TH-3,t:0,life:1400,rx:7+Math.random()*4});
@@ -1901,7 +1915,7 @@ $('#b-view').addEventListener('click',()=>{if(SCENE==='rua')streetView().toggleO
 $('#rot').addEventListener('click',()=>{ROT=ROT===0?90:ROT===90?-90:0;userVert=(ROT===0);lastL=null;applyLayout(true);});
 addEventListener('resize',()=>applyLayout(false));
 
-newGame();initArt();buildTraffic();buildVisitors();applyLayout(true);cam.x=16*T;cam.y=15*TH;clampCam();
+preloadBadge();newGame();initArt();buildTraffic();buildVisitors();applyLayout(true);cam.x=16*T;cam.y=15*TH;clampCam();
 setTimeout(()=>{framesHDFor(P1);for(const n of NPCS)framesHDFor(n);},300);
 $('#b-start').addEventListener('click',()=>{
   AMB.unlock();AMB.setScene(SCENE==='rua'?'rua':'base');
@@ -1912,6 +1926,6 @@ $('#b-start').addEventListener('click',()=>{
   else{street().place('carro');setWhere('Rua do DHPP');}
   setTimeout(()=>toast('Sônia Prado','Lemos, na minha sala. A equipe já está com o material da casa.',{img:'/sonia.jpg',col:'#c9a24a'}),1200);
 });
-window.__base={amb:()=>AMB.ambientState(),get BG(){return BG;},get scene(){return SCENE;},setScene:s=>{if(s==='base')enterBase(true);else{SCENE='rua';street().place('porta');}},street:()=>street(),startDepo,get CASE(){return CASE;},VIS:()=>VIS,get P1(){return P1;},NPCS:()=>NPCS,cam,goTalk,goTile,openTalk,openGallery,FOUND,get started(){return started;},objs:()=>objs,tap,idx,W,H,T,TH,ti,passable,zoomTo,get ROT(){return ROT;},get LODV(){return LODV;},get FITZ(){return FITZ;},get GL(){return !!POST;},prof:()=>({r2d:+PROF.r2d.toFixed(2),post:+FX.ms.toFixed(2),frame:+frameMs.toFixed(2),RS})};
+window.__base={amb:()=>AMB.ambientState(),badge:()=>BADGE,get BG(){return BG;},get scene(){return SCENE;},setScene:s=>{if(s==='base')enterBase(true);else{SCENE='rua';street().place('porta');}},street:()=>street(),startDepo,get CASE(){return CASE;},VIS:()=>VIS,get P1(){return P1;},NPCS:()=>NPCS,cam,goTalk,goTile,openTalk,openGallery,FOUND,get started(){return started;},objs:()=>objs,tap,idx,W,H,T,TH,ti,passable,zoomTo,get ROT(){return ROT;},get LODV(){return LODV;},get FITZ(){return FITZ;},get GL(){return !!POST;},prof:()=>({r2d:+PROF.r2d.toFixed(2),post:+FX.ms.toFixed(2),frame:+frameMs.toFixed(2),RS})};
 requestAnimationFrame(loop);
 })();
