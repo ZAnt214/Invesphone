@@ -8,21 +8,20 @@
 .hud.lh{display:flex;align-items:flex-start;justify-content:space-between;height:62px;padding:calc(var(--st,env(safe-area-inset-top,0px)) + 10px) calc(var(--sr,env(safe-area-inset-right,0px)) + 14px) 0 calc(var(--sl,env(safe-area-inset-left,0px)) + 14px);box-sizing:content-box;
   background:linear-gradient(rgba(4,5,7,.55),rgba(4,5,7,0));pointer-events:none}
 .lh-id{display:flex;align-items:center;gap:12px;pointer-events:auto}
-.lh-dial{position:relative;width:60px;height:60px;flex:none}
-.lh-dial svg{position:absolute;inset:0;width:100%;height:100%}
+.lh-dial{position:relative;width:60px;height:60px;flex:none;isolation:isolate}   /* a mistura de cor do grão e do tom fica só no retrato, sem ler o jogo por trás */
+.lh-dial svg{position:absolute;inset:0;width:100%;height:100%;will-change:transform;animation:lh-spin 90s linear infinite}
 .lh-dial svg line{stroke:rgba(255,255,255,.4);stroke-width:1}
 .lh-dial svg line.l{stroke:rgba(255,255,255,.82)}
-.lh-dial .ring{position:absolute;inset:0;animation:lh-spin 90s linear infinite}
-.lh-dial .sheen{position:absolute;inset:2px;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 72%,var(--lh-acc) 88%,#fff 90%,transparent 93%);-webkit-mask:radial-gradient(circle,transparent 25px,#000 26px,#000 27px,transparent 28px);mask:radial-gradient(circle,transparent 25px,#000 26px,#000 27px,transparent 28px);animation:lh-spin 5.5s linear infinite}
-.lh-dial .ph{position:absolute;left:7px;top:7px;width:46px;height:46px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.6),0 6px 16px rgba(0,0,0,.6)}
-.lh-dial .ph img{width:100%;height:100%;object-fit:cover;object-position:50% 28%;filter:contrast(1.08) saturate(.82) brightness(.97);transform:scale(1.35);transform-origin:50% 30%}
+.lh-dial .sheen{position:absolute;inset:2px;will-change:transform;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 72%,var(--lh-acc) 88%,#fff 90%,transparent 93%);-webkit-mask:radial-gradient(circle,transparent 25px,#000 26px,#000 27px,transparent 28px);mask:radial-gradient(circle,transparent 25px,#000 26px,#000 27px,transparent 28px);animation:lh-spin 5.5s linear infinite}
+.lh-dial .ph{position:absolute;left:7px;top:7px;width:46px;height:46px;border-radius:50%;overflow:hidden;isolation:isolate;box-shadow:0 0 0 1px rgba(0,0,0,.6),0 6px 16px rgba(0,0,0,.6)}
+.lh-dial .ph img{display:block;width:100%;height:100%;object-fit:cover;filter:contrast(1.08) saturate(.82) brightness(.97)}
 .lh-dial .ph::before{content:'';position:absolute;inset:0;z-index:1;background:radial-gradient(circle at 35% 30%,rgba(255,220,170,.18),transparent 55%),radial-gradient(circle,transparent 55%,rgba(0,0,0,.55));mix-blend-mode:soft-light}
-.lh-dial .ph::after{content:'';position:absolute;inset:-60%;z-index:2;background:linear-gradient(115deg,transparent 42%,rgba(255,255,255,.36) 50%,transparent 58%);transform:translateX(-70%);animation:lh-sweep 9s 2s ease-in-out infinite}
-.lh-dial .grain{position:absolute;left:7px;top:7px;width:46px;height:46px;border-radius:50%;z-index:3;opacity:.2;mix-blend-mode:overlay;pointer-events:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='120' height='120' filter='url(%23n)'/></svg>");animation:lh-grain .5s steps(4) infinite}
+.lh-dial .ph::after{content:'';position:absolute;inset:-60%;z-index:2;will-change:transform;background:linear-gradient(115deg,transparent 42%,rgba(255,255,255,.36) 50%,transparent 58%);transform:translateX(-70%);animation:lh-sweep 9s 2s ease-in-out infinite}
+.lh-dial .grain{position:absolute;left:7px;top:7px;width:46px;height:46px;border-radius:50%;z-index:3;opacity:.2;mix-blend-mode:overlay;pointer-events:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='120' height='120' filter='url(%23n)'/></svg>")}
 .lh-dial .dot{position:absolute;right:4px;bottom:5px;z-index:4;width:8px;height:8px;border-radius:50%;background:#5fe39a;box-shadow:0 0 0 2px #0a0b0d,0 0 8px #5fe39a}
 .lh-dial .dot::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:1px solid #5fe39a;animation:lh-ping 2.4s ease-out infinite}
 #app.lh-alert .lh-dial .sheen{animation-duration:1.2s;filter:drop-shadow(0 0 5px var(--lh-acc))}
-#app.lh-still .lh-dial .ring,#app.lh-still .lh-dial .sheen,#app.lh-still .lh-dial .ph::after,#app.lh-still .lh-dial .grain,#app.lh-still .lh-dial .dot::after{animation:none}
+#app.lh-still .lh-dial svg,#app.lh-still .lh-dial .sheen,#app.lh-still .lh-dial .ph::after,#app.lh-still .lh-dial .dot::after{animation:none}
 #app.lh-still .lh-dial .sheen{opacity:.35}
 .lh-nm{display:flex;flex-direction:column;gap:5px;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.85);min-width:0}
 .lh-nm b{font:500 12px/1 var(--lh-ui);letter-spacing:.46em}
@@ -49,13 +48,15 @@
 .lh-room .s{font:400 10px/1 var(--lh-ui);letter-spacing:.6em;color:var(--lh-acc);opacity:0;text-transform:uppercase;text-shadow:0 0 10px rgba(0,0,0,.9)}
 .lh-room.on .t span{animation:lh-letter .9s cubic-bezier(.2,.7,.2,1) forwards}
 .lh-room.on .s{animation:lh-sub 1s .7s ease-out forwards}
-.lh-room.out{transition:opacity .25s;opacity:0}
+.lh-room:not(.on){visibility:hidden}
+.lh-room.out{transition:opacity .8s ease-in,filter .8s ease-in,transform .8s ease-in;opacity:0;filter:blur(6px);transform:translateY(-6px)}
 
 /* cartões de vidro (sem desfoque do fundo: no Safari, o desfoque por cima do canvas deixa rastro) */
 .lh-glass{background:linear-gradient(180deg,rgba(24,26,32,.86),rgba(11,12,15,.9));border:1px solid rgba(255,255,255,.09);box-shadow:0 24px 60px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08);color:#fff;font-family:var(--lh-ui)}
 
 /* última descoberta */
 .lh-disc{position:absolute;left:calc(var(--sl,env(safe-area-inset-left,0px)) + 14px);bottom:calc(var(--sb,env(safe-area-inset-bottom,0px)) + 14px);z-index:6;width:min(330px,calc(100% - 28px));padding:13px 16px 16px;border-radius:14px;overflow:hidden;text-align:left;cursor:pointer;opacity:0;pointer-events:none;transform:translateY(14px);filter:blur(8px)}
+.lh-disc:not(.on):not(.off){visibility:hidden}
 .lh-disc.on{pointer-events:auto;animation:lh-dIn .7s cubic-bezier(.2,.8,.2,1) forwards}
 .lh-disc.off{animation:lh-dOut .6s ease-in forwards}
 .lh-disc::before{content:'';position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.14) 48%,transparent 62%);transform:translateX(-120%);pointer-events:none}
@@ -75,14 +76,16 @@
 .lh-ev svg{width:34px;height:42px;flex:none;fill:none;stroke:var(--lh-acc);stroke-width:1.2;filter:drop-shadow(0 0 6px var(--lh-acc))}
 .lh-ev small{display:block;font:500 9px/1 var(--lh-ui);letter-spacing:.34em;color:var(--lh-acc);text-transform:uppercase}
 .lh-ev b{display:block;margin-top:6px;font:italic 600 21px/1.05 var(--lh-title)}
+.lh-ev:not(.on):not(.go){visibility:hidden}
 .lh-ev.on{animation:lh-evIn .55s cubic-bezier(.2,.8,.2,1) forwards}
 .lh-ev.go{animation:lh-evGo .38s cubic-bezier(.6,0,.8,.4) forwards}
 
 /* caderneta: painel da direita, com o resto da tela escurecido */
-.lh-scrim{position:absolute;inset:0;z-index:9;background:rgba(3,4,6,.6);opacity:0;pointer-events:none;transition:opacity .4s}
-.lh-scrim.on{opacity:1;pointer-events:auto}
+.lh-scrim{position:absolute;inset:0;z-index:9;background:rgba(3,4,6,.6);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .4s,visibility 0s .4s}
+.lh-scrim.on{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .4s,visibility 0s}
 .lh-book{position:absolute;right:0;top:0;bottom:0;z-index:10;width:min(380px,100%);box-sizing:border-box;padding:calc(var(--st,env(safe-area-inset-top,0px)) + 20px) calc(var(--sr,env(safe-area-inset-right,0px)) + 22px) calc(var(--sb,env(safe-area-inset-bottom,0px)) + 14px) 22px;border-radius:0;border-width:0 0 0 1px;
   display:flex;flex-direction:column;transform:translateX(40px);opacity:0;filter:blur(10px);pointer-events:none;transition:opacity .45s,transform .55s cubic-bezier(.2,.8,.2,1),filter .45s}
+.lh-book:not(.on){visibility:hidden;transition:opacity .45s,transform .55s cubic-bezier(.2,.8,.2,1),filter .45s,visibility 0s .55s}
 .lh-book.on{opacity:1;transform:none;filter:none;pointer-events:auto}
 .lh-book header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
 .lh-book h2{margin:0;font:italic 600 27px/1 var(--lh-title)}
@@ -115,13 +118,13 @@
 .lh-write button{padding:0 14px;border-radius:10px;border:1px solid var(--lh-acc);background:none;color:var(--lh-acc);font:500 11px var(--lh-ui);letter-spacing:.16em;text-transform:uppercase;cursor:pointer}
 
 /* partículas e luz por cima de tudo, sem pegar toque */
-.lh-fx{position:absolute;left:0;top:0;width:100%;height:100%;z-index:11;pointer-events:none}
+.lh-fx{position:absolute;left:0;top:0;width:100%;height:100%;z-index:11;pointer-events:none;visibility:hidden}
+.lh-fx.on{visibility:visible}
 
 /* depoimento e quadro do caso ocupam a tela: o HUD some junto */
 body.depo-on .lh-room,body.depo-on .lh-disc,body.depo-on .lh-ev,body.depo-on .lh-fx,body.depo-on .lh-book,body.depo-on .lh-scrim{display:none}
 @keyframes lh-spin{to{transform:rotate(360deg)}}
 @keyframes lh-sweep{0%,70%{transform:translateX(-70%)}100%{transform:translateX(70%)}}
-@keyframes lh-grain{25%{background-position:12px 30px}50%{background-position:-20px 8px}75%{background-position:30px -16px}}
 @keyframes lh-ping{0%{transform:scale(.6);opacity:.9}100%{transform:scale(1.8);opacity:0}}
 @keyframes lh-letter{0%{opacity:0;filter:blur(14px);transform:translateY(10px) scale(1.08)}100%{opacity:1;filter:blur(0);transform:none}}
 @keyframes lh-sub{0%{opacity:0;letter-spacing:1.1em}100%{opacity:1;letter-spacing:.6em}}

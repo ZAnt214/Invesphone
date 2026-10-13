@@ -12,10 +12,10 @@ A integração com o jogo fica em `src/base/base.js` (bloco "HUD do Lemos") e no
 
 ## O que fica sempre na tela
 
-- **Retrato do Lemos** (`.lh-dial`), feito com a foto oficial do crachá (`public/characters/lemos/cracha-foto.png`):
+- **Retrato do Lemos** (`.lh-dial`), feito com um recorte do rosto da foto oficial do crachá (`public/characters/lemos/hud-rosto.jpg`, 144×144, tirado de `cracha-foto.png`):
   - mostrador de 60 marcas girando devagar;
   - brilho correndo pelo aro;
-  - grão de filme;
+  - grão de filme parado;
   - uma luz que passa pelo rosto de vez em quando;
   - luz verde de "em serviço".
 
@@ -35,7 +35,7 @@ A integração com o jogo fica em `src/base/base.js` (bloco "HUD do Lemos") e no
 
 | Momento | Gatilho | O que aparece |
 |---|---|---|
-| Faixa do ambiente | Lemos entra num cômodo (`updateUI`) ou chega à rua (`setWhere`) | Reflexo de lente; o nome sai do desfoque letra por letra, com o subtítulo ("DHPP · Área restrita", "DHPP · Atendimento ao público", "São Paulo · outubro de 2002"); depois o nome vira poeira. Espera Lemos ficar 450 ms no cômodo e não repete o mesmo lugar em menos de 45 s. |
+| Faixa do ambiente | Lemos entra num cômodo (`updateUI`) ou chega à rua (`setWhere`) | Reflexo de lente; o nome sai do desfoque letra por letra, com o subtítulo ("DHPP · Área restrita", "DHPP · Atendimento ao público", "São Paulo · outubro de 2002"); depois o nome perde o foco e some devagar (sem partículas). Espera Lemos ficar 450 ms no cômodo e não repete o mesmo lugar em menos de 45 s. |
 | Nova descoberta | Chegou no save um material da equipe, uma pessoa identificada ou um depoimento registrado | Cartão de vidro no canto de baixo com sino, faixa de luz e palavras saindo do desfoque; fio de 8 s. Tocar abre o material na galeria (fotos e documentos com `assetPaths`) ou a caderneta. Vários ao mesmo tempo viram um cartão só ("· +N"), com prioridade para o material. |
 | Pista anexada | Pista nova em `clues` | O documento brilha no centro, se comprime num ponto de luz e voa em rastro até a caderneta; na chegada, ondas, faíscas, o número rola e aparece "Anexado ao caso". No máximo três seguidas; as outras só somam no número. |
 
@@ -73,3 +73,9 @@ A qualidade gráfica reduz o número de partículas: na baixa, 40%. Quem usa a o
 - **Posições:** medidas por `offsetLeft`/`offsetTop` dentro de `#app`, então funcionam com a tela girada.
 - **Sem desfoque do fundo:** os cartões não usam `backdrop-filter`, porque no Safari o desfoque por cima do canvas deixa rastro. O "vidro" é um gradiente escuro.
 - **Fontes:** Cormorant Garamond (itálico 600) e Jost, hospedadas em `public/fonts`.
+- **Desempenho:**
+  - o mostrador gira como uma camada só (`will-change: transform` no `svg`), sem repintar as marcas a cada quadro;
+  - `isolation: isolate` no mostrador e na foto, para os modos de mistura não lerem o canvas do jogo que muda a cada quadro;
+  - faixa, cartão, evidência, caderneta e o canvas de partículas ficam com `visibility: hidden` quando parados, para não serem compostos;
+  - o canvas de partículas usa no máximo 1,5× de densidade;
+  - o sinal amarelo da equipe só recalcula quando o save muda (`teamNewsCount` em `base.js`).
