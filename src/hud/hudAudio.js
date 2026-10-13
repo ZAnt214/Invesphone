@@ -1,5 +1,5 @@
 /* Sons do HUD do Lemos (src/hud/hud.js), gerados na hora (sem arquivos) e com um eco de sala grande.
-   - Entrar numa sala: sopro de ar subindo, um grave fundo e um brilho agudo; ao sumir, um chiado de areia.
+   - Entrar numa sala: sopro de ar subindo, um grave fundo e um brilho agudo.
    - Descoberta: sino suave em duas notas.
    - Evidência: a folha passando, o zunido do rastro subindo e, na chegada à caderneta, baque grave, estalo e brilhos.
    - Caderneta: página virando; material aberto: ar subindo.
@@ -28,7 +28,6 @@ const buzz=p=>{if(!on())return;try{navigator.vibrate&&navigator.vibrate(p);}catc
 export const hudSfx={
   room(){if(!ctx())return;hiss({f:220,to:2600,q:.7,dur:1.4,vol:.14,att:.55,wet:.7});tone({f:74,to:36,dur:2,vol:.36,att:.02,wet:.4});tone({f:37,dur:1.6,vol:.2,att:.05,wet:.2});
     [1318,1760,2637,3520].forEach((f,i)=>tone({f,at:.3+i*.07,dur:2.4,vol:.015,att:.5,wet:1}));},
-  dust(){if(!ctx())return;hiss({type:'highpass',f:3800,dur:1.6,vol:.045,att:.35,wet:.8});hiss({f:900,to:300,q:.5,dur:1.4,vol:.025,att:.3,wet:.6});},
   disc(){if(!ctx())return;bell(1046,0,.06);bell(1568,.16,.04);hiss({type:'highpass',f:6000,dur:.6,vol:.02,att:.2,wet:.9});buzz(12);},
   open(){if(!ctx())return;hiss({f:600,to:2400,q:.6,dur:.45,vol:.06,att:.12,wet:.5});tone({f:660,to:990,dur:.35,vol:.025,wet:.7});},
   close(){if(!ctx())return;hiss({f:2000,to:500,q:.6,dur:.35,vol:.045,att:.05,wet:.5});},

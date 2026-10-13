@@ -966,7 +966,7 @@ function openTalk(id){
   talkPrevZ=cam.z;follow=true;const cf=talkFocus();if(cf)CAMCTRL.focus({id:'talk',mode:'context',priority:CAMERA_PRIORITY.context,x:cf[0]*T+16,y:cf[1]*TH+TH/2-14,duration:520,hold:1200,interruptible:true});zoomTo(Math.max(cam.z,TALKZ()));
 }
 /* quem fala, na tela: o anel fica sobre a cabeça (ou sobre o objeto) e o rastro desce até o ponto mais perto do cartão */
-const CALM=()=>!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches);
+const CALM_MQ=window.matchMedia?matchMedia('(prefers-reduced-motion: reduce)'):null;const CALM=()=>!!(CALM_MQ&&CALM_MQ.matches);   // consultado a cada quadro: a consulta é criada uma vez só
 let tkAnims=[];
 function talkStopAnims(){for(const a of tkAnims)try{a.cancel();}catch(_){}tkAnims=[];$('#tk-dot').hidden=true;$('#talk').style.pointerEvents='';}
 function talkWho(){
@@ -1798,7 +1798,10 @@ function render(){
   for(const n of NPCS)if(n.say&&!talkOpen){const al=Math.min(1,(n.say.life-n.say.t)/20,n.say.t/6);drawSay(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?70:74),n.say.txt,al);}
   drawNames();drawRoomLabels();
 }
-function hasNews(id){if(!DLG[id])return false;if(id==='interro')return INTERRO_NEWS||!SEEN.interro;if(TEAM_IDS.has(id))return teamNews(CASE,id).count>0||(id==='sonia'&&!SEEN.sonia);return !SEEN[id];}
+// o sinal amarelo da equipe é desenhado a cada quadro: a conta só é refeita quando o save muda
+let NEWS_C=null,NEWS_M={};
+function teamNewsCount(id){if(NEWS_C!==CASE){NEWS_C=CASE;NEWS_M={};}return NEWS_M[id]??(NEWS_M[id]=teamNews(CASE,id).count);}
+function hasNews(id){if(!DLG[id])return false;if(id==='interro')return INTERRO_NEWS||!SEEN.interro;if(TEAM_IDS.has(id))return teamNewsCount(id)>0||(id==='sonia'&&!SEEN.sonia);return !SEEN[id];}
 function isSeat(n){const i=ti(n);return objs.some(o=>o.nocc&&idx(o.x,o.y)===i);}
 
 /* ---------- Interface ---------- */
