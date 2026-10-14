@@ -29,12 +29,12 @@ export function caseGuide(g:CaseSave,{casa,briefed,sweep}:{casa:boolean;briefed:
       known:found?`Ricardo e Helena foram mortos em casa. ${found} de ${total} pontos da cena já registrados pela perícia.`:'Ricardo e Helena foram mortos em casa. Lívia diz ter encontrado tudo revirado.',
       question:QUESTION[1],
       next:done?{title:'Volte à base',text:'A cena está registrada. O material segue para o DHPP, e as versões começam de manhã.',cta:'Voltar à base',go:{kind:'base'}}
-        :{title:'Registre a cena',text:`${found} de ${total} marcadores. Arraste o Maurício até um cômodo para periciar e isole a frente antes que os curiosos entrem no terreno.`,cta:'Ver os achados',go:{kind:'achados'}}}
+        :{title:'Registre a cena',text:`${found} de ${total} marcadores. Arraste o Lemos até um cômodo para periciar e peça à PM que isole a frente antes que os curiosos entrem no terreno.`,cta:'Ver os achados',go:{kind:'achados'}}}
   }
   if(!casa){
     // plantão de madrugada: primeiro a Sônia, depois a casa
     return {status:'Plantão · madrugada',known:KNOWN[0],question:QUESTION[0],
-      next:briefed?{title:'Vá à Rua das Acácias',text:'Maurício já está na casa e a PM segura a frente. Revise a cena antes de ouvir qualquer versão.',cta:'Ir para a casa',go:{kind:'casa'}}
+      next:briefed?{title:'Vá à Rua das Acácias',text:'A PM segura a frente da casa e a perícia é sua. Revise a cena antes de ouvir qualquer versão.',cta:'Ir para a casa',go:{kind:'casa'}}
         :{title:'Fale com a Sônia',text:'A delegada está na sala dela com o caso da noite.',cta:'Ir até a Sônia',go:{kind:'sonia'}}}
   }
   const st=nextSteps(g).filter(s=>!s.locked)[0]

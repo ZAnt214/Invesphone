@@ -47,6 +47,8 @@ const CLUES={
 const CLUE_IDS=Object.keys(CLUES);
 const PEOPLE={
   sonia:{name:'Sônia Prado',role:'Delegada',img:'/sonia.jpg'},
+  lemos:{name:'Lemos',role:'Investigador · DHPP',img:'/characters/lemos/hud-rosto.jpg'},
+  pm:{name:'PM no local',role:'Polícia Militar',ini:'PM',col:'#a9b8c6'},
   mauricio:{name:'Maurício Farias',role:'Perito criminal',ini:'MF',col:'#9fb7c9'},
   paulo:{name:'Paulo Vieira',role:'Investigador de campo',ini:'PV',col:'#d6b27a'},
   central:{name:'Central',role:'Rádio da operação',ini:'CT',col:'#8fd0a8'}
@@ -117,9 +119,8 @@ function findPath(a,pred,pass){const e=bfs(ti(a),pred,pass);if(e<0)return null;r
 /* ---------- State ---------- */
 let S;
 const CREW=[
-  {key:'mauricio',ini:'MF',name:'Maurício Farias',role:'Perito criminal',kind:'pericia',skill:1.35,vest:'#2c3e57',accent:'#9fb7c9',hair:'#5a5a5a',x:8,y:7},
-  {key:'aux',ini:'AP',name:'Auxiliar de perícia',role:'Perícia · apoio',kind:'pericia',skill:0.8,vest:'#2c3e57',accent:'#c9d3db',hair:'#2a1d18',x:8,y:8},
-  {key:'paulo',ini:'PV',name:'Paulo Vieira',role:'Investigador de campo',kind:'campo',skill:1,vest:'#1a1c1e',accent:'#d6b27a',hair:'#3a2416',x:5,y:8},
+  // Lemos faz a perícia da casa sozinho; a PM dá o suporte (perímetro, fita, curiosos, imprensa)
+  {key:'lemos',ini:'LM',name:'Lemos',role:'Investigador · DHPP',kind:'pericia',skill:1.9,vest:'#2b2f36',accent:'#f2c230',hair:'#2a1d18',x:8,y:7},
   {key:'pm1',ini:'PM',name:'Soldado Silva',role:'Polícia Militar · perímetro',kind:'pm',skill:1,vest:'#56687a',accent:'#a9b8c6',hair:'#1f1a18',x:5,y:5},
   {key:'pm2',ini:'PM',name:'Soldado Rocha',role:'Polícia Militar · perímetro',kind:'pm',skill:1,vest:'#56687a',accent:'#a9b8c6',hair:'#3a2416',x:4,y:11}
 ];
@@ -128,7 +129,7 @@ function newGame(){
   buildMap();
   S={tick:0,tape:new Array(N).fill(0),tapeBp:new Array(N).fill(0),desig:new Array(N).fill(0),exam:new Array(N).fill(0),marker:new Array(N).fill(0),
     found:{},order:[],res:{},crew:[],civs:[],contam:0,escorts:0,msgs:[],unread:0,flags:{},nextCiv:200,flash:[]};
-  CREW.forEach((c,k)=>S.crew.push({id:k,key:c.key,look:CREW_LOOK[c.key],ini:c.ini,name:c.name,role:c.role,kind:c.kind,skill:c.skill,vest:c.vest,accent:c.accent,hair:c.hair,skin:SKINS[k%4],
+  CREW.forEach((c,k)=>S.crew.push({id:k,key:c.key,look:CREW_LOOK[c.key],ini:c.ini,name:c.name,role:c.role,kind:c.kind,skill:c.skill,vest:c.vest,accent:c.accent,hair:c.hair,skin:CREW_LOOK[c.key].skin||SKINS[k%4],
     x:c.x,y:c.y,home:idx(c.x,c.y),path:[],job:null,energy:45+Math.random()*30,status:'Aguardando ordem',dir:1,walk:0,moving:false,think:k*6,done:0}));
 }
 function minutes(){return START_MIN+S.tick/20;}
@@ -160,10 +161,10 @@ function discover(id,tile){
   S.found[id]={time:clockStr(),n:S.order.length+1};S.order.push(id);S.marker[tile]=S.order.length;S.unread++;
   {const X=(tile%W)*T+16,Y=((tile/W)|0)*TH+(floor[tile]===F.WALL?2*TH-6:TH-4);MARKT[tile]=frame;burstSparks(X,Y,26);ringFx(X,Y,[242,194,48],34,46);setTimeout(()=>ringFx(X,Y,[255,236,170],22,36),180);floatText(X,Y-6,'Achado '+S.order.length,'#f2c230',150);FX.shake=7;SND.chime();S.flash.push({x:tile%W,y:(tile/W)|0,t:5});}
   flyPolaroid(id,tile,S.order.length);
-  msg('mauricio',CLUES[id].line);
+  msg('lemos',CLUES[id].line);
   caseClue(id);
   const f=S.found;
-  if(f.escritorio_revirado&&f.valores_intactos&&!S.flags.busca){S.flags.busca=1;setTimeout(()=>msg('mauricio','Parece alguém tentando produzir bagunça. Gaveta sem importância aberta, ponto óbvio intacto, objeto caro à vista. Se procuraram algo, sabiam exatamente o que queriam.'),2600);}
+  if(f.escritorio_revirado&&f.valores_intactos&&!S.flags.busca){S.flags.busca=1;setTimeout(()=>msg('lemos','Parece alguém tentando produzir bagunça. Gaveta sem importância aberta, ponto óbvio intacto, objeto caro à vista. Se procuraram algo, sabiam exatamente o que queriam.'),2600);}
   if(S.order.length===3&&!S.flags.three){S.flags.three=1;setTimeout(()=>queueEvent('deixaram'),4200);}
   if(S.order.length===CLUE_IDS.length&&!S.flags.end){S.flags.end=1;setTimeout(()=>queueEvent('fim'),2600);}
   updateBadge();
@@ -238,8 +239,8 @@ function runJob(a){
       if(Math.hypot(c.x-a.x,c.y-a.y)<=1.3){
         c.state='leave';c.escorted=1;c.path=[];c.wait=0;S.escorts++;
         say(a,pick(a.kind==='campo'?PAULO_LINES:PM_LINES),120);if(Math.random()<0.4)setTimeout(()=>say(c,pick(['Tá bom, tá bom.','Só queria ajudar…','Calma, já vou.'])),900);
-        if(a.kind==='campo')a.done++;
-        if(a.kind==='campo'&&a.done===2&&!S.flags.jorge){S.flags.jorge=1;setTimeout(()=>msg('paulo','Achei um nome útil: Jorge. É vigia da rua e presta atenção em carro e movimento. Vou separar ele dos curiosos.'),1500);}
+        a.done++;
+        if(a.kind==='pm'&&S.escorts===3&&!S.flags.jorge){S.flags.jorge=1;setTimeout(()=>msg('pm','Doutor, um dos curiosos é o Jorge, vigia da rua. Presta atenção em carro e movimento. Separei ele dos outros.'),1500);}
         endJob(a);return;
       }
       if(--j.re<=0||!a.path.length){j.re=12;const target=ti(c);const r=findPath(a,i=>i===target);if(r)a.path=r.path;else{endJob(a);return;}}
@@ -370,8 +371,8 @@ function stepWorld(){
   if(S.civs.some(c=>c.gone)){for(const c of S.civs)if(c.gone)delete S.res['c'+c.id];S.civs=S.civs.filter(c=>!c.gone);}
   for(const f of S.flash)f.t--;S.flash=S.flash.filter(f=>f.t>0);
   if(S.contam>=25&&!S.flags.w1){S.flags.w1=1;msg('sonia','Tem gente demais na frente da casa. Isola a rua antes que alguém pise onde não deve.');}
-  if(S.contam>=60&&!S.flags.w2){S.flags.w2=1;msg('mauricio','Estão entrando no terreno. Cada pé a mais é vestígio a menos. Vou trabalhar mais devagar.');}
-  if(minutes()>=5*60+15&&!S.flags.press){S.flags.press=1;msg('paulo','Chegou imprensa. Câmera na mão e gente querendo foto do portão.');}
+  if(S.contam>=60&&!S.flags.w2){S.flags.w2=1;msg('lemos','Estão entrando no terreno. Cada pé a mais é vestígio a menos. Vou ter que trabalhar mais devagar.');}
+  if(minutes()>=5*60+15&&!S.flags.press){S.flags.press=1;msg('pm','Doutor, chegou imprensa. Câmera na mão e gente querendo foto do portão.');}
   if(minutes()>=5*60+50&&!S.flags.dawn){S.flags.dawn=1;sys('O dia está clareando sobre o Campo Belo.');}
   stepRadio();
 }
@@ -699,6 +700,8 @@ function makeLook(kind,k){
   return L;
 }
 const CREW_LOOK={
+  // Lemos como na planta da base: terno escuro, gravata vinho, distintivo no cinto, e luvas para a perícia
+  lemos:{skin:'#d9a273',hair:'#2a1d18',style:'side',kind:'lemos',top:'#2b2f36',pants:'#1f242b',shoes:'#111',gloves:1},
   mauricio:{skin:'#e0b48c',hair:'#9a9a9a',style:'grey',glasses:1,kind:'pericia',top:'#283a52',pants:'#2b2f36',shoes:'#1a1a1a',gloves:1},
   aux:{skin:'#c98e64',hair:'#2a1d18',style:'short',kind:'pericia',top:'#283a52',pants:'#2b2f36',shoes:'#1a1a1a',gloves:1},
   paulo:{skin:'#b67c52',hair:'#1f1a18',style:'side',kind:'campo',top:'#3a2b22',pants:'#3b5a8a',shoes:'#3a2416'},
@@ -719,6 +722,7 @@ function personFrames(L){
       const ty=18+cr;P(7,ty,12,13,L.top);P(7,ty,2,13,hi(L.top));P(17,ty,2,13,sh(L.top));P(7,ty+12,12,1,sh(L.pants));
       if(L.kind==='pericia'){P(7,ty+6,12,2,'#d8d27a');P(10,ty,6,1,'#1d2b3d');P(9,ty+9,8,2,'#e8e4da');}
       if(L.kind==='campo'){P(11,ty+1,4,10,'#cfc8b8');P(8,ty+8,2,2,'#d4af37');}
+      if(L.kind==='lemos'){P(11,ty+1,4,9,'#d8d4cc');P(12,ty+1,2,9,'#7a2a2a');P(8,ty+11,2,2,'#d4af37');}
       if(L.kind==='pm'){P(5,ty,2,3,'#c0392b');P(17,ty+7,2,5,'#111');P(8,ty+2,2,1,'#d4af37');P(7,ty+11,12,2,'#23262b');}
       if(L.kind==='iml'){P(8,ty+4,10,2,'#d8d8d0');P(7,ty+11,12,1,'#111');}
       if(L.cam){P(9,ty+2,8,6,'#111');P(11,ty+3,4,4,'#4a6a8a');P(16,ty+7,2,3,'#f2c230');}
@@ -1378,12 +1382,12 @@ const SND={ctx:null,on:true,
 
 /* ---------- Events with a choice ---------- */
 const EVENTS={
-  garoa:{who:'mauricio',title:'A garoa está apertando',text:'Se a gente demorar no quintal, a água leva o que tiver lá fora. Começo por onde?',opts:[
-    {t:'Começa pelo quintal',sub:'O canil vai primeiro; a casa espera um pouco.',fn:()=>{S.flags.prioQ=1;for(let i=0;i<N;i++)if(hot[i]==='cao_canil'&&periciavel(i))S.desig[i]=1;msg('mauricio','Canil primeiro, antes que a água leve alguma coisa. Depois eu entro.');}},
-    {t:'Primeiro a casa',sub:'Lá fora, a perícia rende menos enquanto chover.',fn:()=>{S.flags.prioQ=0;msg('mauricio','Certo, casa primeiro. O quintal vai sofrer com essa garoa.');}}]},
-  imprensa:{who:'paulo',title:'Imprensa no portão',text:'Estão pedindo alguém para falar. Se ninguém atender, vão ficar forçando a frente da casa.',opts:[
-    {t:'Paulo atende rápido',sub:'Paulo sai do perímetro um tempo; a imprensa sossega.',fn:()=>{S.flags.pressCalm=1;const a=S.crew.find(k=>k.key==='paulo');if(a){endJob(a);const r=findPath(a,i=>i===idx(5,6));a.job={k:'talk',p:0};a.path=r?r.path:[];a.status='Indo falar com a imprensa';}for(const c of S.civs)if(c.press&&c.state==='gawk')c.wait=Math.min(c.wait,160);}},
-    {t:'Ninguém fala agora',sub:'Paulo segue livre; a imprensa insiste por mais tempo.',fn:()=>{S.flags.pressCalm=-1;for(const c of S.civs)if(c.press)c.wait=Math.round(c.wait*1.4);}}]}
+  garoa:{who:'lemos',title:'A garoa está apertando',text:'Se eu demorar no quintal, a água leva o que tiver lá fora. Começo por onde?',opts:[
+    {t:'Começa pelo quintal',sub:'O canil vai primeiro; a casa espera um pouco.',fn:()=>{S.flags.prioQ=1;for(let i=0;i<N;i++)if(hot[i]==='cao_canil'&&periciavel(i))S.desig[i]=1;msg('lemos','Canil primeiro, antes que a água leve alguma coisa. Depois eu entro.');}},
+    {t:'Primeiro a casa',sub:'Lá fora, a perícia rende menos enquanto chover.',fn:()=>{S.flags.prioQ=0;msg('lemos','Casa primeiro. O quintal vai sofrer com essa garoa.');}}]},
+  imprensa:{who:'pm',title:'Imprensa no portão',text:'Estão pedindo alguém para falar. Se ninguém atender, vão ficar forçando a frente da casa.',opts:[
+    {t:'Lemos atende rápido',sub:'Você para a perícia um tempo; a imprensa sossega.',fn:()=>{S.flags.pressCalm=1;const a=S.crew.find(k=>k.key==='lemos');if(a){endJob(a);const r=findPath(a,i=>i===idx(5,6));a.job={k:'talk',p:0};a.path=r?r.path:[];a.status='Indo falar com a imprensa';}for(const c of S.civs)if(c.press&&c.state==='gawk')c.wait=Math.min(c.wait,160);}},
+    {t:'Ninguém fala agora',sub:'A perícia segue; a imprensa insiste por mais tempo.',fn:()=>{S.flags.pressCalm=-1;for(const c of S.civs)if(c.press)c.wait=Math.round(c.wait*1.4);}}]}
 };
 const EVQ=[];let evOpen=null,evPrev=1;
 function queueEvent(k){EVQ.push(k);}
@@ -1589,13 +1593,13 @@ function imlStep(){
   switch(IML.state){
     case 'off':if(m>=5*60+50||S.flags.imlEarly){IML.state='arrive';const v={spr:VANSPR,x:2*T,y:-6*TH,v:0,vmax:1.2,iml:1,park:2*TH-18,wait:0,honked:1,brake:0,wh:0};FX.cars.push(v);IML.van=v;msg('sonia','O rabecão do IML chegou para a remoção.');}break;
     case 'arrive':if(IML.van.parked){IML.agents=[mkIml(2,4,0),mkIml(2,5,1)];IML.state='wait';IML.say='aguardando a perícia';}break;
-    case 'wait':if(S.found.vitimas_dormindo){IML.state='go';IML.say='indo ao quarto';imlGo(idx(13,13));msg('mauricio','Quarto do casal liberado para o IML.');}
+    case 'wait':if(S.found.vitimas_dormindo){IML.state='go';IML.say='indo ao quarto';imlGo(idx(13,13));msg('lemos','Quarto do casal liberado para o IML.');}
       else if(!S.flags.imlNag&&m>=5*60+56){S.flags.imlNag=1;msg('sonia','O IML só entra depois que a perícia liberar o quarto do casal.');}break;
     case 'go':if(!IML.agents[0].path.length){IML.state='prep';IML.t=0;IML.say='preparando a remoção';}break;
     case 'prep':if(++IML.t>110){BODIES=Math.max(0,BODIES-1);IML.carry=true;IML.state='back';IML.say='levando ao rabecão';imlGo(idx(2,4));}break;
     case 'back':if(!IML.agents[0].path.length){IML.carry=false;IML.t=0;IML.state=BODIES>0?'again':'done';IML.say=BODIES>0?'voltando':'concluído';}break;
     case 'again':if(++IML.t>60){IML.state='go';IML.say='indo ao quarto';imlGo(idx(13,13));}break;
-    case 'done':if(++IML.t>80){IML.agents=[];IML.state='leaving';msg('mauricio','Remoção concluída. O quarto fica lacrado para nova perícia.');const v=IML.van;v.parked=false;v.left=true;v.shift={to:2*T};v.vmax=1.4;}break;
+    case 'done':if(++IML.t>80){IML.agents=[];IML.state='leaving';msg('pm','Remoção concluída, doutor. O quarto fica lacrado.');const v=IML.van;v.parked=false;v.left=true;v.shift={to:2*T};v.vmax=1.4;}break;
   }
   if(IML.agents.length){const a=IML.agents[0],b=IML.agents[1];moveAgent(a,passable,0.075);IML.hist.push([a.x,a.y]);if(IML.hist.length>60)IML.hist.shift();
     const hp=IML.hist.length>16?IML.hist[IML.hist.length-17]:null;if(hp){const dx=hp[0]-b.x,dy=hp[1]-b.y;b.moving=Math.hypot(dx,dy)>0.002;if(Math.abs(dx)>0.003)b.dir=dx>0?1:-1;if(b.moving)b.walk+=Math.hypot(dx,dy);b.x=hp[0];b.y=hp[1];}else b.moving=false;}
@@ -1698,6 +1702,11 @@ function personFramesHD(L,base){
         H(14,ty+3,3,.75,'#1d1f22');H(14.25,ty+3.2,2.5,.3,'#c9ccd0');
         H(15.5,ty+4.5,1.5,3,'#111');H(16,ty+1.5,.5,3,'#111');H(15.75,ty+5,.5,.5,'#54e07a');
         H(12,ty+11.5,2,1,'#c9ccd0');
+        break;
+      case 'lemos':
+        H(10.5,ty,1.5,1,'#e8e2d4');H(14,ty,1.5,1,'#e8e2d4');H(12.25,ty+.5,1.5,1,'#8a3030');H(12.5,ty+1.5,1,6.5,'#7a2a2a');H(12.75,ty+1.5,.5,6,'#9a3a3a');
+        H(8,ty+11,1.5,1.5,'#d4af37');H(8.25,ty+11.25,1,1,'#f0d060');
+        for(const [x,y] of hands){H(x,y,2,2,'#8fb4e0');H(x,y,2,.5,'#6a90c0');}
         break;
       case 'campo':
         for(const y of [3,5,7])H(12.75,ty+y,.5,.5,'#a09a8c');H(10.5,ty,1.5,1,'#e8e2d4');H(14,ty,1.5,1,'#e8e2d4');
@@ -2260,7 +2269,7 @@ $('#b-set').addEventListener('click',()=>openSettings(appEl));
 
 /* ---------- Crew dock: pixel portraits with an energy ring and what each one is doing ---------- */
 const crewEl=$('#crew');
-const SHORT={mauricio:'Maurício',aux:'Auxiliar',paulo:'Paulo',pm1:'PM Silva',pm2:'PM Rocha',pm3:'PM Reis'};
+const SHORT={lemos:'Lemos',pm1:'PM Silva',pm2:'PM Rocha',pm3:'PM Reis'};
 function buzz(ms){try{if(navigator.vibrate)navigator.vibrate(ms);}catch(_){}}
 function kick(el,cls,ms){if(!el)return;el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls);clearTimeout(el['_k_'+cls]);el['_k_'+cls]=setTimeout(()=>el.classList.remove(cls),ms);}
 const HEADURL={};
@@ -2340,7 +2349,7 @@ infoEl.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)ret
 function updateBadge(){const b=$('#badge');b.hidden=S.unread<=0;b.textContent=S.unread;}
 /* ---------- Caderneta do Lemos (src/hud/hud.js): a mesma da base, com as abas da casa ----------
    Achados (com a foto de cada marcador) e Rádio entram como abas da caderneta; Caso, Pessoas e Pistas vêm do save do
-   caso, que a varredura alimenta na hora (caseClue): o que Maurício registra aqui já está no quadro da base. */
+   caso, que a varredura alimenta na hora (caseClue): o que Lemos registra aqui já está no quadro da base. */
 let HUD=null;
 function openSheet(tab){if(tab==='f'){S.unread=0;updateBadge();}if(HUD)HUD.openBook(tab==='f'?'achados':'radio');}
 function achadosHtml(){
@@ -2352,7 +2361,7 @@ function achadosHtml(){
 function radioHtml(){
   return S.msgs.length?S.msgs.slice().reverse().map(m=>`<li class="vmsg">${avatar(m.from)}<span class="tx"><b>${PEOPLE[m.from].name} · ${m.time}</b><span>${m.text}</span></span></li>`).join(''):'<li class="empty">Sem mensagens.</li>';
 }
-function openViewer(id){if(HUD&&HUD.bookOpen)HUD.closeBook();const c=CLUES[id];$('#v-img').src=c.img;$('#v-title').textContent=c.title;$('#v-cap').textContent=`Fotografia pericial · ${c.room} · Maurício Farias`;$('#v-pic').classList.remove('z');viewerEl.hidden=false;}
+function openViewer(id){if(HUD&&HUD.bookOpen)HUD.closeBook();const c=CLUES[id];$('#v-img').src=c.img;$('#v-title').textContent=c.title;$('#v-cap').textContent=`Fotografia pericial · ${c.room} · Lemos`;$('#v-pic').classList.remove('z');viewerEl.hidden=false;}
 function closeViewer(){viewerEl.hidden=true;}
 $('#v-x').addEventListener('click',closeViewer);
 $('#v-img').addEventListener('click',()=>$('#v-pic').classList.toggle('z'));
@@ -2612,8 +2621,6 @@ const CALLS=[
     ok:()=>'',arrive:d=>{svcCar('pol','c',car=>{FITA_MAX+=20;car.departAt=S.tick+90;msg('central','A viatura de apoio deixou mais 20 m de fita com a PM.');deliver(d);});return 'later';}},
   {k:'transito',t:'Fechar a rua',sub:'Trânsito desviado até o fim da varredura',eta:1.5,once:1,ack:'Pedido de bloqueio repassado ao trânsito.',
     ok:()=>S.blockUntil>S.tick?'Rua já fechada':'',arrive:()=>{S.blockUntil=1e9;msg('central','Rua das Acácias fechada nos dois sentidos. Cones na pista.');}},
-  {k:'ic',t:'Apoio da perícia',sub:'Fotógrafo e papiloscopista entram na perícia',eta:3,dur:40,cd:10,ack:'Equipe de apoio da perícia acionada.',
-    ok:()=>S.crew.some(c=>c.tempKind==='ic')?'Apoio no local':'',arrive:d=>{svcCar('ic','b',car=>{joinIC(car);msg('mauricio','Chegou o apoio da perícia. Com fotógrafo e papiloscopista a gente rende mais.');deliver(d);});return 'later';},leave:()=>{for(const a of S.crew.filter(c=>c.tempKind==='ic'))leaveTemp(a,a.key==='ic1'?'Fotos feitas. Até mais.':'Coleta encerrada.');}},
   {k:'aguia',t:'Helicóptero Águia',sub:'Luz do alto ajuda lá fora, mas atrai curiosos',eta:1,dur:3,cd:12,ack:'Águia decolando, chega em instantes.',
     ok:()=>FLY.on?'Já tem helicóptero no ar':'',arrive:()=>{startFlyby();S.aguiaUntil=S.tick+3*20;msg('central','Águia sobre a Rua das Acácias. A luz ajuda no quintal e na frente.');for(let i=0;i<2;i++)setTimeout(()=>{if(S.civs.length<11)spawnCiv();},900+i*1700);}},
   {k:'imprensa',t:'Assessoria de imprensa',sub:'Alguém atende os repórteres no portão',eta:1,once:1,ack:'Assessoria avisada. Vão falar com os repórteres.',
@@ -2746,6 +2753,7 @@ $('#r-knob').addEventListener('click',()=>tune(rCh+1,'knob'));
 $('#r-vol').addEventListener('click',closeRadio);
 $('#r-keys').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!b.dataset.n)return;kick(b,'hit',120);const n=b.dataset.n;if(n==='off')closeRadio();else if(n==='up')tune(rCh+1,1);else if(n==='dn')tune(rCh-1,1);else tune(+n-1,1);});
 rList.addEventListener('click',e=>{const b=e.target.closest('.lr');if(b)tune(+b.dataset.i,1);});
+for(const k of $('#r-keys').children)if(+k.dataset.n>CALLS.length)k.disabled=true;   // teclas sem canal
 // push to talk: hold, the bar fills, letting go early drops the call
 function holdEnd(cancel){SND.pttStop();if(!rHold)return;const h=rHold;rHold=null;cancelAnimationFrame(h.raf);h.el.classList.remove('down');rBig.style.setProperty('--h',0);$('#r-bar').style.width='0';if(cancel&&!radioEl.hidden){say2('TX cancelado',1100);SND.key();}renderRadio();}
 function pttDown(e){
@@ -2937,7 +2945,7 @@ setInterval(()=>{const m=middleBusy(),now=performance.now();
   if(m&&!midWas){midWas=true;midT=now;appEl.classList.add('mid-on');}
   else if(!m&&midWas){midWas=false;appEl.classList.remove('mid-on');if(BUSY_UNTIL>midT)BUSY_UNTIL+=now-midT;}
 },100);
-setTimeout(()=>{if(window.__acacias)Object.assign(window.__acacias,{dbg:{floor,F,passable,civPass,W,H,CROSS_Y,inLot,room,idx}});},0);
+setTimeout(()=>{if(window.__acacias)Object.assign(window.__acacias,{dbg:{floor,F,passable,civPass,W,H,CROSS_Y,inLot,room,idx,hot:()=>hot,setSpeed}});},0);
 
 /* the closed stretch: cones go down once the cars already inside have driven out; cars arriving stop at the cones and back away */
 const CONE_TOP=1*TH+TH-4,CONE_BOT=(H-2)*TH+TH-4;
@@ -3081,7 +3089,7 @@ setTool(null);setSpeed(0);updateUI();
 $('#b-start').addEventListener('click',()=>{SND.init();SND.resume();$('#intro').hidden=true;
   // enquanto o jogador revisa a casa, o material do resto do caso vai baixando aos poucos (src/preload)
   setTimeout(()=>import('../preload/prep').then(m=>m.background()).catch(()=>{}),8000);
-  setSpeed(1);msg('sonia','Estou na base com a Denise. Maurício já está aí e a PM segura a frente. Revise a cena antes de ouvir qualquer versão.');
+  setSpeed(1);msg('sonia','Estou na base com a Denise. A PM segura a frente e a perícia da casa é sua. Revise a cena antes de ouvir qualquer versão.');
   setTimeout(()=>HUD.room('Rua das Acácias','Casa da família Valença'),1200);clearTimeout(coachTm);coachTm=setTimeout(showCoach,9000);});
 addEventListener('pointerdown',()=>SND.resume(),{passive:true});
 document.querySelectorAll('.tool,.speed button,.hbtn,#zoom button').forEach(b=>b.addEventListener('click',()=>SND.click()));

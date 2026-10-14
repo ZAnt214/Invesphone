@@ -90,34 +90,34 @@ export const teamDialogues:TeamDialogue[] = [
   },
   // Maurício: cena, vestígios e leitura física.
   {
-    id:'mauricio_cena',memberId:'mauricio',label:'Me dá sua leitura da casa antes da coleta.',
+    id:'mauricio_cena',memberId:'mauricio',label:'Me dá sua leitura das fotos da casa.',
     minTask:1,clueIds:['porta_intacta','escritorio_revirado','valores_intactos'],
-    user:{time:'04:37',text:'Maurício, me fala da casa antes de vocês começarem a recolher. O que não bate?'},
-    agent:{time:'04:38',text:'A entrada está limpa demais pra invasão. E o escritório está bagunçado, mas tem coisa óbvia de valor que ninguém tocou. Eu não chamaria isso de busca às cegas.'}
+    user:{time:'08:14',text:'Maurício, olha as fotos que eu fiz na casa esta madrugada. O que não bate?'},
+    agent:{time:'08:15',text:'A entrada está limpa demais pra invasão. E o escritório está bagunçado, mas tem coisa óbvia de valor que ninguém tocou. Eu não chamaria isso de busca às cegas.'}
   },
   {
     id:'mauricio_painel',memberId:'mauricio',label:'O painel do alarme foi mexido ou forçado?',
     requiresTopics:['mauricio_cena'],clueIds:['painel_alarme'],
-    user:{time:'04:46',text:'E o painel? Tem sinal de violação ou alguém operou normalmente?'},
-    agent:{time:'04:47',text:'Nada de força. Teclado inteiro, tampa no lugar. Quem desligou sabia o que estava fazendo ou tinha o código. Posso te mandar o registro fotográfico de perto.'}
+    user:{time:'08:46',text:'E o painel? Tem sinal de violação ou alguém operou normalmente?'},
+    agent:{time:'08:47',text:'Nada de força. Teclado inteiro, tampa no lugar. Quem desligou sabia o que estava fazendo ou tinha o código. Posso te mandar o registro fotográfico de perto.'}
   },
   {
     id:'mauricio_canil',memberId:'mauricio',label:'Thor poderia ter sido preso depois?',
     requiresTopics:['mauricio_cena'],clueIds:['cao_canil'],
-    user:{time:'04:49',text:'Sobre o cachorro: dá pra saber se colocaram ele no canil durante a confusão?'},
-    agent:{time:'04:50',text:'Não parece. O canil está normal, sem sinal de contenção improvisada. Pra mim ele foi colocado ali antes de a casa virar cena.'}
+    user:{time:'08:49',text:'Sobre o cachorro: dá pra saber se colocaram ele no canil durante a confusão?'},
+    agent:{time:'08:50',text:'Não parece. O canil está normal, sem sinal de contenção improvisada. Pra mim ele foi colocado ali antes de a casa virar cena.'}
   },
   {
     id:'mauricio_quartos',memberId:'mauricio',label:'E os quartos do andar de cima?',
     requiresTopics:['mauricio_cena'],clueIds:['quarto_livia','vitimas_dormindo'],
-    user:{time:'04:51',text:'E lá em cima? Os quartos também estão mexidos?'},
-    agent:{time:'04:52',text:'O quarto do casal está como quem foi surpreendido dormindo, sem sinal de luta ao redor. O quarto da Lívia está intacto, arrumado, como se ninguém tivesse passado por lá. A bagunça ficou toda embaixo.'}
+    user:{time:'08:51',text:'E lá em cima? Os quartos também estão mexidos?'},
+    agent:{time:'08:52',text:'O quarto do casal está como quem foi surpreendido dormindo, sem sinal de luta ao redor. O quarto da Lívia está intacto, arrumado, como se ninguém tivesse passado por lá. A bagunça ficou toda embaixo.'}
   },
   {
     id:'mauricio_busca',memberId:'mauricio',label:'Essa bagunça parece uma busca real?',
     requiresClues:['escritorio_revirado','valores_intactos'],
-    user:{time:'04:56',text:'Olha o escritório pra mim como perito, não como policial. Isso parece alguém procurando coisa de verdade?'},
-    agent:{time:'04:57',text:'Parece alguém tentando produzir bagunça. Gaveta sem importância aberta, ponto óbvio intacto, objeto caro à vista. Se procuraram algo, sabiam exatamente o que queriam.'}
+    user:{time:'08:56',text:'Olha o escritório pra mim como perito, não como policial. Isso parece alguém procurando coisa de verdade?'},
+    agent:{time:'08:57',text:'Parece alguém tentando produzir bagunça. Gaveta sem importância aberta, ponto óbvio intacto, objeto caro à vista. Se procuraram algo, sabiam exatamente o que queriam.'}
   },
 
   // Renata: cruzamentos, registros e inteligência.
@@ -215,14 +215,14 @@ export const teamDialogues:TeamDialogue[] = [
     id:'mauricio_porta',memberId:'mauricio',label:'Dá pra afirmar que ninguém forçou a porta?',
     callPeople:['livia'],
     requiresClues:['porta_intacta'],
-    user:{time:'04:43',text:'Maurício, a porta da frente: dá pra afirmar que ninguém forçou?'},
-    agent:{time:'04:44',text:'Fechadura e batente inteiros. Sem marca de alavanca, sem lasca, sem nada torcido. Quem entrou não precisou forçar. Vou te mandar de perto, com escala, pra ficar registrado.'}
+    user:{time:'08:43',text:'Maurício, a porta da frente: dá pra afirmar que ninguém forçou?'},
+    agent:{time:'08:44',text:'Fechadura e batente inteiros. Sem marca de alavanca, sem lasca, sem nada torcido. Quem entrou não precisou forçar. Vou te mandar de perto, com escala, pra ficar registrado.'}
   },
   {
     id:'mauricio_laudo',memberId:'mauricio',label:'Já dá pra ter um laudo preliminar do local?',
     minInterviews:2,requiresTopics:['mauricio_cena'],
-    user:{time:'05:20',text:'Já ouvi duas versões. Dá pra eu ter um laudo preliminar do local?'},
-    agent:{time:'05:21',text:'Dá. Preliminar mesmo: descreve o que está lá e o que não está, sem apontar ninguém. O que depende de laboratório fica de fora por enquanto. Te mando.'}
+    user:{time:'09:20',text:'Já ouvi duas versões. Dá pra eu ter um laudo preliminar do local?'},
+    agent:{time:'09:21',text:'Dá. Preliminar mesmo: descreve o que está lá e o que não está, sem apontar ninguém. O que depende de laboratório fica de fora por enquanto. Te mando.'}
   },
   {
     id:'renata_placa',memberId:'renata',label:'Consegue puxar o Gol que o Jorge viu?',
@@ -285,7 +285,7 @@ export const teamMaterialRequests:TeamMaterialRequest[] = [
     assetPaths:case01MaterialAssets.fotos_cena,
     description:'Entrada, sala, cozinha, escritório, corredor, os dois quartos e o canil.',
     minTask:1,requiresTopics:['mauricio_cena'],requestTime:'04:39',
-    response:{time:'04:42',from:'Perícia',text:'Separei o pacote antes da coleta. Tem entrada, sala, cozinha, escritório, corredor, os dois quartos e o canil. Estou te enviando na ordem em que fotografamos.'}
+    response:{time:'08:42',from:'Perícia',text:'Separei o pacote antes da coleta. Tem entrada, sala, cozinha, escritório, corredor, os dois quartos e o canil. Estou te enviando na ordem em que fotografamos.'}
   },
   {
     id:'fotos_painel',memberId:'mauricio',label:'Close do painel do alarme',kind:'FOTO',
@@ -293,7 +293,7 @@ export const teamMaterialRequests:TeamMaterialRequest[] = [
     assetPaths:case01MaterialAssets.fotos_painel,
     description:'Fotografias do teclado, visor e estado do painel antes da manipulação.',
     requiresClues:['painel_alarme'],requiresTopics:['mauricio_painel'],requestTime:'04:48',
-    response:{time:'04:51',from:'Perícia',text:'Enviei os closes. Teclado inteiro, visor e tampa. Fotografei antes de tocar em qualquer coisa.'}
+    response:{time:'08:51',from:'Perícia',text:'Enviei os closes. Teclado inteiro, visor e tampa. Fotografei antes de tocar em qualquer coisa.'}
   },
   {
     id:'gravacoes_depoimentos',memberId:'denise',label:'Separar gravações dos depoimentos',kind:'GRAVAÇÃO',
@@ -345,7 +345,7 @@ export const teamMaterialRequests:TeamMaterialRequest[] = [
     assetPaths:case01MaterialAssets.croqui_residencia,
     description:'Planta da casa com os pontos fotografados numerados.',
     minTask:1,requiresTopics:['mauricio_cena'],requestTime:'04:40',
-    response:{time:'04:45',from:'Perícia',text:'Montei o croqui com os pontos fotografados numerados: casa, canil e circulação. Serve pra você se localizar quando eu falar de um ambiente.'}
+    response:{time:'08:45',from:'Perícia',text:'Montei o croqui com os pontos fotografados numerados: casa, canil e circulação. Serve pra você se localizar quando eu falar de um ambiente.'}
   },
   {
     id:'fechadura_porta',memberId:'mauricio',label:'Close da fechadura da porta',kind:'FOTO',
@@ -353,7 +353,7 @@ export const teamMaterialRequests:TeamMaterialRequest[] = [
     assetPaths:case01MaterialAssets.fechadura_porta,
     description:'Fechadura e batente da porta principal, com escala.',
     requiresClues:['porta_intacta'],requiresTopics:['mauricio_porta'],requestTime:'04:45',
-    response:{time:'04:46',from:'Perícia',text:'Aqui o close da fechadura com a escala encostada. Sem marca de força.'}
+    response:{time:'08:46',from:'Perícia',text:'Aqui o close da fechadura com a escala encostada. Sem marca de força.'}
   },
   {
     id:'trava_canil',memberId:'mauricio',label:'Foto da trava do canil',kind:'FOTO',
@@ -361,7 +361,7 @@ export const teamMaterialRequests:TeamMaterialRequest[] = [
     assetPaths:case01MaterialAssets.trava_canil,
     description:'Trinco do canil por fora, com Thor ao fundo.',
     requiresClues:['cao_canil'],requiresTopics:['mauricio_canil'],requestTime:'04:52',
-    response:{time:'04:53',from:'Perícia',text:'O ferrolho está fechado por fora, do jeito que se fecha todo dia. O Thor está lá dentro, calmo.'}
+    response:{time:'08:53',from:'Perícia',text:'O ferrolho está fechado por fora, do jeito que se fecha todo dia. O Thor está lá dentro, calmo.'}
   },
   {
     id:'escritorio_comparativo',memberId:'mauricio',label:'Foto comparativa do escritório',kind:'FOTO',
@@ -369,7 +369,7 @@ export const teamMaterialRequests:TeamMaterialRequest[] = [
     assetPaths:case01MaterialAssets.escritorio_comparativo,
     description:'Gavetas laterais abertas e o que ficou intacto à vista.',
     requiresClues:['escritorio_revirado','valores_intactos'],requiresTopics:['mauricio_busca'],requestTime:'04:58',
-    response:{time:'05:02',from:'Perícia',text:'Fotografei como está: gavetas laterais abertas, papéis fora do lugar, e o relógio, o notebook e o cofre intactos à vista.'}
+    response:{time:'09:02',from:'Perícia',text:'Fotografei como está: gavetas laterais abertas, papéis fora do lugar, e o relógio, o notebook e o cofre intactos à vista.'}
   },
   {
     id:'laudo_preliminar_local',memberId:'mauricio',label:'Laudo preliminar do local',kind:'PERÍCIA',
@@ -377,7 +377,7 @@ export const teamMaterialRequests:TeamMaterialRequest[] = [
     assetPaths:case01MaterialAssets.laudo_preliminar_local,
     description:'Descrição técnica do local, sem apontar autoria.',
     minInterviews:2,requiresTopics:['mauricio_laudo'],requestTime:'05:21',
-    response:{time:'05:25',from:'Perícia',text:'Segue o laudo preliminar. Ele descreve o estado do local e deixa explícito que não atribui autoria a ninguém.'}
+    response:{time:'09:25',from:'Perícia',text:'Segue o laudo preliminar. Ele descreve o estado do local e deixa explícito que não atribui autoria a ninguém.'}
   },
   {
     id:'ficha_veiculo_gol',memberId:'renata',label:'Ficha do Gol que o vigia viu',kind:'DOCUMENTO',
@@ -480,9 +480,9 @@ export const teamMemberForSender=(from:string)=>{
 
 export const teamIntroMessages = [
  {time:'04:32',from:'Sônia',text:'Estou no canal. Me chama quando uma peça mudar a direção do caso.',memberId:'sonia' as TeamMemberId,outgoing:false},
- {time:'04:35',from:'Maurício',text:'Entrei na residência agora. Vou te avisando o que for objetivo antes de qualquer interpretação.',memberId:'mauricio' as TeamMemberId,outgoing:false},
+ {time:'08:12',from:'Maurício',text:'Recebi as fotos que você fez na casa. Vou te avisando o que for objetivo antes de qualquer interpretação.',memberId:'mauricio' as TeamMemberId,outgoing:false},
  {time:'04:44',from:'Renata',text:'Assim que você fechar os primeiros nomes e horários, começo os cruzamentos.',memberId:'renata' as TeamMemberId,outgoing:false},
- {time:'04:39',from:'Paulo',text:'Estou rodando a rua e separando quem realmente viu alguma coisa de quem só ouviu barulho depois.',memberId:'paulo' as TeamMemberId,outgoing:false},
+ {time:'08:13',from:'Paulo',text:'A PM me passou quem estava na frente da casa. Vou separar quem realmente viu alguma coisa de quem só ouviu barulho depois.',memberId:'paulo' as TeamMemberId,outgoing:false},
  {time:'04:58',from:'Denise',text:'Vou manter os depoimentos separados e registrar qualquer mudança de versão. Se quiser comparar trechos, me chama.',memberId:'denise' as TeamMemberId,outgoing:false}
 ]
 
