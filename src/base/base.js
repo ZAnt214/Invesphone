@@ -1775,10 +1775,13 @@ function drawPerson(p,sit,id){
     if(LODV>=3){const xs=p.dir<0?[X+2,X-3]:[X-3.5,X+1.5];for(const x of xs){ctx.fillStyle=sk;ctx.fillRect(x,Y-35.5+bob+cy,1.5,1.5);ctx.fillStyle=rgbs(mul(hex(sk),0.55));ctx.fillRect(x,Y-34.3+bob+cy,1.5,.35);}}
     else{ctx.fillRect(X-3,Y-35+bob+cy,1,2);ctx.fillRect(X+2,Y-35+bob+cy,1,2);}}
 }
+// sinal de novidade: ponto amarelo com um anel que se abre devagar
 function drawMarker(X,Y){
-  const b=Math.round(Math.sin(frame/10)*2);ctx.fillStyle='#1e1611';ctx.beginPath();ctx.moveTo(X,Y+b+7);ctx.lineTo(X-6,Y+b);ctx.lineTo(X,Y+b-7);ctx.lineTo(X+6,Y+b);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#f2c230';ctx.beginPath();ctx.moveTo(X,Y+b+5);ctx.lineTo(X-4,Y+b);ctx.lineTo(X,Y+b-5);ctx.lineTo(X+4,Y+b);ctx.closePath();ctx.fill();
-  ctx.fillStyle='#1e1611';ctx.fillRect(X-1,Y+b-3,2,4);ctx.fillRect(X-1,Y+b+2,2,1.5);
+  const t=(frame%90)/90,b=Math.round(Math.sin(frame/12)*1.5);
+  ctx.globalAlpha=0.55*(1-t);ctx.strokeStyle='#f2c230';ctx.lineWidth=1.2;ctx.beginPath();ctx.arc(X,Y+b,4+t*7,0,7);ctx.stroke();
+  ctx.globalAlpha=1;ctx.fillStyle='#1e1611';ctx.beginPath();ctx.arc(X,Y+b,4.6,0,7);ctx.fill();
+  ctx.fillStyle='#f2c230';ctx.beginPath();ctx.arc(X,Y+b,3.2,0,7);ctx.fill();
+  ctx.fillStyle='rgba(255,246,214,.9)';ctx.fillRect(X-1.5,Y+b-1.8,1.2,1.2);
 }
 let UIK=1;
 function atUI(X,Y,fn){if(UIK>=0.999){fn();return;}ctx.save();ctx.translate(X,Y);ctx.scale(UIK,UIK);ctx.translate(-X,-Y);fn();ctx.restore();}
@@ -1788,11 +1791,16 @@ function drawSay(X,Y,s,al){atUI(X,Y,()=>{
   ctx.globalAlpha=al;ctx.fillStyle='#1e1611';ctx.fillRect(x-1,y-1,w+2,12);ctx.fillRect(X-2,y+11,4,2);
   ctx.fillStyle='#f3f1ea';ctx.fillRect(x,y,w,10);ctx.fillRect(X-1,y+10,2,2);
   ctx.fillStyle='#14181b';ctx.textAlign='center';ctx.fillText(s,X,y+7.5);ctx.textAlign='left';ctx.globalAlpha=1;});}
+// nomes das salas pintados no piso, junto à parede da frente: aparecem ao afastar, sem caixa por cima dos móveis
+// o corredor restrito termina no balcão da recepção: o nome sobe para o chão do corredor
+const LABEL_DY={acesso:-2.4};
 function drawRoomLabels(){
-  const fa=clamp((1.0-LODE)/0.2,0,1);if(fa<=0)return;ctx.save();ctx.globalAlpha=fa;ctx.font='bold 9px ui-monospace,Menlo,monospace';ctx.textAlign='center';
-  for(const k in ROOM_RECT){const r=ROOM_RECT[k],X=(r[0]+r[2]+1)/2*T,Y=(r[1]+r[3])/2*TH,t=ROOM_NAME[k].toUpperCase(),w=ctx.measureText(t).width+10;
-    ctx.fillStyle='rgba(8,10,12,.75)';ctx.fillRect(Math.round(X-w/2),Math.round(Y-9),Math.ceil(w),13);ctx.fillStyle='#e9edf0';ctx.fillText(t,X,Y);}
-  ctx.restore();ctx.textAlign='left';
+  const fa=clamp((1.0-LODE)/0.2,0,1);if(fa<=0)return;ctx.save();ctx.font=`700 8px ${MICROFONT}`;ctx.textAlign='left';ctx.textBaseline='alphabetic';
+  for(const k in ROOM_RECT){const r=ROOM_RECT[k],t=ROOM_NAME[k].toUpperCase(),sp=2.2,cw=[...t].map(c=>ctx.measureText(c).width),w=cw.reduce((a,b)=>a+b,0)+sp*(t.length-1);
+    let x=(r[0]+r[2]+1)/2*T-w/2;const y=(r[3]+1)*TH-RISE+CAPH-6+(LABEL_DY[k]||0)*TH;
+    ctx.lineWidth=2.2;ctx.strokeStyle='rgba(10,10,14,.6)';ctx.lineJoin='round';
+    [...t].forEach((c,i)=>{ctx.globalAlpha=fa*0.75;ctx.strokeText(c,x,y);ctx.fillStyle='#efe9da';ctx.fillText(c,x,y);x+=cw[i]+sp;});}
+  ctx.restore();ctx.textAlign='left';ctx.globalAlpha=1;
 }
 function drawNames(){
   const fa=clamp((LODE-1.9)/0.3,0,1);if(fa<=0||talkOpen)return;
@@ -1861,14 +1869,20 @@ function render(){
   lightPass(s,ox,oy);
   SPR();smokePass();glowPass();focusPass();post2d();
   // camada legível: sinais, falas, nomes
-  for(const n of NPCS)if(hasNews(n.id)&&!(talk&&talk.id===n.id))atUI(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?64:60),()=>drawMarker(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?64:60)));
-  for(const o of objs)if(o.hot&&o.spr&&!o.nomark&&!talkOpen&&(o.hot==='interro'?hasNews('interro'):!SEEN[o.hot])){const sp=o.spr;drawMarker(o.x*T+o.w*T/2,o.hot==='interro'?sp.y-36:sp.y-6);}
+  // sinais de novidade: no máximo três (MARKS_MAX), primeiro o que move a história (Sônia, equipe com novidade,
+  // depoimentos), depois pessoas e coisas ainda não vistas; no empate, o mais perto do Lemos
+  {const cand=[];
+    for(const n of NPCS)if(hasNews(n.id)&&!(talk&&talk.id===n.id)){const X=Math.round(n.x*T)+16,Y=Math.round(n.y*TH)+TH-(n.sit?64:60);cand.push({X,Y,ui:1,p:n.id==='sonia'?5:TEAM_IDS.has(n.id)?4:2,d:dist(P1.x,P1.y,n.x,n.y)});}
+    if(!talkOpen)for(const o of objs)if(o.hot&&o.spr&&!o.nomark&&(o.hot==='interro'?hasNews('interro'):!SEEN[o.hot])){const sp=o.spr;cand.push({X:o.x*T+o.w*T/2,Y:o.hot==='interro'?sp.y-36:sp.y-6,ui:0,p:o.hot==='interro'?4:1,d:dist(P1.x,P1.y,o.x+o.w/2,o.y)});}
+    cand.sort((a,b)=>b.p-a.p||a.d-b.d);
+    for(const m of cand.slice(0,MARKS_MAX)){if(m.ui)atUI(m.X,m.Y,()=>drawMarker(m.X,m.Y));else drawMarker(m.X,m.Y);}}
   for(const n of NPCS)if(n.say&&!talkOpen){const al=Math.min(1,(n.say.life-n.say.t)/20,n.say.t/6);drawSay(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?70:74),n.say.txt,al);}
   drawNames();drawRoomLabels();
 }
 // o sinal amarelo da equipe é desenhado a cada quadro: a conta só é refeita quando o save muda
 let NEWS_C=null,NEWS_M={};
 function teamNewsCount(id){if(NEWS_C!==CASE){NEWS_C=CASE;NEWS_M={};}return NEWS_M[id]??(NEWS_M[id]=teamNews(CASE,id).count);}
+const MARKS_MAX=3;
 function hasNews(id){if(!DLG[id])return false;if(id==='interro')return INTERRO_NEWS||!SEEN.interro;if(TEAM_IDS.has(id))return teamNewsCount(id)>0||(id==='sonia'&&!SEEN.sonia);return !SEEN[id];}
 function isSeat(n){const i=ti(n);return objs.some(o=>o.nocc&&idx(o.x,o.y)===i);}
 
