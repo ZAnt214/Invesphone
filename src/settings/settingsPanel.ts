@@ -66,7 +66,7 @@ function renderList(list:HTMLElement){
   }
   if(tab==='jogo'){
     const r = h('button','st-act'+(confirmReset?' danger':''),confirmReset?'Toque de novo para apagar':'Recomeçar') as HTMLButtonElement
-    r.onclick = ()=>{ if(!confirmReset){ confirmReset = true; renderList(list); return } resetCaseStorage(); location.href = '/' }
+    r.onclick = ()=>{ if(!confirmReset){ confirmReset = true; renderList(list); return } resetCaseStorage(); location.replace('/base/') }
     list.appendChild(row('Recomeçar o caso','Apaga o progresso do Caso 01 e volta ao início. Não dá para desfazer.',r))
     const d = h('button','st-act','Restaurar') as HTMLButtonElement
     d.onclick = ()=>{ resetFx(); d.textContent = 'Pronto' }
