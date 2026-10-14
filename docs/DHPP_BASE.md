@@ -77,8 +77,9 @@ Falas só usam fatos do início do Caso 01 (cena lida, painel, Thor, valores, lo
 
 ## Visão afastada (14/10/2026)
 
-- A planta tem 28 linhas: as linhas 26–27 são a calçada do outro lado da rua, para a câmera descer até a rua inteira.
-- Em volta da planta, `drawApron` repete a borda do terreno (grama em cima; grama, pátio, calçadas e rua dos lados) e escurece com a distância: afastado, nunca aparece preto.
+- A planta tem 30 linhas e o lado de fora bate com a cena da rua (`docs/RUA_BEATCOP_BASE.md`): becos de serviço nos lados e atrás do prédio (colunas 0 e 33, linha 0), calçada nas linhas 19–22 com degraus na entrada e árvores junto ao meio-fio, rua nas linhas 23–26 (vaga junto ao meio-fio com a viatura do DHPP de frente para o oeste, duas mãos com faixa amarela dupla e faixas de pedestre nas pontas), calçada do outro lado na linha 27 e telhados de tijolo (platibanda, vão de serviço, ar-condicionado) nas linhas 28–29.
+- Em volta da planta, `drawApron` desenha a mesma vizinhança da rua: à esquerda o DINER, um prédio de apartamentos e o GROCERY; à direita a PAWN SHOP, a LAUNDRY e outro prédio (`buildNeigh`); atrás, telhados. Calçada, rua e telhados da frente continuam pelos lados, e tudo escurece com a distância: afastado, nunca aparece preto.
+- A fachada tem, como na rua, os painéis "Plantão 24 horas" e "Departamento de Homicídios e de Proteção à Pessoa" (`buildPanels`).
 - Balões de fala e sinais nunca ficam menores que na escala 1 (`UIK`), então continuam legíveis de longe.
 - O aviso de mensagem (`#toast`) fica no canto de baixo à direita, sem cobrir as salas de cima.
 - As bandeiras ficam nas colunas 11 e 20, fora da placa do DHPP; o texto da placa "ÁREA RESTRITA" se ajusta à largura.
@@ -106,6 +107,16 @@ Ajuste `base.life` (Ajustes > Vida no cenário):
 - A copiadora solta uma folha de vez em quando enquanto alguém a usa (`FXP` do tipo `sheet`).
 
 O que já existia continua: vapor dos cafés, ventilador de teto da delegada, bolhas no bebedouro, fumaça e brasa do cigarro, poeira nos fachos, lâmpadas do Arquivo Morto piscando, relógio e monitores.
+
+## Arte que some no iPhone (14/10/2026)
+
+O Safari do iPhone pode descartar o desenho guardado nos canvas fora da tela quando falta memória (o quadro do caso usa bastante): o piso, as paredes, os móveis e as pessoas voltavam vazios e a base ficava quase preta. `artLost` confere um pixel do piso e de um móvel (copiando para um canvas de 1 px, sem puxar o piso inteiro da GPU) ao voltar do quadro e do depoimento, ao voltar para a aba e a cada 4 s; se sumiram, `rebuildArt` refaz toda a arte (piso, paredes, móveis, pessoas, carros e o cache de luzes).
+
+## Desempenho (14/10/2026)
+
+- A tela não é mais limpa com uma cor a cada quadro: o entorno e o piso já a cobrem.
+- O tom de cor da sala (`post2d`, soft-light na tela toda) só é pintado quando aparece.
+- Os degradês do entorno e as larguras das letras dos nomes ficam guardados.
 
 ## Pendências
 - Sprites são pixel art procedural; retratos de Renata, Denise, Paulo e Maurício ainda usam iniciais nos balões (aguardam arte do ChatGPT).
