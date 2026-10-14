@@ -244,7 +244,7 @@ Rua, base e casa têm rotinas próprias: cada personagem tem função, ritmo e l
 
 ## HUD do Lemos
 
-Na rua e na base, a interface é o HUD do Lemos: o retrato, a caderneta, as faixas de cinema com o nome do lugar (só nos lugares importantes), a última descoberta e a pista anexada, com luz, partículas e som. Antes de mexer no cabeçalho, nas descobertas, na caderneta ou no que é anunciado ao jogador, ler `docs/HUD_LEMOS.md`. Código em `src/hud/`. O que é novo sai da comparação com o save do caso: para anunciar algo, grave no save, não chame o HUD direto.
+Na rua, na base e na casa, a interface é o HUD do Lemos: o retrato, a caderneta, as faixas de cinema com o nome do lugar (só nos lugares importantes), a última descoberta e a pista anexada, com luz, partículas e som. Antes de mexer no cabeçalho, nas descobertas, na caderneta ou no que é anunciado ao jogador, ler `docs/HUD_LEMOS.md`. Código em `src/hud/`. O que é novo sai da comparação com o save do caso: para anunciar algo, grave no save, não chame o HUD direto.
 
 ## Ajustes: todo efeito pode ser desligado
 

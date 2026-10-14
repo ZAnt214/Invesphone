@@ -770,13 +770,13 @@ function buildLamp(){ // luminária pendente da sala de depoimentos
 
 /* ---------- Estado ---------- */
 const NPCDEF=[
-  {id:'sonia',name:'Sônia Prado',role:'Delegada · DHPP',look:'sonia',x:5,y:3,sit:true,ini:'SP',col:'#c9a24a',act:'write',lines:['Hm.','Assina aqui, depois.','Café, alguém?'],idle:['phone','read','chin','drink','read'],poseLines:{phone:['Alô. Sim, doutor.','Me manda isso por escrito.','Ainda não. Estou com a equipe.']}},
-  {id:'renata',name:'Renata Leal',role:'Investigadora',look:'renata',x:13,y:3,sit:true,ini:'RL',col:'#7fc9b6',act:'type',lines:['Cruzando registro.','Cadê a minha caneta?','Isso aqui é coincidência.'],idle:['chin','drink','scratch','stretch','phone'],poseLines:{phone:['Oi, é a Renata, do DHPP.','Pode me mandar a lista inteira?'],stretch:['Ai, minhas costas.']}},
-  {id:'denise',name:'Denise Rocha',role:'Escrivã',look:'denise',x:17,y:3,sit:true,ini:'DR',col:'#c9a7d9',act:'type',lines:['Fita nova no gravador.','Folha 2 de 3.'],idle:['read','drink','stretch','chin','read']},
-  {id:'paulo',name:'Paulo Vieira',role:'Investigador de campo',look:'paulo',x:19,y:6,ini:'PV',col:'#d6b27a',walk:[[19,6,'drink'],[16,7,'phone'],[18,2,'watch']],lines:['Café requentado de novo.','A rua acordou cedo.','Vou pegar o carro já já.'],idle:['cross','watch','scratch','phone'],poseLines:{phone:['Fala, chefe. Tô na base.','Passa aqui mais tarde.'],drink:['Tá frio de novo.']}},
-  {id:'mauricio',name:'Maurício Farias',role:'Perito criminal',look:'mauricio',x:25,y:3,sit:true,ini:'MF',col:'#9fb7c9',act:'type',walk:[[25,3],[27,5,'read']],lines:['Luva nova.','Etiqueta, lacre, assinatura.','Foto 14, refaz.'],idle:['read','chin','scratch','stretch']},
-  {id:'faxina',name:'Limpeza',role:'Equipe de apoio',look:'faxina',x:13,y:15,ini:'LP',col:'#8fb0c8',mop:true,walk:[[13,15],[19,13,'stretch'],[17,16],[12,14,'watch'],[18,12]],lines:['Cuidado, tá molhado.','Bom dia, doutor.','Esse café mancha tudo.'],idle:['watch','scratch']},
-  {id:'plantao',name:'Plantão',role:'Recepção · DHPP',look:'plantao',x:14,y:11,sit:true,ini:'PL',col:'#a9b8c6',act:'write',lines:['DHPP, bom dia.','Um momento, por favor.','Sem comentários.'],idle:['phone','phone','read','cross','drink'],poseLines:{phone:['DHPP, bom dia.','Não, senhor. Sem comentários.','Vou transferir, aguarde.']}},
+  {id:'sonia',name:'Sônia Prado',role:'Delegada · DHPP',look:'sonia',x:5,y:3,sit:true,ini:'SP',col:'#c9a24a',act:'write',lines:['Hm.','Assina aqui, depois.','Café, alguém?',{t:'Li o teu registro da casa, Lemos.',when:()=>!!FIM},{t:'Que noite. Senta, toma um café.',when:()=>!!FIM},{t:'Madrugada parada até agora.',when:()=>NIGHT&&!briefed()}],idle:['phone','read','chin','drink','read'],poseLines:{phone:['Alô. Sim, doutor.','Me manda isso por escrito.','Ainda não. Estou com a equipe.']}},
+  {id:'renata',name:'Renata Leal',role:'Investigadora',look:'renata',x:13,y:3,sit:true,ini:'RL',col:'#7fc9b6',act:'type',lines:['Cruzando registro.','Cadê a minha caneta?','Isso aqui é coincidência.',{t:'Vi as fotos da casa. Pesado.',when:()=>!!FIM}],idle:['chin','drink','scratch','stretch','phone'],poseLines:{phone:['Oi, é a Renata, do DHPP.','Pode me mandar a lista inteira?'],stretch:['Ai, minhas costas.']}},
+  {id:'denise',name:'Denise Rocha',role:'Escrivã',look:'denise',x:17,y:3,sit:true,ini:'DR',col:'#c9a7d9',act:'type',lines:['Fita nova no gravador.','Folha 2 de 3.',{t:'Plantão comprido hoje.',when:()=>NIGHT},{t:'O Maurício mandou as fotos pelo rádio.',when:()=>NIGHT&&CX.clues()>0}],idle:['read','drink','stretch','chin','read']},
+  {id:'paulo',name:'Paulo Vieira',role:'Investigador de campo',look:'paulo',x:19,y:6,ini:'PV',col:'#d6b27a',walk:[[19,6,'drink'],[16,7,'phone'],[18,2,'watch']],lines:['Café requentado de novo.','A rua acordou cedo.','Vou pegar o carro já já.',{t:'Ainda tô com o barro do quintal no sapato.',when:()=>!!FIM},{t:'A vizinhança da Acácias não dormiu.',when:()=>!!FIM},{t:'Tirei curioso da frente da casa a noite toda.',when:()=>!!(FIM&&FIM.escoltas>0)}],idle:['cross','watch','scratch','phone'],poseLines:{phone:['Fala, chefe. Tô na base.','Passa aqui mais tarde.'],drink:['Tá frio de novo.']}},
+  {id:'mauricio',name:'Maurício Farias',role:'Perito criminal',look:'mauricio',x:25,y:3,sit:true,ini:'MF',col:'#9fb7c9',act:'type',walk:[[25,3],[27,5,'read']],lines:['Luva nova.','Etiqueta, lacre, assinatura.','Foto 14, refaz.',{t:'Sete marcadores, sete fotos. A casa está toda aqui.',when:()=>!!(FIM&&FIM.achados>=7)},{t:'A cena chegou inteira. Deu pra trabalhar.',when:()=>!!(FIM&&FIM.contaminacao<25)},{t:'Teve gente pisando no terreno. Vai constar no laudo.',when:()=>!!(FIM&&FIM.contaminacao>=60)}],idle:['read','chin','scratch','stretch']},
+  {id:'faxina',name:'Limpeza',role:'Equipe de apoio',look:'faxina',x:13,y:15,ini:'LP',col:'#8fb0c8',mop:true,walk:[[13,15],[19,13,'stretch'],[17,16],[12,14,'watch'],[18,12]],lines:['Cuidado, tá molhado.',{t:'Bom dia, doutor.',when:()=>!NIGHT},{t:'Boa noite, doutor.',when:()=>NIGHT},'Esse café mancha tudo.'],idle:['watch','scratch']},
+  {id:'plantao',name:'Plantão',role:'Recepção · DHPP',look:'plantao',x:14,y:11,sit:true,ini:'PL',col:'#a9b8c6',act:'write',lines:[{t:'DHPP, bom dia.',when:()=>!NIGHT},{t:'DHPP, plantão.',when:()=>NIGHT},'Um momento, por favor.','Sem comentários.'],idle:['phone','phone','read','cross','drink'],poseLines:{phone:['DHPP, bom dia.','Não, senhor. Sem comentários.','Vou transferir, aguarde.']}},
   {id:'guarda',name:'Guarda',role:'Controle de acesso · DHPP',look:'guarda',x:20,y:14,ini:'GD',col:'#7a8fb0',lines:['Crachá, por favor.','Só com crachá, senhor.','Aguarde ser chamado, senhor.'],idle:['watch','cross','watch','scratch']},
 ];
 // conversa de fundo entre colegas (nada do caso: só o dia a dia da base). Os dois precisam estar parados e perto.
@@ -1344,7 +1344,7 @@ function update(dt){
   for(const n of NPCS){
     if(n.sayQ&&(n.sayQ.d-=dt*60)<=0){n.say={txt:n.sayQ.txt,t:0,life:170};n.sayQ=null;}
     if(n.say){n.say.t+=dt*60;if(n.say.t>n.say.life)n.say=null;}
-    else if(started&&(n.sayT-=dt*60)<0){n.sayT=1300+Math.random()*2000;if(dist(P1.x,P1.y,n.x,n.y)<9&&!(n.act&&n.act.st==='ring')){const txt=LINES.pick(LR,n.lines.map(t=>({t})),LCTX,n.id,performance.now()/1000);if(txt)n.say={txt,t:0,life:170};}}
+    else if(started&&(n.sayT-=dt*60)<0){n.sayT=1300+Math.random()*2000;if(dist(P1.x,P1.y,n.x,n.y)<9&&!(n.act&&n.act.st==='ring')){const txt=LINES.pick(LR,n.lines.map(t=>typeof t==='string'?{t}:t),LCTX,n.id,performance.now()/1000);if(txt)n.say={txt,t:0,life:170};}}
     if(n.hold){n.pose=null;continue;}
     if(n.path.length){n.pose=null;const was=n.path.length;stepAgent(n,(RT[n.id]?RT[n.id].speed:1.5)*dt,i=>passable(i)&&ti(P1)!==i&&!NPCS.some(m=>m!==n&&ti(m)===i));
       if(!n.path.length&&was){arriveAct(n);}else if(!n.path.length&&n.act&&n.act.st==='go'){n.actT=.5;}continue;}
@@ -1450,7 +1450,7 @@ const POOL={
   renata_tel:[{t:'Oi, é a Renata, do DHPP.'},{t:'Pode me mandar a lista inteira?'},{t:'Preciso disso com data e hora.'},{t:'Manda no e-mail da equipe, por favor.'}],
   paulo_tel:[{t:'Fala. Tô na base.'},{t:'Passa o endereço completo.'},{t:'Já vou, já vou.'},{t:'Me liga quando ele chegar.'}],
   paulo_radio:[{t:'Viatura 7, na escuta.'},{t:'Copiado. Base.'},{t:'Negativo, ainda na base.'}],
-  plantao_tel:[{t:'DHPP, bom dia.'},{t:'Um momento, por favor.'},{t:'Não, senhor. Sem comentários.'},{t:'Vou transferir, aguarde.'},{t:'Imprensa, de novo.'}],
+  plantao_tel:[{t:'DHPP, bom dia.',when:()=>!NIGHT},{t:'DHPP, plantão noturno.',when:()=>NIGHT},{t:'Um momento, por favor.'},{t:'Não, senhor. Sem comentários.'},{t:'Vou transferir, aguarde.'},{t:'Imprensa, de novo.'}],
   quadro:[{t:'Hm.'},{t:'Isso aqui não fecha.'},{t:'Falta uma linha aqui.',when:()=>CX.topics()>0},{t:'Vou mudar isso de lugar.',when:()=>CX.clues()>2}],
   arquivo:[{t:'Caixa 14… cadê a 15?'},{t:'Quem guardou isso fora da ordem?'}],
   denise_mesa:[{t:'Folha 2 de 3.'},{t:'Termo pronto pra assinar.',when:()=>CX.interviewed()>0},{t:'Transcrevendo.',when:()=>CX.interviewed()>0}],
@@ -1461,7 +1461,7 @@ const POOL={
   chat_denise:[{t:'Denise, tem grampeador aí?',who:'renata'},{t:'Esse ar-condicionado tá de brincadeira.',who:'renata'},{t:'Você viu a pasta azul?',who:'renata'}],
   chat_plantao:[{t:'Alguém procurou por mim?',who:'paulo'},{t:'A chave da viatura tá aí?',who:'paulo'}],
   reply:[{t:'Hm, já vejo.'},{t:'Pode deixar.'},{t:'Gaveta de cima.'},{t:'Agora não, depois.'},{t:'Tá.'},{t:'Já já.'}],
-  greet_sonia:[{t:'Lemos.'}],greet_plantao:[{t:'Bom dia, doutor.'},{t:'Doutor.'}],greet:[{t:'Bom dia, Lemos.'},{t:'E aí, Lemos.'},{t:'Lemos.'}],
+  greet_sonia:[{t:'Lemos.'}],greet_plantao:[{t:'Bom dia, doutor.',when:()=>!NIGHT},{t:'Boa noite, doutor.',when:()=>NIGHT},{t:'Doutor.'}],greet:[{t:'Bom dia, Lemos.',when:()=>!NIGHT},{t:'Noite longa, Lemos.',when:()=>NIGHT},{t:'Voltou da casa, Lemos?',when:()=>!!FIM},{t:'E aí, Lemos.'},{t:'Lemos.'}],
   board_new:[{t:'Vou pôr no quadro.'},{t:'Isso muda a ordem aqui.'}]
 };
 const LCTX={};

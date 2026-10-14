@@ -38,6 +38,8 @@ export function createHud(o){
     <nav class="lh-tabs" role="tablist"><button data-k="caso">Caso</button><button data-k="pessoas">Pessoas</button><button data-k="pistas">Pistas</button><button data-k="suspeitas">Suspeitas</button><button data-k="hipoteses">Hipóteses</button><button data-k="notas">Notas</button><i class="ink"></i></nav>
     <ul class="lh-list"></ul><form class="lh-write" hidden><input type="text" maxlength="140" autocomplete="off" aria-label="Escrever na caderneta"><button type="submit">Anotar</button></form>`);
   book.setAttribute('role','dialog');book.setAttribute('aria-label','Caderneta do Lemos');
+  // abas próprias de uma cena (a casa: achados com foto e rádio), depois da aba Caso: {k,label,count(),html(),click(e)}
+  const XT=o.tabs||[];{const nav=book.querySelector('.lh-tabs'),first=nav.querySelector('[data-k=pessoas]');for(const t of XT){const b=document.createElement('button');b.dataset.k=t.k;nav.insertBefore(b,first);}}
   const cv=el('canvas','lh-fx',app),g=cv.getContext('2d');
   const nbBtn=app.querySelector('#b-book'),ctEl=app.querySelector('#nb-ct');
   const still=()=>app.classList.toggle('lh-still',!fxOn('hud.portrait')||reduce());still();onFxChange(still);
@@ -146,7 +148,8 @@ export function createHud(o){
   function li(cls,i,inner){return `<li class="${cls}" style="animation-delay:${(.06+i*.05).toFixed(2)}s">${inner}</li>`;}
   function render(){
     const D=o.data(),ppl=D.people,cl=D.clues;
-    book.querySelectorAll('.lh-tabs button').forEach(b=>{b.classList.toggle('on',b.dataset.k===tab);b.setAttribute('aria-selected',String(b.dataset.k===tab));
+    book.querySelectorAll('.lh-tabs button').forEach(b=>{const xt=XT.find(t=>t.k===b.dataset.k);if(xt){const n=xt.count?xt.count():0;b.classList.toggle('on',b.dataset.k===tab);b.setAttribute('aria-selected',String(b.dataset.k===tab));b.innerHTML=esc(xt.label)+(n?`<sup>${n}</sup>`:'');return;}
+      b.classList.toggle('on',b.dataset.k===tab);b.setAttribute('aria-selected',String(b.dataset.k===tab));
       const n={caso:0,pessoas:ppl.length,pistas:cl.length,suspeitas:nb.sus.length+nb.susTxt.length,hipoteses:nb.hip.length,notas:nb.notas.length}[b.dataset.k];b.innerHTML=b.dataset.k[0].toUpperCase()+({caso:'aso',pessoas:'essoas',pistas:'istas',suspeitas:'uspeitas',hipoteses:'ipóteses',notas:'otas'}[b.dataset.k])+(n?`<sup>${n}</sup>`:'');});
     const on=book.querySelector('.lh-tabs button.on');ink.style.left=on.offsetLeft+'px';ink.style.width=on.offsetWidth+'px';
     let h='';
@@ -167,13 +170,15 @@ export function createHud(o){
       if(!h)h='<li class="empty">Escreva o que você acha que aconteceu. Dá para descartar depois.</li>';}
     if(tab==='notas'){h=nb.notas.map((s,k)=>li('',k,`<span class="tx"><b>${esc(s.t)}</b><span>${esc(s.h||'')}</span></span><span class="act"><button type="button" data-a="del" data-l="notas" data-k="${k}" aria-label="Apagar">${ICON.x}</button></span>`)).join('');
       if(!h)h='<li class="empty">Lembretes do Lemos: quem ouvir, o que pedir à equipe, o que conferir.</li>';}
+    {const xt=XT.find(t=>t.k===tab);if(xt)h=xt.html();}
     list.innerHTML=h;form.hidden=!PH[tab];if(PH[tab])input.placeholder=PH[tab];
   }
   function openBook(t){stopRoom();if(t)tab=t;nb=loadNb();render();book.classList.add('on');scrim.classList.add('on');SFX.page();if(o.onBook)o.onBook(true);}
   function closeBook(){if(!book.classList.contains('on'))return;book.classList.remove('on');scrim.classList.remove('on');SFX.close();input.blur();if(o.onBook)o.onBook(false);}
   book.querySelector('.cl').addEventListener('click',closeBook);scrim.addEventListener('click',closeBook);
   book.querySelector('.lh-tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;tab=b.dataset.k;render();SFX.tick();});
-  list.addEventListener('click',e=>{const b=e.target.closest('button[data-a]');if(!b)return;const a=b.dataset.a;
+  list.addEventListener('click',e=>{{const xt=XT.find(t=>t.k===tab);if(xt&&xt.click&&xt.click(e)){render();return;}}
+    const b=e.target.closest('button[data-a]');if(!b)return;const a=b.dataset.a;
     if(a==='go'){closeBook();if(o.onGuide)o.onGuide();return;}
     if(a==='sus'){const id=b.dataset.id;nb.sus=nb.sus.includes(id)?nb.sus.filter(x=>x!==id):[...nb.sus,id];}
     if(a==='del')nb[b.dataset.l].splice(+b.dataset.k,1);
@@ -196,6 +201,7 @@ export function createHud(o){
     evidence(d){Q.push({k:'ev',d});pump();},
     setCount,
     openBook,closeBook,
+    refresh(){if(book.classList.contains('on'))render();},
     get bookOpen(){return book.classList.contains('on');},
     get count(){return count;}
   };
