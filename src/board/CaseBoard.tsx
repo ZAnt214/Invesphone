@@ -1,18 +1,17 @@
-/* Quadro do Caso 01: a cortiça da sala da equipe onde o jogador organiza o caso.
-   Segue os capítulos: abre no capítulo atual e mostra só o que ele pede, arrumado para responder a pergunta dele.
-   À esquerda, o painel diz onde o jogador está, a pergunta e o próximo passo (com atalho para quem resolve).
-   Toda pista mostra de onde veio; o jogador liga pistas a pessoas (o fio fica vermelho quando sustenta uma pergunta
-   prevista no depoimento), põe as falas na linha da noite e, no último capítulo, protocola o relatório.
-   Nada aqui libera ou trava a progressão. */
+/* Quadro do Caso 01: a parede de investigação da sala da equipe, como nos filmes. Cada capítulo é uma árvore de dedução
+   (docs/CASE01_BOARD.md): a pergunta do capítulo é a raiz e os três galhos são perguntas menores. O jogador tira as
+   evidências da pasta, prende nos espaços de cada galho e escolhe o que elas provam; o jogo confere na hora. Com os três
+   galhos acesos, acende a conclusão do capítulo. No último, a raiz leva ao relatório de acusação.
+   Nada aqui libera ou trava a história. */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { fxOn, setFx } from '../settings/gameSettings'
 import { advanceTask, readCase, writeCase, type CaseSave } from '../case/caseSave'
-import { depoPeople, summon } from '../case/depositions'
+import { summon } from '../case/depositions'
 import { fileReport, reportEnding } from '../case/report'
 import { nextSteps, type GuideStepData } from '../case/nextSteps'
 import { chapters } from '../case01'
-import { BOARD_PEOPLE, CARDS, CHAPTERS, CONFRONT, boardOf, clueOf, cluesOf, discoveredOf, heardOf, LEMOS_BACK, WALL_IMGS, personOf, portrait, sourcesOf, stageOfTask, thumb, titleOf,
-  type BoardSave, type Section } from './boardData'
+import { BOARD_PEOPLE, TREE, boardOf, clueImg, clueOf, cluesOf, discoveredOf, fits, heardOf, kindOf, LEMOS_BACK, WALL_IMGS, personOf, portrait, rightAnswer, sourcesOf, stageOfTask, thumb, titleOf,
+  type BoardSave, type Branch } from './boardData'
 import { playCine } from './cineAudio'
 import './case-board.css'
 
@@ -31,23 +30,24 @@ type Props = {
   /** false: montado de antemão e escondido (o Lemos indo até o quadro); a entrada, o som e o save só começam com true */
   live?:boolean
 }
-type Sel = {kind:'clue'|'person';id:string}|null
-type Pos = {x:number;y:number;r:number;w:number;variant?:string}
-const W=562,H=390
-const lineX=(tm:number)=>30+tm*502/195             // linha da noite: 22:00 → 01:15
-const LINE_Y=120
-const CROQUI={x:150,y:100,w:276,h:184}
+/** a árvore de um capítulo: 844×250 (pistas à esquerda, deduções no meio, conclusão à direita) */
+const W=844,H=250
+const ROW=[36,125,214]                              // centro de cada galho
+const NODE_X=292,ROOT_X=598
+const CROQUI_IMG='/evidence/case01/new/croqui_residencia.jpg'
+const SONIA='/characters/sonia/portrait.jpg',LEMOS='/characters/lemos/hud-rosto.jpg'
+const FRACA='A dedução pode estar certa, mas essas evidências não mostram isso. Troque as fotos.'
 const firstName=(id:string)=>personOf(id)?.name.split(' ')[0]??id
 const art=(id:string)=>['caio','rafael','jorge','teo'].includes(id)?'o':'a'
 const ENDINGS={A:['Caso Encerrado','O relatório separa quem entrou na casa de quem abriu o caminho, e as provas sustentam cada parte.','“Bom trabalho. Você não parou no primeiro culpado que apareceu.” · Sônia'],
   B:['Meia Justiça','Os executores estão no relatório. O papel de quem preparou a noite ficou de fora.','“Você fechou quem entrou na casa. Não necessariamente quem colocou os dois lá.” · Sônia'],
   C:['Arquivado','O relatório não sustenta a acusação contra quem foi apontado.','Sem uma cadeia coerente de provas, o caso perde força.']} as const
-const ROT=[-2,1.5,-1,2,-1.5,1,-.5,1.2]
+const ROT=[-2.5,2,-1.5,2.5,-1,1.5,-2,1]
 /** Arte oficial do Lemos de costas (creative-requests/completed/2026-10-10-lemos-de-costas-quadro.md). */
 const CINE_FULL=4600, CINE_SHORT=900
 /* a parede inteira do caso, em volta da parte do capítulo: papéis, fotos e fios fora de foco, para dar o tamanho do caso.
    Só usa material que não adianta nada da investigação (fotos da casa, croquis e papéis em branco) e fica desfocado. */
-const WALL={x:-720,y:-380,w:2002,h:1150}
+const WALL={x:-580,y:-450,w:2004,h:1150}
 function drawWall(cv:HTMLCanvasElement,imgs:HTMLImageElement[]){
   const K=.6,c=cv.getContext('2d');if(!c)return
   cv.width=Math.round(WALL.w*K);cv.height=Math.round(WALL.h*K);c.scale(K,K);c.translate(-WALL.x,-WALL.y)
@@ -55,7 +55,7 @@ function drawWall(cv:HTMLCanvasElement,imgs:HTMLImageElement[]){
   c.fillStyle='#7d5330';c.fillRect(WALL.x,WALL.y,WALL.w,WALL.h)
   for(let i=0;i<9000;i++){c.fillStyle=R()<.5?'rgba(50,28,10,.35)':'rgba(190,140,90,.25)';const z=1+R()*3;c.fillRect(WALL.x+R()*WALL.w,WALL.y+R()*WALL.h,z,z)}
   const centers:[number,number][]=[]
-  const free=(x:number,y:number,w:number,h:number)=>x+w<-14||x>576||y+h<-14||y>404
+  const free=(x:number,y:number,w:number,h:number)=>x+w<-14||x>W+14||y+h<-14||y>H+14
   for(let i=0;i<150&&centers.length<74;i++){
     const kind=R(),w=kind<.35?96:kind<.6?120:kind<.8?70:150,h=kind<.35?86:kind<.6?150:kind<.8?62:110
     const x=WALL.x+30+R()*(WALL.w-60-w),y=WALL.y+30+R()*(WALL.h-60-h);if(!free(x,y,w,h))continue
@@ -75,7 +75,7 @@ function drawWall(cv:HTMLCanvasElement,imgs:HTMLImageElement[]){
   for(const [x,y] of centers){c.fillStyle='#b8241b';c.beginPath();c.arc(x,y,4,0,7);c.fill()}
   // moldura de madeira e luz caindo nas bordas
   c.lineWidth=26;c.strokeStyle='#2d1d10';c.strokeRect(WALL.x+13,WALL.y+13,WALL.w-26,WALL.h-26)
-  const gr=c.createRadialGradient(281,195,200,281,195,1100);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.6)');c.fillStyle=gr;c.fillRect(WALL.x,WALL.y,WALL.w,WALL.h)
+  const gr=c.createRadialGradient(W/2,H/2,240,W/2,H/2,1100);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.6)');c.fillStyle=gr;c.fillRect(WALL.x,WALL.y,WALL.w,WALL.h)
 }
 /** Poeira no facho da luminária durante a entrada: brilha só dentro da luz. */
 function DustMotes(){
@@ -137,29 +137,31 @@ const wallArt=()=>wallCache??=Promise.all(WALL_IMGS.map(src=>new Promise<HTMLIma
 /** Desenha antes a cortiça e a parede do fundo (o que mais pesa ao abrir), para a entrada começar sem travar. */
 export async function prewarmBoard(){corkArt();await wallArt()}
 
+const TRAY_H=92
+const ROLE_NEXT:Record<string,'exec'|'mentor'|'fora'|undefined>={none:'exec',exec:'mentor',mentor:'fora',fora:undefined}
+const ROLE_TXT={exec:'Executor',mentor:'Mentor',fora:'Fora'} as const
+
 export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,onShown,live=true}:Props){
   const [g,setG]=useState<CaseSave>(()=>advanceTask(readCase()))
   const b=boardOf(g)
   const save=(fn:(x:CaseSave)=>CaseSave)=>setG(writeCase(fn))
   const saveBoard=(fn:(x:BoardSave)=>Partial<BoardSave>)=>save(x=>({...x,board:{...boardOf(x),...fn(boardOf(x))}}))
   const have=useMemo(()=>cluesOf(g,found),[g,found])
-  const has=(id:string)=>have.includes(id)
-  const people=discoveredOf(g).filter(p=>BOARD_PEOPLE.includes(p))
-  const depo=useMemo(()=>depoPeople(g),[g])
+  const people=discoveredOf(g)
   const reportReady=g.task>=8&&!g.ending
 
   // o que chegou desde a última visita entra com animação; depois fica marcado como visto
   const [fresh]=useState(()=>new Set(have.filter(id=>!b.seen.includes(id))))
   useEffect(()=>{if(!live)return;const t=window.setTimeout(()=>saveBoard(x=>({seen:[...new Set([...x.seen,...have])]})),1600);return ()=>window.clearTimeout(t)},[have.join(),live])
 
-  /* capítulo: o atual abre sozinho; os anteriores dá para rever */
+  /* capítulo: o atual abre sozinho; os anteriores dá para rever; 0 = a árvore do caso inteiro */
   const current=stageOfTask(g.task)
-  const [stage,setStage]=useState(current)
-  const CH=CHAPTERS[stage-1]
+  const [stage,setStage]=useState<number>(current)
+  const T=stage>0?TREE[stage-1]:null
   const [intro,setIntro]=useState(()=>current>(b.stage??0)?current:0)
   /* entrada de cinema: a câmera passa por trás do Lemos, que olha o quadro, e chega até a cortiça. Um toque pula só
      desta vez. "Não mostrar mais" desliga o ajuste scene.board (Ajustes > Cenas rápidas), que religa a entrada inteira;
-     desligada, fica só a aproximação. A antiga escolha guardada em board.cine.off não vale mais (não tinha como desfazer). */
+     desligada, fica só a aproximação. */
   const [cineS,setCine]=useState<'full'|'short'|null>(()=>{
     if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return null
     try{localStorage.removeItem('board.cine.off')}catch{/* sem armazenamento */}
@@ -167,63 +169,54 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
   const cine=live?cineS:null
   const cineOff=()=>{setFx('scene.board',false);setCine(null)}
   useEffect(()=>{if(!cine)return;const t=window.setTimeout(()=>setCine(null),cine==='full'?CINE_FULL:CINE_SHORT);return ()=>window.clearTimeout(t)},[cine])
-  // som da cena: quando o jogador pula, sai rápido; no fim natural, o resto do ambiente some sozinho
   useEffect(()=>{if(cine!=='full')return;const t0=performance.now(),stop=playCine()
     return ()=>{if(performance.now()-t0<CINE_FULL-200)stop()}},[cine])
   useEffect(()=>{if(live&&current>(b.stage??0))saveBoard(()=>({stage:current}))},[live])
   useEffect(()=>{if(!live||!intro||cine)return;const t=window.setTimeout(()=>setIntro(0),3000);return ()=>window.clearTimeout(t)},[cine,live])
 
-  const [sel,setSel]=useState<Sel>(null)
+  const [sel,setSel]=useState<string|null>(null)
+  const [pop,setPop]=useState<Branch|null>(null)
+  const [pick,setPick]=useState<number|string[]|undefined>(undefined)
+  const [note,setNote]=useState<{img:string;who:string;t:string}|null>(null)
   const [viewer,setViewer]=useState<{img:string;t:string;d:string}|null>(null)
+  const [report,setReport]=useState(false)
   const [confirm,setConfirm]=useState(false)
   const [ending,setEnding]=useState<'A'|'B'|'C'|null>(null)
   const [toast,setToast]=useState('')
   const toastT=useRef(0)
   const say=(t:string)=>{setToast(t);window.clearTimeout(toastT.current);toastT.current=window.setTimeout(()=>setToast(''),2800)}
+  useEffect(()=>{setSel(null);setPop(null);setNote(null)},[stage])
 
-  /* posições: cada capítulo arruma os papéis dele, sem buracos */
-  const layout=useMemo(()=>{
-    const pos=new Map<string,Pos>(),mugs:{p:string;x:number;y:number}[]=[]
-    let tray:string[]=[]
-    for(const sec of CH.sections as Section[]){
-      if(sec.kind==='scene')for(const id of have){const c=CARDS[id];if(c.zone==='cena')pos.set(id,{x:c.x??0,y:c.y??0,r:c.r??0,w:c.kind==='ph'?92:150})}
-      if(sec.kind==='people'){
-        const list=BOARD_PEOPLE.filter(p=>people.includes(p))
-        list.forEach((p,k)=>{const x=6+k*92;mugs.push({p,x,y:6})
-          ;(sec.notes[p]??[]).filter(has).forEach((id,r)=>pos.set(id,{x:x-1,y:136+r*50,r:(k+r)%2?1.2:-1.2,w:86,variant:'col'}))})
-      }
-      if(sec.kind==='night'){
-        for(const id of have){const c=CARDS[id];if(c.zone!=='noite'||c.tm==null)continue
-          if(c.reg)pos.set(id,{x:lineX(c.tm)-31,y:6,r:c.tm>150?2:-2,w:62,variant:'sm'})
-          else if(b.placed.includes(id))pos.set(id,{x:lineX(c.tm)-60,y:id==='caio_horario'?198:156,r:0,w:120})}
-        tray=have.filter(id=>{const c=CARDS[id];return c.zone==='noite'&&c.tm!=null&&!c.reg&&!b.placed.includes(id)})
-        tray.forEach((id,i)=>pos.set(id,{x:6+(i%2)*140,y:262+Math.floor(i/2)*58,r:i%2?1.2:-1.2,w:132}))
-      }
-      if(sec.kind==='grid'){
-        const ids=sec.ids.filter(id=>has(id)&&!pos.has(id)),cw=sec.w/sec.cols
-        ids.forEach((id,i)=>{const c=CARDS[id],col=i%sec.cols,row=Math.floor(i/sec.cols)
-          // embaixo da cortiça os documentos vão em tamanho menor, para caber sem cortar
-          const low=sec.y>200,w=c.kind==='ph'?92:c.kind==='doc'?(low?62:78):Math.min(150,cw-8)
-          pos.set(id,{x:sec.x+col*cw+(cw-w)/2,y:sec.y+20+row*62,r:ROT[i%ROT.length],w,variant:c.kind==='doc'&&low?'sm':undefined})})
-      }
-    }
-    return {pos,mugs,tray}
-  },[stage,have.join(),b.placed.join(),people.join()])
-  const shown=(id:string)=>layout.pos.has(id)
-  const anchor=(id:string)=>{const p=layout.pos.get(id)!;return [p.x+p.w/2,p.y+3] as const}
-  const personAnchor=(p:string)=>{const m=layout.mugs.find(x=>x.p===p);return m?[m.x+42,m.y+3] as const:null}
-  const firm=(id:string,p:string)=>(CONFRONT[p]??[]).includes(id)
+  /* galhos */
+  const stOf=(br:Branch)=>b.tree[br.id]??{s:br.need.map(()=>null)}
+  const setBranch=(br:Branch,fn:(s:{s:(string|null)[];lit?:boolean;a?:number|string[]})=>{s:(string|null)[];lit?:boolean;a?:number|string[]})=>
+    saveBoard(x=>({tree:{...x.tree,[br.id]:fn(x.tree[br.id]??{s:br.need.map(()=>null)})}}))
+  const missing=(br:Branch)=>br.need.some(gp=>!gp.some(id=>have.includes(id)))
+  const done=(i:number)=>TREE[i].branches.every(br=>!!b.tree[br.id]?.lit)
+  const placed=new Set(T?T.branches.flatMap(br=>stOf(br).s.filter((x):x is string=>!!x)):[])
+  const pool=T?T.pool.filter(id=>have.includes(id)&&!placed.has(id)):[]
+  const tapSlot=(br:Branch,j:number)=>{const s=stOf(br);if(s.lit){setNote({img:LEMOS,who:'Lemos',t:br.yes});return}
+    if(s.s[j]){setBranch(br,x=>({...x,s:x.s.map((v,k)=>k===j?null:v)}));return}
+    if(!sel){say(pool.length?'Escolha uma evidência na pasta, embaixo.':'Não há evidências na pasta. Continue a investigação.');return}
+    setBranch(br,x=>({...x,s:x.s.map((v,k)=>k===j?sel:v)}));setSel(null)}
+  const tapNode=(br:Branch)=>{const s=stOf(br)
+    if(s.lit){setNote({img:LEMOS,who:'Lemos',t:br.yes});return}
+    if(s.s.every(Boolean)){setPop(br);setPick(br.kind==='people'?[]:undefined);setNote(null);setSel(null);return}
+    say(missing(br)?'Ainda falta material para responder isso.':'Prenda as evidências nos espaços vazios.')}
+  const deduce=()=>{if(!pop)return;const s=stOf(pop),ok=rightAnswer(pop,pick)
+    if(ok&&fits(pop,s.s)){setBranch(pop,x=>({...x,lit:true,a:pick}));setNote({img:LEMOS,who:'Lemos',t:pop.yes})}
+    else{setBranch(pop,x=>({...x,s:x.s.map(()=>null)}));setNote({img:SONIA,who:'Sônia Prado',t:ok?FRACA:pop.no})}
+    setPop(null)}
 
-  /* tamanho e câmera: a cortiça cabe inteira no espaço ao lado do painel; dá para aproximar com dois dedos */
+  /* tamanho e câmera: a árvore cabe inteira entre o cabeçalho e a pasta; dá para aproximar com dois dedos */
   const root=useRef<HTMLDivElement>(null)
   const [size,setSize]=useState({w:844,h:390})
   useLayoutEffect(()=>{const el=root.current!;const fit=()=>setSize({w:el.clientWidth||844,h:el.clientHeight||390});fit();const ro=new ResizeObserver(fit);ro.observe(el);return ()=>ro.disconnect()},[])
   const vert=size.h>size.w*1.05
-  const panelW=vert?0:Math.min(300,Math.max(236,size.w*.34))
-  const area=vert?{x:0,y:44,w:size.w,h:size.h*.5-44}:{x:panelW+12,y:44,w:size.w-panelW-12,h:size.h-44}
-  const fitS=Math.min((area.w-10)/W,(area.h-8)/H)
+  const area={x:0,y:46,w:size.w,h:size.h-46-(stage>0?TRAY_H:8)}
+  const fitS=Math.min(1.6,(area.w-16)/W,(area.h-8)/H)
   type Cam={x:number;y:number;s:number}
-  const clamp=(c:Cam):Cam=>{const s=Math.max(fitS,Math.min(2.4,c.s)),m=20
+  const clamp=(c:Cam):Cam=>{const s=Math.max(fitS,Math.min(2.6,c.s)),m=20
     const lim=(p:number,lo:number,hi:number)=>lo>hi?(lo+hi)/2:Math.min(hi,Math.max(lo,p))
     return {s,x:lim(c.x,area.x+area.w-W*s-m,area.x+m),y:lim(c.y,area.y+area.h-H*s-m,area.y+m)}}
   const fitCam=():Cam=>({s:fitS,x:area.x+(area.w-W*fitS)/2,y:area.y+(area.h-H*fitS)/2})
@@ -242,16 +235,19 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
     else if(pts.length===2&&gest.current){const [a,c]=pts;gest.current={...gest.current,cam,d0:Math.hypot(a.x-c.x,a.y-c.y),m0:[(a.x+c.x)/2,(a.y+c.y)/2],moved:true};setGlide(false)}}
   const onMove=(e:React.PointerEvent)=>{if(!ptr.current.has(e.pointerId)||!gest.current)return
     const p=local(e);ptr.current.set(e.pointerId,p);const G=gest.current,pts=[...ptr.current.values()]
-    if(pts.length>=2&&G.d0&&G.m0){const [a,c]=pts,d=Math.hypot(a.x-c.x,a.y-c.y),m=[(a.x+c.x)/2,(a.y+c.y)/2],s=Math.min(2.4,Math.max(fitS,G.cam.s*d/G.d0))
+    if(pts.length>=2&&G.d0&&G.m0){const [a,c]=pts,d=Math.hypot(a.x-c.x,a.y-c.y),m=[(a.x+c.x)/2,(a.y+c.y)/2],s=Math.min(2.6,Math.max(fitS,G.cam.s*d/G.d0))
       const wx=(G.m0[0]-G.cam.x)/G.cam.s,wy=(G.m0[1]-G.cam.y)/G.cam.s;setCam(clamp({s,x:m[0]-wx*s,y:m[1]-wy*s}));return}
     if(!G.moved&&Math.hypot(p.x-G.sx,p.y-G.sy)<7)return
     if(!G.moved){G.moved=true;setGlide(false)}
     setCam(clamp({s:G.cam.s,x:G.cam.x+p.x-G.sx,y:G.cam.y+p.y-G.sy}))}
   const onUp=(e:React.PointerEvent)=>{ptr.current.delete(e.pointerId);if(!ptr.current.size)window.setTimeout(()=>{gest.current=null},0)}
-  const onWheel=(e:React.WheelEvent)=>{const p=local(e),s=Math.min(2.4,Math.max(fitS,cam.s*Math.pow(1.0018,-e.deltaY))),wx=(p.x-cam.x)/cam.s,wy=(p.y-cam.y)/cam.s;setGlide(false);setCam(clamp({s,x:p.x-wx*s,y:p.y-wy*s}))}
+  const onWheel=(e:React.WheelEvent)=>{const p=local(e),s=Math.min(2.6,Math.max(fitS,cam.s*Math.pow(1.0018,-e.deltaY))),wx=(p.x-cam.x)/cam.s,wy=(p.y-cam.y)/cam.s;setGlide(false);setCam(clamp({s,x:p.x-wx*s,y:p.y-wy*s}))}
   const onClickCapture=(e:React.MouseEvent)=>{if(gest.current?.moved){e.stopPropagation();e.preventDefault()}}
   const zoomed=cam.s>fitS*1.04
 
+  /* o quadro nunca rola: um toque num papel perto da borda (foco) faria o navegador arrastar a tela inteira */
+  useEffect(()=>{const el=root.current;if(!el)return;const fix=()=>{if(el.scrollTop||el.scrollLeft){el.scrollTop=0;el.scrollLeft=0}}
+    el.addEventListener('scroll',fix);return ()=>el.removeEventListener('scroll',fix)},[])
   /* se faltar alguma versão leve, cai no original */
   useEffect(()=>{const el=root.current;if(!el)return
     const h=(e:Event)=>{const i=e.target;if(i instanceof HTMLImageElement&&i.src.includes('/thumbs/')&&!i.dataset.full){i.dataset.full='1';i.src=i.src.replace('/thumbs/','/').replace(/back\.webp$/,'back.png')}}
@@ -267,132 +263,69 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
   useLayoutEffect(()=>{const cv=cork.current;if(!cv)return;copyCanvas(cv,corkArt());return ()=>{cv.width=cv.height=1}},[])
 
   /* ações */
-  const openClue=(id:string)=>setSel({kind:'clue',id})
-  const openPerson=(id:string)=>setSel({kind:'person',id})
-  const toggleLink=(id:string,p:string)=>saveBoard(x=>{const l=x.links[id]??[];return {links:{...x.links,[id]:l.includes(p)?l.filter(y=>y!==p):[...l,p]}}})
   const callIn=(p:string)=>{save(x=>summon(x,p));onSummoned?.(p);say(`${firstName(p)} foi chamad${art(p)} e espera na recepção.`)}
-  const roles=b.roles
-  const executors=Object.keys(roles).filter(p=>roles[p]==='exec'),mentor=Object.keys(roles).find(p=>roles[p]==='mentor')
-  const setRole=(p:string,r:'exec'|'mentor'|'fora')=>saveBoard(x=>{const n={...x.roles};if(n[p]===r)delete n[p];else{if(r==='mentor')for(const k in n)if(n[k]==='mentor')delete n[k];n[p]=r}return {roles:n}})
-  const canFile=executors.length>0&&!!mentor&&!!b.motive&&b.proofs.length>=3
-  const protocol=()=>{const r={executors,mentor:mentor??'',motive:b.motive??'',proofs:b.proofs};setEnding(reportEnding(r));save(x=>fileReport(x,r));setConfirm(false);setSel(null)}
   const run=(st:GuideStepData)=>{const go=st.go
     if(go.kind==='team')onTeam?onTeam(go.memberId):say('Fale com a equipe na sala ao lado.')
     else if(go.kind==='summon')callIn(go.personId)
     else if(go.kind==='depo')onDeposition(go.personId)
-    else if(go.kind==='report'){setStage(5);setSel(null)}}
-  const steps=useMemo(()=>nextSteps(g).filter(s=>s.go.kind!=='clues'),[g])
+    else if(go.kind==='report')openReport()}
+  const steps=useMemo(()=>nextSteps(g).filter(s=>s.go.kind!=='clues'&&!s.locked),[g])
+  const main=steps[0]
 
-  /* fios e alfinetes */
-  const strings:React.ReactNode[]=[],pins:React.ReactNode[]=[]
-  const yarn=(key:string,d:string,draw?:boolean)=>[<path key={key+'s'} className="cb-sh" d={d} transform="translate(1.5 4)"/>,<path key={key+'a'} className={'cb-y1'+(draw?' draw':'')} d={d} pathLength={1}/>,<path key={key+'b'} className="cb-y2" d={d}/>]
-  const curve=(a:readonly number[],c:readonly number[],sag?:number)=>{const mx=(a[0]+c[0])/2,my=(a[1]+c[1])/2+(sag??Math.hypot(c[0]-a[0],c[1]-a[1])*.09+4);return `M${a[0].toFixed(1)} ${a[1].toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${c[0].toFixed(1)} ${c[1].toFixed(1)}`}
-  const hasNight=CH.sections.some(s=>s.kind==='night'),hasScene=CH.sections.some(s=>s.kind==='scene')
-  for(const id of have){if(!shown(id))continue
-    const c=CARDS[id],a=anchor(id)
-    if(hasScene&&c.zone==='cena'&&c.kind==='ph'){const t=[CROQUI.x+(c.u??0)*CROQUI.w,CROQUI.y+(c.v??0)*CROQUI.h] as const
-      strings.push(...yarn(id,curve(a,t),fresh.has(id)),<circle key={id+'r'} className="cb-ring" cx={t[0]} cy={t[1]} r={6.5}/>);pins.push(<i key={id+'pt'} className="cb-pin" style={{left:t[0],top:t[1]}}/>)}
-    if(hasNight&&c.reg&&c.tm!=null){const x=lineX(c.tm),y0=96,y1=LINE_Y+1;strings.push(...yarn(id+'l',`M${x} ${y0} L${x} ${y1}`));pins.push(<i key={id+'pl'} className="cb-pin cb-k" style={{left:x,top:y1}}/>)}
-    pins.push(<i key={id+'p'} className={'cb-pin'+(c.kind==='doc'?' y':'')} style={{left:a[0],top:a[1]}}/>)
-  }
-  layout.mugs.forEach(m=>pins.push(<i key={'pp'+m.p} className="cb-pin y" style={{left:m.x+42,top:m.y+3}}/>))
-  Object.entries(b.links).forEach(([id,ps])=>{if(!shown(id))return;ps.forEach(p=>{const pa=personAnchor(p);if(!pa||!people.includes(p))return
-    const d=curve(anchor(id),pa,24);if(firm(id,p))strings.push(...yarn('L'+id+p,d));else strings.push(<path key={'L'+id+p} className="cb-pen" d={d}/>)})})
+  /* relatório: vem preenchido com o que a árvore do capítulo 5 já fechou */
+  const roles=b.roles
+  const executors=Object.keys(roles).filter(p=>roles[p]==='exec'),mentor=Object.keys(roles).find(p=>roles[p]==='mentor')
+  const canFile=executors.length>0&&!!mentor&&!!b.motive&&b.proofs.length>=3
+  const openReport=()=>{
+    if(!Object.keys(b.roles).length&&!b.motive){const a=(id:string)=>b.tree[id]?.lit?b.tree[id]?.a:undefined
+      const ex=a('c5_dentro'),mt=a('c5_caminho'),mo=a('c5_motivo'),r:BoardSave['roles']={}
+      if(Array.isArray(ex))ex.forEach(p=>r[p]='exec');if(Array.isArray(mt)&&mt[0])r[mt[0]]='mentor'
+      saveBoard(()=>({roles:r,...(mo===1?{motive:'heranca' as const}:{})}))}
+    setReport(true);setSel(null);setPop(null);setNote(null)}
+  const cycleRole=(p:string)=>saveBoard(x=>{const n={...x.roles},nx=ROLE_NEXT[n[p]??'none'];if(nx==='mentor')for(const k in n)if(n[k]==='mentor')delete n[k];if(nx)n[p]=nx;else delete n[p];return {roles:n}})
+  const protocol=()=>{const r={executors,mentor:mentor??'',motive:b.motive??'',proofs:b.proofs};setEnding(reportEnding(r));save(x=>fileReport(x,r));setConfirm(false);setReport(false)}
 
-  /* papéis */
-  const cardEl=(id:string)=>{
-    const c=CARDS[id],p=layout.pos.get(id)!,cls=['cb-c','k-'+c.kind,sel?.kind==='clue'&&sel.id===id?'sel':'',fresh.has(id)?'new':'',p.variant==='col'?'cb-col':'',p.variant==='sm'?'sm':'',id==='confissao_teo'?'yl':''].join(' ')
-    const st={left:p.x,top:p.y,'--r':p.r+'deg',width:c.kind==='nt'?p.w:undefined} as React.CSSProperties
-    const lk=(b.links[id]??[]).filter(x=>people.includes(x)&&!layout.mugs.some(m=>m.p===x))
-    const extra=<>{stage===5&&b.proofs.includes(id)&&<span className="cb-proof"/>}{lk.length>0&&<span className="cb-lk">{lk.map(x=><img key={x} className={firm(id,x)?'firm':''} src={thumb(portrait(x))} alt={firstName(x)}/>)}</span>}</>
-    if(c.kind!=='nt')return <button key={id} className={cls} style={st} onClick={()=>openClue(id)}><img src={thumb(c.img??'')} alt=""/><i>{titleOf(id)}</i>{extra}</button>
-    const heard=heardOf(g,id)[0],col=p.variant==='col'
-    return <button key={id} className={cls+(heard&&!col?'':' blank')} style={st} onClick={()=>openClue(id)}>
-      {heard&&!col&&<img src={thumb(portrait(heard.person))} alt=""/>}<b>{titleOf(id)}</b>
-      <small>{col?(c.img?'documento':'depoimento'):heard?firstName(heard.person)+' · depoimento':clueOf(id)?.category==='depoimento'?'depoimento':'equipe'}</small>{extra}</button>
+  /* a árvore do capítulo */
+  const yarn=(key:string,d:string,on:boolean,draw?:boolean)=>on
+    ?[<path key={key+'s'} className="cb-sh" d={d} transform="translate(1.5 4)"/>,<path key={key+'a'} className={'cb-y1'+(draw?' draw':'')} d={d} pathLength={1}/>,<path key={key+'b'} className="cb-y2" d={d}/>]
+    :[<path key={key} className="ct-dash" d={d}/>]
+  const chapterEl=()=>{if(!T)return null
+    const lines:React.ReactNode[]=[],els:React.ReactNode[]=[],rootDone=done(stage-1),rootY=H/2
+    T.branches.forEach((br,i)=>{const s=stOf(br),cy=ROW[i],lit=!!s.lit,full=s.s.every(Boolean),two=br.need.length>1
+      const xs=two?[18,136]:[77]
+      s.s.forEach((id,j)=>{const x=xs[j]
+        els.push(<button key={br.id+j} className={'ct-slot'+(id?' full':sel&&!lit?' hot':'')+(lit?' lit':'')} style={{left:x,top:cy-32,'--r':(id?ROT[(i*2+j)%ROT.length]:0)+'deg'} as React.CSSProperties}
+          onClick={()=>tapSlot(br,j)} aria-label={id?titleOf(id):'Espaço vazio'}>
+          {id?<><img src={thumb(clueImg(id))} alt=""/><i>{titleOf(id)}</i></>:<span>{sel&&!lit?'pôr aqui':'?'}</span>}</button>)})
+      if(two)els.push(<i key={br.id+'p'} className={'cb-pin'+(lit?'':' cb-k')} style={{left:131,top:cy,zIndex:6}}/>)
+      const sx=two?248:189
+      lines.push(...yarn(br.id+'a',`M${sx} ${cy} H${NODE_X}`,lit||full,lit&&fresh.size>0))
+      lines.push(...yarn(br.id+'b',`M${NODE_X+238} ${cy} C${NODE_X+278} ${cy} ${ROOT_X-38} ${rootY} ${ROOT_X} ${rootY}`,lit))
+      const label=lit?br.short:full?'Toque para deduzir':missing(br)?'Ainda falta material':'Faltam evidências'
+      els.push(<button key={br.id+'n'} className={'ct-node '+(lit?'done':full?'ready':'wait')} style={{left:NODE_X,top:cy-33}} onClick={()=>tapNode(br)}>
+        <small>{br.q}</small><b>{label}</b></button>)})
+    els.push(<div key="root" className={'ct-root'+(rootDone?' done':'')} style={{left:ROOT_X,top:rootY-62}}>
+      <small>Capítulo {stage} · conclusão</small><b>{rootDone?T.done[0]:T.q}</b><p>{rootDone?T.done[1]:'Acende quando os três galhos acenderem.'}</p>
+      {rootDone&&<span className="ct-stamp">CONFERE</span>}
+      {stage===5&&reportReady&&<button className="ct-go" onClick={openReport}>Relatório de acusação ›</button>}</div>)
+    return <><svg className="cb-str" style={{width:W,height:H}} viewBox={`0 0 ${W} ${H}`}>{lines}</svg>{els}</>
   }
-  const sectionEl=(sec:Section,i:number)=>{
-    if(sec.kind==='scene')return <div key={i}><div className="cb-croqui" style={{left:CROQUI.x,top:CROQUI.y,width:CROQUI.w,height:CROQUI.h}}><img src={thumb('/evidence/case01/new/croqui_residencia.jpg')} alt="Croqui da residência"/></div>
-      <span className="cb-tape" style={{left:136,top:96,transform:'rotate(-38deg)'}}/><span className="cb-tape" style={{left:398,top:94,transform:'rotate(36deg)'}}/>
-      {!have.some(id=>CARDS[id].zone==='cena'&&CARDS[id].kind==='ph')&&<p className="cb-empty" style={{left:170,top:300}}>As fotos da casa entram aqui.</p>}</div>
-    if(sec.kind==='people')return <div key={i}>{layout.mugs.map((m,k)=>{const p=m.p,st=g.interviewed.includes(p)?'OUVID'+art(p).toUpperCase():(g.summonedPeople??[]).includes(p)?'CHAMAD'+art(p).toUpperCase():''
-      const role=stage===5&&roles[p]&&roles[p]!=='fora'?<span className="cb-stamp ink">{roles[p]==='exec'?'EXECUTOR':'MENTOR'}</span>:null,d=depo.find(x=>x.id===p)
-      return <button key={p} className={'cb-c k-mug'+(sel?.kind==='person'&&sel.id===p?' sel':'')} style={{left:m.x,top:m.y,'--r':ROT[k]+'deg'} as React.CSSProperties} onClick={()=>openPerson(p)}>
-        <img src={thumb(portrait(p))} alt=""/><i>{firstName(p)}</i><u>{personOf(p)?.role.split(' · ')[0]}</u>{st&&<span className="cb-stamp">{st}</span>}{role}{(d?.state==='retomar'||d?.state==='ouvir')&&<em className="cb-new">{d.state==='ouvir'?'esperando':'novo'}</em>}</button>})}</div>
-    if(sec.kind==='night'){const both=has('log_alarme')&&has('nota_motel')
-      return <div key={i}><div className="cb-tl" style={{top:LINE_Y}}/>{[0,30,60,90,120,150,180].map(m=><span key={m} className="cb-tick" style={{left:lineX(m),top:LINE_Y+8}}>{String(Math.floor((22*60+m)/60)%24).padStart(2,'0')}:{String(m%60).padStart(2,'0')}</span>)}
-        {both&&<div className="cb-gap" style={{left:lineX(112),width:lineX(176)-lineX(112),top:LINE_Y+24}}><span>1h04</span></div>}
-        {b.placed.includes('caio_horario')&&has('nota_motel')&&<div className="cb-claim" style={{left:lineX(60),width:lineX(176)-lineX(60),top:LINE_Y+70}}><span>Caio: “já estava no motel”</span></div>}
-        {!has('log_alarme')&&!has('nota_motel')&&<div className="cb-slot" style={{left:150,top:18}}><b>Nenhum horário registrado ainda</b><span>Registros oficiais da noite entram aqui, presos na hora certa.</span></div>}
-        {layout.tray.length>0&&<div className="cb-tray" style={{left:6,top:244}}>Falas sobre horário: toque e ponha na linha</div>}</div>}
-    const any=sec.ids.some(has)
-    return <div key={i}><div className="cb-sec" style={{left:sec.x,top:sec.y,width:sec.w}}>{sec.title}</div>
-      {!any&&<p className="cb-empty" style={{left:sec.x+14,top:sec.y+26}}>Nada preso aqui ainda.</p>}</div>
+  /* a árvore do caso inteiro: cada capítulo é um galho da pergunta final */
+  const caseEl=()=>{const lines:React.ReactNode[]=[],els:React.ReactNode[]=[],ry=H/2,all=done(4)
+    TREE.forEach((t,i)=>{const y=6+i*48,cy=y+21,open=i+1<=current,dn=open&&done(i)
+      t.branches.forEach((br,k)=>els.push(<i key={'m'+i+k} className={'ct-mini'+(b.tree[br.id]?.lit?' on':'')} style={{left:150+k*44,top:cy-9}} title={br.q}/>))
+      lines.push(...yarn('c'+i,`M${150+3*44-6} ${cy} H${NODE_X}`,dn))
+      lines.push(...yarn('r'+i,`M${NODE_X+238} ${cy} C${NODE_X+278} ${cy} ${ROOT_X-38} ${ry} ${ROOT_X} ${ry}`,dn))
+      els.push(<button key={'ch'+i} className={'ct-node ct-ch '+(dn?'done':open?'ready':'lock')} style={{left:NODE_X,top:y}} disabled={!open} onClick={()=>setStage(i+1)}>
+        <small>Capítulo {i+1}</small><b>{!open?'?':dn?t.done[0]:t.short}</b></button>)})
+    els.push(<div key="root" className={'ct-root'+(all?' done':'')} style={{left:ROOT_X,top:ry-62}}><small>A pergunta do caso</small><b>{all?TREE[4].done[0]:'Quem fez o quê?'}</b>
+      <p>{all?TREE[4].done[1]:'Cada capítulo fechado acende um galho.'}</p>{all&&<span className="ct-stamp">CONFERE</span>}
+      {reportReady&&<button className="ct-go" onClick={openReport}>Relatório de acusação ›</button>}</div>)
+    return <><svg className="cb-str" style={{width:W,height:H}} viewBox={`0 0 ${W} ${H}`}>{lines}</svg>{els}</>
   }
 
-  /* painel: onde estou, a pergunta e o próximo passo; ou o detalhe do papel tocado */
-  let detail:React.ReactNode=null
-  if(sel?.kind==='clue'){
-    const id=sel.id,c=CARDS[id],cl=clueOf(id),heard=heardOf(g,id),src=sourcesOf(g,id,found),ln=(b.links[id]??[]).filter(p=>people.includes(p)),last=ln[ln.length-1]
-    const img=c.img??src.find(s=>s.img)?.img,lastState=last?depo.find(x=>x.id===last)?.state:undefined
-    detail=<>
-      <header>{img?<img src={thumb(img)} alt=""/>:heard[0]?<img src={thumb(portrait(heard[0].person))} alt=""/>:null}<div><small className="cb-k">{c.kind==='ph'?'Foto da perícia':c.kind==='doc'||c.img?'Documento':'Depoimento'}</small><h3>{cl?.title}</h3></div></header>
-      <p>{cl?.description}</p>
-      {src.map((s,i)=><div key={i} className="cb-src">{s.text}</div>)}
-      {heard.map((s,i)=><div key={'h'+i} className="cb-src">{firstName(s.person)}, no depoimento: <q>{s.phrase}</q></div>)}
-      <div className="cb-act">
-        {img&&<button onClick={()=>setViewer({img,t:cl?.title??'',d:cl?.description??''})}>Ver o original</button>}
-        {c.zone==='noite'&&c.tm!=null&&!c.reg&&!b.placed.includes(id)&&(has('log_alarme')
-          ?<button className="main" onClick={()=>{saveBoard(x=>({placed:[...x.placed,id]}));if(stage!==3)setStage(3)}}>Pôr na linha da noite</button>
-          :<button disabled>A linha precisa de um horário registrado</button>)}
-        {stage===5&&reportReady&&<button className={b.proofs.includes(id)?'on':''} onClick={()=>saveBoard(x=>({proofs:x.proofs.includes(id)?x.proofs.filter(y=>y!==id):[...x.proofs,id]}))}>{b.proofs.includes(id)?'✓ Prova no relatório':'Usar como prova no relatório'}</button>}
-      </div>
-      <div className="cb-dl">Isso aponta para…</div>
-      <div className="cb-faces">{people.map(p=><button key={p} className={ln.includes(p)?(firm(id,p)?'on':'pencil'):''} onClick={()=>toggleLink(id,p)}><img src={thumb(portrait(p))} alt=""/>{firstName(p)}</button>)}</div>
-      {last&&(firm(id,last)
-        ?<><div className="cb-fb firm"><b>Dá para confrontar</b>Isso sustenta uma pergunta no depoimento de {firstName(last)}.</div>
-          <div className="cb-act">{lastState==='chamar'?<button className="main" onClick={()=>callIn(last)}>Chamar {firstName(last)} para depor</button>
-            :lastState==='sem_provas'?<button disabled>{firstName(last)} só pode ser chamad{art(last)} com provas contra ele</button>
-            :<button className="main" onClick={()=>onDeposition(last)}>Levar ao depoimento de {firstName(last)}</button>}</div></>
-        :<div className="cb-fb"><b>Só hipótese</b>Por enquanto, nada no depoimento de {firstName(last)} se apoia nisso.</div>)}</>
-  }
-  if(sel?.kind==='person'){
-    const p=sel.id,P=personOf(p),d=depo.find(x=>x.id===p)
-    const st=g.interviewed.includes(p)?'Depoimento concluído':(g.summonedPeople??[]).includes(p)?`Chamad${art(p)} para depor`:`Identificad${art(p)} pela investigação`
-    const said=have.filter(id=>heardOf(g,id).some(s=>s.person===p)),linked=have.filter(id=>(b.links[id]??[]).includes(p))
-    const list=(arr:string[])=>arr.length?arr.map(id=><button key={id} onClick={()=>openClue(id)}>{titleOf(id)}</button>):<span className="cb-src">Nada ainda.</span>
-    const label={chamar:`Chamar ${firstName(p)} para depor`,sem_provas:'Só com provas contra ele',ouvir:`Ouvir ${firstName(p)}`,retomar:`Retomar ${firstName(p)} · ${d?.pending} nova${(d?.pending??0)>1?'s':''}`,registrado:'Rever depoimento'}
-    detail=<>
-      <header><img src={thumb(portrait(p))} alt=""/><div><small className="cb-k">{st}</small><h3>{P?.name}</h3><span className="cb-src plain">{P?.role}</span></div></header>
-      {stage===5&&reportReady&&<><div className="cb-dl">No relatório, {firstName(p)} é…</div><div className="cb-roles">{([['exec','Executor'],['mentor','Mentor'],['fora','Fora']] as const).map(([k,t])=><button key={k} className={roles[p]===k?'on':''} onClick={()=>setRole(p,k)}>{t}</button>)}</div></>}
-      {d&&<div className="cb-act"><button className={d.state==='ouvir'||d.state==='retomar'||d.state==='chamar'?'main':''} disabled={d.state==='sem_provas'} onClick={()=>d.state==='chamar'?callIn(p):onDeposition(p)}>{label[d.state]}</button></div>}
-      <div className="cb-dl">O que {firstName(p)} disse e foi marcado</div><div className="cb-act">{list(said)}</div>
-      <div className="cb-dl">Fios que você ligou a {firstName(p)}</div><div className="cb-act">{list(linked)}</div></>
-  }
-  const [main,...more]=steps
-  const panel=<aside className="cb-panel" aria-live="polite">
-    {detail?<><button className="cb-back" onClick={()=>setSel(null)}>‹ Capítulo {stage}</button><div className="cb-body">{detail}</div></>
-    :<div className="cb-body">
-      <div className="cb-chap"><small>Capítulo {stage}{stage!==current?' · revendo':''}</small><b>{chapters[stage-1].title}</b><p>{CH.q}</p></div>
-      {stage===5&&reportReady?<div className="cb-report">
-        <div className="cb-dl">Relatório de acusação</div>
-        <p className="cb-hint">Toque nas fotos para marcar executores e mentor, e nos papéis para escolher as provas.</p>
-        <div className="cb-rrow"><b>Executores</b><span>{executors.map(firstName).join(', ')||'—'}</span></div>
-        <div className="cb-rrow"><b>Mentor</b><span>{mentor?firstName(mentor):'—'}</span></div>
-        <div className="cb-rrow"><b>Motivo</b></div>
-        <div className="cb-roles">{([['heranca','Herança e namoro'],['roubo','Roubo']] as const).map(([k,t])=><button key={k} className={b.motive===k?'on':''} onClick={()=>saveBoard(()=>({motive:k}))}>{t}</button>)}</div>
-        <div className="cb-rrow"><b>Provas</b><span>{b.proofs.map(titleOf).join(', ')||'—'}</span></div>
-        <div className="cb-act"><button className="main" disabled={!canFile} onClick={()=>setConfirm(true)}>Protocolar relatório</button></div>
-      </div>
-      :stage!==current?<div className="cb-step"><small>Você está revendo</small><p>O caso já está no capítulo {current}.</p><div className="cb-act"><button className="main" onClick={()=>setStage(current)}>Ir para o capítulo {current}</button></div></div>
-      :main?<>
-        <div className={'cb-step'+(main.locked?' locked':'')}><small>Próximo passo</small><b>{main.title}</b><p>{main.text}</p>{main.cta&&!main.locked&&<div className="cb-act"><button className="main" onClick={()=>run(main)}>{main.cta}</button></div>}</div>
-        {more.filter(s=>!s.locked).slice(0,2).map(s=><button key={s.id} className="cb-more" onClick={()=>run(s)}><span>{s.title}</span><i>›</i></button>)}
-      </>:<div className="cb-step"><small>Próximo passo</small><p>Releia o que está no quadro e ligue as pistas às pessoas.</p></div>}
-      {!!g.ending&&<div className="cb-step"><small>Relatório protocolado</small><p>O caso saiu das suas mãos.</p></div>}
-    </div>}
-  </aside>
-
+  const S=sel?clueOf(sel):null,src=sel?sourcesOf(g,sel,found):[],heard=sel?heardOf(g,sel):[]
+  const popPeople=pop?.people?.filter(p=>people.includes(p))??[]
   const cineStyle={'--ox':`${area.x+area.w/2}px`,'--oy':`${area.y+area.h/2}px`} as React.CSSProperties
   return <div ref={root} className={'cb'+(vert?' vert':'')+(zoomed?' zoomed':'')+(cine?' cine cine-'+cine:'')} style={cineStyle}>
     {cine==='full'&&<div className="cb-room" aria-hidden="true"/>}
@@ -400,23 +333,57 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
       <div className={'cb-world'+(glide?' glide':'')} style={{width:W,height:H,transform:`translate(${cam.x}px,${cam.y}px) scale(${cam.s})`}}>
         <canvas ref={wall} className="cb-wall" style={{left:WALL.x,top:WALL.y,width:WALL.w,height:WALL.h}} aria-hidden="true"/>
         <canvas ref={cork} className="cb-cork" style={{width:W,height:H}}/>
-        {CH.sections.map(sectionEl)}
-        {[...layout.pos.keys()].map(cardEl)}
-        <svg className="cb-str" style={{width:W,height:H}} viewBox={`0 0 ${W} ${H}`}>{strings}</svg>
-        <div className="cb-pins">{pins}</div>
+        {stage>0?chapterEl():caseEl()}
         {/* a luminária pendurada acima do quadro: o facho cai sobre a cortiça e avança junto com a câmera */}
         {cine==='full'&&<div className="cb-lampw" aria-hidden="true"><i className="cb-cord"/><i className="cb-shade"/><i className="cb-bulb"/><div className="cb-wbeam"><DustMotes/></div></div>}
       </div>
     </div>
     <div className="cb-light"/>
-    {panel}
-    <div className="cb-hud" style={{left:vert?10:area.x}}>
-      <nav className="cb-tabs" aria-label="Capítulos do caso">{CHAPTERS.slice(0,current).map((S,i)=>{const n=i+1
-        return <button key={n} className={'cb-tab'+(n===stage?' on':'')+(n===current?' now':'')} onClick={()=>{setSel(null);setStage(n)}} aria-current={n===stage}><span className="n">{n}</span>{n===stage?S.short:''}</button>})}</nav>
+    <div className="cb-hud">
+      <nav className="cb-tabs" aria-label="Capítulos do caso">
+        <button className={'cb-tab'+(stage===0?' on':'')} onClick={()=>setStage(0)} aria-current={stage===0}>Caso</button>
+        {TREE.slice(0,current).map((t,i)=>{const n=i+1
+          return <button key={n} className={'cb-tab'+(n===stage?' on':'')+(n===current?' now':'')+(done(i)?' ok':'')} onClick={()=>setStage(n)} aria-current={n===stage}><span className="n">{n}</span>{n===stage?t.short:''}</button>})}
+      </nav>
       {zoomed&&<button className="cb-chip" onClick={()=>{setGlide(true);setCam(fitCam())}}>Ver tudo</button>}
       <span className="cb-sp"/>
+      {main&&!reportReady&&<button className="cb-chip ct-next" onClick={()=>run(main)}><em>Próximo</em><span>{main.title}</span></button>}
+      {reportReady&&<button className="cb-chip cb-gold" onClick={openReport}>Relatório</button>}
+      {stage===1&&<button className="cb-chip" onClick={()=>setViewer({img:CROQUI_IMG,t:'Croqui da residência',d:'Planta da casa da Rua das Acácias, com os cômodos da varredura.'})}>Croqui</button>}
       <button className="cb-chip cb-x" aria-label="Fechar o quadro" onClick={onClose}>×</button>
     </div>
+    {stage>0&&<div className="ct-tray">
+      <small>Evidências</small>
+      <div className="ct-row">{pool.length?pool.map(id=><button key={id} className={'ct-ev'+(sel===id?' sel':'')+(fresh.has(id)?' new':'')} onClick={()=>{setSel(sel===id?null:id);setNote(null)}} aria-pressed={sel===id}>
+          <img src={thumb(clueImg(id))} alt=""/><i>{titleOf(id)}</i></button>)
+        :<p>{have.some(id=>T?.pool.includes(id))?'Todas as evidências deste capítulo estão na árvore.':'Ainda não há evidências deste capítulo. Continue a investigação.'}</p>}</div>
+    </div>}
+    {S&&sel&&<div className="ct-info">
+      <img src={thumb(clueImg(sel))} alt=""/>
+      <div><small>{kindOf(sel)}</small><b>{S.title}</b><p>{S.description}</p>
+        {src[0]&&<span>{src[0].text}</span>}{!src[0]&&heard[0]&&<span>{firstName(heard[0].person)}, no depoimento: “{heard[0].phrase}”</span>}</div>
+      <div className="ct-act"><button onClick={()=>setViewer({img:clueImg(sel),t:S.title,d:S.description})}>Ver o original</button><button onClick={()=>setSel(null)}>Guardar</button></div>
+      <em>Toque num espaço vazio para prender.</em>
+    </div>}
+    {pop&&<div className="ct-pop" role="dialog" aria-label={pop.q}>
+      <small>O que essas evidências provam?</small><b>{pop.q}</b>
+      {pop.kind==='text'?(pop.opts??[]).map((t,k)=><button key={k} className={'ct-op'+(pick===k?' on':'')} onClick={()=>setPick(k)}>{t}</button>)
+        :<div className="ct-faces">{popPeople.map(p=>{const on=Array.isArray(pick)&&pick.includes(p)
+          return <button key={p} className={on?'on':''} onClick={()=>setPick(Array.isArray(pick)?(on?pick.filter(x=>x!==p):[...pick,p]):[p])}><img src={thumb(portrait(p))} alt=""/>{firstName(p)}</button>})}</div>}
+      <div className="ct-row2"><button onClick={()=>setPop(null)}>Voltar</button><button className="main" disabled={pick==null||(Array.isArray(pick)&&!pick.length)} onClick={deduce}>Confirmar</button></div>
+    </div>}
+    {note&&<div className="ct-note" role="status"><span><img src={thumb(note.img)} alt=""/>{note.who}</span><p>{note.t}</p><button onClick={()=>setNote(null)}>Ok</button></div>}
+    {report&&<div className="ct-rep" role="dialog" aria-label="Relatório de acusação">
+      <header><small>DHPP · Homicídios</small><b>Relatório de acusação</b><button className="cb-chip cb-x" aria-label="Fechar o relatório" onClick={()=>setReport(false)}>×</button></header>
+      <div className="ct-rl">Papel de cada um · toque para mudar</div>
+      <div className="ct-roles">{BOARD_PEOPLE.filter(p=>people.includes(p)).map(p=><button key={p} className={roles[p]?'on '+roles[p]:''} onClick={()=>cycleRole(p)}>
+        <img src={thumb(portrait(p))} alt=""/><i>{firstName(p)}</i><u>{roles[p]?ROLE_TXT[roles[p]]:'—'}</u></button>)}</div>
+      <div className="ct-rl">Motivo</div>
+      <div className="ct-mot">{([['heranca','Herança e namoro'],['roubo','Roubo']] as const).map(([k,t])=><button key={k} className={b.motive===k?'on':''} onClick={()=>saveBoard(()=>({motive:k}))}>{t}</button>)}</div>
+      <div className="ct-rl">Provas · escolha pelo menos três</div>
+      <div className="ct-proofs">{have.map(id=><button key={id} className={b.proofs.includes(id)?'on':''} onClick={()=>saveBoard(x=>({proofs:x.proofs.includes(id)?x.proofs.filter(y=>y!==id):[...x.proofs,id]}))}>{titleOf(id)}</button>)}</div>
+      <button className="ct-go" disabled={!canFile} onClick={()=>setConfirm(true)}>Protocolar relatório</button>
+    </div>}
     {toast&&<div className="cb-toast">{toast}</div>}
     {cine==='full'&&<button className="cb-cine" aria-label="Pular" onClick={()=>setCine(null)}>
       <span className="cb-window"/>
@@ -426,7 +393,7 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
       <i className="cb-bar t"/><i className="cb-bar b"/>
     </button>}
     {cine==='full'&&<button className="cb-cine-off" onClick={cineOff}>Não mostrar mais</button>}
-    {intro>0&&!cine&&<button className="cb-chapter" onClick={()=>setIntro(0)}><small>Capítulo {intro}</small><b>{chapters[intro-1].title}</b><p>{chapters[intro-1].summary}</p><em>{CHAPTERS[intro-1].q}</em></button>}
+    {intro>0&&!cine&&<button className="cb-chapter" onClick={()=>setIntro(0)}><small>Capítulo {intro}</small><b>{chapters[intro-1].title}</b><p>{chapters[intro-1].summary}</p><em>{TREE[intro-1].q}</em></button>}
     {viewer&&<div className="cb-viewer" onClick={()=>setViewer(null)}><img src={viewer.img} alt=""/><div><b>{viewer.t}</b><p>{viewer.d}</p></div></div>}
     {confirm&&<div className="cb-end"><div className="cb-card"><small>Relatório de acusação</small><h3>Protocolar agora?</h3><p>Depois de protocolado, o relatório encerra sua participação operacional no caso.</p>
       <div className="cb-row"><button onClick={()=>setConfirm(false)}>Revisar</button><button className="cb-gold" onClick={protocol}>Protocolar relatório</button></div></div></div>}
