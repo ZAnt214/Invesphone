@@ -1027,3 +1027,25 @@ body:not(.land) .hud-top.lx .ht .brk{background:none;height:0;margin:0}
 .hud-top.lx .hbtn.lh-b{display:flex}
 /* rótulos de baixo (Lemos, apoio, isolar, desfazer, rádio) no mesmo traço do cabeçalho */
 .hud-bot .tool .l,.hud-bot .mem .nm,.hud-bot .mmore .nm{font:400 9px/1 var(--lh-ui);letter-spacing:.3em;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.9)}
+
+/* ---------- Barra de baixo no padrão da base (14/10/2026) ----------
+   Antes os retratos e as ferramentas ficavam metade escondidos na borda (estêncil no asfalto); no celular em pé isso
+   parecia cortado. Agora tudo aparece inteiro, menor, sobre uma faixa escura que some para cima, no traço do cabeçalho. */
+.hud-bot{--slot:54px;--gl:38px;--cut:0px;--gapk:10px;--lift:-6px;padding-bottom:calc(var(--sb,env(safe-area-inset-bottom,0px)) + 10px)!important}
+.hud-bot::before{content:'';position:absolute;left:0;right:0;bottom:0;height:120px;z-index:-1;pointer-events:none;background:linear-gradient(rgba(4,5,7,0),rgba(4,5,7,.38) 45%,rgba(4,5,7,.62))}
+.dock::before,.dock::after,.actions::before,.actions::after{display:none!important}
+.dock,.dock.hcard,body:not(.land) .dock,body:not(.land) .dock.hcard{overflow:visible;padding:22px 0 0;margin-bottom:0}
+.actions,body:not(.land) .actions{margin-bottom:0}
+.mem,.mmore{margin-bottom:0}
+.mem .disc,.mmore .disc{width:32px;height:32px;background:rgba(255,255,255,.06)}
+.mem .disc canvas{width:32px;height:32px;transform:translateY(-2px)}
+.mem .ring .rt,.mmore .ring circle{stroke:rgba(255,255,255,.22);stroke-width:1.4;stroke-dasharray:3 2.5}
+.mem .ring .rv{stroke:#fff;stroke-width:1.6}
+.mem[aria-pressed="true"] .ring .rv,.mmore[aria-expanded="true"] .ring circle,.mmore.has:not([aria-expanded="true"]) .ring circle{stroke:var(--lh-acc,#ffcf8a)}
+.mmore .stc{width:18px;height:18px;stroke:#fff;stroke-width:1.5}
+.mmore .cnt{font:500 9px/1 var(--lh-ui);background:#fff;border-radius:7px;padding:2px 4px;transform:none}
+.tool .kb svg.stc,body:not(.land) .tool .kb svg.stc{width:30px;height:30px}
+.tool .kb,.tool[aria-pressed="true"] .kb,#t-cancel[aria-pressed="true"] .kb,.rkey .kb,.rkey[aria-expanded="true"] .kb{height:34px}
+.tool .l,.mem .nm,.mmore .nm{bottom:calc(100% + 6px)}
+.tool[aria-pressed="true"] .l,.rkey[aria-expanded="true"] .l,.mem[aria-pressed="true"] .nm,.mmore[aria-expanded="true"] .nm{color:var(--lh-acc,#ffcf8a)}
+#crew2{bottom:calc(var(--sb,env(safe-area-inset-bottom,0px)) + 86px)}
