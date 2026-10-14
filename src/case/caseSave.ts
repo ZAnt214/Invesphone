@@ -35,10 +35,13 @@ export function advanceTask<G extends TeamGame>(g:G):G{
   let next=g.task
   const heardInitial=g.interviewed.filter(id=>['livia','rafael','cida','jorge','caio'].includes(id)).length
   if(next===1&&['porta_intacta','painel_alarme','cao_canil','valores_intactos'].every(id=>g.clues.includes(id)))next=2
-  if(next===2&&heardInitial>=4)next=3
+  // Lívia e Caio são centrais; basta uma terceira versão para verificar o contexto.
+  // Rafael e Cida ajudam, mas ouvir os dois não é pedágio para avançar.
+  if(next===2&&g.interviewed.includes('livia')&&g.interviewed.includes('caio')&&heardInitial>=3)next=3
   if(next===3&&g.clues.includes('log_alarme'))next=4
   if(next===4&&g.clues.includes('nota_motel'))next=5
-  if(next===5&&g.clues.includes('ameaca_heranca')&&g.clues.includes('extrato_ricardo')&&g.clues.includes('carta_cobranca'))next=6
+  // A carta de cobrança é pista falsa opcional, não requisito para abrir o dinheiro.
+  if(next===5&&g.clues.includes('ameaca_heranca')&&g.clues.includes('extrato_ricardo'))next=6
   if(next===6&&g.clues.includes('cinta_bancaria')&&(g.discoveredPeople??[]).includes('teo'))next=7
   if(next===7&&g.clues.includes('confissao_teo'))next=8
   return next===g.task?g:{...g,task:next}

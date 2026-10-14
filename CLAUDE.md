@@ -93,12 +93,24 @@ Antes de criar ou alterar qualquer conteúdo narrativo do Caso 01, leia:
 Se uma fala antiga, placeholder, comentário de código ou tela entrar em conflito com esses arquivos, corrija o conteúdo para ficar de acordo com a bíblia. Não altere culpados, papéis, horários-chave, motivo central ou lógica das pistas sem uma mudança explicitamente aprovada pelo usuário.
 
 
+## Orientação narrativa — o jogador não pode ficar perdido
+
+Antes de alterar cenas, chamadas, HUD, caderneta, home ou sugestões, ler `docs/CASE01_JORNADA_DO_JOGADOR.md`.
+
+- Os cinco capítulos conduzem por cinco **perguntas**, uma dominante por vez.
+- Na home e no quadro, mostrar a pergunta atual e um único caminho principal viável; no máximo mais uma linha secundária discreta.
+- Priorizar o que Lemos **sabe de fato**, distinguir depoimento de prova e não antecipar culpas.
+- Rafael e Cida são aprofundamentos, não exigência de quatro depoimentos; a carta de cobrança é uma falsa pista opcional.
+- Os retornos da equipe nunca devem despejar várias linhas não relacionadas de uma vez.
+- O guia afeta apresentação e ritmo, não a verdade canônica ou os documentos oficiais.
+
 ## Fluxo oficial do Caso 01
 
 Antes de alterar progressão, desbloqueios, ordem de tarefas, chamadas, interrogatórios, linha do tempo, finanças ou finais do Caso 01, consulte:
 
 - `docs/CASE01_GAME_FLOW.md` — fluxo detalhado cena por cena, do primeiro toque ao epílogo.
 - `docs/CASE01_GAME_FLOW.json` — estrutura resumida e legível por código com atos, cenas, viradas, desbloqueios e relatório final.
+- `docs/CASE01_JORNADA_DO_JOGADOR.md` — cinco perguntas dominantes, material essencial versus opcional, exemplos de orientação e testes contra confusão.
 - `docs/CASE01_STORY_BIBLE.md` — verdade narrativa completa.
 - `docs/CASE01_CANON.json` — fatos imutáveis.
 

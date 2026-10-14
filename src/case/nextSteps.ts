@@ -43,6 +43,8 @@ export const nextSteps=(game:CaseSave):GuideStepData[]=>{
     for(const x of roster){
       if(game.interviewed.includes(x.id)||!summoned.includes(x.id))continue
       const started=progressOf(game,x.id).asked.length>0
+      // já começou e não há pergunta disponível agora: a próxima depende de outra linha (não prender o jogador aqui)
+      if(started&&!pendingQuestions(interrogations[x.id],progressOf(game,x.id),game.clues,requested).length)continue
       out.push({id:'depo-'+x.id,done:`Interrogatório de ${nameOf(x.id)} concluído`,tag:'INTERROGATÓRIO',title:`${nameOf(x.id)} aguarda para ser interrogado`,text:started?'Você já começou: continue de onde parou.':personWhy[x.id]??x.role,cta:`Interrogar ${nameOf(x.id)}`,go:{kind:'depo',personId:x.id}})
     }
     // quem apareceu na investigação e ainda não foi chamado
@@ -79,5 +81,31 @@ export const nextSteps=(game:CaseSave):GuideStepData[]=>{
     out.push({id:'sonia',tag:'EQUIPE',title:'Peça a leitura da Sônia',text:'Quando nada de novo chega, ela ajuda a separar fato de hipótese.',cta:'Falar com Sônia',go:{kind:'team',memberId:'sonia'}})
     out.push({id:'clues',tag:'PISTAS',title:'Revise o que você já tem',text:'Releia as pistas e as anotações dos depoimentos antes do próximo passo.',cta:'Abrir pistas',go:{kind:'clues'}})
   }
-  return out.sort((a,b)=>Number(!!a.locked)-Number(!!b.locked))
+  // Mostre só linhas que realmente podem ser seguidas. O restante continua nos apps
+  // naturais, mas não compete pela atenção no guia da tela inicial.
+  const priority=(st:GuideStepData):number=>{
+    const id=st.id
+    if(id==='report')return 0
+    if(game.task<2)return id==='team-mauricio'?0:id==='team-sonia'?1:10
+    if(game.task===2){
+      if(id==='depo-livia'||id==='depo-caio')return 0
+      if(id==='team-paulo'&&!discovered.includes('jorge'))return 1
+      if(id==='call-jorge'||id==='depo-jorge')return 2
+      if(id==='call-rafael'||id==='depo-rafael'||id==='call-cida'||id==='depo-cida')return 3
+    }
+    if(game.task===3)return id==='team-renata'?0:id==='retake-livia'?1:12
+    if(game.task===4)return id==='team-paulo'?0:id==='retake-caio'?1:id==='team-renata'?2:12
+    if(game.task===5)return id==='retake-livia'?0:id==='team-renata'?1:id==='team-denise'?2:12
+    if(game.task===6)return id==='team-renata'?0:id==='depo-teo'||id==='call-teo'?1:12
+    // com a cinta, a linha é Téo: chamar, ouvir e confrontar; depois testar as versões de Caio e Lívia
+    if(game.task===7)return id==='call-teo'||id==='depo-teo'||id==='retake-teo'?0:id==='retake-caio'||id==='retake-livia'?1:12
+    return 20
+  }
+  const available=out.filter(x=>!x.locked).sort((a,b)=>priority(a)-priority(b))
+  if(available.length)return available
+  // Não deixar o jogador sem orientação se só restarem convocações ainda indisponíveis.
+  return [
+    {id:'sonia',tag:'EQUIPE',title:'Converse com Sônia',text:'Revise com ela quais versões ainda precisam de uma fonte independente.',cta:'Falar com Sônia',go:{kind:'team',memberId:'sonia'},done:'Conversa com Sônia registrada'},
+    {id:'clues',tag:'PISTAS',title:'Compare as evidências',text:'Veja de onde vieram os fatos já registrados.',cta:'Abrir pistas',go:{kind:'clues'},done:'Evidências revisadas'}
+  ]
 }

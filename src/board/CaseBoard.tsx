@@ -199,11 +199,15 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
     if(s.s[j]){setBranch(br,x=>({...x,s:x.s.map((v,k)=>k===j?null:v)}));return}
     if(!sel){say(pool.length?'Escolha uma evidência na pasta, embaixo.':'Não há evidências na pasta. Continue a investigação.');return}
     setBranch(br,x=>({...x,s:x.s.map((v,k)=>k===j?sel:v)}));setSel(null)}
+  /* papéis só são conferidos depois das versões: antes, a resposta fica anotada como hipótese */
+  const waiting=(br:Branch)=>!!br.confirmAfter&&g.task<br.confirmAfter
   const tapNode=(br:Branch)=>{const s=stOf(br)
     if(s.lit){setNote({img:LEMOS,who:'Lemos',t:br.yes});return}
+    if(s.hyp&&waiting(br)){setNote({img:LEMOS,who:'Lemos',t:'Hipótese anotada. Confronte as versões de Caio e Lívia antes de dar isso como certo.'});return}
     if(s.s.every(Boolean)){setPop(br);setPick(br.kind==='people'?[]:undefined);setNote(null);setSel(null);return}
     say(missing(br)?'Ainda falta material para responder isso.':'Prenda as evidências nos espaços vazios.')}
-  const deduce=()=>{if(!pop)return;const s=stOf(pop),ok=rightAnswer(pop,pick)
+  const deduce=()=>{if(!pop)return;const s=stOf(pop),ok=rightAnswer(pop,pick,s.s)
+    if(waiting(pop)){setBranch(pop,x=>({...x,a:pick,hyp:true}));setNote({img:LEMOS,who:'Lemos',t:'Hipótese anotada. Confronte as versões de Caio e Lívia antes de dar isso como certo.'});setPop(null);return}
     if(ok&&fits(pop,s.s)){setBranch(pop,x=>({...x,lit:true,a:pick}));setNote({img:LEMOS,who:'Lemos',t:pop.yes})}
     else{setBranch(pop,x=>({...x,s:x.s.map(()=>null)}));setNote({img:SONIA,who:'Sônia Prado',t:ok?FRACA:pop.no})}
     setPop(null)}
@@ -306,8 +310,9 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
       const sx=two?248:189
       lines.push(...yarn(br.id+'a',`M${sx} ${cy} H${NODE_X}`,lit||full,lit&&fresh.size>0))
       lines.push(...yarn(br.id+'b',`M${NODE_X+238} ${cy} C${NODE_X+278} ${cy} ${ROOT_X-38} ${rootY} ${ROOT_X} ${rootY}`,lit))
-      const label=lit?br.short:full?'Toque para deduzir':missing(br)?'Ainda falta material':'Faltam evidências'
-      els.push(<button key={br.id+'n'} className={'ct-node '+(lit?'done':full?'ready':'wait')} style={{left:NODE_X,top:cy-33}} onClick={()=>tapNode(br)}>
+      const hyp=!lit&&!!s.hyp,hypTxt=hyp?'Hipótese: '+(Array.isArray(s.a)?s.a.map(firstName).join(' e '):br.opts?.[s.a as number]??''):''
+      const label=lit?br.short:hyp&&waiting(br)?hypTxt:full?(hyp?'Toque para conferir':'Toque para deduzir'):missing(br)?'Ainda falta material':'Faltam evidências'
+      els.push(<button key={br.id+'n'} className={'ct-node '+(lit?'done':hyp&&waiting(br)?'hyp':full?'ready':'wait')} style={{left:NODE_X,top:cy-33}} onClick={()=>tapNode(br)}>
         <small>{br.q}</small><b>{label}</b></button>)})
     els.push(<div key="root" className={'ct-root'+(rootDone?' done':'')} style={{left:ROOT_X,top:rootY-62}}>
       <small>Capítulo {stage} · conclusão</small><b>{rootDone?T.done[0]:T.q}</b><p>{rootDone?T.done[1]:'Acende quando os três galhos acenderem.'}</p>
@@ -330,7 +335,7 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
   }
 
   /* o que fazer agora, escrito na aba da pasta */
-  const readyBr=T?.branches.find(br=>!stOf(br).lit&&stOf(br).s.every(Boolean))
+  const readyBr=T?.branches.find(br=>!stOf(br).lit&&stOf(br).s.every(Boolean)&&!(stOf(br).hyp&&waiting(br)))
   const hint:{n:string;t:string;on:boolean;go?:()=>void}=!T?{n:'',t:'',on:false}:sel?{n:'2',t:'Agora toque num espaço vazio da árvore',on:true}
     :readyBr?{n:'3',t:`Toque na ficha “${readyBr.q}” para deduzir`,on:true}
     :done(stage-1)?{n:'✓',t:`Capítulo resolvido · ${next.t} ›`,on:true,go:next.go}

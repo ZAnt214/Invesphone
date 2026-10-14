@@ -1,6 +1,49 @@
 {
   "caseId": "case01",
   "title": "A Casa da Rua das Acácias",
+  "playerGuide": "docs/CASE01_JORNADA_DO_JOGADOR.md",
+  "playerOrientation": [
+    {
+      "chapter": 1,
+      "question": "Foi mesmo um roubo?",
+      "focus": "porta, valores, Thor e alarme",
+      "fact": "A cena não combina com um roubo casual.",
+      "next": "Ouvir quem conhece a casa",
+      "destination": "pessoas"
+    },
+    {
+      "chapter": 2,
+      "question": "Quem conhecia a casa e o que as pessoas dizem?",
+      "focus": "Lívia, Caio e uma versão de verificação; Jorge surge pela equipe",
+      "fact": "Versões precisam de registros independentes.",
+      "next": "Pedir o histórico do alarme",
+      "destination": "equipe"
+    },
+    {
+      "chapter": 3,
+      "question": "O álibi cobre o intervalo antes do motel?",
+      "focus": "alarme 23:52, nota do motel 00:56 e Gol ~23:30",
+      "fact": "A versão não cobre os 64 minutos entre registros.",
+      "next": "Confrontar horários e verificar o motivo",
+      "destination": "pessoas"
+    },
+    {
+      "chapter": 4,
+      "question": "De onde saiu o dinheiro ligado a Téo?",
+      "focus": "extrato de Ricardo, US$ 5.000, moto e cinta bancária",
+      "fact": "O dinheiro liga Téo à quantia retirada da casa.",
+      "next": "Confrontar Téo sobre a origem",
+      "destination": "pessoas"
+    },
+    {
+      "chapter": 5,
+      "question": "Quem entrou, quem facilitou e por quê?",
+      "focus": "admissões parciais, acesso, motivo e comparação das versões",
+      "fact": "O jogador deduz papéis antes de a confissão confirmar.",
+      "next": "Organizar os papéis e formalizar provas",
+      "destination": "quadro/relatorio"
+    }
+  ],
   "sourceOfTruth": "docs/CASE01_GAME_FLOW.md",
   "acts": [
     {

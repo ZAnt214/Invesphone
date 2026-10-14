@@ -51,10 +51,10 @@ export const teoInterrogation:InterrogationConfig = {
       id:'confront_money',
       requiresClue:'moto_dolares',
       question:'A moto foi paga com dólares em espécie. Quem te deu esse dinheiro?',
-      answer:'Foi um adiantamento. O Caio disse que ia ter dinheiro e me deu uma parte, só isso.',
+      answer:'O Caio me deu uma parte. Falou que era de um negócio… eu não perguntei de onde vinha. Só isso.',
       expression:'nervous',
       unlocks:['confront_bank'],
-      highlights:[{ phrase:'O Caio disse que ia ter dinheiro', clue:'teo_adiantamento' }]
+      highlights:[{ phrase:'O Caio me deu uma parte', clue:'teo_adiantamento' }]
     },
     {
       id:'confront_bank',
@@ -85,7 +85,9 @@ export const teoInterrogation:InterrogationConfig = {
     },
     {
       id:'confess',
-      requiresClue:'livia_thor_caio',
+      // Só pergunta depois de confrontar a rotina de Thor com Lívia e o uso do código com Caio.
+      // A confirmação final não deve anteceder o teste da hipótese em ambos.
+      requiresClues:['livia_thor_caio','caio_admite_codigo'],
       question:'Quem preparou essas informações com o Caio?',
       answer:'A Lívia deixou tudo pronto. O código, o cachorro… O Caio me passou o resto. Eu entrei com ele. É isso.',
       expression:'teary',

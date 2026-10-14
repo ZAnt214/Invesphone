@@ -432,6 +432,29 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
   0:'Ocorrência recebida',1:'Cena em processamento',2:'Versões sendo colhidas',3:'Aguardando retorno técnico',4:'Janela de horário em aberto',
   5:'Linha financeira aberta',6:'Dinheiro sob análise',7:'Separando quem fez o quê',8:'Investigação pronta para relatório'
  } as Record<number,string>)[game.task] ?? current.title
+ const caseQuestion=({
+  0:'O que aconteceu na casa?',
+  1:'Foi mesmo um roubo?',
+  2:'Quem conhecia a casa e o que as pessoas dizem?',
+  3:'O que o registro do alarme pode confirmar?',
+  4:'O álibi cobre o intervalo antes do motel?',
+  5:'O que motivaria alguém próximo da família?',
+  6:'De onde veio o dinheiro encontrado com Téo?',
+  7:'Quem entrou, quem facilitou e por quê?',
+  8:'Que conclusão as provas permitem sustentar?'
+ } as Record<number,string>)[game.task] ?? 'Qual é a próxima pergunta do caso?'
+ // o que Lemos sabe de fato em cada etapa: registros e declarações já obtidos, sem antecipar culpas
+ const caseKnown=({
+  0:'Sônia ligou às 04:27: duas vítimas numa casa que parece assaltada.',
+  1:'Ricardo e Helena foram mortos em casa. Lívia diz ter encontrado tudo revirado.',
+  2:'Não houve arrombamento, e objetos de valor ficaram na casa.',
+  3:'Lívia e Caio dizem que passaram a noite juntos. A versão precisa de um registro independente.',
+  4:'O alarme foi desligado às 23:52 com o código mestre.',
+  5:'23:52, alarme desligado. 00:56, entrada no motel. Há 1h04 sem registro.',
+  6:'O pai ameaçou cortar a herança de Lívia, e um extrato de Ricardo chamou atenção.',
+  7:'A cinta dos dólares ligados a Téo bate com o saque de Ricardo: US$ 5.000.',
+  8:'Téo confirmou a participação, e as versões foram confrontadas.'
+ } as Record<number,string>)[game.task] ?? ''
  const go=(to:StepGo)=>{
   if(to.kind==='team')setGame(g=>({...g,app:'team',teamFocus:to.memberId}))
   else if(to.kind==='summon')setGame(g=>({...g,summonedPeople:(g.summonedPeople??['livia','caio']).includes(to.personId)?(g.summonedPeople??[]):[...(g.summonedPeople??['livia','caio']),to.personId]}))
@@ -445,16 +468,15 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
  // enquanto a leva não existe (primeira abertura), mostra as primeiras sugestões
  const notes=(batch.length?batch:guideBatchOf(nextSteps(game).filter(x=>x.done))).map(b=>{const st=liveSteps.get(b.id);const finished=doneIds.includes(b.id)||!st;return {id:b.id,finished,doneText:b.done,tag:st?.tag??'',title:st?.title??'',text:st?.text??'',cta:st?.cta,locked:st?.locked,run:()=>{if(st)go(st.go)}}})
  const unread=caseTeam.reduce((n,m)=>n+teamNews(game,m.id).count,0)
- return <HandsetHome chapterNumber={chapter.number} chapterTitle={chapter.title} caseStatus={status} notes={notes} peopleOpen={game.task>=2} helenaOpen={game.task>=3||(game.requestedMaterials??[]).includes('termo_apreensao_celular_helena')} archiveOpen={game.task>=3} teamBadge={unread} clueBadge={game.clues.length} onOpenApp={openApp}/>
+ return <HandsetHome chapterNumber={chapter.number} chapterTitle={chapter.title} caseStatus={status} caseQuestion={caseQuestion} caseKnown={caseKnown} notes={notes} peopleOpen={game.task>=2} helenaOpen={game.task>=3||(game.requestedMaterials??[]).includes('termo_apreensao_celular_helena')} archiveOpen={game.task>=3} teamBadge={unread} clueBadge={game.clues.length} onOpenApp={openApp}/>
 }
 function HandsetStatus(){return <header className="handset-status"><span>VIVO&nbsp;&nbsp;▮▮▮</span><b>DHPP</b><BatteryMedium/></header>}
 function PhonePage({title,back,children}:{title:string;back:()=>void;children:React.ReactNode}){return <main className={`handset page${title==='Equipe'?' team-page':''}`}><HandsetStatus/><header className="page-head"><button onClick={back}><ChevronLeft/></button><b>{title}</b><span/></header><section className="page-body">{children}</section></main>}
 
-/** Monta uma leva de até 3 sugestões: as que dá para fazer agora e, se sobrar espaço, avisos do que ainda falta. */
+/** Até duas sugestões acionáveis; a primeira é a prioridade da história.
+    As demais linhas continuam acessíveis nos apps sem disputar a home. */
 const guideBatchOf=(steps:GuideStepData[]):{id:string;done:string}[]=>{
-  const real=steps.filter(x=>x.done&&!x.locked).slice(0,3)
-  const waiting=steps.filter(x=>x.done&&x.locked).slice(0,3-real.length)
-  return [...real,...waiting].map(x=>({id:x.id,done:x.done!}))
+  return steps.filter(x=>x.done&&!x.locked).slice(0,2).map(x=>({id:x.id,done:x.done!}))
 }
 /** Atualiza a leva: o que sumiu das sugestões foi feito. Só o relatório pronto fura a leva. */
 const reconcileGuide=(g:GameSave):GameSave=>{

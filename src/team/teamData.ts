@@ -129,7 +129,7 @@ export const teamDialogues:TeamDialogue[] = [
   },
   {
     id:'renata_alarme',memberId:'renata',label:'Vale puxar o histórico completo do alarme?',
-    minInterviews:4,requiresTopics:['renata_prioridades'],
+    minInterviews:3,requiresTopics:['renata_prioridades'],
     user:{time:'05:13',text:'As versões já estão minimamente separadas. Puxa o alarme inteiro ou só a madrugada?'},
     agent:{time:'05:14',text:'Inteiro. Quero ver padrão, quem costuma armar e qualquer desativação fora do horário. Se tiver código mestre no meio, isso muda bastante a leitura.'}
   },
@@ -314,7 +314,7 @@ export const teamMaterialRequests:TeamMaterialRequest[] = [
     id:'log_alarme',memberId:'renata',label:'Puxar log completo do alarme',kind:'PERÍCIA',
     assetPaths:case01MaterialAssets.log_alarme,
     description:'Histórico de ativações e desativações do sistema da residência.',
-    minInterviews:4,requiresTopics:['renata_alarme'],clueIds:['log_alarme'],requestTime:'05:15',
+    minInterviews:3,requiresTopics:['renata_alarme'],clueIds:['log_alarme'],requestTime:'05:15',
     response:{time:'05:18',from:'Inteligência',text:'Chegou. Tem uma desativação por código mestre às 23:52. Esse é o evento fora do padrão que eu estava procurando.'}
   },
   {
