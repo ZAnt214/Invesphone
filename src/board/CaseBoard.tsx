@@ -137,7 +137,7 @@ const wallArt=()=>wallCache??=Promise.all(WALL_IMGS.map(src=>new Promise<HTMLIma
 /** Desenha antes a cortiça e a parede do fundo (o que mais pesa ao abrir), para a entrada começar sem travar. */
 export async function prewarmBoard(){corkArt();await wallArt()}
 
-const TRAY_H=92
+const TRAY_H=96
 const ROLE_NEXT:Record<string,'exec'|'mentor'|'fora'|undefined>={none:'exec',exec:'mentor',mentor:'fora',fora:undefined}
 const ROLE_TXT={exec:'Executor',mentor:'Mentor',fora:'Fora'} as const
 
@@ -213,7 +213,7 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
   const [size,setSize]=useState({w:844,h:390})
   useLayoutEffect(()=>{const el=root.current!;const fit=()=>setSize({w:el.clientWidth||844,h:el.clientHeight||390});fit();const ro=new ResizeObserver(fit);ro.observe(el);return ()=>ro.disconnect()},[])
   const vert=size.h>size.w*1.05
-  const area={x:0,y:46,w:size.w,h:size.h-46-(stage>0?TRAY_H:8)}
+  const area={x:26,y:50,w:size.w-52,h:size.h-50-(stage>0?TRAY_H:10)}
   const fitS=Math.min(1.6,(area.w-16)/W,(area.h-8)/H)
   type Cam={x:number;y:number;s:number}
   const clamp=(c:Cam):Cam=>{const s=Math.max(fitS,Math.min(2.6,c.s)),m=20
@@ -296,7 +296,7 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
       s.s.forEach((id,j)=>{const x=xs[j]
         els.push(<button key={br.id+j} className={'ct-slot'+(id?' full':sel&&!lit?' hot':'')+(lit?' lit':'')} style={{left:x,top:cy-32,'--r':(id?ROT[(i*2+j)%ROT.length]:0)+'deg'} as React.CSSProperties}
           onClick={()=>tapSlot(br,j)} aria-label={id?titleOf(id):'Espaço vazio'}>
-          {id?<><img src={thumb(clueImg(id))} alt=""/><i>{titleOf(id)}</i></>:<span>{sel&&!lit?'pôr aqui':'?'}</span>}</button>)})
+          {id?<><img src={thumb(clueImg(id))} alt=""/><i>{titleOf(id)}</i></>:<span><b>+</b>{sel&&!lit?'prender aqui':'evidência'}</span>}</button>)})
       if(two)els.push(<i key={br.id+'p'} className={'cb-pin'+(lit?'':' cb-k')} style={{left:131,top:cy,zIndex:6}}/>)
       const sx=two?248:189
       lines.push(...yarn(br.id+'a',`M${sx} ${cy} H${NODE_X}`,lit||full,lit&&fresh.size>0))
@@ -324,6 +324,12 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
     return <><svg className="cb-str" style={{width:W,height:H}} viewBox={`0 0 ${W} ${H}`}>{lines}</svg>{els}</>
   }
 
+  /* o que fazer agora, escrito na aba da pasta */
+  const readyBr=T?.branches.find(br=>!stOf(br).lit&&stOf(br).s.every(Boolean))
+  const hint=!T?{n:'',t:'',on:false}:sel?{n:'2',t:'Agora toque num espaço vazio da árvore',on:true}
+    :readyBr?{n:'3',t:`Toque na ficha “${readyBr.q}” para deduzir`,on:true}
+    :done(stage-1)?{n:'✓',t:'Capítulo resolvido',on:false}
+    :pool.length?{n:'1',t:'Pasta de evidências · toque numa foto para pegar',on:false}:{n:'',t:'Pasta de evidências',on:false}
   const S=sel?clueOf(sel):null,src=sel?sourcesOf(g,sel,found):[],heard=sel?heardOf(g,sel):[]
   const popPeople=pop?.people?.filter(p=>people.includes(p))??[]
   const cineStyle={'--ox':`${area.x+area.w/2}px`,'--oy':`${area.y+area.h/2}px`} as React.CSSProperties
@@ -353,7 +359,7 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
       <button className="cb-chip cb-x" aria-label="Fechar o quadro" onClick={onClose}>×</button>
     </div>
     {stage>0&&<div className="ct-tray">
-      <small>Evidências</small>
+      <small className={hint.on?'on':''}><b>{hint.n}</b>{hint.t}</small>
       <div className="ct-row">{pool.length?pool.map(id=><button key={id} className={'ct-ev'+(sel===id?' sel':'')+(fresh.has(id)?' new':'')} onClick={()=>{setSel(sel===id?null:id);setNote(null)}} aria-pressed={sel===id}>
           <img src={thumb(clueImg(id))} alt=""/><i>{titleOf(id)}</i></button>)
         :<p>{have.some(id=>T?.pool.includes(id))?'Todas as evidências deste capítulo estão na árvore.':'Ainda não há evidências deste capítulo. Continue a investigação.'}</p>}</div>
@@ -363,7 +369,6 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
       <div><small>{kindOf(sel)}</small><b>{S.title}</b><p>{S.description}</p>
         {src[0]&&<span>{src[0].text}</span>}{!src[0]&&heard[0]&&<span>{firstName(heard[0].person)}, no depoimento: “{heard[0].phrase}”</span>}</div>
       <div className="ct-act"><button onClick={()=>setViewer({img:clueImg(sel),t:S.title,d:S.description})}>Ver o original</button><button onClick={()=>setSel(null)}>Guardar</button></div>
-      <em>Toque num espaço vazio para prender.</em>
     </div>}
     {pop&&<div className="ct-pop" role="dialog" aria-label={pop.q}>
       <small>O que essas evidências provam?</small><b>{pop.q}</b>
