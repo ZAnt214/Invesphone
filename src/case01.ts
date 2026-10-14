@@ -56,7 +56,7 @@ export const clues: Clue[] = [
   {id:'busca_dirigida',title:'Bagunça encenada',description:'Gavetas pouco importantes foram abertas enquanto as mais óbvias ficaram intactas.',category:'depoimento'},
   {id:'vigia_horario',title:'Gol por volta das 23h30',description:'Jorge lembra do Gol parado perto da casa por volta das 23h30.',category:'depoimento'},
   {id:'caio_saiu_22h30',title:'Caio saiu às 22h30',description:'Téo conta que Caio pegou o Gol por volta das 22h30.',category:'depoimento'},
-  {id:'teo_adiantamento',title:'Adiantamento de Caio',description:'Téo admite que Caio dividiu dinheiro com ele antes do crime.',category:'depoimento'},
+  {id:'teo_adiantamento',title:'Dinheiro repassado por Caio',description:'Téo admite que Caio lhe passou parte dos dólares; ainda não explica a origem da quantia.',category:'depoimento'},
   {id:'teo_entrou_com_caio',title:'Téo entrou com Caio',description:'Antes da confissão final, Téo admite que entrou na residência junto com Caio para buscar o dinheiro.',category:'depoimento'},
   {id:'caio_digitou_alarme',title:'Caio usou o código',description:'Téo afirma que Caio digitou o código mestre às 23:52 e já sabia como acessar a casa.',category:'depoimento'},
   {id:'plano_preparado_antes',title:'Entrada preparada antes',description:'Téo admite que Caio já chegou sabendo horário, código, situação de Thor e onde procurar o dinheiro.',category:'depoimento'},
