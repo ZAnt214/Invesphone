@@ -98,5 +98,11 @@ export const nextSteps=(game:CaseSave):GuideStepData[]=>{
     if(game.task===7)return id==='retake-teo'||id==='depo-teo'?0:id==='retake-caio'||id==='retake-livia'?1:12
     return 20
   }
-  return out.filter(x=>!x.locked).sort((a,b)=>priority(a)-priority(b))
+  const available=out.filter(x=>!x.locked).sort((a,b)=>priority(a)-priority(b))
+  if(available.length)return available
+  // Não deixar o jogador sem orientação se só restarem convocações ainda indisponíveis.
+  return [
+    {id:'sonia',tag:'EQUIPE',title:'Converse com Sônia',text:'Revise com ela quais versões ainda precisam de uma fonte independente.',cta:'Falar com Sônia',go:{kind:'team',memberId:'sonia'},done:'Conversa com Sônia registrada'},
+    {id:'clues',tag:'PISTAS',title:'Compare as evidências',text:'Veja de onde vieram os fatos já registrados.',cta:'Abrir pistas',go:{kind:'clues'},done:'Evidências revisadas'}
+  ]
 }
