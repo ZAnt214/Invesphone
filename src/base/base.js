@@ -1986,6 +1986,18 @@ addEventListener('resize',()=>applyLayout(false));
 
 newGame();initArt();buildTraffic();buildVisitors();applyLayout(true);cam.x=16*T;cam.y=15*TH;clampCam();
 setTimeout(()=>{framesHDFor(P1);for(const n of NPCS)framesHDFor(n);},300);
+// Versão nova do jogo: o modo offline (vite-plugin-pwa, autoUpdate) abre a cópia guardada e baixa a nova em segundo
+// plano; quando ela assume a página, a base ainda estaria rodando a antiga. Se o jogador ainda não entrou na base,
+// recarrega na hora para abrir já a nova; com o jogo em andamento, avisa que ela entra na próxima vez que abrir.
+if('serviceWorker' in navigator){
+  const hadCtl=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(!hadCtl||safe(()=>sessionStorage.getItem('base.swReload'),null))return;
+    if(!started){safe(()=>sessionStorage.setItem('base.swReload','1'));location.reload();}
+    else toast('Arquivo Morto','Há uma versão nova do jogo. Ela entra na próxima vez que você abrir.');
+  });
+  addEventListener('load',()=>{navigator.serviceWorker.getRegistration().then(r=>r&&r.update()).catch(()=>{});setTimeout(()=>safe(()=>sessionStorage.removeItem('base.swReload')),15000);});
+}
 $('#b-start').addEventListener('click',()=>{
   AMB.unlock();AMB.setScene(SCENE==='rua'?'rua':'base');
   $('#intro').hidden=true;started=true;setTimeout(()=>loadDepo().catch(()=>{}),4000);setTimeout(()=>loadPrep().then(m=>m.background()).catch(()=>{}),3000);
