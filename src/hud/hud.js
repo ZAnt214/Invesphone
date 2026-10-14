@@ -35,7 +35,7 @@ export function createHud(o){
   const ev=el('div','lh-ev lh-glass',app,'<svg viewBox="0 0 38 46" aria-hidden="true"><path d="M2 2h24l10 10v32H2z"/><path d="M26 2v10h10M8 20h22M8 26h22M8 32h14"/></svg><div><small></small><b></b></div>');ev.setAttribute('aria-hidden','true');
   const scrim=el('div','lh-scrim',app);
   const book=el('div','lh-book lh-glass',app,`<header><h2>Caderneta</h2><button type="button" class="cl">Fechar</button></header>
-    <nav class="lh-tabs" role="tablist"><button data-k="pessoas">Pessoas</button><button data-k="pistas">Pistas</button><button data-k="suspeitas">Suspeitas</button><button data-k="hipoteses">Hipóteses</button><button data-k="notas">Notas</button><i class="ink"></i></nav>
+    <nav class="lh-tabs" role="tablist"><button data-k="caso">Caso</button><button data-k="pessoas">Pessoas</button><button data-k="pistas">Pistas</button><button data-k="suspeitas">Suspeitas</button><button data-k="hipoteses">Hipóteses</button><button data-k="notas">Notas</button><i class="ink"></i></nav>
     <ul class="lh-list"></ul><form class="lh-write" hidden><input type="text" maxlength="140" autocomplete="off" aria-label="Escrever na caderneta"><button type="submit">Anotar</button></form>`);
   book.setAttribute('role','dialog');book.setAttribute('aria-label','Caderneta do Lemos');
   const cv=el('canvas','lh-fx',app),g=cv.getContext('2d');
@@ -139,7 +139,7 @@ export function createHud(o){
     else{qBusy=false;pump();}}
 
   /* ---------- caderneta ---------- */
-  let nb=loadNb(),tab='pessoas';
+  let nb=loadNb(),tab='caso';
   const list=book.querySelector('.lh-list'),form=book.querySelector('.lh-write'),input=form.querySelector('input'),ink=book.querySelector('.ink');
   const PH={suspeitas:'Escreva uma suspeita',hipoteses:'Escreva uma hipótese',notas:'Escreva uma nota'};
   const now=()=>o.clock?o.clock():'';
@@ -147,9 +147,13 @@ export function createHud(o){
   function render(){
     const D=o.data(),ppl=D.people,cl=D.clues;
     book.querySelectorAll('.lh-tabs button').forEach(b=>{b.classList.toggle('on',b.dataset.k===tab);b.setAttribute('aria-selected',String(b.dataset.k===tab));
-      const n={pessoas:ppl.length,pistas:cl.length,suspeitas:nb.sus.length+nb.susTxt.length,hipoteses:nb.hip.length,notas:nb.notas.length}[b.dataset.k];b.innerHTML=b.dataset.k[0].toUpperCase()+({pessoas:'essoas',pistas:'istas',suspeitas:'uspeitas',hipoteses:'ipóteses',notas:'otas'}[b.dataset.k])+(n?`<sup>${n}</sup>`:'');});
+      const n={caso:0,pessoas:ppl.length,pistas:cl.length,suspeitas:nb.sus.length+nb.susTxt.length,hipoteses:nb.hip.length,notas:nb.notas.length}[b.dataset.k];b.innerHTML=b.dataset.k[0].toUpperCase()+({caso:'aso',pessoas:'essoas',pistas:'istas',suspeitas:'uspeitas',hipoteses:'ipóteses',notas:'otas'}[b.dataset.k])+(n?`<sup>${n}</sup>`:'');});
     const on=book.querySelector('.lh-tabs button.on');ink.style.left=on.offsetLeft+'px';ink.style.width=on.offsetWidth+'px';
     let h='';
+    // o caso agora: o que Lemos sabe, o que falta entender e o próximo passo (src/case/guide.ts)
+    if(tab==='caso'){const G=D.guide;
+      h=G?li('cg',0,`<span class="tx"><small>${esc(G.status)}</small><span><em>Sabemos</em>${esc(G.known)}</span><span><em>Falta entender</em><b>${esc(G.question)}</b></span></span>`)
+        +(G.next?li('cg nx',1,`<span class="tx"><small>Próximo passo</small><b>${esc(G.next.title)}</b><span>${esc(G.next.text)}</span><button type="button" data-a="go">${esc(G.next.cta)} ›</button></span>`):''):'<li class="empty">Nada em andamento.</li>';}
     if(tab==='pessoas'){h=ppl.map((p,i)=>li('',i,`<span class="av" style="background-image:url('${p.photo||''}')"></span><span class="tx"><b>${esc(p.name)}</b><span>${esc(p.role)}${p.state?' · '+esc(p.state):''}</span></span><span class="act"><button type="button" data-a="sus" data-id="${p.id}" class="${nb.sus.includes(p.id)?'on':''}" aria-label="${nb.sus.includes(p.id)?'Tirar das suspeitas':'Marcar como suspeito'}">${ICON.target}</button></span>`)).join('');
       if(!ppl.length)h='<li class="empty">Ninguém identificado ainda.</li>';}
     if(tab==='pistas'){const ord=[...cl].reverse();h=ord.map((c,i)=>li(nb.seen.includes(c.id)?'':'new',i,`<span class="tx"><b>${esc(c.title)}</b><span>${esc(c.desc||'')}</span></span>`)).join('');
@@ -170,6 +174,7 @@ export function createHud(o){
   book.querySelector('.cl').addEventListener('click',closeBook);scrim.addEventListener('click',closeBook);
   book.querySelector('.lh-tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;tab=b.dataset.k;render();SFX.tick();});
   list.addEventListener('click',e=>{const b=e.target.closest('button[data-a]');if(!b)return;const a=b.dataset.a;
+    if(a==='go'){closeBook();if(o.onGuide)o.onGuide();return;}
     if(a==='sus'){const id=b.dataset.id;nb.sus=nb.sus.includes(id)?nb.sus.filter(x=>x!==id):[...nb.sus,id];}
     if(a==='del')nb[b.dataset.l].splice(+b.dataset.k,1);
     if(a==='strike'){const s=nb.hip[+b.dataset.k];s.x=!s.x;}

@@ -1,5 +1,5 @@
 /* Equipe do Caso 01: integrantes, assuntos de conversa, diligências e as regras de quando cada um fica disponível.
-   Compartilhado pelo app Equipe do Invesphone e pelas mesas da base do DHPP (src/base), que gravam no mesmo save. */
+   Usado pelas conversas com a equipe na base do DHPP (src/base), que gravam no save do caso. */
 import { case01MaterialAssets } from '../evidence/case01Materials'
 
 /** O pedaço do save do caso que a Equipe lê e escreve. */

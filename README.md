@@ -1,14 +1,13 @@
-# Invesphone
+# Arquivo Morto
 
 Base independente do Floot para **Arquivo Morto**, um jogo narrativo de investigação criminal em formato found-phone.
 
 ## Páginas
 
-- `/` — **Varredura das Acácias**: a cena 2D do Caso 01 (estilo colônia/Norland), página inicial do site. Código em `src/varredura/` (canvas, sem React), entrada em `index.html`.
-  - Controles: um dedo sempre move a planta. Arrastar o retrato de alguém da equipe até o mapa dá a ordem, e o lugar decide qual (curioso, cômodo, calçada ou viatura). As teclas redondas marcam áreas para Periciar, Isolar ou Desfazer. Cada achado vira uma polaroide que pousa no marcador numerado do topo.
-- `/invesphone` — o app Invesphone (celular do caso), mantido inteiro para ser adaptado à nova página. Entrada em `invesphone/index.html`.
+- `/base` — **Base do DHPP**, onde o jogo começa (a raiz `/` leva para cá). De madrugada é o plantão: a Sônia passa o caso e Lemos vai para a casa. Depois da casa, a base amanhece com a equipe. Código em `src/base/` (canvas), entrada em `base/index.html`.
+- `/casa` — **Varredura das Acácias**: a casa do crime, segunda parte do Caso 01. Código em `src/varredura/` (canvas, sem React), entrada em `casa/index.html`.
 
-As duas entradas são declaradas em `vite.config.ts` (`build.rollupOptions.input`).
+As entradas são declaradas em `vite.config.ts` (`build.rollupOptions.input`); os redirecionamentos (raiz e o antigo `/invesphone`) ficam em `vercel.json`. Não há mais aparelho nem chamada.
 
 ## Stack
 
@@ -32,4 +31,4 @@ npm run dev
 npm run build
 ```
 
-A primeira experiência implementada é a ligação animada da Delegada Sônia, com som ativado por interação do usuário para compatibilidade com Safari/iPhone, seguida pela abertura do sistema DHPP.
+O jogo começa no plantão de madrugada da base do DHPP, segue para a casa da Rua das Acácias e volta à base de manhã.

@@ -3,7 +3,7 @@
  *
  * REGRA (CLAUDE.md): todo efeito visual ou sonoro novo entra aqui, na categoria certa, com um texto curto e
  * a opção de desligar (efeito visual = seção Gráficos; som = seção Som) — e o código do efeito consulta `fxOn(id)` antes de desenhar/tocar. As duas telas de
- * ajustes (o botão de engrenagem do jogo, em src/settings/settingsPanel.ts, e o app Ajustes do aparelho)
+ * ajustes (o botão de engrenagem do jogo, em src/settings/settingsPanel.ts)
  * são montadas a partir desta lista; nenhuma das duas tem opção escrita à mão.
  *
  * A qualidade gráfica (src/characters/quality.ts) continua por cima: um efeito ligado aqui ainda respeita

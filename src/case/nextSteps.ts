@@ -1,5 +1,5 @@
 /* Próximos passos do Caso 01: o que o jogador pode fazer agora, do mais urgente ao mais livre.
-   Usado pela tela inicial do aparelho e pelo quadro do caso na base. */
+   Usado pela caderneta do Lemos (aba Caso, via src/case/guide.ts) e pelo quadro do caso na base. */
 import { clues, people } from '../case01'
 import { interrogations } from '../interrogation/registry'
 import { pendingQuestions } from '../interrogation/logic'
@@ -65,7 +65,7 @@ export const nextSteps=(game:CaseSave):GuideStepData[]=>{
     const first=m.name.split(' ')[0]
     const lead=news.requests[0]?`${news.requests[0].kind[0]+news.requests[0].kind.slice(1).toLowerCase()}: ${news.requests[0].label}`:news.topics[0].label
     out.push(game.task<2&&id==='mauricio'
-      ?{id:'team-'+id,done:'Falou com o Maurício, na casa',tag:'PRIMEIRO PASSO',title:'Fale com o Maurício, na casa',text:'Peça a leitura do perito sobre a cena antes de falar com qualquer pessoa.',cta:'Abrir conversa',go:{kind:'team',memberId:id}}
+      ?{id:'team-'+id,done:'Falou com o Maurício',tag:'PRIMEIRO PASSO',title:'Fale com o Maurício',text:'Peça a leitura do perito sobre a cena antes de falar com qualquer pessoa.',cta:'Abrir conversa',go:{kind:'team',memberId:id}}
       :{id:'team-'+id,done:`Conversas com ${first} em dia`,tag:'EQUIPE',title:`${first} tem ${news.count} ${news.count>1?'assuntos novos':'assunto novo'}`,text:lead,cta:'Abrir conversa',go:{kind:'team',memberId:id}})
   }
 

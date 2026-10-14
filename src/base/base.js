@@ -1,6 +1,7 @@
 /* Base do DHPP: cena 2D navegável do Caso 01, na mesma técnica da Varredura das Acácias
    (pixel art procedural, câmera oblíqua, luz multiplicada por sala, detalhe por zoom, tela deitada).
-   Lemos anda, a equipe fala, o aparelho leva ao resto do caso. */
+   Lemos anda, a equipe fala, a caderneta guarda o caso. O jogo começa aqui, no plantão de madrugada; a casa
+   da Rua das Acácias (/casa) é a segunda parte, e depois dela a base amanhece. Não há aparelho nem chamada. */
 import { applyRequest, applyTopic, caseTeam, DEFAULT_DISCOVERED, requestOk, teamDialogues, teamMaterialRequests, teamNews, topicOk } from '../team/teamData';
 import { readCase, writeCase } from '../case/caseSave';
 import { depoPeople, summon } from '../case/depositions';
@@ -11,6 +12,7 @@ import * as AMB from '../world/ambientAudio';
 import { openSettings } from '../settings/settingsPanel';
 import { badgeReady, openBadge } from './badgeSwipe';
 import { createHud } from '../hud/hud';
+import { caseGuide } from '../case/guide';
 import { clues as CLUE_LIST, people as PEOPLE } from '../case01';
 import { fxOn, onFxChange } from '../settings/gameSettings';
 import { choose, eventLog, jitter, lifeDebug, lineBank } from '../world/life';
@@ -87,6 +89,12 @@ const CLUES={
 };
 const FIM=safe(()=>JSON.parse(localStorage.getItem('varredura.fim')||'null'),null);
 const FOUND=((FIM&&FIM.ordem)||[]).filter(id=>CLUES[id]);
+/* plantão de madrugada: antes da casa. Lemos está de serviço no DHPP quando o caso chega; a Sônia passa a ocorrência e
+   ele vai para a Rua das Acácias. Depois da varredura (FIM), a base é a da manhã, com a equipe inteira. */
+const NIGHT=!FIM;
+// quem está no prédio de madrugada; Maurício e Paulo já estão na casa, Renata chega de manhã
+const NIGHT_IDS=new Set(['sonia','denise','plantao','guarda','faxina']);
+const briefed=()=>!!(CASE||readCase()).briefed;
 
 /* ---------- Mapa ---------- */
 const F={GRASS:0,STREET:1,WALK:2,CONC:3,WALL:6,DOOR:8,WIN:9,FLOOR:4,ALLEY:10,ROOF:11};
@@ -122,7 +130,7 @@ function buildMap(){
   add('desk',12,4,2,1,{v:'renata'});add('desk',16,4,2,1,{v:'denise'});add('desk',19,4,2,1,{v:'lemos',hot:'mesa_lemos'});
   add('board',14,6,3,1,{hot:'quadro'});add('coffee',20,6,1,1);add('xerox',12,6,1,1);add('filing',11,2,1,1);add('plant',21,2,1,1,{v:'tall'});add('plant',18,7,1,1);
   // perícia
-  add('stool',25,3,1,1,{nocc:true});add('bench',24,4,4,1);add('lightbox',28,6,3,1,{hot:'fotos'});add('locker',30,2,1,1);add('locker',31,2,1,1);add('bagtable',24,6,2,1);add('evidcage',23,2,2,1);add('plant',23,7,1,1);
+  add('stool',25,3,1,1,{nocc:true});add('bench',24,4,4,1);add('lightbox',28,6,3,1,{hot:'fotos'});add('locker',30,2,1,1);add('locker',31,2,1,1);add('bagtable',24,6,2,1,{hot:'celular_helena'});add('evidcage',23,2,2,1);add('plant',23,7,1,1);
   // recepção (pública) e controle de acesso: divisória de vidro na linha 13 com o balcão do Plantão (atrás do vidro, do lado
   // restrito), o painel de senha, a placa de área restrita e a porta com leitor de crachá (a única passagem para dentro)
   add('chair',14,12,1,1,{nocc:true});
@@ -795,11 +803,11 @@ const CAMERA_DEBUG=/[?&]cameraDebug=1(?:&|$)/.test(location.search);
 const CAMLEAD=createLead({rest:.3});   // espaço à frente de Lemos (suavizado)
 const CAMCTRL=createCameraControl({manualHold:2600,reducedMotion:!!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)});
 let CAMDBG=null,camIdle=0;
-let gameMin=8*60+10,lastClock=0;
+let gameMin=NIGHT?4*60+27:8*60+10,lastClock=0;
 function newGame(){
   buildMap();
   P1={id:'lemos',x:16,y:20,path:[],dir:1,walk:0,moving:false,look:LOOK.lemos,pend:null};
-  NPCS=NPCDEF.map((d,k)=>({...d,k,route:d.walk,home:idx(d.x,d.y),act:null,actT:3+k*2.3,mem:{},dir:d.id==='paulo'?-1:1,path:[],walk:0,moving:false,timer:120+Math.floor(Math.random()*200),wp:0,hold:false,say:null,sayT:600+Math.floor(Math.random()*900),pose:null,poseT:0,poseCD:60+Math.floor(Math.random()*500),sayQ:null}));
+  NPCS=NPCDEF.filter(d=>!NIGHT||NIGHT_IDS.has(d.id)).map((d,k)=>({...d,k,route:d.walk,home:idx(d.x,d.y),act:null,actT:3+k*2.3,mem:{},dir:d.id==='paulo'?-1:1,path:[],walk:0,moving:false,timer:120+Math.floor(Math.random()*200),wp:0,hold:false,say:null,sayT:600+Math.floor(Math.random()*900),pose:null,poseT:0,poseCD:60+Math.floor(Math.random()*500),sayQ:null}));
 }
 function framesFor(p){if(!p.frames)p.frames=personFrames(p.look||LOOK[p.lookId]);return p.frames;}
 function framesHDFor(p){if(!p.framesHD)p.framesHD=personFramesHD(p.look,framesFor(p));return p.framesHD;}
@@ -831,7 +839,6 @@ const walkPass=i=>passable(i)&&!npcAtTile(i);
 function roomOf(a){return room[ti(a)];}
 
 /* ---------- Conversas ---------- */
-const OPEN_PHONE={t:'Abrir o aparelho',s:'Invesphone',href:'/invesphone',main:true};
 const nF=()=>FOUND.length;
 /* ---------- Equipe nas mesas: a mesma conversa do app Equipe, no mesmo save ---------- */
 let CASE=readCase();
@@ -944,6 +951,14 @@ const loadBoard=lazyPart(()=>import('./board'));
 // carregamento em duas fases: o essencial do momento do caso antes de entrar (com barra no cartão de abertura)
 // e o resto aos poucos enquanto o jogador anda pela base (src/preload)
 const loadPrep=lazyPart(()=>import('../preload/prep'));
+function introTexts(){
+  if(!NIGHT)return;
+  const set=(sel,t)=>{const e=$(sel);if(e)e.textContent=t;};
+  set('#intro .eb','Caso 01 · Plantão do DHPP');set('#intro h1','Madrugada no DHPP');
+  set('#intro .call p',briefed()?'Lemos, a casa da Rua das Acácias. Maurício está te esperando.':'Lemos, na minha sala. Chegou um caso: duplo homicídio na Rua das Acácias.');
+  set('#b-start','Começar o plantão');
+}
+introTexts();
 function prepIntro(){
   const btn=$('#b-start'),box=$('#b-prep'),fill=box.querySelector('b'),label=box.querySelector('span'),txt=btn.textContent;
   let ready=false;
@@ -980,17 +995,44 @@ function boardNearTick(dt){
   else if(boardPrepared&&(boardPrepT+=dt)>2){boardPrepared=false;boardPrepT=0;loadBoard().then(m=>{if(!depoOpen){m.discardBoard();$('#board').hidden=true;}}).catch(()=>{});}
 }
 const DLG={
-  sonia:()=>teamTalk('sonia'),mauricio:()=>teamTalk('mauricio'),renata:()=>teamTalk('renata'),paulo:()=>teamTalk('paulo'),denise:()=>teamTalk('denise'),
+  sonia:()=>NIGHT?soniaNight():teamTalk('sonia'),mauricio:()=>teamTalk('mauricio'),renata:()=>teamTalk('renata'),paulo:()=>teamTalk('paulo'),denise:()=>teamTalk('denise'),
   sonia_mesa:()=>({who:'Mesa da delegada',role:'Sala de Sônia Prado',av:'icon',pages:['Pasta aberta, telefone fora do gancho pela metade, xícara vazia. Nada aqui é para você mexer sem ela dizer.'],opts:[]}),
   guarda:()=>({who:'Guarda',role:'Controle de acesso · DHPP',av:'guarda',pages:['Bom dia, doutor. A porta só abre com o crachá de vocês.','Quem vem depor espera no sofá até alguém da equipe buscar.'],opts:[]}),
   plantao:()=>({who:'Plantão',role:'Recepção · DHPP',av:'plantao',pages:['A imprensa ligou duas vezes. Respondi o que a delegada mandou: sem comentários.','Se alguém procurar a equipe, passa por mim primeiro.'],opts:[]}),
-  mesa_lemos:()=>({who:'Sua mesa',role:'Lemos · DHPP',av:'icon',pages:['Café frio e a pasta do Caso 01 ainda fechada. O que importa está no aparelho.'],opts:[OPEN_PHONE]}),
+  mesa_lemos:()=>({who:'Sua mesa',role:'Lemos · DHPP',av:'icon',pages:[NIGHT?'Café frio, a escala do plantão e o rádio ligado baixo. A noite estava parada até agora.':'Café frio e a pasta do Caso 01 aberta. O que já se sabe está na caderneta.'],opts:[{t:'Abrir a caderneta',s:'O caso agora',fn:()=>HUD.openBook('caso'),main:true}]}),
+  celular_helena:()=>helenaPhone(),
   fotos:()=>FOUND.length?{who:'Mesa de luz',role:'Perícia',av:'icon',pages:['Fotografias periciais da casa, reveladas e penduradas para análise.'],opts:[{t:'Ver as fotos',s:`${FOUND.length} de 7`,fn:()=>openGallery(0),main:true}]}
-    :{who:'Mesa de luz',role:'Perícia',av:'icon',pages:['A mesa de luz está apagada. Nenhuma foto da casa chegou ainda.'],opts:[{t:'Voltar à casa',s:'Varredura',href:'/'}]},
+    :{who:'Mesa de luz',role:'Perícia',av:'icon',pages:['A mesa de luz está apagada. Nenhuma foto da casa chegou ainda.'],opts:[{t:'Ir para a casa',s:'Rua das Acácias',href:'/casa/'}]},
   interro:()=>interroTalk(),
   arquivo:()=>({who:'Arquivo Morto',role:'Caixas e prateleiras',av:'icon',
-    pages:['Caixas de casos que ninguém fechou, com o nome escrito a lápis na lateral. Todo caso daqui começou parecendo simples.','O de hoje ainda cabe numa gaveta. Ver o que já foi guardado dele é pelo aparelho.'],opts:[{t:'Abrir o aparelho',s:'Arquivo',href:'/invesphone',main:true}]})
+    pages:['Caixas de casos que ninguém fechou, com o nome escrito a lápis na lateral. Todo caso daqui começou parecendo simples.','O de hoje ainda cabe numa gaveta. O que já chegou dele está no quadro da sala da equipe.'],opts:NIGHT?[]:[{t:'Abrir o quadro do caso',s:'Sala da equipe',fn:()=>startBoard(),main:true}]})
 };
+/* plantão: a Sônia passa a ocorrência (no lugar da antiga chamada) e manda Lemos para a casa */
+function soniaNight(){
+  const go={t:'Ir para a Rua das Acácias',s:'A casa do crime',fn:goCasa,main:true};
+  if(briefed())return {who:'Sônia Prado',role:'Delegada · DHPP',av:'sonia',pages:['Ainda aqui? Maurício já está na casa e a PM segura a frente. Vai.'],opts:[go]};
+  return {who:'Sônia Prado',role:'Delegada · DHPP',av:'sonia',pages:[
+    {t:'Lemos, temos um caso. Duplo homicídio na Rua das Acácias: Ricardo e Helena Valença, mortos no quarto.'},
+    {t:'A filha, Lívia, chegou de madrugada e diz que encontrou a casa revirada. Ligou para o 190.'},
+    {me:true,t:'Assalto?'},
+    {t:'É o que parece. Quero primeiro o que não combina com roubo. Revise a cena antes de ouvir qualquer versão.'},
+    {t:'Maurício já está indo, e o Paulo cuida da rua. A PM segura a frente. Me liga do local.',commit:()=>{CASE=writeCase(g=>({...g,briefed:true}));}}],opts:[go]};
+}
+function goCasa(){closeTalk();fadeTo(()=>{location.href='/casa/';});}
+/* o celular de Helena, apreendido e lacrado na perícia: mensagens e agenda (antes, o app "Tel. Helena" do aparelho) */
+const HELENA_AGENDA=[
+  ['02/10','Ricardo e Lívia brigaram de novo por causa do Caio. Tentei mediar. Acho o namoro prejudicial, mas não sei como dizer isso sem piorar.'],
+  ['09/10','Ricardo falou em cortar parte do apoio da Lívia. Pedi calma. Preciso conversar com ela antes que ele faça isso.'],
+  ['14/10','A Lívia anda calada e sai com o Caio quase toda noite. Preciso sentar com ela. Sozinha, sem o pai.'],
+  ['16/10','Lívia pediu para conversar. Disse que amanhã. Hoje não, o Ricardo ainda está alterado.']];
+function helenaPhone(){
+  const c=CASE||readCase(),open=c.task>=3||(c.requestedMaterials||[]).includes('termo_apreensao_celular_helena');
+  if(!open)return {who:'Saco de provas',role:'Perícia · lacrado',av:'icon',pages:[NIGHT?'A bancada de provas está vazia. O material da noite ainda está na casa.':'Um celular lacrado, com etiqueta de custódia em nome de Helena Valença. Só abre depois do auto de apreensão e de quando a investigação precisar dele.'],opts:[]};
+  return {who:'Celular de Helena',role:'Aparelho apreendido · acesso autorizado',av:'icon',pages:[
+    'Mensagens. Rafael, ontem às 22:14: “mãe, vou ficar mais um pouco na lan”. Helena: “Não demore. Seu pai já está dormindo.”',
+    'Lívia, ontem às 18:42: “mãe podemos conversar quando eu voltar?”. Helena: “Amanhã. Hoje não.”',
+    ...HELENA_AGENDA.map(([d,t],i)=>i===HELENA_AGENDA.length-1?{t:`Agenda, ${d}: ${t}`,commit:()=>{CASE=writeCase(g=>g.clues.includes('agenda_helena')?g:{...g,clues:[...g.clues,'agenda_helena']});}}:`Agenda, ${d}: ${t}`)],opts:[]};
+}
 let talk=null,tkTimer=0,talkPrevZ=null;
 function avatarHTML(av){
   const n=NPCS.find(x=>x.id===av);
@@ -1129,11 +1171,23 @@ const HUD_SEEN='invesphone.hud.seen';
 const DEPO_TXT={chamar:'não chamado',sem_provas:'não chamado',ouvir:'chamado para depor',retomar:'depoimento em aberto',registrado:'depoimento registrado'};
 function hudData(){
   const c=CASE||readCase(),known=c.discoveredPeople||DEFAULT_DISCOVERED,dp=depoPeople(c);
-  const people=PEOPLE.filter(p=>p.id!=='sonia'&&known.includes(p.id)).map(p=>{const d=dp.find(x=>x.id===p.id);return {id:p.id,name:p.name,role:p.role,photo:p.id==='livia'?'/characters/livia/expressions/neutral.jpg':`/characters/${p.id}/portrait.jpg`,state:d?DEPO_TXT[d.state]:''};});
+  // de madrugada, Lemos só conhece quem a Sônia citou (a filha que encontrou a cena); o resto aparece depois da casa
+  const people=PEOPLE.filter(p=>p.id!=='sonia'&&(NIGHT?c.briefed&&p.id==='livia':known.includes(p.id))).map(p=>{const d=dp.find(x=>x.id===p.id);return {id:p.id,name:p.name,role:p.role,photo:p.id==='livia'?'/characters/livia/expressions/neutral.jpg':`/characters/${p.id}/portrait.jpg`,state:d?DEPO_TXT[d.state]:''};});
   const clues=(c.clues||[]).map(id=>{const k=CLUE_LIST.find(x=>x.id===id);return k?{id,title:k.title,desc:k.description}:null;}).filter(Boolean);
-  return {people,clues};
+  return {people,clues,guide:caseGuide(c,{casa:!NIGHT,briefed:!!c.briefed})};
 }
-const HUD=createHud({app:appEl,clock:()=>clockStr(),data:hudData,canShow:()=>started&&!talkOpen&&!depoOpen&&!BADGE.open&&!galOpen&&!$('#intro')?.offsetParent});
+/* o próximo passo da caderneta leva ao lugar natural: Sônia, equipe, depoimento, quadro ou a casa */
+function runGuide(){
+  const G=caseGuide(CASE||readCase(),{casa:!NIGHT,briefed:briefed()}),go=G.next&&G.next.go;if(!go)return;
+  if(go.kind==='casa')goCasa();
+  else if(go.kind==='sonia')goTalk('npc','sonia');
+  else if(go.kind==='team')goTalk('npc',go.memberId);
+  else if(go.kind==='summon'){CASE=writeCase(g=>summon(g,go.personId));buildVisitors();refreshCase();}
+  else if(go.kind==='depo')goTalk('hot','interro',go.personId);
+  else if(go.kind==='report')goTalk('hot','quadro');
+  else if(go.kind==='clues')HUD.openBook('pistas');
+}
+const HUD=createHud({app:appEl,clock:()=>clockStr(),data:hudData,onGuide:()=>runGuide(),canShow:()=>started&&!talkOpen&&!depoOpen&&!BADGE.open&&!galOpen&&!$('#intro')?.offsetParent});
 let HSEEN=safe(()=>JSON.parse(localStorage.getItem(HUD_SEEN)||'null'),null);
 const hudSig=c=>({clues:[...(c.clues||[])],mats:[...(c.requestedMaterials||[])],ppl:[...(c.discoveredPeople||DEFAULT_DISCOVERED)],heard:[...(c.interviewed||[])]});
 // o que chegou no save desde a última olhada vira descoberta (material, pessoa, depoimento) ou pista anexada
@@ -2111,8 +2165,10 @@ $('#b-start').addEventListener('click',()=>{
   // voltou de uma recarga feita para pegar a versão nova: reabre o que o jogador tinha pedido
   const reopen=safe(()=>sessionStorage.getItem('base.reopen'),null);
   if(reopen){safe(()=>sessionStorage.removeItem('base.reopen'));enterBase(true);setTimeout(()=>reopen==='board'?startBoard():startDepo(reopen.slice(5)),500);}
+  else if(NIGHT){enterBase(true);P1.x=19;P1.y=5;P1.path=[];cam.x=P1.x*T+16;cam.y=P1.y*TH;clampCam();}
   else{street().place('carro');setWhere('Rua do DHPP');}
-  setTimeout(()=>toast('Sônia Prado','Lemos, na minha sala. A equipe já está com o material da casa.',{img:'/sonia.jpg',col:'#c9a24a'}),1200);
+  setTimeout(()=>NIGHT?toast('Sônia Prado',briefed()?'Lemos, a casa. Maurício está te esperando.':'Lemos, na minha sala. Chegou um caso.',{img:'/sonia.jpg',col:'#c9a24a'})
+    :toast('Sônia Prado','Lemos, na minha sala. A equipe já está com o material da casa.',{img:'/sonia.jpg',col:'#c9a24a'}),1200);
 });
 window.__base={amb:()=>AMB.ambientState(),badge:()=>BADGE,refreshCase:()=>refreshCase(),hud:()=>HUD,get BG(){return BG;},get scene(){return SCENE;},setScene:s=>{if(s==='base')enterBase(true);else{SCENE='rua';street().place('porta');}},street:()=>street(),startDepo,startBoard,get CASE(){return CASE;},VIS:()=>VIS,get P1(){return P1;},NPCS:()=>NPCS,cam,goTalk,goTile,openTalk,openGallery,FOUND,get started(){return started;},objs:()=>objs,tap,idx,W,H,T,TH,ti,passable,zoomTo,get ROT(){return ROT;},get LODV(){return LODV;},get FITZ(){return FITZ;},get GL(){return !!POST;},prof:()=>({r2d:+PROF.r2d.toFixed(2),post:+FX.ms.toFixed(2),frame:+frameMs.toFixed(2),RS})};
 requestAnimationFrame(loop);

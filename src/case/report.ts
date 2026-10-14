@@ -1,4 +1,4 @@
-/* Relatório de acusação do Caso 01: a mesma regra de final para o relatório do aparelho e o do quadro da base. */
+/* Relatório de acusação do Caso 01: a regra de final do relatório protocolado no quadro da base. */
 import { acceptedProofs, clues } from '../case01'
 import type { CaseSave } from './caseSave'
 
@@ -14,7 +14,7 @@ export function reportEnding(r:Report):Ending{
   return execOK&&mentorOK&&motiveOK&&proofOK?'A':execOK?'B':'C'
 }
 
-/** Protocola o relatório no save: o aparelho abre direto no resultado. */
+/** Protocola o relatório no save. */
 export function fileReport<G extends CaseSave&{score?:number}>(g:G,r:Report):G{
   const ending=reportEnding(r)
   const support=g.clues.filter(id=>clues.some(c=>c.id===id&&c.support)).length

@@ -413,6 +413,6 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
     {confirm&&<div className="cb-end"><div className="cb-card"><small>Relatório de acusação</small><h3>Protocolar agora?</h3><p>Depois de protocolado, o relatório encerra sua participação operacional no caso.</p>
       <div className="cb-row"><button onClick={()=>setConfirm(false)}>Revisar</button><button className="cb-gold" onClick={protocol}>Protocolar relatório</button></div></div></div>}
     {ending&&<div className="cb-end"><div className="cb-card"><small>Relatório protocolado</small><h3>{ENDINGS[ending][0]}</h3><p>{ENDINGS[ending][1]}</p><p className="q">{ENDINGS[ending][2]}</p>
-      <div className="cb-row"><button onClick={()=>setEnding(null)}>Voltar ao quadro</button><a className="cb-gold" href="/invesphone">Abrir o aparelho</a></div></div></div>}
+      <div className="cb-row"><button onClick={()=>setEnding(null)}>Voltar ao quadro</button><button className="cb-gold" onClick={()=>{setEnding(null);onClose()}}>Voltar à base</button></div></div></div>}
   </div>
 }

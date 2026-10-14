@@ -6,8 +6,8 @@ import { createHash } from 'node:crypto'
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 
-// Três páginas: a raiz é a Varredura das Acácias (cena 2D do Caso 01), /base é a base do
-// DHPP (outra cena 2D) e o app Invesphone continua inteiro em /invesphone.
+// Duas páginas: /base é a base do DHPP, onde o jogo começa (a raiz leva para lá, em vercel.json), e /casa é a
+// Varredura das Acácias, a casa do crime, segunda parte do Caso 01. Não há mais aparelho nem chamada.
 const page = (p: string) => fileURLToPath(new URL(p, import.meta.url))
 
 // nome do cache das ilustrações/evidências: muda quando algum arquivo muda, para o aparelho baixar a versão nova
@@ -30,9 +30,8 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main: page('./index.html'),
-        invesphone: page('./invesphone/index.html'),
-        base: page('./base/index.html')
+        base: page('./base/index.html'),
+        casa: page('./casa/index.html')
       }
     }
   },
@@ -49,13 +48,15 @@ export default defineConfig({
           handler: 'CacheFirst',
           options: { cacheName: ART_CACHE, expiration: { maxEntries: 600, purgeOnQuotaError: true } }
         }],
-        // sem isto o service worker entregaria a página inicial ao abrir /invesphone
-        navigateFallbackDenylist: [/^\/invesphone/, /^\/base/]
+        // cada página tem o seu HTML: o service worker não troca uma pela outra
+        navigateFallback: null,
+        navigateFallbackDenylist: [/^\/casa/, /^\/base/]
       },
       manifest: {
         name: 'Arquivo Morto',
         short_name: 'Arquivo Morto',
-        description: 'Investigação criminal narrativa em formato found-phone.',
+        description: 'Investigação criminal narrativa no DHPP.',
+        start_url: '/base/',
         theme_color: '#050607',
         background_color: '#050607',
         display: 'standalone'

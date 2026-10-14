@@ -142,3 +142,13 @@ body.depo-on .lh-room,body.depo-on .lh-disc,body.depo-on .lh-ev,body.depo-on .lh
 @keyframes lh-li{to{opacity:1;transform:none;filter:none}}
 @keyframes lh-blink{50%{opacity:.35}}
 @media (prefers-reduced-motion:reduce){.hud.lh *,.lh-room,.lh-room *,.lh-disc,.lh-disc *,.lh-ev,.lh-book,.lh-book *{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
+
+/* caderneta · aba Caso: o que sabemos, o que falta entender e o próximo passo */
+.lh-list li.cg{align-items:flex-start}
+.lh-list li.cg .tx{display:flex;flex-direction:column;gap:7px;white-space:normal}
+.lh-list li.cg small{font:500 9px/1 var(--lh-ui);letter-spacing:.16em;text-transform:uppercase;color:var(--lh-acc)}
+.lh-list li.cg .tx>span{font:400 13px/1.4 var(--lh-ui);color:rgba(255,255,255,.78)}
+.lh-list li.cg em{display:block;margin-bottom:2px;font:500 8.5px/1 var(--lh-ui);font-style:normal;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.45)}
+.lh-list li.cg .tx>span b{font-weight:600;color:#fff}
+.lh-list li.cg.nx .tx>b{font:600 14px/1.25 var(--lh-ui);color:#fff}
+.lh-list li.cg.nx button{align-self:flex-start;margin-top:2px;padding:8px 14px;border:0;border-radius:999px;background:var(--lh-acc);color:#14110c;font:600 12px/1 var(--lh-ui);letter-spacing:.06em;cursor:pointer}
