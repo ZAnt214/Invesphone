@@ -53,6 +53,7 @@ export const EFFECTS:Effect[] = [
   { id:'base.life', cat:'vida', label:'Movimento no DHPP', desc:'Gente passando na calçada do outro lado, papéis no chão e a copiadora soltando folhas.', def:true, where:'DHPP' },
   { id:'dwellers', cat:'vida', label:'Gente nas janelas e lojas', desc:'Moradores nas janelas e varandas, funcionários e clientes nas vitrines.', def:true, where:'Rua' },
   // cenas rápidas
+  { id:'scene.board', cat:'cenas', label:'Entrada do quadro do caso', desc:'A câmera passa por trás do Lemos até o quadro. Desligada, só a aproximação.', def:true, where:'DHPP' },
   { id:'scene.badge', cat:'cenas', label:'Passar o crachá na porta', desc:'Passar o crachá na leitora para entrar na área restrita. Desligado, a porta abre sozinha.', def:true, where:'DHPP' },
   // interface (HUD do Lemos)
   { id:'hud.particles', cat:'interface', label:'Luz e partículas da interface', desc:'Reflexo de lente, poeira de luz e o rastro da evidência voando até a caderneta.', def:true, where:'Rua e DHPP' },

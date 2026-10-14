@@ -5,6 +5,7 @@
    prevista no depoimento), põe as falas na linha da noite e, no último capítulo, protocola o relatório.
    Nada aqui libera ou trava a progressão. */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { fxOn, setFx } from '../settings/gameSettings'
 import { advanceTask, readCase, writeCase, type CaseSave } from '../case/caseSave'
 import { depoPeople, summon } from '../case/depositions'
 import { fileReport, reportEnding } from '../case/report'
@@ -156,14 +157,15 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
   const [stage,setStage]=useState(current)
   const CH=CHAPTERS[stage-1]
   const [intro,setIntro]=useState(()=>current>(b.stage??0)?current:0)
-  /* entrada de cinema: a câmera passa por trás do Lemos, que olha o quadro, e chega até a cortiça.
-     Inteira na primeira vez da sessão; nas outras, só a aproximação. Um toque pula. */
+  /* entrada de cinema: a câmera passa por trás do Lemos, que olha o quadro, e chega até a cortiça. Um toque pula só
+     desta vez. "Não mostrar mais" desliga o ajuste scene.board (Ajustes > Cenas rápidas), que religa a entrada inteira;
+     desligada, fica só a aproximação. A antiga escolha guardada em board.cine.off não vale mais (não tinha como desfazer). */
   const [cineS,setCine]=useState<'full'|'short'|null>(()=>{
     if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return null
-    let off=false;try{off=localStorage.getItem('board.cine.off')==='1'}catch{/* sem armazenamento */}
-    return off?'short':'full'})
+    try{localStorage.removeItem('board.cine.off')}catch{/* sem armazenamento */}
+    return fxOn('scene.board')?'full':'short'})
   const cine=live?cineS:null
-  const cineOff=()=>{try{localStorage.setItem('board.cine.off','1')}catch{/* sem armazenamento */}setCine(null)}
+  const cineOff=()=>{setFx('scene.board',false);setCine(null)}
   useEffect(()=>{if(!cine)return;const t=window.setTimeout(()=>setCine(null),cine==='full'?CINE_FULL:CINE_SHORT);return ()=>window.clearTimeout(t)},[cine])
   // som da cena: quando o jogador pula, sai rápido; no fim natural, o resto do ambiente some sozinho
   useEffect(()=>{if(cine!=='full')return;const t0=performance.now(),stop=playCine()
@@ -423,7 +425,7 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
       <span className="cb-vig"/>
       <i className="cb-bar t"/><i className="cb-bar b"/>
     </button>}
-    {cine==='full'&&<button className="cb-cine-off" onClick={cineOff}>Não mostrar de novo</button>}
+    {cine==='full'&&<button className="cb-cine-off" onClick={cineOff}>Não mostrar mais</button>}
     {intro>0&&!cine&&<button className="cb-chapter" onClick={()=>setIntro(0)}><small>Capítulo {intro}</small><b>{chapters[intro-1].title}</b><p>{chapters[intro-1].summary}</p><em>{CHAPTERS[intro-1].q}</em></button>}
     {viewer&&<div className="cb-viewer" onClick={()=>setViewer(null)}><img src={viewer.img} alt=""/><div><b>{viewer.t}</b><p>{viewer.d}</p></div></div>}
     {confirm&&<div className="cb-end"><div className="cb-card"><small>Relatório de acusação</small><h3>Protocolar agora?</h3><p>Depois de protocolado, o relatório encerra sua participação operacional no caso.</p>
