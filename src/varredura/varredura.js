@@ -631,8 +631,9 @@ function OBLQ(o){
     });
     case 'viatura':case 'carro':{
       const pol=o.t==='viatura';
-      const C=pol?{b:'#e4e7e3',hi:'#f6f8f5',sh:'#b9beba',dk:'#8d938f',fr:'#cfd3cf'}:{b:'#3d6db0',hi:'#5d8cce',sh:'#2c5389',dk:'#1f3d66',fr:'#33609e'};
-      return mk(18,(P,E,g,t)=>drawCarPx(P,E,C,pol,false));}
+      // parados na frente: a viatura do DHPP em que Lemos chegou e um sedã azul, os mesmos da rua da base
+      const C=pol?carPal('#1a191c'):carPal('#2e589c');
+      return mk(18,(P,E,g,t)=>drawCarPx(P,E,C,pol,false,pol?'viatura':null));}
     case 'mesa':return mk(26,(P,E,g,t)=>{
       const ty=t,B=t+fh;
       // CRT monitor and lamp
@@ -650,7 +651,10 @@ function OBLQ(o){
   return null;
 }
 
-function drawCarPx(P,E,C,pol,van){
+/* M: modelo dos carros oficiais da rua do DHPP (public/base/rua/veiculos), vistos de cima: as mesmas cores e os mesmos
+   detalhes de cada um (táxi com luminoso e xadrez, perua com painel de madeira, viatura do DHPP preta de teto creme,
+   furgão marrom), para a rua da casa e a da base mostrarem os mesmos carros */
+function drawCarPx(P,E,C,pol,van,M){
         const RR=(x,y,w,h,c,r)=>{for(let j=0;j<h;j++){const k=j<r?r-j:j>h-1-r?r-(h-1-j):0;P(x+k,y+j,w-2*k,1,c);}};
         const TR=(y0,y1,a0,b0,a1,b1,c)=>{for(let y=y0;y<y1;y++){const u=(y-y0)/Math.max(1,y1-y0-1),l=Math.round(a0+(a1-a0)*u),r=Math.round(b0+(b1-b0)*u);P(l,y,r-l,1,c);}};
         // tyres under the wheel arches
@@ -667,7 +671,14 @@ function drawCarPx(P,E,C,pol,van){
         // cabin: rear window, roof, windshield (narrower than the body, shoulders show beside it)
         TR(13,24,18,46,15,49,'#1c2833');P(19,15,8,1,'#56758c');P(19,16,4,1,'#3d5568');
         RR(15,24,34,20,C.hi,4);P(18,26,24,1,'rgba(255,255,255,.6)');P(17,27,1,14,'rgba(255,255,255,.3)');P(46,27,2,15,'rgba(0,0,0,.12)');
+        if(M==='viatura'){RR(15,24,34,20,'#f5e2d4',4);P(18,26,24,1,'#fffaf2');P(46,27,2,15,'rgba(0,0,0,.12)');
+          for(let y=15;y<70;y+=1)if(y<24||y>43){P(7,y,1,1,'#f5e2d4');P(56,y,1,1,'#f5e2d4');}
+          P(21,40,22,3,'#1a191c');P(22,41,2,1,'#f5e2d4');P(25,41,2,1,'#f5e2d4');P(28,41,2,1,'#f5e2d4');P(31,41,2,1,'#f5e2d4');}   // "DHPP" no teto
         if(pol){P(17,30,30,8,'#26282c');P(18,31,13,5,'#7a1a18');P(33,31,13,5,'#1a2f6a');P(17,38,30,1,'#111');}
+        if(M==='taxi'){P(25,29,14,7,'#1a1714');P(26,30,12,5,'#f6f2e0');P(27,31,10,1,'#c9b26a');P(28,33,8,1,'#1a1714');
+          for(let y=26;y<43;y+=2){P(8,y,2,1,(y>>1)%2?'#181716':'#f6f2e0');P(54,y,2,1,(y>>1)%2?'#f6f2e0':'#181716');}}
+        if(M==='perua'){for(let y=14;y<70;y++){P(8,y,3,1,y%7===0?'#4a2a16':'#633c24');P(53,y,3,1,y%7===0?'#4a2a16':'#633c24');}
+          for(let y=13;y<24;y++)P(16,y,32,1,C.hi);P(16,13,32,1,'#c9a87a');P(17,15,1,7,'#8a8a80');P(46,15,1,7,'#8a8a80');}
         TR(44,56,15,49,12,52,'#1a2631');for(let k=0;k<6;k++)P(20+k*2,46+k,3,1,'rgba(150,185,210,.55)');P(39,47,5,1,'rgba(150,185,210,.35)');
         P(14,44,1,12,C.dk);P(49,44,1,12,C.dk);
         // mirrors
@@ -687,6 +698,7 @@ function drawCarPx(P,E,C,pol,van){
           for(let y=6;y<45;y++){const ins=y<10?10-y:0;P(13+ins,y,38-2*ins,1,C.hi);}
           P(13,6,38,1,'#ffffff');P(14,8,1,34,'rgba(255,255,255,.35)');P(48,8,2,35,'rgba(0,0,0,.12)');
           for(let y=12;y<40;y+=7)P(16,y,32,1,C.sh);
+          if(M==='furgao')return;
           P(23,20,18,7,'#2b2c30');const wl='#e8e8e2';P(25,21,1,5,wl);P(28,21,1,5,wl);P(29,22,1,1,wl);P(30,23,1,1,wl);P(31,22,1,1,wl);P(32,21,1,5,wl);P(35,21,1,5,wl);P(35,25,3,1,wl);
           P(18,40,28,3,'#1e3f7a');
         }
@@ -1551,7 +1563,9 @@ function drawSunShadows(v){
 function carPal(hb){const b=hex(hb);return {b:hb,hi:rgbs(mix(b,[255,255,255],0.28)),sh:rgbs(mul(b,0.76)),dk:rgbs(mul(b,0.58)),fr:rgbs(mul(b,0.88))};}
 let TRAFFIC=[],VANSPR=null;
 function buildCars(){
-  TRAFFIC=['#c9c4b8','#8a2f2f','#2f6b4a','#d9d4c7','#26282c','#b98a2a','#5a6a7a'].map(c=>outlined(S2(64,84,(P,E)=>drawCarPx(P,E,carPal(c),false,false))));
+  // os mesmos carros da rua do DHPP: sedãs azul, bege, bordô e verde, táxi, perua de madeira e furgão marrom
+  TRAFFIC=[['#2e589c'],['#c4a17a'],['#712e32'],['#455338'],['#fcbb29','taxi'],['#e9c898','perua'],['#6c3e32','furgao']]
+    .map(([c,m])=>outlined(S2(64,84,(P,E)=>drawCarPx(P,E,carPal(c),false,m==='furgao',m))));
   VANSPR=outlined(S2(64,84,(P,E)=>drawCarPx(P,E,{b:'#d9dcd8',hi:'#eef0ec',sh:'#aeb3af',dk:'#7f8580',fr:'#c4c8c4'},false,true)));
 }
 function spawnCar(){FX.cars.push({spr:pick(TRAFFIC),x:2*T,y:-6*TH,v:1.5,vmax:1.3+Math.random()*0.6,wait:0,honked:0,brake:0,wh:0});}
@@ -2973,7 +2987,7 @@ setInterval(()=>{const m=middleBusy(),now=performance.now();
   if(m&&!midWas){midWas=true;midT=now;appEl.classList.add('mid-on');}
   else if(!m&&midWas){midWas=false;appEl.classList.remove('mid-on');if(BUSY_UNTIL>midT)BUSY_UNTIL+=now-midT;}
 },100);
-setTimeout(()=>{if(window.__acacias)Object.assign(window.__acacias,{dbg:{floor,F,passable,civPass,W,H,CROSS_Y,inLot,room,idx,hot:()=>hot,setSpeed,applyCmd,roomPoints}});},0);
+setTimeout(()=>{if(window.__acacias)Object.assign(window.__acacias,{dbg:{floor,F,passable,civPass,W,H,CROSS_Y,inLot,room,idx,hot:()=>hot,setSpeed,applyCmd,roomPoints,carSprites:()=>{svcSprites();return [...TRAFFIC,POLSPR];}}});},0);
 
 /* the closed stretch: cones go down once the cars already inside have driven out; cars arriving stop at the cones and back away */
 const CONE_TOP=1*TH+TH-4,CONE_BOT=(H-2)*TH+TH-4;
@@ -3002,7 +3016,8 @@ $('#b-again').addEventListener('click',()=>{SND.click();location.reload();});
    pulls over smoothly in the left lane, and only then does the help step out and the radio confirm. */
 let POLSPR=null,ICSPR=null,ASSSPR=null;
 function svcSprites(){if(POLSPR)return;
-  POLSPR=outlined(S2(64,84,(P,E)=>drawCarPx(P,E,{b:'#e4e7e3',hi:'#f6f8f5',sh:'#b9beba',dk:'#8d938f',fr:'#cfd3cf'},true,false)));
+  // as viaturas que chegam são a viatura do DHPP da rua da base (preta, teto creme, giroflex)
+  POLSPR=outlined(S2(64,84,(P,E)=>drawCarPx(P,E,carPal('#1a191c'),true,false,'viatura')));
   ICSPR=outlined(S2(64,84,(P,E)=>drawCarPx(P,E,carPal('#2c3e57'),false,true)));
   ASSSPR=outlined(S2(64,84,(P,E)=>drawCarPx(P,E,carPal('#26282c'),false,false)));}
 const SLOT_Y={a:5*TH,b:14.6*TH,c:19.2*TH};
