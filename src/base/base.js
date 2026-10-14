@@ -780,8 +780,24 @@ function initArt(){initArt.ao=fxOn('base.ao');
   for(const o of objs){o.spr=makeSprite(o);if(o.t==='secdoor'){o.sprC=o.spr;o.sprO=makeSprite({...o,open:true});}}
   BG=buildGround();WALLROWS=buildWalls();SIGN=buildSign();DOORSPR=buildDoor();LAMP=buildLamp();
   SHADOW=S2(22,8,(P,E)=>{E(11,4,10,3.5,'rgba(0,0,0,.30)');E(11,4,7,2.5,'rgba(0,0,0,.18)');});
-  for(const n of NPCS)n.look=LOOK[n.look];
+  for(const n of NPCS)if(typeof n.look==='string')n.look=LOOK[n.look];
 }
+// O Safari do iPhone pode descartar o desenho guardado em canvas fora da tela quando falta memória (o quadro do caso
+// usa bastante): o piso, as paredes, os móveis e as pessoas voltam vazios e a base fica preta. Ao voltar do quadro, do
+// depoimento ou de outro app, confere um pixel do piso e de um móvel; se sumiram, refaz toda a arte.
+let LSGEN=0;
+function artLost(){try{const px=(c,x,y)=>c.getContext('2d').getImageData(x,y,1,1).data[3];const o=objs.find(q=>q.spr&&q.spr.c);
+  return px(BG,4,4)===0||(o&&px(o.spr.c,(o.spr.c.width>>1),(o.spr.c.height>>1))===0&&px(o.spr.c,(o.spr.c.width>>1),o.spr.c.height-2)===0);}catch(_){return true;}}
+function rebuildArt(){
+  for(const k in LCACHE)delete LCACHE[k];LSGEN++;APRON=null;
+  initArt();
+  for(const p of [P1,...NPCS,...Object.values(VFR),...PEDS])if(p){p.frames=null;p.framesHD=null;}
+  TRAFFIC.length=0;buildTraffic();for(const c of CARS)c.spr=TRAFFIC[Math.floor(Math.random()*TRAFFIC.length)];
+}
+function checkArt(){if(BG&&artLost())rebuildArt();}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(checkArt,60);});
+addEventListener('pageshow',()=>setTimeout(checkArt,60));
+setInterval(()=>{if(SCENE!=='rua'&&!depoOpen&&document.visibilityState==='visible')checkArt();},4000);   // o iPhone também pode descartar no meio do jogo
 const npcAtTile=i=>NPCS.some(n=>ti(n)===i||(n.path.length&&n.path[0]===i));
 const walkPass=i=>passable(i)&&!npcAtTile(i);
 function roomOf(a){return room[ti(a)];}
@@ -892,7 +908,7 @@ function startDepo(id){
   HUD.stopRoom();depoOpen=true;const host=$('#depo');host.hidden=false;document.body.classList.add('depo-on');
   // a base fica escondida atrás do depoimento: libera a memória das telas dela (no iPhone, faltar memória recarrega a página)
   cv.width=cv.height=1;lc.width=lc.height=1;
-  const back=()=>{host.hidden=true;depoOpen=false;document.body.classList.remove('depo-on');sizeCanvas();refreshCase();buildVisitors();last=performance.now();};
+  const back=()=>{host.hidden=true;depoOpen=false;document.body.classList.remove('depo-on');sizeCanvas();checkArt();refreshCase();buildVisitors();last=performance.now();};
   loadDepo().then(m=>m.openDeposition(host,id,back),()=>partFailed(back,'depo:'+id));
 }
 // quadro do caso: React à parte, como o depoimento; a base pausa e libera a memória enquanto ele está aberto
@@ -917,7 +933,7 @@ function startBoard(){
   // a base continua na tela (parada) até o quadro estar pronto para pintar a entrada: nunca aparece tela preta no meio
   HUD.stopRoom();depoOpen=true;boardPrepT=0;const host=$('#board');hideHost(host);host.hidden=false;
   const shown=()=>{host.style.visibility='';host.style.pointerEvents='';document.body.classList.add('depo-on');cv.width=cv.height=1;lc.width=lc.height=1;};
-  const back=()=>{host.hidden=true;showHost(host);boardPrepared=false;depoOpen=false;document.body.classList.remove('depo-on');sizeCanvas();refreshCase();buildVisitors();last=performance.now();};
+  const back=()=>{host.hidden=true;showHost(host);boardPrepared=false;depoOpen=false;document.body.classList.remove('depo-on');sizeCanvas();checkArt();refreshCase();buildVisitors();last=performance.now();};
   loadBoard().then(m=>m.openBoard(host,boardOpts(shown,back)),()=>partFailed(back,'board'));
 }
 const hideHost=h=>{h.style.visibility='hidden';h.style.pointerEvents='none';};
@@ -1479,7 +1495,7 @@ function followCam(dt){
 /* ---------- Luz (mesmo método da casa: ambiente × luzes por cômodo) ---------- */
 const LCACHE={};
 const LC_SUN=[255,234,196],LC_MON=[110,230,180],LC_CLOUD=[176,180,196],LC_EMBER=[255,130,60],LC_WHITE=[255,255,255];
-function lightSprite(col){if(col._ls)return col._ls;const k=col.join(',');let c=LCACHE[k];if(c)return col._ls=c;c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,rgbs(col,1));gr.addColorStop(0.4,rgbs(col,0.55));gr.addColorStop(1,rgbs(col,0));g.fillStyle=gr;g.fillRect(0,0,64,64);return col._ls=LCACHE[k]=c;}
+function lightSprite(col){if(col._ls&&col._lg===LSGEN)return col._ls;col._lg=LSGEN;const k=col.join(',');let c=LCACHE[k];if(c)return col._ls=c;c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,rgbs(col,1));gr.addColorStop(0.4,rgbs(col,0.55));gr.addColorStop(1,rgbs(col,0));g.fillStyle=gr;g.fillRect(0,0,64,64);return col._ls=LCACHE[k]=c;}
 const COOL=[225,236,255],WARM=[255,206,140],SUNC=[255,236,200];
 // [x, y, raio em tiles, cor, intensidade, cômodo, oscila]
 // portas entre as salas e a passagem da sala da equipe para o corredor: a luz atravessa (base.doorlight)
