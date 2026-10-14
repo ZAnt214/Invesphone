@@ -1550,11 +1550,25 @@ let FXP=[];
 // filtra no lugar: sem lixo por quadro para o coletor de memória (evita engasgos)
 function keep(a,f){let j=0;for(let i=0;i<a.length;i++){const v=a[i];if(f(v))a[j++]=v;}a.length=j;return a;}
 const aliveP=p=>p.t<p.life,onRoad=c=>c.x>-6*T&&c.x<(W+6)*T;
+// gente passando na calçada do outro lado (base.life): só figurantes, nunca alguém do caso
+const PED_LOOKS=[
+  {skin:'#d9a273',hair:'#2a1d18',style:'short',kind:'civil',top:'#5a6a7a',pants:'#2b2f36',shoes:'#222'},
+  {skin:'#a8714a',hair:'#1f1a18',style:'long',kind:'civil',top:'#9a4a3a',pants:'#3a3a42',shoes:'#e8e4da'},
+  {skin:'#e8b58e',hair:'#9a9a9a',style:'grey',kind:'civil',top:'#3a4a3a',pants:'#3a3a32',shoes:'#222'},
+  {skin:'#8a5a3a',hair:'#1f1a18',style:'curly',kind:'civil',top:'#c9a24a',pants:'#2b2f36',shoes:'#111'},
+  {skin:'#f0c9a0',hair:'#7a4a2a',style:'bun',kind:'civil',top:'#4a5a8a',pants:'#2b2f36',shoes:'#222'}];
+const PEDS=Array.from({length:4},(_,k)=>newPed(k,true));
+function newPed(k,any){const dir=Math.random()<0.5?1:-1;return {k,dir,x:any?Math.random()*W:(dir>0?-2:W+1),y:26.5+(k%2)*0.7+Math.random()*0.2,v:0.016+Math.random()*0.01,walk:Math.random()*4,moving:true,look:PED_LOOKS[(k+Math.floor(Math.random()*5))%PED_LOOKS.length],frames:null};}
+function updPeds(){for(let i=0;i<PEDS.length;i++){const p=PEDS[i];p.x+=p.v*p.dir;p.walk+=p.v;if(p.x<-3||p.x>W+3){PEDS[i]=newPed(p.k,false);}}}
 function updFX(){
+  if(fxOn('base.life')){updPeds();
+    // a copiadora solta uma folha de vez em quando enquanto alguém a usa
+    if(frame%110===0&&NPCS.some(n=>n.act&&n.act.id==='copiadora'&&n.act.st==='do')&&FXP.length<400)FXP.push({k:'sheet',x:12*T+24,y:6*TH-8,z:0,vz:0,t:0,life:150});}
   if(frame%9===0){for(const [x,y] of [[20*T+14,6*TH-19],[4*T+24,4*TH-9],[19*T+52,4*TH-8]])if(FXP.length<400)FXP.push({k:'steam',x:x+(Math.random()-0.5)*3,y,z:0,vz:0.22,t:0,life:56,sz:1.4});}
   for(const p of FXP){p.t++;
     if(p.k==='leaf'||p.k==='feather'||p.k==='ash'){if(p.y<p.gy){p.x+=p.vx+Math.sin(p.t/(p.k==='feather'?20:14)+p.ph)*(p.k==='ash'?0.05:0.35);p.y+=p.vy;}else if(GUST>0.2&&p.k!=='ash'){p.x+=GUST*1.6;}continue;}
     if(p.k==='drop'){p.vz-=0.09;p.z+=p.vz;p.x+=p.vx;if(p.z<0)p.t=p.life;continue;}
+    if(p.k==='sheet'){if(p.t<36)p.x+=0.28;continue;}
     if(p.k==='bub'){p.z+=p.vz;p.x+=Math.sin(p.t/4)*0.15;if(p.z>11)p.t=p.life;continue;}
     p.z+=p.vz;p.x+=(p.vx||0)+(Math.random()-0.5)*0.15;}
   keep(FXP,aliveP);if(FXP.length>420)FXP.splice(0,FXP.length-420);
@@ -1657,6 +1671,9 @@ function updAtmo(){
 function drawFloorFX(){
   // piso molhado: um brilho frio que seca aos poucos
   for(const w of WETS){const k=Math.min(1,w.t/30)*(1-w.t/w.life);ctx.globalAlpha=0.22*k;ctx.fillStyle='#9fc0dc';ctx.beginPath();ctx.ellipse(w.x,w.y,w.rx,w.rx*0.42,0,0,7);ctx.fill();ctx.globalAlpha=0.35*k;ctx.fillStyle='#ffffff';ctx.fillRect(Math.round(w.x-w.rx*0.4),Math.round(w.y-1),Math.round(w.rx*0.6),1);}
+  ctx.globalAlpha=1;
+  // papéis caídos na sala da equipe (base.life)
+  if(fxOn('base.life'))for(const [x,y,a] of [[13.4,7.3,.2],[14.1,7.6,-.35],[18.6,7.2,.5],[11.7,6.8,-.15]]){ctx.save();ctx.translate(x*T,y*TH);ctx.rotate(a);ctx.globalAlpha=0.35;ctx.fillStyle='#000';ctx.fillRect(-4,-2,9,6);ctx.globalAlpha=1;ctx.fillStyle='#efece4';ctx.fillRect(-5,-3,9,6);ctx.fillStyle='#b8b3a6';ctx.fillRect(-3,-1,5,1);ctx.fillRect(-3,1,4,1);ctx.restore();}
   ctx.globalAlpha=1;
   // sombra das pás do ventilador de teto da sala da delegada
   {const cx=6*T,cy=5.3*TH,a=frame*0.21;ctx.save();ctx.beginPath();const q=roomClip('sonia');ctx.rect(q[0],2*TH,q[2]-q[0],q[3]-2*TH);ctx.clip();ctx.translate(cx,cy);ctx.scale(1,K);
@@ -1846,6 +1863,7 @@ function render(){
   for(const n of NPCS){n._sit=!!n.sit&&!n.moving&&isSeat(n);n._k=n.k;R(Math.round(n.y)).p.push(n);}
   P1._sit=false;P1._k=9;R(Math.round(P1.y)).p.push(P1);
   VIS.forEach((v,k)=>{v._sit=true;v._k=20+k;R(Math.round(v.y)).p.push(v);});
+  if(fxOn('base.life'))PEDS.forEach((p,k)=>{p._sit=false;p._k=40+k;R(Math.round(p.y)).p.push(p);});
   for(const c of CARS)R(Math.floor(c.y/TH)).x.push(c);
   for(const b of PIGEONS)R(Math.floor(b.y/TH)).x.push(b);
   const y0=Math.max(0,Math.floor(-oy/s/TH)-4),y1=Math.min(H-1,Math.ceil((cv.height-oy)/s/TH)+4);
@@ -1864,6 +1882,7 @@ function render(){
   // luminária pendente da sala de depoimentos
   ctx.fillStyle='#1c1e20';ctx.fillRect(5.5*T+15,10*TH-RISE,1,2*TH-6);ctx.drawImage(LAMP,5.5*T+5,12*TH-30);
   micro();
+  if(fxOn('base.life'))for(const p of FXP)if(p.k==='sheet'){const k=Math.min(1,(p.life-p.t)/20);ctx.globalAlpha=k;ctx.fillStyle='#f3f0e8';ctx.fillRect(Math.round(p.x),Math.round(p.y),9,6);ctx.fillStyle='#c9c4b6';ctx.fillRect(Math.round(p.x),Math.round(p.y)+5,9,1);ctx.fillStyle='#8a8a8a';ctx.fillRect(Math.round(p.x)+2,Math.round(p.y)+2,5,1);ctx.globalAlpha=1;}
   // destino do toque
   if(P1.path.length&&started){const e=P1.path[P1.path.length-1],X=(e%W)*T+16,Y=((e/W)|0)*TH+TH/2;ctx.strokeStyle='rgba(242,194,48,.9)';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.lineDashOffset=-(frame>>2);ctx.beginPath();ctx.ellipse(X,Y,10,4.5,0,0,7);ctx.stroke();ctx.setLineDash([]);}
   lightPass(s,ox,oy);

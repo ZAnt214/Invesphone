@@ -97,6 +97,16 @@ Com a câmera afastada (zoom abaixo de 1), as outras salas escurecem (`focusPass
 - Ao afastar, o nome de cada sala aparece pintado no piso junto à parede da frente (`drawRoomLabels`), em letras espaçadas com contorno escuro, sem caixa por cima dos móveis. O do corredor restrito sobe para o chão do corredor (`LABEL_DY`), longe do balcão.
 - O sinal de novidade virou um ponto amarelo com um anel que se abre devagar (`drawMarker`), e aparecem **no máximo três** (`MARKS_MAX`): primeiro a Sônia, depois a equipe com novidade e os depoimentos, depois pessoas e coisas ainda não vistas; no empate, o mais perto do Lemos. Os outros aparecem quando esses forem vistos.
 
+## Movimento no DHPP (14/10/2026)
+
+Ajuste `base.life` (Ajustes > Vida no cenário):
+
+- Figurantes passam na calçada do outro lado da rua (`PEDS`, roupas em `PED_LOOKS`); nunca alguém do caso.
+- Papéis caídos no chão da sala da equipe.
+- A copiadora solta uma folha de vez em quando enquanto alguém a usa (`FXP` do tipo `sheet`).
+
+O que já existia continua: vapor dos cafés, ventilador de teto da delegada, bolhas no bebedouro, fumaça e brasa do cigarro, poeira nos fachos, lâmpadas do Arquivo Morto piscando, relógio e monitores.
+
 ## Pendências
 - Sprites são pixel art procedural; retratos de Renata, Denise, Paulo e Maurício ainda usam iniciais nos balões (aguardam arte do ChatGPT).
 - Os links levam ao app inteiro; ligação direta a Equipe/Pessoas/Arquivo depende de rota no Invesphone.
