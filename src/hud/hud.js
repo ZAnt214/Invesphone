@@ -185,6 +185,7 @@ export function createHud(o){
   return {
     room:showRoom,
     roomOn,
+    roomAge:()=>roomOn()?performance.now()-roomAt:Infinity,
     stopRoom,
     discovery(d){Q.push({k:'disc',d});pump();},
     evidence(d){Q.push({k:'ev',d});pump();},

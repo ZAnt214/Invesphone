@@ -43,12 +43,15 @@ O nome do lugar só entra nos lugares que pesam na história; nos lugares de pas
 | Lugar | Aparece? | Subtítulo | Por quê |
 |---|---|---|---|
 | Rua do DHPP | sim | São Paulo · outubro de 2002 | Chegada: situa tempo e lugar |
+| Prédio do DHPP (recepção ou pátio, ao chegar) | sim, com o nome "DHPP" | Departamento de Homicídios | Chegada ao prédio |
 | Sala da delegada | sim | DHPP · Delegada Sônia Prado | Primeira ordem do caso |
 | Sala de depoimentos | sim | DHPP · Depoimentos | Onde as pessoas são ouvidas |
 | Perícia | sim | DHPP · Material do caso | Onde as provas chegam |
 | Arquivo Morto | sim | DHPP · Casos encerrados | O lugar que dá nome ao jogo |
 | Sala da equipe | não | | Lemos passa por ela o tempo todo |
-| Recepção, corredor restrito, pátio, corredores | não | | Passagem |
+| Corredor restrito, corredores | não | | Passagem |
+
+A recepção e o pátio contam como um lugar só, o prédio (`PLACE_OF`). A faixa do prédio entra logo na chegada, mesmo com Lemos andando para alguém, e a leitora de crachá espera ela ficar 2,4 s na tela antes de abrir.
 
 Cada lugar aparece uma vez por sessão do navegador: o que já foi mostrado fica em `sessionStorage` (`invesphone.hud.lugares`), então ir ao aparelho e voltar, ou o iPhone recarregar a aba, não repete. Nos outros lugares, o nome continua no cabeçalho, pequeno.
 
