@@ -77,7 +77,7 @@ Falas só usam fatos do início do Caso 01 (cena lida, painel, Thor, valores, lo
 
 ## Visão afastada (14/10/2026)
 
-- A planta tem 30 linhas e o lado de fora bate com a cena da rua (`docs/RUA_BEATCOP_BASE.md`): becos de serviço nos lados e atrás do prédio (colunas 0 e 33, linha 0), calçada nas linhas 19–22 com degraus na entrada e árvores junto ao meio-fio, rua nas linhas 23–26 (vaga junto ao meio-fio com a viatura do DHPP de frente para o oeste, duas mãos com faixa amarela dupla e faixas de pedestre nas pontas), calçada do outro lado na linha 27 e telhados de tijolo (platibanda, vão de serviço, ar-condicionado) nas linhas 28–29.
+- A planta tem 39 linhas. Becos de serviço nos lados e atrás do prédio (colunas 0 e 33, linha 0); da linha 19 para baixo, o lado de fora é a própria cena da rua (veja "Lado de fora igual à rua"); telhados de tijolo do lado de cá (platibanda, vão de serviço, ar-condicionado) nas linhas 37–38.
 - Em volta da planta, `drawApron` desenha a mesma vizinhança da rua: à esquerda o DINER, um prédio de apartamentos e o GROCERY; à direita a PAWN SHOP, a LAUNDRY e outro prédio (`buildNeigh`); atrás, telhados. Calçada, rua e telhados da frente continuam pelos lados, e tudo escurece com a distância: afastado, nunca aparece preto.
 - A fachada tem, como na rua, os painéis "Plantão 24 horas" e "Departamento de Homicídios e de Proteção à Pessoa" (`buildPanels`).
 - Balões de fala e sinais nunca ficam menores que na escala 1 (`UIK`), então continuam legíveis de longe.
@@ -98,11 +98,19 @@ Com a câmera afastada (zoom abaixo de 1), as outras salas escurecem (`focusPass
 - Ao afastar, o nome de cada sala aparece pintado no piso junto à parede da frente (`drawRoomLabels`), em letras espaçadas com contorno escuro, sem caixa por cima dos móveis. O do corredor restrito sobe para o chão do corredor (`LABEL_DY`), longe do balcão.
 - O sinal de novidade virou um ponto amarelo com um anel que se abre devagar (`drawMarker`), e aparecem **no máximo três** (`MARKS_MAX`): primeiro a Sônia, depois a equipe com novidade e os depoimentos, depois pessoas e coisas ainda não vistas; no empate, o mais perto do Lemos. Os outros aparecem quando esses forem vistos.
 
+## Lado de fora igual à rua (14/10/2026)
+
+Na planta, o lado de fora não é mais um desenho próprio: é a cena da rua (`street.js`, `strip.ground` e `strip.ents`), com o mesmo chão oficial, os mesmos carros (de lado, na arte de `public/base/rua/veiculos`), a viatura do DHPP com o giroflex na vaga em frente à porta, os pedestres, os pombos, os semáforos, os postes, as árvores, os bancos, as lixeiras e o vapor dos bueiros.
+
+- É a mesma simulação: a rua continua andando enquanto o Lemos está lá dentro (`STREET.update` no laço da planta), então quem estava passando ao entrar continua passando, e ao sair a rua está como ele vê da planta.
+- A porta do DHPP da rua (x 1200) cai na porta da planta (x 512) e o pé das fachadas (GY) cai na linha 19, na mesma escala. A calçada ocupa as linhas 19–24, a rua 24–36 e a calçada de cá fecha embaixo.
+- O prédio da planta é mais largo que o lote do DHPP na rua (1024 px de parede contra 620). O trecho em frente a ele é remontado com pedaços lisos da própria calçada e do asfalto (sem esticar a arte), e a posição de quem passa ali é alargada aos poucos (`stripX`): os vizinhos, os becos e as faixas de pedestre ficam dos lados, como na rua.
+- O Lemos da rua não aparece na planta; a fachada e as bandeiras são as da planta. Postes e árvores passam na frente da fachada, como na rua.
+
 ## Movimento no DHPP (14/10/2026)
 
 Ajuste `base.life` (Ajustes > Vida no cenário):
 
-- Figurantes passam na calçada do outro lado da rua (`PEDS`, roupas em `PED_LOOKS`); nunca alguém do caso.
 - Papéis caídos no chão da sala da equipe.
 - A copiadora solta uma folha de vez em quando enquanto alguém a usa (`FXP` do tipo `sheet`).
 

@@ -17,7 +17,7 @@ import { choose, eventLog, jitter, lifeDebug, lineBank } from '../world/life';
 import { CAMERA_PRIORITY, createCameraControl, createLead, damp, deadZoneTarget, drawCameraDebug } from '../camera/cameraDirector';
 (() => {
 'use strict';
-const T=32,TH=22,K=TH/T,RISE=16,CAPH=8,W=34,H=30,N=W*H;   // como na cena da rua: calçada (19–22), rua com vaga e duas mãos (23–26), calçada (27) e telhados (28–29) do outro lado
+const T=32,TH=22,K=TH/T,RISE=16,CAPH=8,W=34,H=39,N=W*H;   // do lado de fora, a própria cena da rua (street.js, strip): calçada, rua e calçada de cá (19–36); telhados (37–38)
 const $=s=>document.querySelector(s);
 const appEl=$('#app'),cv=$('#cv'),ctx=cv.getContext('2d');
 const lc=document.createElement('canvas'),lctx=lc.getContext('2d');
@@ -103,7 +103,7 @@ function buildMap(){
   const set=(x0,y0,x1,y1,f,r)=>{for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=idx(x,y);if(f!=null)floor[i]=f;if(r!==undefined)room[i]=r;}};
   const block=(x0,y0,x1,y1)=>{for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)blk[idx(x,y)]=true;};
   // o DHPP fica entre becos e encostado nos vizinhos, de frente para a calçada, como na cena da rua (docs/RUA_BEATCOP_BASE.md)
-  set(0,19,W-1,22,F.WALK,'fora');set(0,23,W-1,26,F.STREET,'fora');block(0,23,W-1,26);set(0,27,W-1,27,F.WALK,'fora');set(0,28,W-1,29,F.ROOF,'fora');block(0,27,W-1,29);
+  set(0,19,W-1,36,F.WALK,'fora');block(0,19,W-1,36);set(0,37,W-1,38,F.ROOF,'fora');block(0,37,W-1,38);
   set(0,0,W-1,18,F.ALLEY,'fora');block(0,0,W-1,0);block(0,1,0,18);block(W-1,1,W-1,18);
   set(1,1,32,18,F.WALL,'wall');
   for(const r in ROOM_RECT){const [a,b,c,d]=ROOM_RECT[r];set(a,b,c,d,F.FLOOR,r);}
@@ -137,8 +137,8 @@ function buildMap(){
   // arquivo
   add('shelf',24,11,3,1,{v:'arq'});add('shelf',28,11,3,1,{v:'arq'});add('shelf',24,14,3,1,{v:'arq'});add('shelf',28,14,3,1,{v:'arq',hot:'arquivo'});add('boxes',23,16,1,1);add('boxes',30,16,1,1);add('boxes',31,16,1,1);
   // pátio
-  // calçada: árvores junto ao meio-fio e as bandeiras ladeando a entrada; a viatura fica na vaga da rua (PARKED)
-  add('tree',2,21,1,1);add('tree',9,21,1,1);add('tree',24,21,1,1);add('tree',31,21,1,1);add('flag',11,19,1,1,{v:'br'});add('flag',20,19,1,1,{v:'dh'});
+  // as bandeiras ladeando a entrada; o resto da calçada (postes, árvores, viatura, quem passa) vem da cena da rua
+  add('flag',11,19,1,1,{v:'br'});add('flag',20,19,1,1,{v:'dh'});
   add('boxes',0,7,1,1);add('boxes',33,13,1,1);
 }
 function passable(i){const f=floor[i];if(f===F.WALL||f===F.WIN)return false;if(blk[i]||occ[i]>=0)return false;return true;}
@@ -569,7 +569,7 @@ function wallIdx(x,y){if(x<0||y<0||x>=W||y>=H)return false;const f=floor[idx(x,y
 let ROOFS=null;
 function roofSeg(wx){
   if(!ROOFS){ROOFS=[];let x=-24*T,k=0;while(x<(W+24)*T){const w=(6+Math.floor(hash(k,3,91)*5))*T,b=['#8a4632','#9a5a3c','#a58a62','#7a3a2a','#8e7a5a'][k%5];
-    ROOFS.push({x0:x,x1:x+w,brick:b,tar:['#4a4642','#55504a','#3e3b38'][k%3],ac:[x+40+Math.floor(hash(k,4,92)*(w-80)),28.4*T+Math.floor(hash(k,5,93)*20)]});ROOFS.push({x0:x+w,x1:x+w+10,gap:1});x+=w+10;k++;}}
+    ROOFS.push({x0:x,x1:x+w,brick:b,tar:['#4a4642','#55504a','#3e3b38'][k%3],ac:[x+40+Math.floor(hash(k,4,92)*(w-80)),37.4*T+Math.floor(hash(k,5,93)*20)]});ROOFS.push({x0:x+w,x1:x+w+10,gap:1});x+=w+10;k++;}}
   for(const r of ROOFS)if(wx>=r.x0&&wx<r.x1)return r;return ROOFS[0];
 }
 function groundPx(wx,wy){
@@ -597,7 +597,7 @@ function groundPx(wx,wy){
     case 'dark':return mul(hex('#2a2520'),0.8+n*0.2);
     case 'alley':{c=mul(hex('#4a4744'),0.86+n*0.14+n2*0.06);if(vn(wx/18,wy/18,71)>0.74)c=mul(c,0.82);if(hash(wx>>2,wy>>2,72)>0.985)c=mul(c,0.7);
       if((tx===0||tx===W-1)&&(lx===(tx===0?30:1)))c=mul(c,0.7);if(ty===0&&ly<6)c=mul(hex('#6a4a3a'),0.85+n*0.15);return c;}
-    case 'roof':{const sg=roofSeg(wx),pa=ty===28&&ly<6;if(sg.gap)return mul(hex('#2c2a28'),0.8+n*0.2);
+    case 'roof':{const sg=roofSeg(wx),pa=ty===37&&ly<6;if(sg.gap)return mul(hex('#2c2a28'),0.8+n*0.2);
       if(pa||wx-sg.x0<5||sg.x1-wx<5){c=mul(hex(sg.brick),0.86+n*0.16);if((wy&3)===0||((wx+((wy>>2)&1)*4)&7)===0)c=mul(c,0.78);if(pa&&ly===0)c=mul(c,1.15);return c;}
       c=mul(hex(sg.tar),0.88+n*0.12+n2*0.05);if(hash(wx>>1,wy>>1,73)>0.94)c=mul(c,1.12);
       const u=sg.ac;if(u&&wx>=u[0]&&wx<u[0]+14&&wy>=u[1]&&wy<u[1]+10){c=hex(wx===u[0]||wy===u[1]?'#d8dadc':'#a9adb0');if(((wx-u[0])&1)&&wy>u[1]+2&&wy<u[1]+8)c=hex('#6a7074');}
@@ -817,11 +817,10 @@ let LSGEN=0;
 const SENT=document.createElement('canvas');SENT.width=SENT.height=1;const SCTX=SENT.getContext('2d',{willReadFrequently:true});
 function artLost(){try{const px=(c,x,y)=>{SCTX.clearRect(0,0,1,1);SCTX.drawImage(c,x,y,1,1,0,0,1,1);return SCTX.getImageData(0,0,1,1).data[3];};const o=objs.find(q=>q.spr&&q.spr.c);
   return px(BG,4,4)===0||(o&&px(o.spr.c,(o.spr.c.width>>1),(o.spr.c.height>>1))===0&&px(o.spr.c,(o.spr.c.width>>1),o.spr.c.height-2)===0);}catch(_){return true;}}
-function rebuildArt(){
+function rebuildArt(){if(STREET)STREET.strip.reset();
   for(const k in LCACHE)delete LCACHE[k];LSGEN++;APRON=null;
   initArt();
-  for(const p of [P1,...NPCS,...Object.values(VFR),...PEDS])if(p){p.frames=null;p.framesHD=null;}
-  TRAFFIC.length=0;buildTraffic();for(const c of CARS)c.spr=TRAFFIC[Math.floor(Math.random()*TRAFFIC.length)];
+  for(const p of [P1,...NPCS,...Object.values(VFR)])if(p){p.frames=null;p.framesHD=null;}
 }
 function checkArt(){if(BG&&artLost())rebuildArt();}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(checkArt,60);});
@@ -1594,19 +1593,9 @@ function glowPass(){
 let FXP=[];
 // filtra no lugar: sem lixo por quadro para o coletor de memória (evita engasgos)
 function keep(a,f){let j=0;for(let i=0;i<a.length;i++){const v=a[i];if(f(v))a[j++]=v;}a.length=j;return a;}
-const aliveP=p=>p.t<p.life,onRoad=c=>c.x>-6*T&&c.x<(W+6)*T;
-// gente passando na calçada do outro lado (base.life): só figurantes, nunca alguém do caso
-const PED_LOOKS=[
-  {skin:'#d9a273',hair:'#2a1d18',style:'short',kind:'civil',top:'#5a6a7a',pants:'#2b2f36',shoes:'#222'},
-  {skin:'#a8714a',hair:'#1f1a18',style:'long',kind:'civil',top:'#9a4a3a',pants:'#3a3a42',shoes:'#e8e4da'},
-  {skin:'#e8b58e',hair:'#9a9a9a',style:'grey',kind:'civil',top:'#3a4a3a',pants:'#3a3a32',shoes:'#222'},
-  {skin:'#8a5a3a',hair:'#1f1a18',style:'curly',kind:'civil',top:'#c9a24a',pants:'#2b2f36',shoes:'#111'},
-  {skin:'#f0c9a0',hair:'#7a4a2a',style:'bun',kind:'civil',top:'#4a5a8a',pants:'#2b2f36',shoes:'#222'}];
-const PEDS=Array.from({length:4},(_,k)=>newPed(k,true));
-function newPed(k,any){const dir=Math.random()<0.5?1:-1;return {k,dir,x:any?Math.random()*W:(dir>0?-2:W+1),y:27.25+(k%2)*0.45+Math.random()*0.15,v:0.016+Math.random()*0.01,walk:Math.random()*4,moving:true,look:PED_LOOKS[(k+Math.floor(Math.random()*5))%PED_LOOKS.length],frames:null};}
-function updPeds(){for(let i=0;i<PEDS.length;i++){const p=PEDS[i];p.x+=p.v*p.dir;p.walk+=p.v;if(p.x<-3||p.x>W+3){PEDS[i]=newPed(p.k,false);}}}
+const aliveP=p=>p.t<p.life;
 function updFX(){
-  if(fxOn('base.life')){updPeds();
+  if(fxOn('base.life')){
     // a copiadora solta uma folha de vez em quando enquanto alguém a usa
     if(frame%110===0&&NPCS.some(n=>n.act&&n.act.id==='copiadora'&&n.act.st==='do')&&FXP.length<400)FXP.push({k:'sheet',x:12*T+24,y:6*TH-8,z:0,vz:0,t:0,life:150});}
   if(frame%9===0){for(const [x,y] of [[20*T+14,6*TH-19],[4*T+24,4*TH-9],[19*T+52,4*TH-8]])if(FXP.length<400)FXP.push({k:'steam',x:x+(Math.random()-0.5)*3,y,z:0,vz:0.22,t:0,life:56,sz:1.4});}
@@ -1656,21 +1645,6 @@ const POLLEN=Array.from({length:120},()=>({x:Math.random()*W*T,y:(18.6+Math.rand
 let GUST=0,gustT=500;
 // mariposas em volta da luminária da sala de depoimentos
 const MOTHS=Array.from({length:3},(_,k)=>({a:k*2.1,r:5+k*3,v:0.07+k*0.025,ph:Math.random()*6}));
-// rua: carros dos dois lados
-const TRAFFIC=[];let CARS=[],PARKED=[],nextCar=120;
-function buildTraffic(){
-  for(const c of [['#3d6db0','#5d8cce','#2c5389','#1f3d66','#33609e'],['#8a2a2a','#aa4a44','#6a2020','#4a1515','#7a2626'],['#d8d4c8','#f0ece2','#b0aca0','#8a8678','#c8c4b8'],['#2f3a2f','#4a5a4a','#252e25','#1a201a','#2a332a'],['#c9a24a','#e0bc66','#a8842e','#7a5e1e','#b8923c']]){
-    const v=outlined(S2(64,81,(P,E)=>drawCarPx(P,E,{b:c[0],hi:c[1],sh:c[2],dk:c[3],fr:c[4]},false)));
-    const w=Math.round(v.height*0.82),h=Math.round(v.width*0.72),o=document.createElement('canvas');o.width=w;o.height=h;const g=o.getContext('2d');g.imageSmoothingEnabled=false;
-    g.translate(w/2,h/2);g.rotate(-Math.PI/2);g.scale(0.72,0.82);g.drawImage(v,-v.width/2,-v.height/2);TRAFFIC.push(o);}
-  // a viatura do DHPP parada na vaga em frente, de frente para o oeste (como na cena da rua)
-  {const v=outlined(S2(64,81,(P,E)=>drawCarPx(P,E,{b:'#e4e7e3',hi:'#f6f8f5',sh:'#b9beba',dk:'#8d938f',fr:'#cfd3cf'},true)));
-    const w=Math.round(v.height*0.82),h=Math.round(v.width*0.72),o=document.createElement('canvas');o.width=w;o.height=h;const g=o.getContext('2d');g.imageSmoothingEnabled=false;
-    g.translate(w/2,h/2);g.rotate(-Math.PI/2);g.scale(0.72,0.82);g.drawImage(v,-v.width/2,-v.height/2);PARKED=[{spr:o,dir:-1,x:5*T,y:24.05*TH,v:0}];}
-}
-// pombos no pátio
-const PIGEONS=Array.from({length:6},(_,k)=>newPigeon(k,true));
-function newPigeon(k,ground){return {k,x:(3+Math.random()*28)*T,y:(19.3+Math.random()*3.2)*TH,z:ground?0:60+Math.random()*30,st:ground?'g':'land',dir:Math.random()<0.5?-1:1,t:Math.floor(Math.random()*90),vx:0,vy:0,away:0};}
 // piso molhado deixado pelo rodo
 let WETS=[],TREES=null;
 // porta de vidro que abre sozinha
@@ -1684,19 +1658,6 @@ function updAtmo(){
   // ventilador de teto mexe o ar da sala da delegada
   {const cx=6*T,cy=5.3*TH;for(const m of MOTES)if(m.r==='sonia'){const dx=m.x-cx,dy=(m.y-cy)/K,d=Math.hypot(dx,dy);if(d<2.6*T&&d>4){const a=0.006*(1-d/(2.6*T)),c=Math.cos(a),sn=Math.sin(a);m.x=cx+dx*c-dy*sn;m.y=cy+(dx*sn+dy*c)*K;}}}
   for(const m of MOTES){m.x+=m.vx+Math.sin(frame/140+m.ph)*0.03;m.z+=m.vz+Math.sin(frame/90+m.ph)*0.02;const q=ROOM_RECT[m.r];if(m.x<q[0]*T)m.x=(q[2]+1)*T;if(m.x>(q[2]+1)*T)m.x=q[0]*T;if(m.z<4||m.z>46)m.vz=-m.vz;}
-  // carros
-  if(--nextCar<=0){nextCar=240+Math.random()*420;const r=Math.random()<0.5;CARS.push({spr:pick(TRAFFIC),dir:r?1:-1,x:r?-4*T:(W+4)*T,y:r?26.6*TH:25.25*TH,v:(1.1+Math.random()*0.7)});}
-  for(const c of CARS){c.x+=c.v*c.dir;const tail=c.x-c.dir*c.spr.width/2;
-    if(frame%4===0)FXP.push({k:'exh',x:tail-c.dir*2,y:c.y-7,z:2,vz:0.06,vx:-c.dir*0.25,t:0,life:70,sz:1.2});
-    if(frame%9===0)FXP.push({k:'puff',x:tail+(Math.random()-0.5)*6,y:c.y-2,z:0,vz:0.04,vx:c.dir*0.3,t:0,life:36,sz:1.6});}keep(CARS,onRoad);
-  // pombos: bicam, andam e voam quando Lemos chega perto
-  for(const b of PIGEONS){
-    b.t++;
-    if(b.st==='g'){if(Math.hypot(P1.x*T+16-b.x,(P1.y*TH+TH)-b.y)<48&&started){b.st='fly';b.vx=(b.x>P1.x*T+16?1:-1)*(1.4+Math.random());b.vy=-0.5-Math.random()*0.5;b.dir=Math.sign(b.vx);b.away=0;for(let k=0;k<3;k++)FXP.push({k:'feather',x:b.x+(Math.random()-0.5)*8,y:b.y-8-Math.random()*6,gy:b.y+Math.random()*6,vx:(Math.random()-0.5)*0.3,vy:0.12+Math.random()*0.1,t:0,life:420,c:pick(['#c8ccd2','#a3a9b0','#e8eaee']),ph:Math.random()*6});}
-      else if(b.t%120===60&&Math.random()<0.5){b.dir=-b.dir;}else if(b.t%40<6)b.x+=b.dir*0.25;}
-    else if(b.st==='fly'){b.x+=b.vx;b.y+=b.vy;b.z+=1.1;b.away++;if(b.away>260){Object.assign(b,newPigeon(b.k,false));}}
-    else if(b.st==='land'){b.z-=0.8;b.x+=b.dir*0.4;if(b.z<=0){b.z=0;b.st='g';}}
-  }
   // folhas caindo das árvores
   if(Math.random()<0.07+GUST*0.3){const tr=TREES||(TREES=objs.filter(o=>o.t==='tree'&&!o.far));if(tr.length){const o=pick(tr);FXP.push({k:'leaf',x:o.x*T+16+(Math.random()-0.5)*30,y:(o.y+1)*TH-50+Math.random()*12,gy:(o.y+1)*TH+Math.random()*30,vx:0.12+Math.random()*0.2,vy:0.25+Math.random()*0.2,t:0,life:520,c:pick(['#4a8a3c','#69ad52','#c9a040','#a8642a']),ph:Math.random()*6});}}
   // cigarro no cinzeiro da sala de depoimentos
@@ -1737,21 +1698,6 @@ function drawFlagCloth(o){
   if(!cl)cl=o.cloth=S2(17,12,(P)=>{if(o.v==='br'){P(0,0,17,12,'#2f7a3a');for(let k=0;k<5;k++)P(8-k*2,3+k-2,1+k*4,1,'#e8c63a');for(let k=0;k<4;k++)P(4+k*2,6+k,9-k*4,1,'#e8c63a');P(5,4,7,4,'#e8c63a');P(6,4,5,4,'#2f4f9a');P(6,6,5,1,'#e8ecef');}else{P(0,0,17,12,'#1e2a3a');P(0,0,17,1,'#3a4f6a');P(4,3,9,1,'#e8ecef');P(4,6,9,1,'#c9a24a');P(4,9,9,1,'#e8ecef');}});
   for(let i=0;i<17;i++){const ph=frame/7-i*0.5,dy=Math.sin(ph)*1.6*(i/16);ctx.drawImage(cl,i,0,1,12,X+17+i,Y+3+dy,1,12);if(Math.cos(ph)<-0.3){ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillRect(X+17+i,Y+3+dy,1,12);}else if(Math.cos(ph)>0.7){ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(X+17+i,Y+3+dy,1,12);}}
   ctx.fillStyle='#1e1611';ctx.fillRect(X+16,Y+3,1,12);
-}
-function drawCar2(c){
-  const s=c.spr,X=DP(c.x-s.width/2),Y=DP(c.y-s.height);
-  ctx.globalAlpha=0.3;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(c.x+4,c.y-4,s.width*0.5,8,0,0,7);ctx.fill();ctx.globalAlpha=1;
-  if(c.dir<0){ctx.save();ctx.translate(c.x,0);ctx.scale(-1,1);ctx.drawImage(s,-s.width/2,Y);ctx.restore();}else ctx.drawImage(s,X,Y);
-}
-function drawPigeon(b){
-  const X=DP(b.x),Y=DP(b.y),z=DP(b.z),d=b.dir;
-  ctx.globalAlpha=0.28*Math.max(0.2,1-b.z/90);ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(X,Y,5,1.6,0,0,7);ctx.fill();ctx.globalAlpha=1;
-  const y=Y-z-6,peck=b.st==='g'&&(b.t%50)<8,fly=b.st!=='g',up=(frame>>2)%2;
-  if(fly){ctx.fillStyle='#1e1611';ctx.fillRect(X-7,up?y-5:y+1,14,4);ctx.fillStyle='#a3a9b0';ctx.fillRect(X-6,up?y-4:y+2,12,2);}
-  ctx.fillStyle='#1e1611';ctx.fillRect(X-5-(d>0?1:0),y-1,11,7);
-  ctx.fillStyle='#8a9098';ctx.fillRect(X-4,y,9,5);ctx.fillStyle='#a3a9b0';ctx.fillRect(X-3,y,6,2);ctx.fillStyle='#5a6068';ctx.fillRect(d>0?X-5:X+3,y+1,3,2);
-  const hx=d>0?X+4:X-6,hy=peck?y+3:y-3;ctx.fillStyle='#1e1611';ctx.fillRect(hx-1,hy-1,5,5);ctx.fillStyle='#4f5a62';ctx.fillRect(hx,hy,3,3);ctx.fillStyle='#5fa08a';ctx.fillRect(hx,hy+2,3,1);ctx.fillStyle='#e8e2d0';ctx.fillRect(d>0?hx+2:hx,hy,1,1);ctx.fillStyle='#c97a3a';ctx.fillRect(d>0?hx+3:hx-1,hy+1,1,1);
-  if(!fly){ctx.fillStyle='#c97a3a';ctx.fillRect(X-1,y+5,1,2);ctx.fillRect(X+2,y+5,1,2);}
 }
 function drawDoor(){
   const X=15*T,Y=18*TH+12,o=doorOpen*22;
@@ -1904,7 +1850,7 @@ function buildNeigh(side){
 function drawApron(){
   const w=BG.width,h=BG.height,E=30*T,y19=19*T;
   if(!APRON){const strip=(sx,sy,sw,sh)=>{const c=document.createElement('canvas');c.width=sw;c.height=sh;c.getContext('2d').drawImage(BG,sx,sy,sw,sh,0,0,sw,sh);return c;};
-    APRON={left:ctx.createPattern(strip(0,0,T,h),'repeat-x'),right:ctx.createPattern(strip(w-T,0,T,h),'repeat-x'),back:ctx.createPattern(strip(0,28*T,8*T,2*T),'repeat')};}
+    APRON={left:ctx.createPattern(strip(0,0,T,h),'repeat-x'),right:ctx.createPattern(strip(w-T,0,T,h),'repeat-x'),back:ctx.createPattern(strip(0,37*T,8*T,2*T),'repeat')};}
   if(!NEIGH)NEIGH={L:buildNeigh(-1),R:buildNeigh(1)};
   // atrás do quarteirão: telhados
   ctx.fillStyle=APRON.back;ctx.fillRect(-E,-E,w+2*E,E);
@@ -1926,6 +1872,15 @@ function focusPass(){
     if(FOCUS[k]>0){const q=roomClip(k);ctx.globalAlpha=0.5*FOCUS[k];ctx.fillStyle='#070a10';ctx.fillRect(q[0],q[1],q[2]-q[0],q[3]-q[1]);}}
   ctx.globalAlpha=1;
 }
+// o lado de fora da planta é a própria cena da rua (street.js): o mesmo chão, os mesmos carros, a viatura, quem passa,
+// os semáforos, os postes e as árvores, na arte oficial e na mesma simulação (a rua continua andando com o Lemos aqui dentro).
+// A porta do DHPP da rua (x 1200) cai na porta da planta (x 512); o pé das fachadas (GY) cai na linha 19.
+const STRIP_DX=688,STRIP_YB=956;
+function stripView(s,ox,oy){
+  if(!STREET||(cv.height-oy)/s<19*TH-230)return null;const st=STREET;   // a rua fora do quadro (postes e árvores sobem até ~200 px)
+  const dy=st.strip.GY-19*TH;
+  return {st,ox:ox-STRIP_DX*s,oy:oy-dy*s,X0:-ox/s+STRIP_DX,X1:(cv.width-ox)/s+STRIP_DX,yb:STRIP_YB};
+}
 function render(){
   // o entorno (drawApron) e o piso cobrem a tela inteira: limpar seria pintar a tela toda à toa a cada quadro
   ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;
@@ -1935,17 +1890,15 @@ function render(){
   LODE=s/RS;LODV=lodOf(LODE);SC=s;UIK=Math.max(1/LODE,Math.min(1,2.2/LODE));
   const SPR=()=>{ctx.setTransform(s,0,0,s,ox,oy);ctx.imageSmoothingEnabled=false;};
   DOF_S=s;DOF_OY=oy;DOF_ON=FXMODE==='2d'&&!POST&&FX.dof>0.02&&QHIGH();
-  ctx.setTransform(s,0,0,s*K,ox,oy);ctx.imageSmoothingEnabled=false;drawApron();ctx.drawImage(BG,0,0);dofGround(s,ox,oy);SPR();drawFloorFX();
+  ctx.setTransform(s,0,0,s*K,ox,oy);ctx.imageSmoothingEnabled=false;drawApron();ctx.drawImage(BG,0,0);dofGround(s,ox,oy);
+  const RX=stripView(s,ox,oy);if(RX)RX.st.strip.ground(ctx,s,RX.ox,RX.oy,RX.X0,RX.X1,RX.yb);
+  SPR();drawFloorFX();
   if(!ROWS){ROWS=Array.from({length:H},()=>({o:[],p:[],x:[]}));for(const o of objs)if(o.spr)ROWS[clamp(o.y+o.h-1,0,H-1)].o.push(o);}
   for(const r of ROWS){r.p.length=0;r.x.length=0;}
   const R=k=>ROWS[clamp(k,0,H-1)];
   for(const n of NPCS){n._sit=!!n.sit&&!n.moving&&isSeat(n);n._k=n.k;R(Math.round(n.y)).p.push(n);}
   P1._sit=false;P1._k=9;R(Math.round(P1.y)).p.push(P1);
   VIS.forEach((v,k)=>{v._sit=true;v._k=20+k;R(Math.round(v.y)).p.push(v);});
-  if(fxOn('base.life'))PEDS.forEach((p,k)=>{p._sit=false;p._k=40+k;R(Math.round(p.y)).p.push(p);});
-  for(const c of CARS)R(Math.floor(c.y/TH)).x.push(c);
-  for(const c of PARKED)R(Math.floor(c.y/TH)).x.push(c);
-  for(const b of PIGEONS)R(Math.floor(b.y/TH)).x.push(b);
   const y0=Math.max(0,Math.floor(-oy/s/TH)-4),y1=Math.min(H-1,Math.ceil((cv.height-oy)/s/TH)+4);
   for(let y=y0;y<=y1;y++){
     if(WALLROWS[y])drawB(WALLROWS[y],0,y*TH-RISE,dofW(y*TH));
@@ -1957,8 +1910,8 @@ function render(){
     if(r.p.length>1)r.p.sort(byY);
     // quem está sentado atrás de uma mesa é desenhado antes dela (a mesa fica na fileira de baixo)
     for(const p of r.p)drawPerson(p,p._sit,p._k);
-    for(const e of r.x){if(e.spr)drawCar2(e);else drawPigeon(e);}
   }
+  if(RX){RX.st.strip.ents(ctx,s,RX.ox,RX.oy,RX.X0,RX.X1,RX.yb);SPR();}
   // luminária pendente da sala de depoimentos
   ctx.fillStyle='#1c1e20';ctx.fillRect(5.5*T+15,10*TH-RISE,1,2*TH-6);ctx.drawImage(LAMP,5.5*T+5,12*TH-30);
   micro();
@@ -1997,7 +1950,7 @@ function fadeTo(fn){FADE.classList.add('on');setTimeout(()=>{fn();requestAnimati
 function setWhere(t){lastRoom=null;$('#where-n').textContent=t;$('#b-view').hidden=t!=='Rua do DHPP';}
 // entrou pela porta do DHPP: aparece na recepção, logo depois da porta
 function enterBase(instant){
-  const go=()=>{SCENE='base';$('#b-view').hidden=true;AMB.setScene('base');streetLeft=performance.now();resumeBase();P1.x=16;P1.y=17;P1.path=[];P1.pend=null;P1.dir=1;
+  const go=()=>{SCENE='base';$('#b-view').hidden=true;AMB.setScene('base');streetLeft=0;resumeBase();P1.x=16;P1.y=17;P1.path=[];P1.pend=null;P1.dir=1;
     const e=bfs(ti(P1),i=>i===idx(16,15),walkPass);if(e>=0)P1.path=pathTo(e);
     cam.x=P1.x*T+16;cam.y=P1.y*TH;clampCam();CAMCTRL.focus({id:'enter-base',mode:'transition',priority:CAMERA_PRIORITY.critical,x:16*T+16,y:14.5*TH,duration:420,hold:220,interruptible:true});follow=true;last=performance.now();updateUI();};
   if(instant)go();else fadeTo(go);
@@ -2036,7 +1989,7 @@ function loop(now){
   {const et=SCENE!=='rua'||!fxOn('edge.tint');if(ETN.hidden!==et)ETN.hidden=et;const vg=fxOn('edge.tint')?'':'none';if(VIG.style.display!==vg)VIG.style.display=vg;}
   if(SCENE==='rua'){if(FX.vigS!==0.5){FX.vigS=0.5;VIG.style.opacity=0.5;}const st=street();st.update(dt);streetAmbience(st,dt);streetView().draw(ctx,cv.width,cv.height,RS,started);frame++;if(frame%6===0){const c=clockStr();if(c!==lastClk){lastClk=c;$('#clk').textContent=c;}}
     lastClock+=dt;if(lastClock>3){lastClock=0;gameMin++;}requestAnimationFrame(loop);return;}
-  update(dt);updFX();updAtmo();stepZoom();followCam(dt);if(started)primeBlur();frame++;const r0=performance.now();render();PROF.r2d+=(performance.now()-r0-PROF.r2d)*0.05;postFX(dt);
+  update(dt);updFX();updAtmo();if(STREET)STREET.update(dt);stepZoom();followCam(dt);if(started)primeBlur();frame++;const r0=performance.now();render();PROF.r2d+=(performance.now()-r0-PROF.r2d)*0.05;postFX(dt);
   if(CAMERA_DEBUG&&CAMDBG)drawCameraDebug(ctx,{width:cv.width,height:cv.height,dpr:RS,deadZone:{x:VW()/2-CAMDBG.zoneX,y:VH()/2-CAMDBG.zoneY,w:CAMDBG.zoneX*2,h:CAMDBG.zoneY*2},target:CAMDBG.target,lines:[`BASE · ${CAMDBG.room||roomOf(P1)}`,`modo ${CAMDBG.mode} · prioridade ${CAMDBG.priority}`,`cam ${cam.x.toFixed(1)}, ${cam.y.toFixed(1)} · zoom ${cam.z.toFixed(2)}`]});
   if(talk)updLink();if(frame%6===0)updateUI();
   requestAnimationFrame(loop);
@@ -2138,7 +2091,7 @@ $('#b-view').addEventListener('click',()=>{if(SCENE==='rua')streetView().toggleO
 $('#rot').addEventListener('click',()=>{ROT=ROT===0?90:ROT===90?-90:0;userVert=(ROT===0);lastL=null;applyLayout(true);});
 addEventListener('resize',()=>applyLayout(false));
 
-newGame();initArt();buildTraffic();buildVisitors();applyLayout(true);cam.x=16*T;cam.y=15*TH;clampCam();
+newGame();initArt();buildVisitors();applyLayout(true);cam.x=16*T;cam.y=15*TH;clampCam();
 setTimeout(()=>{framesHDFor(P1);for(const n of NPCS)framesHDFor(n);},300);
 // Versão nova do jogo: o modo offline (vite-plugin-pwa, autoUpdate) abre a cópia guardada e baixa a nova em segundo
 // plano; quando ela assume a página, a base ainda estaria rodando a antiga. Se o jogador ainda não entrou na base,

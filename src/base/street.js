@@ -829,5 +829,64 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   }
   /** botão "visão geral": afasta até a escala 1 (a rua inteira, com os prédios de baixo) e volta */
   function toggleOverview(){if(!lastView)return;const b=lastView.baseS;camera.clearManual();camZoom=camZoom<.99?1:Math.max(.34,1/b);}
-  return {toggleOverview,lanes:LANES,update,resume,debugRows,draw,tap,place,gestureStart,gestureMove,gestureEnd,zoomAt,lemos,door:DOOR,ready,stats,get view(){return lastView;},get cars(){return cars;},parked,peds,birds,trees,get t(){return t;},zoom:()=>camZoom};
+  /* ---------- a mesma rua vista da planta da base (base.js) ----------
+     A planta mostra o lado de fora como esta cena: a calçada, o meio-fio, as duas mãos, as faixas e a calçada de cá, na
+     arte oficial, com tudo o que anda nela (carros, viatura, pedestres, pombos, semáforos, postes, árvores). Só do pé
+     das fachadas (GY) para baixo: a fachada fica com a planta. O prédio da planta é mais largo que o lote do DHPP aqui
+     (1024 px de parede contra 620), então o trecho em frente a ele é alargado: o chão é remontado com pedaços lisos da
+     própria calçada e do asfalto (sem esticar a arte), e quem passa por ali anda um pouco mais depressa. A porta do DHPP
+     cai na porta da planta; os vizinhos e os becos ficam dos lados, como aqui. Coordenadas da faixa (X): X=sx no centro. */
+  const STRIP={L0:700,L1:1090,R0:1310,R1:1800,dl:-170,dr:234};
+  const smooth=u=>u<=0?0:u>=1?1:u*u*(3-2*u);
+  function stripX(sx){const S=STRIP;if(sx<S.L1)return sx+S.dl*(1-smooth((sx-S.L0)/(S.L1-S.L0)));if(sx>S.R0)return sx+S.dr*smooth((sx-S.R0)/(S.R1-S.R0));return sx;}
+  let stripG=null,stripOf=null;
+  function stripGround(yb){
+    if(stripG&&stripOf===layer&&stripG.height===yb-GY)return stripG;
+    const S=STRIP,h=yb-GY,c=document.createElement('canvas');c.width=STREET_W+S.dr-S.dl;c.height=h;const g=c.getContext('2d');g.imageSmoothingEnabled=false;
+    const put=(sx0,sx1,X)=>g.drawImage(layer,sx0,GY,sx1-sx0,h,X-S.dl,0,sx1-sx0,h);
+    const fill=(X0,X1,src)=>{let X=X0;while(X<X1){for(const [a,b] of src){const w=Math.min(b-a,X1-X);if(w<=0)break;put(a,a+w,X);X+=w;}}};
+    put(0,890,S.dl);                             // à esquerda: os vizinhos e o beco, como aqui
+    put(890,1104,890+S.dl);                      // a frente do DHPP depois do beco
+    fill(1104+S.dl,1090,[[960,1100]]);           // calçada e asfalto lisos
+    put(1090,1310,1090);                         // a escada da porta e a vaga da viatura, no lugar
+    fill(1310,1510+S.dr-200,[[1310,1490]]);
+    put(1310,1510,1510+S.dr-200);                // a frente do DHPP até o beco
+    put(1510,STREET_W,1510+S.dr);                // à direita: o beco e os vizinhos
+    stripG=c;stripOf=layer;return c;
+  }
+  /** chão da rua na planta: (ox,oy) é onde o ponto X=0, y=0 da rua cai na tela, na escala s; X0..X1 é o trecho visível */
+  function drawStripGround(ctx,s,ox,oy,X0,X1,yb){
+    const G=stripGround(yb),S=STRIP;ctx.setTransform(s,0,0,s,ox,oy);ctx.imageSmoothingEnabled=false;
+    const a=Math.max(0,Math.floor(X0-S.dl)),b=Math.min(G.width,Math.ceil(X1-S.dl));if(b>a)ctx.drawImage(G,a,0,b-a,G.height,a+S.dl,GY,b-a,G.height);
+    if(F.debris)for(const d of debris){const X=Math.round(stripX(d.x));if(X<X0||X>X1)continue;const Y=Math.round(d.y);ctx.fillStyle='rgba(20,16,14,.22)';ctx.fillRect(X,Y,3,1);ctx.fillStyle=d.k===0?'#a8742a':d.k===1?'#5a6a2a':'#e6e1d2';ctx.fillRect(X,Y-1,3,2);}
+  }
+  /** o que anda e o que fica de pé na calçada, na ordem do pé, por cima da planta (postes e árvores passam na frente da fachada) */
+  function drawStripEnts(ctx,s,ox,oy,X0,X1,yb){
+    const q=Q();ctx.setTransform(s,0,0,s,ox,oy);ctx.imageSmoothingEnabled=false;
+    for(const e of ENTS){const r=e.ref;if(e.k==='car'){if(r.lane!=null)e.y=(r.yo??LANES[r.lane].y)+(r.yj||0);}else e.y=r.y;}
+    for(let i=1;i<ENTS.length;i++){const e=ENTS[i];let j=i-1;while(j>=0&&ENTS[j].y>e.y){ENTS[j+1]=ENTS[j];j--;}ENTS[j+1]=e;}
+    for(const e of ENTS){const r=e.ref;if(r===lemos||e.y>yb)continue;
+      if(e.k==='car'){const w=W(r),X=stripX(r.x+w/2)-w/2;if(X+w<X0||X>X1)continue;const sx=r.x;r.x=X;
+        if(r.lane!=null)car(ctx,r,X,e.y,LANES[r.lane].dir,false);else car(ctx,r,X,r.y,r.dir||1,r===viatura);r.x=sx;continue;}
+      if(e.k==='steam'){if(!(q>=1&&F.steam))continue;const X=stripX(r.x);if(X<X0||X>X1)continue;const sx=r.x;r.x=X;steam(ctx,r);r.x=sx;continue;}
+      const X=stripX(r.x);if(X<X0-140||X>X1+140)continue;const sx=r.x;r.x=X;
+      switch(e.k){
+        case 'prop':{const im=art(PATH.prop(r.k));if(!im)break;const w=im.width*PROP_S,h=im.height*PROP_S;
+          contact(ctx,X+1,r.y,Math.max(4,w*.42),2.5,.3);ctx.drawImage(r.dark?dimmed(im,r.dark):im,Math.round(X-w/2),Math.round(r.y-h),Math.round(w),Math.round(h));break;}
+        case 'tree':tree(ctx,r);break;
+        case 'signal':signal(ctx,r);break;
+        case 'ped':if(!r.hidden)person(ctx,r);break;
+        case 'bird':bird(ctx,r);break;
+      }
+      r.x=sx;}
+    const fum=art(PATH.efeito('fumaca-escape'));
+    if(F.steam&&fum)for(const p of puffs){const X=stripX(p.x);if(X<X0||X>X1)continue;const f=Math.min(3,Math.floor(p.t*4));ctx.globalAlpha=1-p.t;ctx.drawImage(fum,f*12,0,12,8,X-9,p.y-6,18,12);}
+    ctx.globalAlpha=1;
+    // o giroflex da viatura parada e das que passam com a sirene
+    if(q>=1){ctx.globalCompositeOperation='lighter';const flash=(k,yy)=>{const w=W(k),X=stripX(k.x+w/2)-w/2;if(X+w<X0||X>X1)return;const red=(2+Math.floor(t*(k.siren?4:2.5))%2)===2,m=meta(k.id),sx=(red?67:85)*CAR_S,cx=X+((k.dir||(k.lane!=null?LANES[k.lane].dir:1))<0?w-sx:sx),cyy=yy-m.h*CAR_S+6*CAR_S;
+        const sp=glowSprite(red?'rgba(255,60,50,1)':'rgba(60,110,255,1)');ctx.globalAlpha=.5;ctx.drawImage(sp,cx-18,cyy-14,36,28);ctx.globalAlpha=.16;ctx.drawImage(sp,cx-130,yy-90,260,110);};
+      flash(viatura,viatura.y);for(const k of cars)if(k.siren)flash(k,(k.yo??LANES[k.lane].y)+(k.yj||0));
+      ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}
+  }
+  return {strip:{reset:()=>{stripG=null;},ground:drawStripGround,ents:drawStripEnts,x:stripX,GY,NEAR,FG_TOP},toggleOverview,lanes:LANES,update,resume,debugRows,draw,tap,place,gestureStart,gestureMove,gestureEnd,zoomAt,lemos,door:DOOR,ready,stats,get view(){return lastView;},get cars(){return cars;},parked,peds,birds,trees,get t(){return t;},zoom:()=>camZoom};
 }
