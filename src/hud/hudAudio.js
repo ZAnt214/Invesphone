@@ -1,5 +1,5 @@
 /* Sons do HUD do Lemos (src/hud/hud.js), gerados na hora (sem arquivos) e com um eco de sala grande.
-   - Entrar numa sala: sopro de ar subindo, um grave fundo e um brilho agudo.
+   - Faixas de cinema (nome do lugar): uma nota de contrabaixo de jazz noir, outra uma quinta acima, e uma vassourinha no prato.
    - Descoberta: sino suave em duas notas.
    - Evidência: a folha passando, o zunido do rastro subindo e, na chegada à caderneta, baque grave, estalo e brilhos.
    - Caderneta: página virando; material aberto: ar subindo.
@@ -26,8 +26,11 @@ function bell(f,at,v){for(const [k,a,d] of [[1,1,1.8],[2.01,.4,1.2],[2.76,.32,.9
 const buzz=p=>{if(!on())return;try{navigator.vibrate&&navigator.vibrate(p);}catch(_){/* sem vibração */}};
 
 export const hudSfx={
-  room(){if(!ctx())return;hiss({f:220,to:2600,q:.7,dur:1.4,vol:.14,att:.55,wet:.7});tone({f:74,to:36,dur:2,vol:.36,att:.02,wet:.4});tone({f:37,dur:1.6,vol:.2,att:.05,wet:.2});
-    [1318,1760,2637,3520].forEach((f,i)=>tone({f,at:.3+i*.07,dur:2.4,vol:.015,att:.5,wet:1}));},
+  room(){if(!ctx())return;
+    const pluck=(f,at,v)=>{tone({f:f*1.04,to:f,dur:.08,vol:v*.6,att:.002,wet:.2,at});tone({f,at,dur:1.9,vol:v,att:.006,wet:.35});
+      tone({type:'triangle',f:f*2,at,dur:1.1,vol:v*.35,att:.004,wet:.35});hiss({f:420,q:1.4,at,dur:.05,vol:v*.25,att:.002,wet:.2});};
+    hiss({f:7000,q:.5,dur:1.5,vol:.028,att:.75,wet:.6});   // vassourinha no prato
+    pluck(55,.05,.34);pluck(82.4,.62,.22);},             // lá grave e mi
   disc(){if(!ctx())return;bell(1046,0,.06);bell(1568,.16,.04);hiss({type:'highpass',f:6000,dur:.6,vol:.02,att:.2,wet:.9});buzz(12);},
   open(){if(!ctx())return;hiss({f:600,to:2400,q:.6,dur:.45,vol:.06,att:.12,wet:.5});tone({f:660,to:990,dur:.35,vol:.025,wet:.7});},
   close(){if(!ctx())return;hiss({f:2000,to:500,q:.6,dur:.35,vol:.045,att:.05,wet:.5});},
