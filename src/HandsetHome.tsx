@@ -10,6 +10,7 @@ type Props = {
   chapterNumber:number
   chapterTitle:string
   caseStatus:string
+  caseQuestion:string
   notes:GuideNote[]
   teamBadge:number
   clueBadge:number
@@ -50,6 +51,7 @@ export default function HandsetHome(p:Props){
 
       <section className="hm-guide" aria-label="Próximos passos do caso">
         <header><i aria-hidden="true"/><b>Caso 01 · {p.caseStatus}</b></header>
+        <p className="hm-question">{p.caseQuestion}</p>
         <ol key={p.notes.map(n=>n.id).join('|')}>
           {p.notes.map((n,i)=>{
             if(n.finished) return <li key={n.id} className="done"><span aria-hidden="true"><Check/></span><s>{n.doneText}</s></li>
@@ -66,7 +68,7 @@ export default function HandsetHome(p:Props){
             )
           })}
         </ol>
-        <small>Sugestões do caso: siga na ordem que preferir.</small>
+        <small>A primeira linha é a prioridade; outras pistas podem ser consultadas livremente.</small>
       </section>
 
       <div className="hm-center">
