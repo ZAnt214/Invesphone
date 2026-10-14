@@ -1837,7 +1837,7 @@ function drawApron(){
   ctx.fillStyle=APRON.top;ctx.fillRect(0,-E,w,E);
   ctx.fillStyle=APRON.left;ctx.fillRect(-E,0,E,h);
   ctx.save();ctx.translate(w-T,0);ctx.fillStyle=APRON.right;ctx.fillRect(T,0,E,h);ctx.restore();
-  const fade=(x0,y0,x1,y1,rx,ry,rw,rh)=>{const g=ctx.createLinearGradient(x0,y0,x1,y1);g.addColorStop(0,'rgba(8,10,12,.18)');g.addColorStop(.4,'rgba(8,10,12,.42)');g.addColorStop(1,'rgba(8,10,12,.68)');ctx.fillStyle=g;ctx.fillRect(rx,ry,rw,rh);};
+  const fade=(x0,y0,x1,y1,rx,ry,rw,rh)=>{const g=ctx.createLinearGradient(x0,y0,x1,y1);g.addColorStop(0,'rgba(8,10,12,.4)');g.addColorStop(.4,'rgba(8,10,12,.6)');g.addColorStop(1,'rgba(8,10,12,.8)');ctx.fillStyle=g;ctx.fillRect(rx,ry,rw,rh);};
   fade(0,0,0,-6*T,-E,-E,w+2*E,E);fade(0,0,-8*T,0,-E,0,E,h);fade(w,0,w+8*T,0,w,0,E,h);
 }
 // foco na sala do Lemos (base.focus): com a câmera afastada, as outras salas escurecem e esfriam; a troca é suave
