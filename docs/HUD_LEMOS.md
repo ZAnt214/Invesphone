@@ -104,7 +104,7 @@ A qualidade gráfica reduz o número de partículas: na baixa, 40%. Quem usa a o
 
 A casa (`/casa`, `src/varredura/varredura.js`) usa o mesmo HUD (`createHud`), para as duas partes do jogo conversarem:
 
-- **Retrato do Lemos** no lugar da marca do DHPP, dentro do cartão do relógio da cena: rosto, "LEMOS" e "Rua das Acácias". As ferramentas da varredura (relógio e velocidade, marcadores, cena, fita) continuam no mesmo cartão de cima.
+- **Cabeçalho igual ao da base** (`.hud-top.lx` em `varredura.css`): sem placas, faixa escura que some para baixo; à esquerda o retrato, "LEMOS" e "Rua das Acácias · hora · fase"; à direita os botões finos (caderneta com o número de pistas, base, som, ajustes, girar). As ferramentas da varredura ficam no meio, no mesmo traço: velocidade do tempo (ícones finos, o ativo em âmbar), marcadores (número em Cormorant itálico e sete tracinhos), cena e fita (anéis pequenos). Os rótulos de baixo usam o Jost espaçado.
 - **Caderneta**: o botão do caderno (`#b-book`, com o número de pistas do caso) abre a caderneta da base. Além de Caso, Pessoas, Pistas, Suspeitas, Hipóteses e Notas, ela ganha as abas da casa (`tabs` em `createHud`): **Achados** (cada marcador com a foto, que abre no visualizador, e a opção da cena 18+) e **Rádio** (as mensagens da noite). O antigo "Caderno de Lemos" saiu.
 - **Caso**: `caseGuide(..., {sweep})` mostra a varredura (quantos marcadores faltam) e, no fim, "Volte à base".
 - **Pistas ao vivo**: cada achado da perícia entra no save do caso na hora (`caseClue`). Quando Lemos volta, a base já tem tudo, e o HUD anuncia as pistas novas ao chegar.
