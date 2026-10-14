@@ -1,6 +1,6 @@
 # HUD do Lemos
 
-Interface da rua e da base do DHPP: quase nada fica na tela até algo acontecer. Quando acontece, vem com luz, partículas, desfoque e som. A direção foi aprovada a partir das sugestões do artifact "HUD do Lemos" (3ª rodada, evolução da Noir).
+Interface da rua, da base do DHPP e da casa da Rua das Acácias: quase nada fica na tela até algo acontecer. Quando acontece, vem com luz, partículas, desfoque e som. A direção foi aprovada a partir das sugestões do artifact "HUD do Lemos" (3ª rodada, evolução da Noir).
 
 Código:
 
@@ -19,8 +19,7 @@ A integração com o jogo fica em `src/base/base.js` (bloco "HUD do Lemos") e no
   - visão geral da rua;
   - girar;
   - casa;
-  - ajustes;
-  - aparelho.
+  - ajustes.
 
   Os IDs são os mesmos do cabeçalho antigo.
 
@@ -100,3 +99,15 @@ A qualidade gráfica reduz o número de partículas: na baixa, 40%. Quem usa a o
   - faixa, cartão, evidência, caderneta e o canvas de partículas ficam com `visibility: hidden` quando parados, para não serem compostos;
   - o canvas de partículas usa no máximo 1,5× de densidade;
   - o sinal amarelo da equipe só recalcula quando o save muda (`teamNewsCount` em `base.js`).
+
+## Na casa (varredura, 14/10/2026)
+
+A casa (`/casa`, `src/varredura/varredura.js`) usa o mesmo HUD (`createHud`), para as duas partes do jogo conversarem:
+
+- **Retrato do Lemos** no lugar da marca do DHPP, dentro do cartão do relógio da cena: rosto, "LEMOS" e "Rua das Acácias". As ferramentas da varredura (relógio e velocidade, marcadores, cena, fita) continuam no mesmo cartão de cima.
+- **Caderneta**: o botão do caderno (`#b-book`, com o número de pistas do caso) abre a caderneta da base. Além de Caso, Pessoas, Pistas, Suspeitas, Hipóteses e Notas, ela ganha as abas da casa (`tabs` em `createHud`): **Achados** (cada marcador com a foto, que abre no visualizador, e a opção da cena 18+) e **Rádio** (as mensagens da noite). O antigo "Caderno de Lemos" saiu.
+- **Caso**: `caseGuide(..., {sweep})` mostra a varredura (quantos marcadores faltam) e, no fim, "Volte à base".
+- **Pistas ao vivo**: cada achado da perícia entra no save do caso na hora (`caseClue`). Quando Lemos volta, a base já tem tudo, e o HUD anuncia as pistas novas ao chegar.
+- **Faixas de cinema**: "Rua das Acácias · Casa da família Valença", ao entrar na cena.
+- **Ajustes**: engrenagem no cabeçalho (`openSettings`), o mesmo painel da base.
+- A Sônia fala pelo **rádio da base** (não há celular). De manhã, a equipe da base comenta a noite na casa (falas com condição em `varredura.fim`); de madrugada, o plantão fala de noite.

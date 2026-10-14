@@ -3,6 +3,11 @@ import { applyQuality, getQuality, onQualityChange } from '../characters/quality
 import { perfHud } from '../perfHud';
 import { choose as chooseLife } from '../world/life';
 import { CAMERA_PRIORITY, createCameraControl, createLead, damp, deadZoneTarget, drawCameraDebug } from '../camera/cameraDirector';
+import { createHud } from '../hud/hud';
+import { readCase, writeCase } from '../case/caseSave';
+import { caseGuide } from '../case/guide';
+import { clues as CLUE_LIST, people as CASE_PEOPLE } from '../case01';
+import { openSettings } from '../settings/settingsPanel';
 (() => {
 'use strict';
 const T=32,W=36,H=26,N=W*H;
@@ -137,14 +142,14 @@ function pushNote(d){notesEl.appendChild(d);while(notesEl.children.length>1)note
 function msgNow(from,text){
   const m={from,text,time:clockStr()};S.msgs.push(m);
   const p=PEOPLE[from],d=document.createElement('div');d.className='note radio live';d.style.setProperty('--c',p.col||'#e3c290');
-  d.innerHTML=avatar(from)+`<div class="nb"><div class="who"><b></b><span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span class="ch">${from==='sonia'?'Celular':'Rádio'} · ${m.time}</span></div><p><span class="sr"></span><span class="tx" aria-hidden="true"></span><i class="cur" aria-hidden="true"></i></p></div>`;
+  d.innerHTML=avatar(from)+`<div class="nb"><div class="who"><b></b><span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span class="ch">${from==='sonia'?'Rádio · base':'Rádio'} · ${m.time}</span></div><p><span class="sr"></span><span class="tx" aria-hidden="true"></span><i class="cur" aria-hidden="true"></i></p></div>`;
   d.querySelector('.who b').textContent=p.name;d.querySelector('.sr').textContent=text;pushNote(d);
   const tx=d.querySelector('.tx');let k=0;
   (function type(){if(!d.isConnected)return;k=Math.min(text.length,k+2);tx.textContent=text.slice(0,k);if(k<text.length)setTimeout(type,28);else{d.classList.remove('live');d.classList.add('done');SND.squelch();}})();
   setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),450);},Math.min(13000,3600+text.length*52));
   const a=S.crew.find(c=>c.key===from);if(a)a.talkUntil=performance.now()+text.length*14+900;
   if(from==='sonia')SND.blip();else if(SND.ok()){SND.rOn();setTimeout(()=>SND.radio(),180);}
-  if(!sheetEl.hidden)renderSheet();
+  if(HUD)HUD.refresh();
 }
 function avatar(from){const p=PEOPLE[from];if(p.img)return `<img class="av" src="${p.img}" alt="">`;const h=HEADURL[from];return h?`<img class="av px" src="${h}" alt="" style="background:${p.col}">`:`<span class="av" style="background:${p.col};color:#0b0e10">${p.ini}</span>`;}
 function sysNow(text){const d=document.createElement('div');d.className='note sys';d.innerHTML=`<p>${text}</p>`;pushNote(d);setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),450);},2600);}
@@ -156,6 +161,7 @@ function discover(id,tile){
   {const X=(tile%W)*T+16,Y=((tile/W)|0)*TH+(floor[tile]===F.WALL?2*TH-6:TH-4);MARKT[tile]=frame;burstSparks(X,Y,26);ringFx(X,Y,[242,194,48],34,46);setTimeout(()=>ringFx(X,Y,[255,236,170],22,36),180);floatText(X,Y-6,'Achado '+S.order.length,'#f2c230',150);FX.shake=7;SND.chime();S.flash.push({x:tile%W,y:(tile/W)|0,t:5});}
   flyPolaroid(id,tile,S.order.length);
   msg('mauricio',CLUES[id].line);
+  caseClue(id);
   const f=S.found;
   if(f.escritorio_revirado&&f.valores_intactos&&!S.flags.busca){S.flags.busca=1;setTimeout(()=>msg('mauricio','Parece alguém tentando produzir bagunça. Gaveta sem importância aberta, ponto óbvio intacto, objeto caro à vista. Se procuraram algo, sabiam exatamente o que queriam.'),2600);}
   if(S.order.length===3&&!S.flags.three){S.flags.three=1;setTimeout(()=>queueEvent('deixaram'),4200);}
@@ -2222,11 +2228,11 @@ addEventListener('keydown',e=>{
   if(e.key===' '){e.preventDefault();setSpeed(paused?(lastSpeed||1):0);}
   else if(e.key==='1')setSpeed(1);else if(e.key==='2')setSpeed(2);else if(e.key==='3'||e.key==='4')setSpeed(4);
   else if(e.key==='Escape'&&pendingOrder){pendingOrder=null;modeSig='';updateMode();updateInfo();}
-  else if(e.key==='Escape'){if(!viewerEl.hidden)closeViewer();else if(!sheetEl.hidden)sheetEl.hidden=true;else{setTool(null);updateMode();sel=null;selTile=null;updateInfo();}}
+  else if(e.key==='Escape'){if(!viewerEl.hidden)closeViewer();else if(HUD&&HUD.bookOpen)HUD.closeBook();else{setTool(null);updateMode();sel=null;selTile=null;updateInfo();}}
 });
 
 /* ---------- UI ---------- */
-const notesEl=$('#notes'),sheetEl=$('#sheet'),viewerEl=$('#viewer'),appEl=$('#app');
+const notesEl=$('#notes'),viewerEl=$('#viewer'),appEl=$('#app');
 let paused=true,speed=1,lastSpeed=1;
 function setSpeed(v){if(v===0)paused=true;else{paused=false;speed=v;lastSpeed=v;}for(const b of document.querySelectorAll('.speed button'))b.setAttribute('aria-pressed',String(+b.dataset.sp===(paused?0:speed)));appEl.classList.toggle('paused',paused);}
 document.querySelectorAll('.speed button').forEach(b=>b.addEventListener('click',()=>setSpeed(+b.dataset.sp)));
@@ -2250,7 +2256,7 @@ function updateMode(){
   const sig=title+h+off+painting;if(sig===modeSig)return;modeSig=sig;
   if(tool||pendingOrder){$('#mode-t').textContent=title;$('#mode-h').textContent=h;$('#mode-x').textContent=pendingOrder?'Cancelar':'Concluir';}el.classList.toggle('off',off);el.classList.toggle('hot',!!painting);
 }
-$('#t-cad').addEventListener('click',()=>{openSheet('f');});
+$('#b-set').addEventListener('click',()=>openSettings(appEl));
 
 /* ---------- Crew dock: pixel portraits with an energy ring and what each one is doing ---------- */
 const crewEl=$('#crew');
@@ -2332,23 +2338,21 @@ infoEl.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)ret
   const k=b.dataset.o;if(!k)return;const a=S.crew.find(m=>m.id===sel);if(!a)return;
   if(ORD[k].pick){pendingOrder={id:a.id,k};setTool(null);infoEl.hidden=true;modeSig='';updateMode();}else giveOrder(a,k,null);});
 function updateBadge(){const b=$('#badge');b.hidden=S.unread<=0;b.textContent=S.unread;}
-let sheetTab='f';
-function openSheet(tab){sheetTab=tab;sheetEl.hidden=false;if(tab==='f'){S.unread=0;updateBadge();}renderSheet();}
-$('#sheet-x').addEventListener('click',()=>{sheetEl.hidden=true;});
-$('#tab-f').addEventListener('click',()=>openSheet('f'));$('#tab-m').addEventListener('click',()=>openSheet('m'));
-function renderSheet(){
-  $('#tab-f').setAttribute('aria-pressed',String(sheetTab==='f'));$('#tab-m').setAttribute('aria-pressed',String(sheetTab==='m'));
-  const body=$('#sheet-body');
-  if(sheetTab==='f'){
-    if(!S.order.length){body.innerHTML='<div class="empty">Nada registrado ainda. Mande a perícia a um cômodo e o que ela encontrar entra aqui, com a foto.</div>';return;}
-    body.innerHTML=(S.flags.end?`<div class="concl"><small>CONCLUSÃO · ${S.flags.endTime||''}</small>Roubo comum não explica a cena.</div>`:'')+
-      S.order.map((id,k)=>{const c=CLUES[id],f=S.found[id];return `<div class="find"><button class="pol" data-photo="${id}" style="--r:${k%2?2.5:-2.5}deg" aria-label="Ver a foto: ${c.title}"><img src="${c.img}" alt=""><span class="pn">${f.n}</span></button><div><b>${c.title}</b><span>${c.desc}</span><small>${c.room} · ${f.time}</small></div></div>`;}).join('');
-  }else{
-    body.innerHTML=S.msgs.length?S.msgs.slice().reverse().map(m=>`<div class="msg">${avatar(m.from)}<div><div class="who">${PEOPLE[m.from].name} · ${m.time}</div><p>${m.text}</p></div></div>`).join(''):'<div class="empty">Sem mensagens.</div>';
-  }
+/* ---------- Caderneta do Lemos (src/hud/hud.js): a mesma da base, com as abas da casa ----------
+   Achados (com a foto de cada marcador) e Rádio entram como abas da caderneta; Caso, Pessoas e Pistas vêm do save do
+   caso, que a varredura alimenta na hora (caseClue): o que Maurício registra aqui já está no quadro da base. */
+let HUD=null;
+function openSheet(tab){if(tab==='f'){S.unread=0;updateBadge();}if(HUD)HUD.openBook(tab==='f'?'achados':'radio');}
+function achadosHtml(){
+  const gore=`<li class="cg"><span class="tx"><small>Cena</small><span>Corpos e sangue em pixel art. Desligue para ver os corpos cobertos por lençol.</span><button type="button" data-gore="1">${GORE?'Cena 18+ ligada · desligar':'Cena 18+ desligada · ligar'} ›</button></span></li>`;
+  if(!S.order.length)return gore+'<li class="empty">Nada registrado ainda. Mande a perícia a um cômodo e o que ela encontrar entra aqui, com a foto.</li>';
+  return (S.flags.end?`<li class="cg nx"><span class="tx"><small>Conclusão · ${S.flags.endTime||''}</small><b>Roubo comum não explica a cena.</b></span></li>`:'')+
+    S.order.slice().reverse().map(id=>{const c=CLUES[id],f=S.found[id];return `<li class="vfind"><button type="button" class="pol" data-photo="${id}" aria-label="Ver a foto: ${c.title}"><img src="${c.img}" alt=""><span class="pn">${f.n}</span></button><span class="tx"><b>${c.title}</b><span>${c.desc}</span><span>${c.room} · ${f.time}</span></span></li>`;}).join('')+gore;
 }
-$('#sheet-body').addEventListener('click',e=>{const b=e.target.closest('[data-photo]');if(b)openViewer(b.dataset.photo);});
-function openViewer(id){const c=CLUES[id];$('#v-img').src=c.img;$('#v-title').textContent=c.title;$('#v-cap').textContent=`Fotografia pericial · ${c.room} · Maurício Farias`;$('#v-pic').classList.remove('z');viewerEl.hidden=false;}
+function radioHtml(){
+  return S.msgs.length?S.msgs.slice().reverse().map(m=>`<li class="vmsg">${avatar(m.from)}<span class="tx"><b>${PEOPLE[m.from].name} · ${m.time}</b><span>${m.text}</span></span></li>`).join(''):'<li class="empty">Sem mensagens.</li>';
+}
+function openViewer(id){if(HUD&&HUD.bookOpen)HUD.closeBook();const c=CLUES[id];$('#v-img').src=c.img;$('#v-title').textContent=c.title;$('#v-cap').textContent=`Fotografia pericial · ${c.room} · Maurício Farias`;$('#v-pic').classList.remove('z');viewerEl.hidden=false;}
 function closeViewer(){viewerEl.hidden=true;}
 $('#v-x').addEventListener('click',closeViewer);
 $('#v-img').addEventListener('click',()=>$('#v-pic').classList.toggle('z'));
@@ -2385,7 +2389,7 @@ function showEnd(){
   const [l]=presLabel();
   $('#end-sum').textContent=`Sete achados registrados. Preservação da cena: ${l.toLowerCase()}. ${S.contam<25?'O isolamento segurou a frente da casa.':'Gente demais passou pelo terreno antes do isolamento.'}`;
   $('#end-list').innerHTML=S.order.map(id=>`<li><svg viewBox="0 0 24 24"><path d="M12 3l9 17H3z"/></svg><span><b>${CLUES[id].title}.</b> ${CLUES[id].desc}</span></li>`).join('');
-  hideCoach();cmdCancel();closeRadio();$('#end').hidden=false;fitCards();setSpeed(0);if(!sheetEl.hidden)renderSheet();
+  hideCoach();cmdCancel();closeRadio();$('#end').hidden=false;fitCards();setSpeed(0);if(HUD)HUD.refresh();
 }
 $('#b-end').addEventListener('click',()=>{SND.click();$('#end').hidden=true;showFin();});
 
@@ -2549,7 +2553,7 @@ function coachDone(set){if(set&&!COACHED){COACHED=true;try{localStorage.setItem(
 function hideCoach(){coachEl.hidden=true;appEl.classList.remove('coach-on');if(coachAnim){coachAnim.cancel();coachAnim=null;}clearTimeout(coachTm);}
 function showCoach(){
   if(COACHED||!coachEl.hidden||cmd||!$('#intro').hidden||!$('#end').hidden)return;
-  if(evOpen||!sheetEl.hidden||!viewerEl.hidden||(typeof middleBusy==='function'&&(middleBusy()||bottomBusy()))){clearTimeout(coachTm);coachTm=setTimeout(showCoach,2500);return;}
+  if(evOpen||(HUD&&HUD.bookOpen)||!viewerEl.hidden||(typeof middleBusy==='function'&&(middleBusy()||bottomBusy()))){clearTimeout(coachTm);coachTm=setTimeout(showCoach,2500);return;}
   const chip=crewEl.querySelector('.mem .pf');if(!chip)return;
   const r=chip.getBoundingClientRect(),p=clientToApp(r.left+r.width/2,r.top+r.height/2);
   coachEl.hidden=false;appEl.classList.add('coach-on');
@@ -2837,7 +2841,7 @@ setInterval(()=>{const m=$('#mem-more');if(!m)return;const a=sel==null?null:S.cr
 /* ---------- Event boxes ----------
    style 'balao' (default): routine calls from someone on the scene open as a balloon tied to that person on the map;
    style 'cena': the few moments that turn the case open as a cinematic cut. The rule lives in the event data. */
-EVENTS.deixaram={who:'sonia',style:'cena',where:'Celular',title:'“Não olha só pro que mexeram. Olha pro que deixaram.”',text:'',
+EVENTS.deixaram={who:'sonia',style:'cena',where:'Rádio · base',title:'“Não olha só pro que mexeram. Olha pro que deixaram.”',text:'',
   opts:[{t:'Continuar',sub:'',fn:()=>msg('sonia','Não olha só pro que mexeram. Olha pro que deixaram.')}]};
 const bubEl=$('#bub'),bubLn=$('#bub-ln'),bubPin=$('#bub-pin'),cineEl=$('#cine');let BUB=null;
 function evDone(o){SND.click();o.fn();bubEl.hidden=true;bubLn.setAttribute('hidden','');bubPin.hidden=true;BUB=null;
@@ -3050,6 +3054,26 @@ function applyLayout(force){
 $('#rot').addEventListener('click',()=>{ROT=ROT===0?90:ROT===90?-90:0;userVert=(ROT===0);lastL=null;applyLayout(true);});
 addEventListener('resize',()=>applyLayout(false));
 newGame();
+/* ---------- HUD do Lemos na casa (docs/HUD_LEMOS.md): retrato, faixas de cinema, caderneta e pistas no save do caso ---------- */
+let CASE=readCase();
+const casePhoto=id=>id==='livia'?'/characters/livia/expressions/neutral.jpg':`/characters/${id}/portrait.jpg`;
+// o achado da perícia entra no save do caso na hora: a base já o tem quando Lemos voltar
+function caseClue(id){if(!CLUE_LIST.some(c=>c.id===id))return;CASE=writeCase(g=>g.clues.includes(id)?g:{...g,clues:[...g.clues,id]});if(HUD){HUD.setCount(CASE.clues.length,true);HUD.refresh();}}
+function hudData(){
+  // na casa, Lemos só conhece quem a Sônia citou no plantão: a filha, que encontrou a cena
+  const people=CASE_PEOPLE.filter(p=>p.id==='livia').map(p=>({id:p.id,name:p.name,role:p.role,photo:casePhoto(p.id),state:'encontrou a cena'}));
+  const clues=(CASE.clues||[]).map(id=>{const k=CLUE_LIST.find(x=>x.id===id);return k?{id,title:k.title,desc:k.description}:null;}).filter(Boolean);
+  return {people,clues,guide:caseGuide(CASE,{casa:false,briefed:true,sweep:{found:S.order.length,total:CLUE_IDS.length,done:!!S.flags.end}})};
+}
+HUD=createHud({app:appEl,data:hudData,clock:()=>clockStr(),
+  canShow:()=>!evOpen&&$('#end').hidden&&$('#fin').hidden&&$('#intro').hidden,
+  onBook:open=>appEl.classList.toggle('book-on',open),
+  onGuide:()=>{const G=hudData().guide,go=G.next&&G.next.go;if(!go)return;if(go.kind==='base')location.href='/base/';else if(go.kind==='achados')HUD.openBook('achados');},
+  tabs:[{k:'achados',label:'Achados',count:()=>S.order.length,html:achadosHtml,
+          click:e=>{const ph=e.target.closest('[data-photo]');if(ph){openViewer(ph.dataset.photo);return false;}if(e.target.closest('[data-gore]')){setGore(!GORE);return true;}return false;}},
+        {k:'radio',label:'Rádio',html:radioHtml}]});
+HUD.setCount(CASE.clues.length,false);
+addEventListener('storage',()=>{CASE=readCase();HUD.setCount(CASE.clues.length,false);});
 initArt();buildAmbient();buildSeg7();buildRail();buildCrew();applyLayout(true);
 setTimeout(()=>{for(const a of S.crew)framesHDFor(a);bedOverlay(BODIES,GORE,true);},400);
 window.__acacias={S:()=>S,cam,ez,VW,VH,get ROT(){return ROT;},T,TH,discover,say,IML,FX,setGore,get LODV(){return LODV;},FLY,startFlyby,spawnCar,spawnCiv,giveOrder,CARBLK,get cmd(){return cmd;},showCoach,LANDED,HUDPAD};
@@ -3057,13 +3081,13 @@ setTool(null);setSpeed(0);updateUI();
 $('#b-start').addEventListener('click',()=>{SND.init();SND.resume();$('#intro').hidden=true;
   // enquanto o jogador revisa a casa, o material do resto do caso vai baixando aos poucos (src/preload)
   setTimeout(()=>import('../preload/prep').then(m=>m.background()).catch(()=>{}),8000);
-  setSpeed(1);msg('sonia','Maurício já está na casa e a PM segura a frente. Revise a cena antes de ouvir qualquer versão.');clearTimeout(coachTm);coachTm=setTimeout(showCoach,9000);});
+  setSpeed(1);msg('sonia','Estou na base com a Denise. Maurício já está aí e a PM segura a frente. Revise a cena antes de ouvir qualquer versão.');
+  setTimeout(()=>HUD.room('Rua das Acácias','Casa da família Valença'),1200);clearTimeout(coachTm);coachTm=setTimeout(showCoach,9000);});
 addEventListener('pointerdown',()=>SND.resume(),{passive:true});
 document.querySelectorAll('.tool,.speed button,.hbtn,#zoom button').forEach(b=>b.addEventListener('click',()=>SND.click()));
 $('#z-in').addEventListener('click',()=>zoomTo(cam.z*1.6,VW()/2,VH()/2));
 $('#z-out').addEventListener('click',()=>zoomTo(cam.z/1.6,VW()/2,VH()/2));
 $('#opt-gore').addEventListener('change',e=>setGore(e.target.checked));
-$('#gore-t').addEventListener('click',()=>setGore(!GORE));
 $('#snd').addEventListener('click',()=>{SND.init();SND.set(!SND.on);$('#snd').classList.toggle('off',!SND.on);$('#snd').setAttribute('aria-pressed',String(SND.on));});
 requestAnimationFrame(loop);
 })();

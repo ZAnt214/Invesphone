@@ -4,7 +4,9 @@
 import type { CaseSave } from './caseSave'
 import { nextSteps, type GuideStepData } from './nextSteps'
 
-export type GuideNext = {title:string;text:string;cta:string;go:GuideStepData['go']|{kind:'casa'}|{kind:'sonia'}}
+export type GuideNext = {title:string;text:string;cta:string;go:GuideStepData['go']|{kind:'casa'}|{kind:'sonia'}|{kind:'base'}|{kind:'achados'}}
+/** Na casa (varredura em andamento): marcadores registrados, total e se a cena já foi encerrada. */
+export type SweepState = {found:number;total:number;done:boolean}
 export type CaseGuide = {status:string;known:string;question:string;next:GuideNext|null}
 
 const STATUS:Record<number,string>={0:'Ocorrência recebida',1:'Cena em processamento',2:'Versões sendo colhidas',3:'Aguardando retorno técnico',4:'Janela de horário em aberto',
@@ -18,8 +20,17 @@ const KNOWN:Record<number,string>={0:'Plantão de madrugada: um casal foi encont
   5:'23:52, alarme desligado. 00:56, entrada no motel. Há 1h04 sem registro.',6:'O pai ameaçou cortar a herança de Lívia, e um extrato de Ricardo chamou atenção.',
   7:'A cinta dos dólares ligados a Téo bate com o saque de Ricardo: US$ 5.000.',8:'Téo confirmou a participação, e as versões foram confrontadas.'}
 
-/** casa: a varredura já terminou (o material da casa chegou à base). briefed: Sônia já passou o caso no plantão. */
-export function caseGuide(g:CaseSave,{casa,briefed}:{casa:boolean;briefed:boolean}):CaseGuide{
+/** casa: a varredura já terminou (o material da casa chegou à base). briefed: Sônia já passou o caso no plantão.
+    sweep: Lemos está na casa agora (a caderneta da varredura). */
+export function caseGuide(g:CaseSave,{casa,briefed,sweep}:{casa:boolean;briefed:boolean;sweep?:SweepState}):CaseGuide{
+  if(sweep){
+    const {found,total,done}=sweep
+    return {status:done?'Cena registrada':'Varredura · Rua das Acácias',
+      known:found?`Ricardo e Helena foram mortos em casa. ${found} de ${total} pontos da cena já registrados pela perícia.`:'Ricardo e Helena foram mortos em casa. Lívia diz ter encontrado tudo revirado.',
+      question:QUESTION[1],
+      next:done?{title:'Volte à base',text:'A cena está registrada. O material segue para o DHPP, e as versões começam de manhã.',cta:'Voltar à base',go:{kind:'base'}}
+        :{title:'Registre a cena',text:`${found} de ${total} marcadores. Arraste o Maurício até um cômodo para periciar e isole a frente antes que os curiosos entrem no terreno.`,cta:'Ver os achados',go:{kind:'achados'}}}
+  }
   if(!casa){
     // plantão de madrugada: primeiro a Sônia, depois a casa
     return {status:'Plantão · madrugada',known:KNOWN[0],question:QUESTION[0],
