@@ -63,13 +63,14 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 body.narrow .h-where{display:none}body.narrow .h-btns{margin-left:auto}
 body.tiny .clk span{display:none}body.tiny .hbtn.phone span{display:none}
 
-#toast{position:absolute;z-index:6;left:50%;top:calc(var(--st,env(safe-area-inset-top,0px)) + 66px);transform:translateX(-50%);width:min(420px,calc(100% - 28px));box-sizing:border-box;
+/* aviso no canto de baixo à direita: não cobre as salas de cima nem a caderneta */
+#toast{position:absolute;z-index:6;right:calc(var(--sr,env(safe-area-inset-right,0px)) + 14px);bottom:calc(var(--sb,env(safe-area-inset-bottom,0px)) + 14px);width:min(340px,calc(100% - 28px));box-sizing:border-box;
   display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:center;padding:8px 12px 8px 8px;background:rgba(10,13,15,.92);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2),0 12px 28px rgba(0,0,0,.55);
   animation:tin .35s cubic-bezier(.2,.9,.3,1.2);pointer-events:none}
 #toast .av{width:34px;height:34px}
 #toast small{display:block;font:700 9px/1 var(--tfont);letter-spacing:.18em;text-transform:uppercase;color:var(--mark)}
 #toast p{margin:3px 0 0;font:500 13px/1.3 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-@keyframes tin{from{opacity:0;transform:translate(-50%,-10px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes tin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
 .av{display:grid;place-items:center;border-radius:50%;overflow:hidden;font:700 12px/1 var(--tfont);letter-spacing:.06em;color:#10161a;background:var(--accent);flex:none;width:44px;height:44px}
 .av img{width:100%;height:100%;object-fit:cover}

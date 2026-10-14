@@ -17,7 +17,7 @@ import { choose, eventLog, jitter, lifeDebug, lineBank } from '../world/life';
 import { CAMERA_PRIORITY, createCameraControl, createLead, damp, deadZoneTarget, drawCameraDebug } from '../camera/cameraDirector';
 (() => {
 'use strict';
-const T=32,TH=22,K=TH/T,RISE=16,CAPH=8,W=34,H=26,N=W*H;
+const T=32,TH=22,K=TH/T,RISE=16,CAPH=8,W=34,H=28,N=W*H;   // linhas 26–27: calçada do outro lado da rua
 const $=s=>document.querySelector(s);
 const appEl=$('#app'),cv=$('#cv'),ctx=cv.getContext('2d');
 const lc=document.createElement('canvas'),lctx=lc.getContext('2d');
@@ -102,7 +102,7 @@ function buildMap(){
   floor=new Array(N).fill(F.GRASS);room=new Array(N).fill('fora');occ=new Array(N).fill(-1);hot=new Array(N).fill(null);blk=new Array(N).fill(false);objs=[];
   const set=(x0,y0,x1,y1,f,r)=>{for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=idx(x,y);if(f!=null)floor[i]=f;if(r!==undefined)room[i]=r;}};
   const block=(x0,y0,x1,y1)=>{for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)blk[idx(x,y)]=true;};
-  set(0,19,W-1,20,F.CONC,'fora');set(0,21,W-1,22,F.WALK,'fora');set(0,23,W-1,25,F.STREET,'fora');block(0,23,W-1,25);
+  set(0,19,W-1,20,F.CONC,'fora');set(0,21,W-1,22,F.WALK,'fora');set(0,23,W-1,25,F.STREET,'fora');block(0,23,W-1,25);set(0,26,W-1,27,F.WALK,'fora');block(0,26,W-1,27);
   set(0,0,W-1,18,F.GRASS,'fora');block(0,0,W-1,0);block(0,1,0,18);block(W-1,1,W-1,18);
   set(1,1,32,18,F.WALL,'wall');
   for(const r in ROOM_RECT){const [a,b,c,d]=ROOM_RECT[r];set(a,b,c,d,F.FLOOR,r);}
@@ -136,7 +136,7 @@ function buildMap(){
   // arquivo
   add('shelf',24,11,3,1,{v:'arq'});add('shelf',28,11,3,1,{v:'arq'});add('shelf',24,14,3,1,{v:'arq'});add('shelf',28,14,3,1,{v:'arq',hot:'arquivo'});add('boxes',23,16,1,1);add('boxes',30,16,1,1);add('boxes',31,16,1,1);
   // pátio
-  add('car',4,19,2,3);add('tree',1,19,1,1);add('tree',31,19,1,1);add('tree',9,20,1,1);add('flag',12,19,1,1,{v:'br'});add('flag',19,19,1,1,{v:'dh'});add('tree',24,20,1,1);
+  add('car',4,19,2,3);add('tree',1,19,1,1);add('tree',31,19,1,1);add('tree',9,20,1,1);add('flag',11,19,1,1,{v:'br'});add('flag',20,19,1,1,{v:'dh'});add('tree',24,20,1,1);
   for(let x=0;x<W;x+=3)if(x>1&&x<32&&x%9!==0)add('tree',x,0,1,1,{far:true});
 }
 function passable(i){const f=floor[i];if(f===F.WALL||f===F.WIN)return false;if(blk[i]||occ[i]>=0)return false;return true;}
@@ -381,7 +381,7 @@ const FACT={
     P(0,4,fw,3,'#a9b0b6');P(0,4,fw,1,'#d4dade');for(let x=0;x<=fw-3;x+=T)P(Math.min(x,fw-3),4,3,B-20,'#8a9096');
     P(0,B-16,fw,14,'#6e737a');P(0,B-16,fw,2,'#9aa0a6');P(0,B-3,fw,3,'#4a4f55');
     if(o.v==='senha'){P(fw/2-18,12,36,14,'#14161a');P(fw/2-17,13,34,1,'#2a2e34');txt(g,'042',fw/2-12,23,9,'#ff4a3a',1.4);P(fw/2-18,26,36,2,'#2a2e34');}
-    if(o.v==='restrito'){P(6,12,fw-12,16,'#b02a24');P(6,12,fw-12,1,'#d8524a');const a=txtW(g,'ÁREA RESTRITA',6,1.2);txt(g,'ÁREA RESTRITA',fw/2-a/2,21,6,'#ffffff',1.2);const b2=txtW(g,'SÓ AGENTES',5,1.1);txt(g,'SÓ AGENTES',fw/2-b2/2,27,5,'#ffe2de',1.1);}
+    if(o.v==='restrito'){P(6,12,fw-12,16,'#b02a24');P(6,12,fw-12,1,'#d8524a');const sp1=Math.max(0,Math.min(1.2,(fw-18-txtW(g,'ÁREA RESTRITA',6,0))/12)),a=txtW(g,'ÁREA RESTRITA',6,sp1);txt(g,'ÁREA RESTRITA',fw/2-a/2,21,6,'#ffffff',sp1);const b2=txtW(g,'SÓ AGENTES',5,.8);txt(g,'SÓ AGENTES',fw/2-b2/2,27,5,'#ffe2de',.8);/* o texto cabe na placa, qualquer que seja a fonte */}
   }];},
   // porta de acesso: vidro jateado com a faixa "ACESSO RESTRITO", batente de aço e leitor de crachá ao lado (luz vermelha;
   // verde quando abre). Aberta, a folha some de lado e mostra o corredor.
@@ -1788,15 +1788,29 @@ function drawNames(){
   ctx.restore();ctx.textAlign='left';
 }
 let ROWS=null;const byY=(a,b)=>a.y-b.y;
+// em volta da planta: repete a borda do terreno (grama em cima; grama, pátio, calçadas e rua dos lados) e escurece
+// com a distância, para a visão afastada nunca mostrar preto. Desenhado no espaço do terreno (BG), antes dele.
+let APRON=null;
+function drawApron(){
+  const w=BG.width,h=BG.height,E=24*T;
+  if(!APRON){const strip=(sx,sy,sw,sh)=>{const c=document.createElement('canvas');c.width=sw;c.height=sh;c.getContext('2d').drawImage(BG,sx,sy,sw,sh,0,0,sw,sh);return c;};
+    APRON={top:ctx.createPattern(strip(0,0,w,T),'repeat-y'),left:ctx.createPattern(strip(0,0,T,h),'repeat-x'),right:ctx.createPattern(strip(w-T,0,T,h),'repeat-x'),corner:ctx.createPattern(strip(0,0,T,T),'repeat')};}
+  ctx.fillStyle=APRON.corner;ctx.fillRect(-E,-E,w+2*E,E);
+  ctx.fillStyle=APRON.top;ctx.fillRect(0,-E,w,E);
+  ctx.fillStyle=APRON.left;ctx.fillRect(-E,0,E,h);
+  ctx.save();ctx.translate(w-T,0);ctx.fillStyle=APRON.right;ctx.fillRect(T,0,E,h);ctx.restore();
+  const fade=(x0,y0,x1,y1,rx,ry,rw,rh)=>{const g=ctx.createLinearGradient(x0,y0,x1,y1);g.addColorStop(0,'rgba(8,10,12,.25)');g.addColorStop(.35,'rgba(8,10,12,.6)');g.addColorStop(1,'rgba(8,10,12,.92)');ctx.fillStyle=g;ctx.fillRect(rx,ry,rw,rh);};
+  fade(0,0,0,-6*T,-E,-E,w+2*E,E);fade(0,0,-8*T,0,-E,0,E,h);fade(w,0,w+8*T,0,w,0,E,h);
+}
 function render(){
   ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;ctx.fillStyle='#0b0d10';ctx.fillRect(0,0,cv.width,cv.height);
   const s=cam.z*RS,oxf=cv.width/2-cam.x*s,oyf=cv.height/2-cam.y*s,ox=Math.round(oxf),oy=Math.round(oyf);
   // a fração que o arredondamento tirou vai para o shader: a câmera desliza no pixel da tela
   FX.sx=oxf-ox;FX.sy=oyf-oy;
-  LODE=s/RS;LODV=lodOf(LODE);SC=s;UIK=Math.min(1,2.2/LODE);
+  LODE=s/RS;LODV=lodOf(LODE);SC=s;UIK=Math.max(1/LODE,Math.min(1,2.2/LODE));
   const SPR=()=>{ctx.setTransform(s,0,0,s,ox,oy);ctx.imageSmoothingEnabled=false;};
   DOF_S=s;DOF_OY=oy;DOF_ON=FXMODE==='2d'&&!POST&&FX.dof>0.02&&QHIGH();
-  ctx.setTransform(s,0,0,s*K,ox,oy);ctx.imageSmoothingEnabled=false;ctx.drawImage(BG,0,0);dofGround(s,ox,oy);SPR();drawFloorFX();
+  ctx.setTransform(s,0,0,s*K,ox,oy);ctx.imageSmoothingEnabled=false;drawApron();ctx.drawImage(BG,0,0);dofGround(s,ox,oy);SPR();drawFloorFX();
   if(!ROWS){ROWS=Array.from({length:H},()=>({o:[],p:[],x:[]}));for(const o of objs)if(o.spr)ROWS[clamp(o.y+o.h-1,0,H-1)].o.push(o);}
   for(const r of ROWS){r.p.length=0;r.x.length=0;}
   const R=k=>ROWS[clamp(k,0,H-1)];
