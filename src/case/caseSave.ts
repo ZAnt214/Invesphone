@@ -1,5 +1,5 @@
-/* Save único do Caso 01, lido e escrito pelo Invesphone e pelas cenas (base do DHPP).
-   O Invesphone completa os campos que faltarem ao carregar (merge com o jogo inicial). */
+/* Save único do Caso 01, lido e escrito pelas cenas (base do DHPP e casa da Rua das Acácias).
+   Ao carregar, os campos que faltarem vêm do começo do caso (merge com o jogo inicial). */
 import { DEFAULT_DISCOVERED, type TeamGame } from '../team/teamData'
 
 export const SAVE_KEY = 'invesphone-case01-v2'
@@ -7,7 +7,7 @@ export const SAVE_VERSION = 3
 
 export type CaseSave = TeamGame & {version:number;summonedPeople?:string[];[k:string]:unknown}
 
-/** Começo do caso quando ainda não há save: a ligação da Sônia continua sendo a porta de entrada do aparelho. */
+/** Começo do caso quando ainda não há save: o plantão de madrugada na base do DHPP. */
 const seed = ():CaseSave => ({version:SAVE_VERSION,screen:'incoming',app:'home',task:1,clues:[],interviewed:[],orders:[],discoveredPeople:[...DEFAULT_DISCOVERED],summonedPeople:['livia','caio'],score:1000})
 
 /** Recomeçar o caso: apaga o save e o que depende dele (caderneta do Lemos e o que o HUD já anunciou). */

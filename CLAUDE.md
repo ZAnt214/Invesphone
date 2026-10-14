@@ -150,6 +150,10 @@ Mesmo que `game.task` permaneça temporariamente no código como marcador intern
 Referência: seção 55 de `docs/CASE01_GAME_FLOW.md` ("Investigação sem tarefas").
 
 
+## Sem aparelho e sem chamada (14/10/2026)
+
+O jogo não tem mais o celular do caso (Invesphone) nem a ligação da Sônia. Ele começa na **base do DHPP, no plantão de madrugada** (`/base`, para onde a raiz leva): a Sônia passa a ocorrência em pessoa e Lemos vai para a **casa da Rua das Acácias** (`/casa`, a varredura), a segunda parte. Depois da casa, a base amanhece com a equipe inteira. O que o aparelho fazia fica na base: conversas com a equipe nas mesas, depoimentos na sala, o quadro do caso (com o relatório), o celular de Helena na bancada da perícia e o guia do caso na caderneta do Lemos (aba "Caso", `src/case/guide.ts`). Não criar telas, links ou textos que mandem o jogador a um aparelho.
+
 ## Nome e marca do órgão
 
 O órgão de investigação do jogo é o **DHPP** (Homicídios). Sempre usar esse nome nos textos da interface (cabeçalhos, ligação, ajustes, finais); não usar "Polícia de São Paulo", "Polícia Civil" nem outro órgão. A marca d'água do órgão é a mesma em todo o jogo: `DHPP` + linha + `HOMICÍDIOS` (ver `.ii-mark`/`.ds-mark` nos depoimentos e `.hm-mark` na tela inicial).
@@ -244,6 +248,5 @@ Na rua e na base, a interface é o HUD do Lemos: o retrato, a caderneta, as faix
 
 Todo efeito visual ou sonoro (os que já existem e os que vierem) precisa estar em `src/settings/gameSettings.ts`, na categoria certa — tudo o que é visual fica na seção **Gráficos**, junto da qualidade gráfica (categorias Luz e sol, Atmosfera, Bordas da tela, Vida no cenário; criar outra dentro de Gráficos se nenhuma servir), e o que é som fica na seção **Som**, com nome curto, descrição e a opção de desligar. O código do efeito consulta `fxOn(id)` (ou o objeto `F` em `street.js`) antes de desenhar ou tocar, e reage na hora a `onFxChange`.
 
-- As telas de ajustes são geradas desse registro: o botão de engrenagem no cabeçalho do jogo (`src/settings/settingsPanel.ts`, que gira junto com o jogo no celular em pé) e o app Ajustes do aparelho (`src/EffectsSettings.tsx`). Não escrever opção à mão em nenhuma das duas.
-- O aparelho será descontinuado: o que hoje só existe no app Ajustes deve ter equivalente no painel do jogo.
+- A tela de ajustes é gerada desse registro: o botão de engrenagem no cabeçalho do jogo (`src/settings/settingsPanel.ts`, que gira junto com o jogo no celular em pé). Não escrever opção à mão nela.
 - A qualidade gráfica continua valendo por cima (a baixa desliga efeitos pesados mesmo que estejam ligados aqui).

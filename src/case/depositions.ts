@@ -1,5 +1,5 @@
 /* Depoimentos do Caso 01 sobre o save único: quem pode ser chamado, progresso de cada um e o que falta perguntar.
-   Usado pela sala de depoimentos da base do DHPP; o app Interrogar do Invesphone segue as mesmas regras. */
+   Usado pela sala de depoimentos da base do DHPP. */
 import { people } from '../case01'
 import { interrogations } from '../interrogation/registry'
 import { newProgress, pendingQuestions } from '../interrogation/logic'

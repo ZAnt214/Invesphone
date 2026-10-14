@@ -1,4 +1,4 @@
-/* Sala de depoimentos da base: o mesmo depoimento ilustrado do Invesphone, montado por cima da cena e gravando no save único. */
+/* Sala de depoimentos da base: o depoimento ilustrado, montado por cima da cena e gravando no save único. */
 import { createRoot, type Root } from 'react-dom/client'
 import IllustratedInterrogation from '../interrogation/IllustratedInterrogation'
 import { interrogations } from '../interrogation/registry'

@@ -1,5 +1,5 @@
 /**
- * Ajustes dentro do jogo (botão de engrenagem no cabeçalho). Substitui, com o tempo, o app Ajustes do aparelho.
+ * Ajustes dentro do jogo (botão de engrenagem no cabeçalho), gerados do registro de src/settings/gameSettings.ts.
  * Tudo vem do registro de src/settings/gameSettings.ts: a qualidade gráfica, a tela cheia, o som e cada efeito,
  * na sua categoria, com a opção de desligar. Cabe inteiro na tela do celular; só a lista de opções rola, dentro
  * do painel.
