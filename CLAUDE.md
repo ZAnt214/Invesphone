@@ -154,6 +154,8 @@ Referência: seção 55 de `docs/CASE01_GAME_FLOW.md` ("Investigação sem taref
 
 O jogo não tem mais o celular do caso (Invesphone) nem a ligação da Sônia. Ele começa na **base do DHPP, no plantão de madrugada** (`/base`, para onde a raiz leva): a Sônia passa a ocorrência em pessoa e Lemos vai para a **casa da Rua das Acácias** (`/casa`, a varredura), a segunda parte. Depois da casa, a base amanhece com a equipe inteira. O que o aparelho fazia fica na base: conversas com a equipe nas mesas, depoimentos na sala, o quadro do caso (com o relatório), o celular de Helena na bancada da perícia e o guia do caso na caderneta do Lemos (aba "Caso", `src/case/guide.ts`). Não criar telas, links ou textos que mandem o jogador a um aparelho.
 
+A madrugada (enquanto a casa não terminou, `NIGHT` em `base.js`) tem visual próprio: lado de fora azul-escuro, salas acesas só pelas lâmpadas, sem sol, nuvens nem fachos; postes, faróis, lanternas e janelas acesas; garoa (só onde é céu aberto na planta) e o chiado da chuva; pouca gente na rua. Efeitos `night.lamps`, `night.rain` e `sfx.rain` em `gameSettings.ts`. Ver `docs/RUA_BEATCOP_BASE.md`, seção "Madrugada".
+
 ## Nome e marca do órgão
 
 O órgão de investigação do jogo é o **DHPP** (Homicídios). Sempre usar esse nome nos textos da interface (cabeçalhos, ligação, ajustes, finais); não usar "Polícia de São Paulo", "Polícia Civil" nem outro órgão. A marca d'água do órgão é a mesma em todo o jogo: `DHPP` + linha + `HOMICÍDIOS` (ver `.ii-mark`/`.ds-mark` nos depoimentos e `.hm-mark` na tela inicial).

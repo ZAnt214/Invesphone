@@ -1596,23 +1596,24 @@ const LIGHTS=[
 const WINDOWS=[[4,'sonia'],[5,'sonia'],[13,'equipe'],[19,'equipe'],[25,'pericia'],[29,'pericia']];
 const HALOS=[{x:4.6*T+1,y:3*TH+3,r:16,c:[255,226,150],a:0.9},{x:5.5*T+16,y:12*TH-18,r:20,c:[255,214,150],a:0.85},{x:29.5*T,y:5.6*TH,r:30,c:[220,240,255],a:0.45},
   {x:21*T+16,y:11*TH-11,r:5,c:[120,180,255],a:0.7},{x:20*T+19,y:6*TH-25,r:4,c:[255,80,60],a:0.8},{x:18*T+16,y:9*TH+7,r:14,c:[90,255,150],a:0.35}];
-const AMB_IN=[118,124,142],AMB_OUT=[255,250,244];
+// de madrugada (NIGHT) o lado de fora fica azul-escuro e as salas vivem só das lâmpadas
+const AMB_IN=NIGHT?[80,86,108]:[118,124,142],AMB_OUT=NIGHT?[64,76,118]:[255,250,244];
 function roomClip(rm){const r=ROOM_RECT[rm];return [r[0]*T,r[1]*TH-30,(r[2]+1)*T,(r[3]+1)*TH-RISE+CAPH];}
 const GR={};
 function lightPass(s,ox,oy){
   const sp=(x,y)=>[(x*s+ox)/LS,(y*s+oy)/LS];
   lctx.setTransform(1,0,0,1,0,0);lctx.globalAlpha=1;lctx.globalCompositeOperation='source-over';
   lctx.fillStyle=rgbs(AMB_OUT);lctx.fillRect(0,0,lc.width,lc.height);
-  for(const c of CLOUDS){const [X,Y]=sp(c.x,c.y),rr=c.r*s/LS;lctx.globalAlpha=0.55;lctx.drawImage(lightSprite(LC_CLOUD),X-rr,Y-rr*0.7,rr*2,rr*1.4);}lctx.globalAlpha=1;
+  if(!NIGHT)for(const c of CLOUDS){const [X,Y]=sp(c.x,c.y),rr=c.r*s/LS;lctx.globalAlpha=0.55;lctx.drawImage(lightSprite(LC_CLOUD),X-rr,Y-rr*0.7,rr*2,rr*1.4);}lctx.globalAlpha=1;
   {const [a,b]=sp(1*T,1*TH-RISE),[c,d]=sp(33*T,18*TH-8);lctx.fillStyle=rgbs(AMB_IN);lctx.fillRect(a,b,c-a,d-b);}
   lctx.globalCompositeOperation='lighter';
   const draw=(x,y,r,col,a,rm)=>{const [X,Y]=sp(x,y),rr=r*s/LS;if(X<-rr||Y<-rr||X>lc.width+rr||Y>lc.height+rr)return;lctx.save();
     if(rm){const q=roomClip(rm),[a0,b0]=sp(q[0],q[1]),[a1,b1]=sp(q[2],q[3]);lctx.beginPath();lctx.rect(a0,b0,a1-a0,b1-b0);lctx.clip();}
     lctx.globalAlpha=Math.min(1,a);lctx.drawImage(lightSprite(col),X-rr,Y-rr*0.8,rr*2,rr*1.6);lctx.restore();};
   for(const l of LIGHTS){const fl=l[6]?0.86+0.14*vn(frame/9,l[0]*7,5)*(((frame>>3)%53)===0?0.2:1):1;draw(l[0]*T,l[1]*TH,l[2]*T,l[3],l[4]*fl,l[5]);if(l[4]>1)draw(l[0]*T,l[1]*TH,l[2]*T,l[3],l[4]-1,l[5]);}
-  for(const [x,rm] of WINDOWS)draw(x*T+30,2.9*TH,2.1*T,SUNC,0.5*(1-0.7*sunShade(x*T)),rm);
+  if(!NIGHT)for(const [x,rm] of WINDOWS)draw(x*T+30,2.9*TH,2.1*T,SUNC,0.5*(1-0.7*sunShade(x*T)),rm);
   if(fxOn('base.doorlight'))for(const [x,y,col] of DOORLIGHTS)draw(x*T+16,y*TH+TH/2,2.1*T,col,0.75,null);
-  lctx.globalAlpha=1;lctx.globalCompositeOperation='multiply';if(GR.skyH!==lc.height){GR.skyH=lc.height;GR.sky=null;}if(!GR.sky){const g=GR.sky=lctx.createLinearGradient(0,0,0,lc.height);g.addColorStop(0,'rgb(255,238,218)');g.addColorStop(0.5,'rgb(250,248,246)');g.addColorStop(1,'rgb(212,224,246)');}lctx.fillStyle=GR.sky;lctx.fillRect(0,0,lc.width,lc.height);
+  lctx.globalAlpha=1;lctx.globalCompositeOperation='multiply';if(!NIGHT){if(GR.skyH!==lc.height){GR.skyH=lc.height;GR.sky=null;}if(!GR.sky){const g=GR.sky=lctx.createLinearGradient(0,0,0,lc.height);g.addColorStop(0,'rgb(255,238,218)');g.addColorStop(0.5,'rgb(250,248,246)');g.addColorStop(1,'rgb(212,224,246)');}lctx.fillStyle=GR.sky;lctx.fillRect(0,0,lc.width,lc.height);}
   lctx.globalCompositeOperation='source-over';
   ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='multiply';ctx.imageSmoothingEnabled=true;ctx.drawImage(lc,0,0,cv.width,cv.height);ctx.globalCompositeOperation='source-over';
 }
@@ -1623,13 +1624,13 @@ function glowPass(){
   // a claridade da porta escorrendo no batente
   if(fxOn('base.doorlight'))for(const [x,y,col] of DOORLIGHTS){ctx.globalAlpha=0.15;ctx.drawImage(lightSprite(col),x*T-12,y*TH-16,56,44);}
   // brilho das janelas do fundo (some quando a nuvem passa)
-  if(FXMODE!=='off')for(const [x] of WINDOWS){const sh=1-0.75*sunShade(x*T);ctx.globalAlpha=0.3*sh;ctx.drawImage(lightSprite(LC_SUN),x*T-14,2*TH-34,60,40);}
+  if(FXMODE!=='off'&&!NIGHT)for(const [x] of WINDOWS){const sh=1-0.75*sunShade(x*T);ctx.globalAlpha=0.3*sh;ctx.drawImage(lightSprite(LC_SUN),x*T-14,2*TH-34,60,40);}
   // sol da manhã entrando pelas janelas do fundo, com poeira no feixe
-  for(const [x,rm] of WINDOWS){const r=roomClip(rm);ctx.save();ctx.beginPath();ctx.rect(r[0],r[1],r[2]-r[0],r[3]-r[1]);ctx.clip();
+  if(!NIGHT)for(const [x,rm] of WINDOWS){const r=roomClip(rm);ctx.save();ctx.beginPath();ctx.rect(r[0],r[1],r[2]-r[0],r[3]-r[1]);ctx.clip();
     const sh=1-0.75*sunShade(x*T),y0=2*TH-2;if(!GR.beam){GR.beam=ctx.createLinearGradient(0,y0,0,y0+76);GR.beam.addColorStop(0,'rgba(255,228,180,.22)');GR.beam.addColorStop(1,'rgba(255,228,180,0)');}ctx.globalAlpha=sh;ctx.fillStyle=GR.beam;
     ctx.beginPath();ctx.moveTo(x*T+6,y0);ctx.lineTo(x*T+26,y0);ctx.lineTo(x*T+26+34,y0+76);ctx.lineTo(x*T+6+34,y0+76);ctx.closePath();ctx.fill();ctx.restore();}
   ctx.fillStyle='rgba(255,240,210,.85)';
-  const dustN=QLOW()?0:QHIGH()?DUST.length:DUST.length>>1;
+  const dustN=QLOW()||NIGHT?0:QHIGH()?DUST.length:DUST.length>>1;
   for(let di=0;di<dustN;di++){const d=DUST[di];d.u=(d.u+d.s)%1;const w=((d.v+Math.sin(frame/90+d.ph)*0.06)%1+1)%1,tw=0.65+0.35*Math.sin(frame/17+d.ph*5);ctx.globalAlpha=(d.big?0.35:0.6)*tw*(1-d.u)*Math.min(1,d.u*6)*(1-0.7*sunShade(d.w*T));const sz=d.big?2:1;ctx.fillRect(Math.round(d.w*T+6+w*20+d.u*34),Math.round(2*TH-2+d.u*76),sz,sz);}
   // poeira no ar de cada sala, acesa onde há luz
   ctx.fillStyle='#fff4dc';const moteStep=QLOW()?0:QHIGH()?1:2;if(moteStep)for(let mi=0;mi<MOTES.length;mi+=moteStep){const m=MOTES[mi];const tw=0.5+0.5*Math.sin(frame/23+m.ph*7);ctx.globalAlpha=(m.r==='interro'?0.26:0.42)*tw*(m.big?0.6:1);const sz=m.big?2:1;ctx.fillRect(Math.round(m.x),Math.round(m.y-m.z),sz,sz);}
@@ -1973,6 +1974,10 @@ function render(){
   // destino do toque
   if(P1.path.length&&started){const e=P1.path[P1.path.length-1],X=(e%W)*T+16,Y=((e/W)|0)*TH+TH/2;ctx.strokeStyle='rgba(242,194,48,.9)';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.lineDashOffset=-(frame>>2);ctx.beginPath();ctx.ellipse(X,Y,10,4.5,0,0,7);ctx.stroke();ctx.setLineDash([]);}
   lightPass(s,ox,oy);
+  // madrugada: postes e faróis da rua somados depois da luz (não escurecem) e a garoa só onde é céu aberto
+  if(NIGHT){if(RX)RX.st.strip.night(ctx,s,RX.ox,RX.oy,RX.X0,RX.X1);
+    if(STREET)STREET.strip.rain(ctx,cv.width,cv.height,RS,c=>{c.beginPath();c.rect(0,0,cv.width,cv.height);c.rect(1*T*s+ox,(1*TH-RISE-40)*s+oy,32*T*s,(18*TH-(1*TH-RISE-40))*s);c.clip('evenodd');});
+    SPR();}
   SPR();smokePass();glowPass();focusPass();post2d();
   // camada legível: sinais, falas, nomes
   // sinais de novidade: no máximo três (MARKS_MAX), primeiro o que move a história (Sônia, equipe com novidade,
@@ -1996,7 +2001,7 @@ function isSeat(n){const i=ti(n);return objs.some(o=>o.nocc&&idx(o.x,o.y)===i);}
 let lastRoom='',lastClk='';
 /* ---------- Rua (lado de fora) ⇄ planta (lado de dentro) ---------- */
 let SCENE='rua',STREET=null;
-const street=()=>STREET||(STREET=createStreet({lemosLook:LOOK.lemos,personFrames,getZoom:()=>cam.z,onEnter:()=>enterBase(),art:{S2,refine,outlined,bush,hash,mulberry32,txt,txtW,sign:()=>SIGN,door:()=>DOORSPR},quality:()=>QUAL,onSound:(k,x,a)=>ambStreet(k,x,a),hudTop:()=>HUDT}));
+const street=()=>STREET||(STREET=createStreet({lemosLook:LOOK.lemos,personFrames,getZoom:()=>cam.z,onEnter:()=>enterBase(),art:{S2,refine,outlined,bush,hash,mulberry32,txt,txtW,sign:()=>SIGN,door:()=>DOORSPR},quality:()=>QUAL,onSound:(k,x,a)=>ambStreet(k,x,a),hudTop:()=>HUDT,night:()=>NIGHT}));
 // a rua (street.js) vem da direção americana aprovada; a arte oficial de public/base/rua/ entra quando chega
 const streetView=()=>street();
 const FADE=document.createElement('div');FADE.id='fade';FADE.setAttribute('aria-hidden','true');appEl.appendChild(FADE);
@@ -2021,7 +2026,7 @@ function streetAmbience(st,dt){
   for(const k of st.cars){const w=k.id==='onibus'?360:180,d=Math.abs(k.x+w/2-cx);lv+=Math.max(0,1-d/700)*Math.min(1,k.v/110)*(k.id==='onibus'?1.6:1);}
   AMB.traffic(Math.min(1,lv*.4));
   const L=st.lemos;if(L.moving&&Math.floor(L.walk*2)!==stepW){stepW=Math.floor(L.walk*2);AMB.fx('step',0,.5);}
-  if(Math.random()<.025)AMB.fx('bird',Math.random()*1.6-.8,.5);
+  if(!NIGHT&&Math.random()<.025)AMB.fx('bird',Math.random()*1.6-.8,.5);
 }
 function goExit(){
   P1.pend=null;if(talk)closeTalk();
@@ -2160,7 +2165,7 @@ if('serviceWorker' in navigator){
   addEventListener('load',()=>{navigator.serviceWorker.getRegistration().then(r=>r&&r.update()).catch(()=>{});setTimeout(()=>safe(()=>sessionStorage.removeItem('base.swReload')),15000);});
 }
 $('#b-start').addEventListener('click',()=>{
-  AMB.unlock();AMB.setScene(SCENE==='rua'?'rua':'base');
+  AMB.unlock();AMB.setRain(NIGHT);AMB.setScene(SCENE==='rua'?'rua':'base');
   $('#intro').hidden=true;started=true;setTimeout(()=>loadDepo().catch(()=>{}),4000);setTimeout(()=>loadPrep().then(m=>m.background()).catch(()=>{}),3000);
   // voltou de uma recarga feita para pegar a versão nova: reabre o que o jogador tinha pedido
   const reopen=safe(()=>sessionStorage.getItem('base.reopen'),null);
