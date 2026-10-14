@@ -6,6 +6,10 @@ Status: CANÔNICO
 Período: São Paulo, outubro de 2002  
 Uso: fonte oficial de verdade para narrativa, diálogos, pistas, interrogatórios, telas, documentos, progressão e finais.
 
+**Direção de experiência simplificada:** `docs/CASE01_JORNADA_DO_JOGADOR.md`. Esta Bíblia documenta tudo que aconteceu e tudo que pode ser descoberto; **isso não significa que o jogador deva receber tudo ao mesmo tempo**. Cada capítulo deve responder a uma pergunta clara, revelar apenas os fatos úteis naquele momento e ligar a descoberta a uma próxima ação natural. Linhas secundárias enriquecem, mas não travam a investigação principal.
+
+**Regra editorial:** manter as duas camadas separadas: bastidor (quem realmente participou, cronologia completa e provas aceitas) versus conhecimento disponível ao Lemos (registros e declarações já obtidos). Nenhuma fala ou resumo pode misturar as duas para explicar uma suspeita antes das provas.
+
 Disclaimer oficial:
 
 Caso ficcional livremente inspirado em um crime real ocorrido em São Paulo em 2002. Nomes, lugares e detalhes foram alterados. Qualquer semelhança com pessoas reais é mera coincidência.
