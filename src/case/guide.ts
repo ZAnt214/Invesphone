@@ -6,7 +6,7 @@ import { nextSteps, type GuideStepData } from './nextSteps'
 
 export type GuideNext = {title:string;text:string;cta:string;go:GuideStepData['go']|{kind:'casa'}|{kind:'sonia'}|{kind:'base'}|{kind:'achados'}}
 /** Na casa (varredura em andamento): marcadores registrados, total e se a cena já foi encerrada. */
-export type SweepState = {found:number;total:number;done:boolean}
+export type SweepState = {found:number;total:number;done:boolean;cena?:string;fita?:number}
 export type CaseGuide = {status:string;known:string;question:string;next:GuideNext|null}
 
 const STATUS:Record<number,string>={0:'Ocorrência recebida',1:'Cena em processamento',2:'Versões sendo colhidas',3:'Aguardando retorno técnico',4:'Janela de horário em aberto',
@@ -25,7 +25,8 @@ const KNOWN:Record<number,string>={0:'Plantão de madrugada: um casal foi encont
 export function caseGuide(g:CaseSave,{casa,briefed,sweep}:{casa:boolean;briefed:boolean;sweep?:SweepState}):CaseGuide{
   if(sweep){
     const {found,total,done}=sweep
-    return {status:done?'Cena registrada':'Varredura · Rua das Acácias',
+    const extra=(sweep.cena?` · cena ${sweep.cena.toLowerCase()}`:'')+(sweep.fita!=null?` · ${sweep.fita} m de fita`:'')
+    return {status:(done?'Cena registrada':'Varredura · Rua das Acácias')+extra,
       known:found?`Ricardo e Helena foram mortos em casa. ${found} de ${total} pontos da cena já registrados pela perícia.`:'Ricardo e Helena foram mortos em casa. Lívia diz ter encontrado tudo revirado.',
       question:QUESTION[1],
       next:done?{title:'Volte à base',text:'A cena está registrada. O material segue para o DHPP, e as versões começam de manhã.',cta:'Voltar à base',go:{kind:'base'}}

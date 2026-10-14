@@ -994,7 +994,9 @@ function clampCam(){
 }
 function s2w(sx,sy){const e=ez(),ys=cam.y+(sy-VH()/2)/e;return {x:cam.x+(sx-VW()/2)/e,y:ys/K,ys};}
 function tileAt(sx,sy){const w=s2w(sx,sy);return idx(clamp(Math.floor(w.x/T),0,W-1),clamp(Math.floor(w.y/T),0,H-1));}
-function resize(){dpr=Math.min(window.devicePixelRatio||1,QLOW()?2:3);cv.width=Math.round(VW()*dpr);cv.height=Math.round(VH()*dpr);lc.width=Math.ceil(cv.width/LS);lc.height=Math.ceil(cv.height/LS);clampCam();}
+/* resolução do canvas igual à da base: no máximo 2× (no iPhone, 3× desenhava 2,25 vezes mais pixels por quadro sem
+   diferença visível na pixel art, que já é ampliada em degraus inteiros; textos e HUD são HTML e continuam nítidos) */
+function resize(){dpr=Math.min(window.devicePixelRatio||1,2);cv.width=Math.round(VW()*dpr);cv.height=Math.round(VH()*dpr);lc.width=Math.ceil(cv.width/LS);lc.height=Math.ceil(cv.height/LS);clampCam();}
 const LS=3;
 function fitView(){
   const L=VW()>VH();
@@ -2436,7 +2438,7 @@ function updateRail(){
 }
 railEl.addEventListener('click',e=>{const t=e.target.closest('.tent');if(!t)return;const k=+t.dataset.k,id=S.order[k];SND.click();if(id&&LANDED.has(k))openViewer(id);else openSheet('f');});
 function landTent(k){
-  LANDED.add(k);updateRail();const t=railEl.children[k];if(!t)return;
+  LANDED.add(k);updateRail();const t=railEl.children[k];if(!t)return;if(!t.offsetParent){kick($('#b-book'),'hit',900);return;}
   kick(t,'pop',700);
   for(let i=0;i<9;i++){const s=document.createElement('i');s.className='spk';const a=i/9*6.283+Math.random()*0.5,r=13+Math.random()*11;s.style.setProperty('--dx',(Math.cos(a)*r).toFixed(1)+'px');s.style.setProperty('--dy',(Math.sin(a)*r).toFixed(1)+'px');t.appendChild(s);setTimeout(()=>s.remove(),700);}
   SND.stamp();buzz(18);const bd=$('#badge');if(!bd.hidden)kick(bd,'bump',520);
@@ -2453,7 +2455,7 @@ function flyPolaroid(id,tile,n){
   const now=performance.now(),wait=Math.max(0,flyBusy-now);flyBusy=now+wait+1500;
   setTimeout(()=>{
     const pw=el.offsetWidth,ph=el.offsetHeight,p=worldToApp((tile%W)*T+16,((tile/W)|0)*TH+TH-12);
-    const r=t.getBoundingClientRect(),q=clientToApp(r.left+r.width/2,r.top+r.height/2);
+    const r=(t.offsetParent?t:$('#b-book')).getBoundingClientRect(),q=clientToApp(r.left+r.width/2,r.top+r.height/2);   // sem a barra de marcadores, voa para a caderneta
     const cx=clamp(VW()/2,pw,VW()-pw),cy=clamp(VH()*0.48,HUDPAD.t+ph/2+8,VH()-HUDPAD.b-ph/2);
     const tf=(x,y,s,z)=>`translate(${(x-pw/2).toFixed(1)}px,${(y-ph/2).toFixed(1)}px) scale(${s}) rotate(${z}deg)`;
     el.querySelector('img').classList.add('dev');SND.eject();
@@ -3116,7 +3118,8 @@ function hudData(){
   // na casa, Lemos só conhece quem a Sônia citou no plantão: a filha, que encontrou a cena
   const people=CASE_PEOPLE.filter(p=>p.id==='livia').map(p=>({id:p.id,name:p.name,role:p.role,photo:casePhoto(p.id),state:'encontrou a cena'}));
   const clues=(CASE.clues||[]).map(id=>{const k=CLUE_LIST.find(x=>x.id===id);return k?{id,title:k.title,desc:k.description}:null;}).filter(Boolean);
-  return {people,clues,guide:caseGuide(CASE,{casa:false,briefed:true,sweep:{found:S.order.length,total:CLUE_IDS.length,done:!!S.flags.end}})};
+  const [pl]=presLabel();
+  return {people,clues,guide:caseGuide(CASE,{casa:false,briefed:true,sweep:{found:S.order.length,total:CLUE_IDS.length,done:!!S.flags.end,cena:pl,fita:Math.max(0,FITA_MAX-tapeUsed())}})};
 }
 HUD=createHud({app:appEl,data:hudData,clock:()=>clockStr(),
   canShow:()=>!evOpen&&$('#end').hidden&&$('#fin').hidden&&$('#intro').hidden,
