@@ -35,6 +35,8 @@ export const EFFECTS:Effect[] = [
   { id:'sun.glints', cat:'luz', label:'Brilhos', desc:'O sol batendo nas janelas, nas poças e no cromado dos carros.', def:true, where:'Rua' },
   { id:'sun.color', cat:'luz', label:'Cor da manhã', desc:'Tom dourado do lado do sol e frio do outro.', def:true, where:'Rua' },
   { id:'shadows', cat:'luz', label:'Sombras projetadas', desc:'Sombras de pessoas, carros, postes e árvores no chão.', def:true, where:'Rua' },
+  { id:'base.ao', cat:'luz', label:'Sombra nos cantos', desc:'O chão escurece junto às paredes das salas, dando volume aos cômodos.', def:true, where:'DHPP' },
+  { id:'base.doorlight', cat:'luz', label:'Luz pelas portas', desc:'A luz de cada sala vaza pelas portas e passagens.', def:true, where:'DHPP' },
   // atmosfera
   { id:'wind', cat:'atmosfera', label:'Vento', desc:'Árvores, bandeiras e varais balançando; folhas soltas no ar.', def:true, where:'Rua' },
   { id:'debris', cat:'atmosfera', label:'Folhas e papéis no chão', desc:'Levados pelo vento pela calçada e pela sarjeta.', def:true, where:'Rua' },
