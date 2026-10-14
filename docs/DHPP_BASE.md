@@ -75,6 +75,14 @@ Vindo da recepção, Lemos para diante da porta (`GATE_X`, linha 13) e a leitora
 ## Regras de conteúdo
 Falas só usam fatos do início do Caso 01 (cena lida, painel, Thor, valores, log pedido). Nenhum nome de envolvido é citado antes de ser descoberto. Novos textos seguem `docs/CASE01_STORY_BIBLE.md` e `docs/TEAM_MATERIAL_REQUESTS.md`.
 
+## Visão afastada (14/10/2026)
+
+- A planta tem 28 linhas: as linhas 26–27 são a calçada do outro lado da rua, para a câmera descer até a rua inteira.
+- Em volta da planta, `drawApron` repete a borda do terreno (grama em cima; grama, pátio, calçadas e rua dos lados) e escurece com a distância: afastado, nunca aparece preto.
+- Balões de fala e sinais nunca ficam menores que na escala 1 (`UIK`), então continuam legíveis de longe.
+- O aviso de mensagem (`#toast`) fica no canto de baixo à direita, sem cobrir as salas de cima.
+- As bandeiras ficam nas colunas 11 e 20, fora da placa do DHPP; o texto da placa "ÁREA RESTRITA" se ajusta à largura.
+
 ## Pendências
 - Sprites são pixel art procedural; retratos de Renata, Denise, Paulo e Maurício ainda usam iniciais nos balões (aguardam arte do ChatGPT).
 - Os links levam ao app inteiro; ligação direta a Equipe/Pessoas/Arquivo depende de rota no Invesphone.
