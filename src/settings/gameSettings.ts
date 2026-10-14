@@ -46,6 +46,7 @@ export const EFFECTS:Effect[] = [
   // tela e bordas
   { id:'edge.blur', cat:'tela', label:'Desfoque nas bordas', desc:'O cenário perde um pouco de foco perto das bordas.', def:true, where:'Rua' },
   { id:'edge.tint', cat:'tela', label:'Cantos escuros', desc:'Bordas um pouco mais escuras e quentes (vinheta).', def:true, where:'Rua e DHPP' },
+  { id:'base.focus', cat:'tela', label:'Foco na sala do Lemos', desc:'Com a câmera afastada, a sala onde o Lemos está fica acesa e as outras escurecem.', def:true, where:'DHPP' },
   { id:'edge.glow', cat:'tela', label:'Luz e partículas nas bordas', desc:'A luz do sol vazando do canto e pontinhos de luz flutuando.', def:true, where:'Rua' },
   { id:'front', cat:'tela', label:'Prédios em primeiro plano', desc:'Os prédios do lado de cá, entre a câmera e a rua.', def:true, where:'Rua' },
   // vida

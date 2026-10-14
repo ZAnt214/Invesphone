@@ -88,6 +88,10 @@ Falas só usam fatos do início do Caso 01 (cena lida, painel, Thor, valores, lo
 - **Sombra nos cantos** (`base.ao`, Ajustes > Luz e sol): o piso escurece junto às paredes de cada sala, mais forte embaixo da parede do fundo. É pintada no piso (`buildGround`) e o piso é refeito quando o ajuste muda.
 - **Luz pelas portas** (`base.doorlight`): cada porta entre salas e a passagem da sala da equipe têm uma luz (`DOORLIGHTS`) que vaza para os dois lados, mais um brilho suave no batente.
 
+## Foco na sala do Lemos (14/10/2026)
+
+Com a câmera afastada (zoom abaixo de 1), as outras salas escurecem (`focusPass`) e a do Lemos fica acesa; a troca é suave quando ele muda de sala. Fora das salas (pátio, corredores) nada escurece. Ajuste: `base.focus`, em Ajustes > Bordas da tela.
+
 ## Pendências
 - Sprites são pixel art procedural; retratos de Renata, Denise, Paulo e Maurício ainda usam iniciais nos balões (aguardam arte do ChatGPT).
 - Os links levam ao app inteiro; ligação direta a Equipe/Pessoas/Arquivo depende de rota no Invesphone.

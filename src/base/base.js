@@ -1812,8 +1812,16 @@ function drawApron(){
   ctx.fillStyle=APRON.top;ctx.fillRect(0,-E,w,E);
   ctx.fillStyle=APRON.left;ctx.fillRect(-E,0,E,h);
   ctx.save();ctx.translate(w-T,0);ctx.fillStyle=APRON.right;ctx.fillRect(T,0,E,h);ctx.restore();
-  const fade=(x0,y0,x1,y1,rx,ry,rw,rh)=>{const g=ctx.createLinearGradient(x0,y0,x1,y1);g.addColorStop(0,'rgba(8,10,12,.25)');g.addColorStop(.35,'rgba(8,10,12,.6)');g.addColorStop(1,'rgba(8,10,12,.92)');ctx.fillStyle=g;ctx.fillRect(rx,ry,rw,rh);};
+  const fade=(x0,y0,x1,y1,rx,ry,rw,rh)=>{const g=ctx.createLinearGradient(x0,y0,x1,y1);g.addColorStop(0,'rgba(8,10,12,.18)');g.addColorStop(.4,'rgba(8,10,12,.42)');g.addColorStop(1,'rgba(8,10,12,.68)');ctx.fillStyle=g;ctx.fillRect(rx,ry,rw,rh);};
   fade(0,0,0,-6*T,-E,-E,w+2*E,E);fade(0,0,-8*T,0,-E,0,E,h);fade(w,0,w+8*T,0,w,0,E,h);
+}
+// foco na sala do Lemos (base.focus): com a câmera afastada, as outras salas escurecem e esfriam; a troca é suave
+const FOCUS={};
+function focusPass(){
+  const on=fxOn('base.focus'),far=clamp((1.0-LODE)/0.22,0,1),cur=roomOf(P1);
+  for(const k in ROOM_RECT){const t=on&&ROOM_RECT[cur]&&k!==cur?far:0,v=FOCUS[k]||0,n=v+(t-v)*0.12;FOCUS[k]=n<0.004?0:n;
+    if(FOCUS[k]>0){const q=roomClip(k);ctx.globalAlpha=0.5*FOCUS[k];ctx.fillStyle='#070a10';ctx.fillRect(q[0],q[1],q[2]-q[0],q[3]-q[1]);}}
+  ctx.globalAlpha=1;
 }
 function render(){
   ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;ctx.fillStyle='#0b0d10';ctx.fillRect(0,0,cv.width,cv.height);
@@ -1851,7 +1859,7 @@ function render(){
   // destino do toque
   if(P1.path.length&&started){const e=P1.path[P1.path.length-1],X=(e%W)*T+16,Y=((e/W)|0)*TH+TH/2;ctx.strokeStyle='rgba(242,194,48,.9)';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);ctx.lineDashOffset=-(frame>>2);ctx.beginPath();ctx.ellipse(X,Y,10,4.5,0,0,7);ctx.stroke();ctx.setLineDash([]);}
   lightPass(s,ox,oy);
-  SPR();smokePass();glowPass();post2d();
+  SPR();smokePass();glowPass();focusPass();post2d();
   // camada legível: sinais, falas, nomes
   for(const n of NPCS)if(hasNews(n.id)&&!(talk&&talk.id===n.id))atUI(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?64:60),()=>drawMarker(Math.round(n.x*T)+16,Math.round(n.y*TH)+TH-(n.sit?64:60)));
   for(const o of objs)if(o.hot&&o.spr&&!o.nomark&&!talkOpen&&(o.hot==='interro'?hasNews('interro'):!SEEN[o.hot])){const sp=o.spr;drawMarker(o.x*T+o.w*T/2,o.hot==='interro'?sp.y-36:sp.y-6);}
