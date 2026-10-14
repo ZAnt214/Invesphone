@@ -135,7 +135,7 @@ Mesmo que `game.task` permaneça temporariamente no código como marcador intern
 - a home deve mostrar situação do caso + última atualização operacional;
 - ações contextuais devem levar ao app natural (Equipe, Pessoas, Pistas, Arquivo, cena ou relatório).
 
-Referência: seção 52 de `docs/CASE01_GAME_FLOW.md`.
+Referência: seção 55 de `docs/CASE01_GAME_FLOW.md` ("Investigação sem tarefas").
 
 
 ## Nome e marca do órgão
