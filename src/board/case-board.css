@@ -146,11 +146,13 @@
 .ct-root{position:absolute;z-index:4;width:232px;box-sizing:border-box;padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;background:#f1ead8;box-shadow:2px 12px 26px rgba(0,0,0,.6);transform:rotate(-1.5deg)}
 .ct-root::before{content:"";position:absolute;left:88px;top:-8px;width:56px;height:16px;background:rgba(240,228,190,.8);transform:rotate(-4deg)}
 .ct-root.done small{opacity:.7}
+.ct-nx{margin-top:4px;font:12px/1 'Special Elite',monospace;color:#5a5348;text-transform:uppercase}
+.cb .ct-root .ct-nx+.ct-go{margin-top:0;max-width:100%;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:none;letter-spacing:.02em;font-size:14px}
 .ct-root small{font:12px/1 'Special Elite',monospace;color:#5a5348;text-transform:uppercase}
 .ct-root b{align-self:flex-start;font:400 22px/1.05 var(--mark);color:var(--ink);padding:2px 6px;border:2.5px solid var(--red);border-radius:50% 45% 50% 48%}
 .ct-root p{margin:0;font:700 18px/1.1 var(--hand);color:#3a3329}
 .ct-root.done b{border:0;padding:0;color:#9e1c14}
-.ct-stamp{position:absolute;right:8px;top:6px;padding:3px 8px;border:3px solid #b8241b;color:#b8241b;font:800 15px/1 var(--disp);letter-spacing:.14em;transform:rotate(-10deg);opacity:.85;pointer-events:none}
+.ct-stamp{position:absolute;right:-18px;top:-28px;background:rgba(241,234,216,.9);padding:3px 8px;border:3px solid #b8241b;color:#b8241b;font:800 15px/1 var(--disp);letter-spacing:.14em;transform:rotate(-10deg);opacity:.85;pointer-events:none}
 .ct-root.done .ct-stamp{animation:ct-stamp .45s cubic-bezier(.2,1.6,.4,1) both}
 @keyframes ct-stamp{from{transform:rotate(-10deg) scale(2.2);opacity:0}to{transform:rotate(-10deg);opacity:.85}}
 .cb .ct-go{align-self:flex-start;margin-top:4px;border:0;border-radius:999px;padding:8px 14px;background:#1d1a22;color:var(--gold);font:800 12.5px/1 var(--disp);letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
@@ -158,12 +160,13 @@
 /* a pasta de evidências: fica separada da árvore, com a aba dizendo o que fazer agora */
 .ct-tray{position:absolute;left:calc(var(--sl,env(safe-area-inset-left,0px)) + 18px);right:calc(var(--sr,env(safe-area-inset-right,0px)) + 18px);bottom:-4px;height:84px;z-index:30;
   background:linear-gradient(#d9b77c,#bf955a);border-radius:0 8px 0 0;box-shadow:0 -6px 18px rgba(0,0,0,.55)}
-.ct-tray small{position:absolute;left:0;bottom:100%;display:flex;align-items:center;gap:8px;max-width:calc(100% - 20px);padding:6px 14px 5px 8px;background:#d9b77c;border-radius:8px 8px 0 0;
+.cb .ct-tray .ct-tab{position:absolute;left:0;bottom:100%;border:0;cursor:default;display:flex;align-items:center;gap:8px;max-width:calc(100% - 20px);padding:6px 14px 5px 8px;background:#d9b77c;border-radius:8px 8px 0 0;
   font:700 17px/1 var(--hand);color:#3a2c10;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .25s,color .25s}
-.ct-tray small b{display:grid;place-items:center;flex:none;min-width:20px;height:20px;padding:0 4px;box-sizing:border-box;border-radius:10px;background:#3a2c10;color:#f2dfb0;font:800 12px/1 var(--disp)}
-.ct-tray small b:empty{display:none}
-.ct-tray small.on{background:var(--gold);color:#1d1a22}
-.ct-tray small.on b{background:#1d1a22;color:var(--gold)}
+.ct-tray .ct-tab b{display:grid;place-items:center;flex:none;min-width:20px;height:20px;padding:0 4px;box-sizing:border-box;border-radius:10px;background:#3a2c10;color:#f2dfb0;font:800 12px/1 var(--disp)}
+.ct-tray .ct-tab b:empty{display:none}
+.cb .ct-tray .ct-tab.act{cursor:pointer;box-shadow:0 -3px 12px rgba(242,194,48,.45)}
+.cb .ct-tray .ct-tab.on{background:var(--gold);color:#1d1a22}
+.ct-tray .ct-tab.on b{background:#1d1a22;color:var(--gold)}
 .ct-row{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;gap:10px;padding:8px 12px 6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;align-items:flex-start}
 .ct-row::-webkit-scrollbar{display:none}
 .ct-row p{margin:20px 0 0 6px;font:700 18px/1.1 var(--hand);color:#4a3a1a}

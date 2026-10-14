@@ -137,7 +137,7 @@ const wallArt=()=>wallCache??=Promise.all(WALL_IMGS.map(src=>new Promise<HTMLIma
 /** Desenha antes a cortiça e a parede do fundo (o que mais pesa ao abrir), para a entrada começar sem travar. */
 export async function prewarmBoard(){corkArt();await wallArt()}
 
-const TRAY_H=96
+const TRAY_H=120
 const ROLE_NEXT:Record<string,'exec'|'mentor'|'fora'|undefined>={none:'exec',exec:'mentor',mentor:'fora',fora:undefined}
 const ROLE_TXT={exec:'Executor',mentor:'Mentor',fora:'Fora'} as const
 
@@ -285,6 +285,11 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
   const cycleRole=(p:string)=>saveBoard(x=>{const n={...x.roles},nx=ROLE_NEXT[n[p]??'none'];if(nx==='mentor')for(const k in n)if(n[k]==='mentor')delete n[k];if(nx)n[p]=nx;else delete n[p];return {roles:n}})
   const protocol=()=>{const r={executors,mentor:mentor??'',motive:b.motive??'',proofs:b.proofs};setEnding(reportEnding(r));save(x=>fileReport(x,r));setConfirm(false);setReport(false)}
 
+  /* depois de fechar o capítulo, o quadro nunca fica sem saída: aponta o capítulo atual, o relatório ou o próximo passo */
+  const next=stage===5&&reportReady?{t:'Relatório de acusação',go:openReport}
+    :stage>0&&stage<current?{t:`Ir para o capítulo ${current}`,go:()=>setStage(current)}
+    :main?{t:main.title,go:()=>run(main)}:{t:'Voltar à base',go:onClose}
+
   /* a árvore do capítulo */
   const yarn=(key:string,d:string,on:boolean,draw?:boolean)=>on
     ?[<path key={key+'s'} className="cb-sh" d={d} transform="translate(1.5 4)"/>,<path key={key+'a'} className={'cb-y1'+(draw?' draw':'')} d={d} pathLength={1}/>,<path key={key+'b'} className="cb-y2" d={d}/>]
@@ -307,7 +312,7 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
     els.push(<div key="root" className={'ct-root'+(rootDone?' done':'')} style={{left:ROOT_X,top:rootY-62}}>
       <small>Capítulo {stage} · conclusão</small><b>{rootDone?T.done[0]:T.q}</b><p>{rootDone?T.done[1]:'Acende quando os três galhos acenderem.'}</p>
       {rootDone&&<span className="ct-stamp">CONFERE</span>}
-      {stage===5&&reportReady&&<button className="ct-go" onClick={openReport}>Relatório de acusação ›</button>}</div>)
+      {rootDone&&next&&<><span className="ct-nx">Próximo passo</span><button className="ct-go" onClick={next.go}>{next.t} ›</button></>}</div>)
     return <><svg className="cb-str" style={{width:W,height:H}} viewBox={`0 0 ${W} ${H}`}>{lines}</svg>{els}</>
   }
   /* a árvore do caso inteiro: cada capítulo é um galho da pergunta final */
@@ -326,9 +331,9 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
 
   /* o que fazer agora, escrito na aba da pasta */
   const readyBr=T?.branches.find(br=>!stOf(br).lit&&stOf(br).s.every(Boolean))
-  const hint=!T?{n:'',t:'',on:false}:sel?{n:'2',t:'Agora toque num espaço vazio da árvore',on:true}
+  const hint:{n:string;t:string;on:boolean;go?:()=>void}=!T?{n:'',t:'',on:false}:sel?{n:'2',t:'Agora toque num espaço vazio da árvore',on:true}
     :readyBr?{n:'3',t:`Toque na ficha “${readyBr.q}” para deduzir`,on:true}
-    :done(stage-1)?{n:'✓',t:'Capítulo resolvido',on:false}
+    :done(stage-1)?{n:'✓',t:`Capítulo resolvido · ${next.t} ›`,on:true,go:next.go}
     :pool.length?{n:'1',t:'Pasta de evidências · toque numa foto para pegar',on:false}:{n:'',t:'Pasta de evidências',on:false}
   const S=sel?clueOf(sel):null,src=sel?sourcesOf(g,sel,found):[],heard=sel?heardOf(g,sel):[]
   const popPeople=pop?.people?.filter(p=>people.includes(p))??[]
@@ -359,7 +364,7 @@ export default function CaseBoard({found,onClose,onDeposition,onTeam,onSummoned,
       <button className="cb-chip cb-x" aria-label="Fechar o quadro" onClick={onClose}>×</button>
     </div>
     {stage>0&&<div className="ct-tray">
-      <small className={hint.on?'on':''}><b>{hint.n}</b>{hint.t}</small>
+      <button className={'ct-tab'+(hint.on?' on':'')+(hint.go?' act':'')} disabled={!hint.go} onClick={hint.go}><b>{hint.n}</b>{hint.t}</button>
       <div className="ct-row">{pool.length?pool.map(id=><button key={id} className={'ct-ev'+(sel===id?' sel':'')+(fresh.has(id)?' new':'')} onClick={()=>{setSel(sel===id?null:id);setNote(null)}} aria-pressed={sel===id}>
           <img src={thumb(clueImg(id))} alt=""/><i>{titleOf(id)}</i></button>)
         :<p>{have.some(id=>T?.pool.includes(id))?'Todas as evidências deste capítulo estão na árvore.':'Ainda não há evidências deste capítulo. Continue a investigação.'}</p>}</div>
