@@ -1049,3 +1049,25 @@ body:not(.land) .hud-top.lx .ht .brk{background:none;height:0;margin:0}
 .tool .l,.mem .nm,.mmore .nm{bottom:calc(100% + 6px)}
 .tool[aria-pressed="true"] .l,.rkey[aria-expanded="true"] .l,.mem[aria-pressed="true"] .nm,.mmore[aria-expanded="true"] .nm{color:var(--lh-acc,#ffcf8a)}
 #crew2{bottom:calc(var(--sb,env(safe-area-inset-bottom,0px)) + 86px)}
+
+/* ---------- Cabeçalho da casa: primeira linha igual à base, ferramentas numa pílula embaixo (14/10/2026) ---------- */
+.hud-top.lx .ht,body:not(.land) .hud-top.lx .ht{flex-wrap:wrap;row-gap:6px;align-items:flex-start}
+.hud-top.lx .ht .brk,body:not(.land) .hud-top.lx .ht .brk{display:block;flex:0 0 100%;height:0;order:3}
+.hud-top.lx .h-time{order:1}
+.hud-top.lx .h-btns{order:2;margin-left:auto}
+.hud-top.lx .h-sub{order:4;display:flex;align-items:center;gap:14px;padding:3px 14px 3px 4px;margin-left:36px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.08);text-shadow:none;pointer-events:auto}
+.hud-top.lx .h-sub>div{display:flex;align-items:center;margin:0;padding:0;order:0}
+.hud-top.lx .h-sub .speed button,body:not(.land) .hud-top.lx .h-sub .speed button{width:26px;height:26px}
+.hud-top.lx .h-sub .h-marks{gap:8px}
+.hud-top.lx .h-sub .h-marks .cap,body.mid .hud-top.lx .h-sub .h-marks .cap,body.narrow .hud-top.lx .h-sub .h-marks .cap,body:not(.land) .hud-top.lx .h-sub .h-marks .cap{display:flex;flex-direction:row;align-items:baseline;gap:6px}
+.hud-top.lx .h-sub .h-marks .cap b,.hud-top.lx .h-sub .gauge .gl b{font:italic 600 15px/1 var(--lh-title)}
+.hud-top.lx .h-sub .h-marks .cap b i{font-size:10px}
+.hud-top.lx .h-sub .h-state{gap:12px}
+.hud-top.lx .h-sub .gauge{gap:6px}
+.hud-top.lx .h-sub .gauge .ring{width:18px;height:18px}
+.hud-top.lx .h-sub .gauge .gl{flex-direction:row;align-items:baseline;gap:6px}
+.hud-top.lx .h-sub small{font:400 7.5px/1 var(--lh-ui);letter-spacing:.28em;text-transform:uppercase;color:rgba(255,255,255,.5)}
+.hud-top.lx .h-sub .tent{width:12px;height:9px}
+.hud-top.lx .h-sub .sep{width:1px;height:14px;background:rgba(255,255,255,.12)}
+.hud-top.lx .ht>.h-sub{background:linear-gradient(180deg,rgba(24,26,32,.82),rgba(11,12,15,.88));border:1px solid rgba(255,255,255,.09)}
+.hud-top.lx .h-sub .gauge .gl b{color:#fff}

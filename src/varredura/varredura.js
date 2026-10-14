@@ -3069,6 +3069,8 @@ function fitTop(){const ht=$('.ht');ht.style.transform='';ht.style.width='';TOPK
   const avail=ht.clientWidth;let need=(()=>{const c=getComputedStyle(ht);let w=(parseFloat(c.paddingLeft)||0)+(parseFloat(c.paddingRight)||0);for(const e of ht.children){if(!e.offsetWidth)continue;w+=e.offsetWidth;}return Math.max(ht.scrollWidth,Math.ceil(w));})();
   // upright: the watch shares a row with the buttons, the marks with the gauges
   if(!document.body.classList.contains('land')){const w=s=>{const e=ht.querySelector(s);return e&&e.offsetWidth?e.offsetWidth:0;};need=Math.max(w('.h-time')+w('.h-btns'),w('.h-marks')+w('.h-state'))+6;}
+  // cabeçalho no padrão da base: Lemos e botões na primeira linha, as ferramentas da varredura na pílula de baixo
+  if(ht.querySelector('.h-sub')){const w=s=>{const e=ht.querySelector(s);return e&&e.offsetWidth?e.offsetWidth:0;};need=Math.max(w('.h-time')+w('.h-btns')+16,w('.h-sub'));}
   if(need>avail+1){TOPK=avail/need;ht.style.width=(avail/TOPK).toFixed(1)+'px';ht.style.transform=`scale(${TOPK.toFixed(4)})`;}}
 function placeNotes(){const ht=$('.ht'),y=ht.offsetTop+ht.offsetHeight*TOPK,sp=$('#sup');sp.style.top=(y+6)+'px';const sh=!document.body.classList.contains('land')&&sp.children.length?sp.offsetHeight+6:0;notesEl.style.top=(y+6+sh)+'px';$('#evt').style.top=(y+8)+'px';}
 function measureHud(){
