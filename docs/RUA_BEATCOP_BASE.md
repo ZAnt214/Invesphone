@@ -96,3 +96,13 @@ Medido com Chromium, CPU 4x mais lenta, tela 844×390 @3x, desenho de um quadro 
 ## Fachada institucional do DHPP (13/10/2026)
 
 Concreto aparente com brises verticais e janelas em fita, telhado com casa de máquinas, antena de rádio e parabólica; faixa azul-marinho com filetes dourados, o letreiro oficial no centro, o nome completo (Departamento de Homicídios e de Proteção à Pessoa), "Plantão 24 horas" e o brasão; térreo de granito com janelas gradeadas e câmeras; **uma só entrada** (pórtico com a porta oficial ladeada de vidro, marquise iluminada, placa "Atendimento 24h", interfone, degraus e frades de concreto na calçada). A separação entre público e áreas restritas é dentro do prédio (`docs/DHPP_BASE.md`).
+
+## Madrugada (plantão noturno, 14/10/2026)
+
+Enquanto a varredura da casa não terminou, o jogo é de madrugada (`NIGHT` em `src/base/base.js`, passado à rua por `createStreet({night})`).
+
+- **Rua** (`street.js`): o sol sai por inteiro (fachos, reflexos, brilhos, cor da manhã, nuvens, luz do canto e sombras de quem anda são desligados só durante o desenho, sem mexer nos Ajustes). Depois dos prédios de cá, a tela inteira é multiplicada por um azul-escuro e as luzes vêm somadas por cima: cabeça e poça de luz de cada poste, faróis e lanternas dos carros, parte das janelas acesas (sorteio fixo por janela), neon e arandelas mais fortes, giroflex. O anel do toque e o marcador da porta ficam por cima do escuro. Pouca gente na rua (12 pedestres).
+- **Base** (`base.js`): `AMB_OUT`/`AMB_IN` escuros; sem sol pelas janelas, nuvens, céu, fachos e poeira de luz. A faixa da rua na planta recebe os postes e faróis depois da luz (`strip.night`), e a garoa cai fora do prédio (`strip.rain` com recorte).
+- **Garoa**: riscos finos em tela e respingos; desligada com movimento reduzido.
+- **Ajustes**: `night.lamps` (Gráficos › Luz e sol), `night.rain` (Gráficos › Atmosfera), `sfx.rain` (Som; leito em `ambientAudio.js`, `setRain`). Sem pássaros de madrugada.
+- Depois da casa (`varredura.fim`), tudo volta à manhã de sempre.

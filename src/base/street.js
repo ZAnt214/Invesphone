@@ -116,7 +116,9 @@ const rgba=(hex,a)=>{const h=hex.replace('#','');return `rgba(${parseInt(h.slice
 const RM=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** art: as funções de desenho da base (S2, bush…) e o letreiro e a porta dela; quality(): 'low'|'medium'|'high' */
-export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quality,onSound,hudTop}){
+export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quality,onSound,hudTop,night:NI}){
+  // plantão da madrugada (base.js): sem sol, rua escura, postes, faróis e janelas acesas, garoa
+  const isNight=()=>!!(NI&&NI());
   const Q=()=>{const q=quality?quality():'high';return q==='low'?0:q==='medium'?1:2;};
   let fgRooms=[];
   let layer=buildStatic();
@@ -156,7 +158,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     busBench:[{x:360,y:ny-3,busy:null},{x:380,y:ny-3,busy:null}],busStand:[{x:300,y:ny-8},{x:318,y:ny-6},{x:336,y:ny-9}]};
   const STOP_X=330;                                   // ponto de ônibus (calçada de cá)
   const life=eventLog(16);
-  const NPED=30;
+  const NPED=isNight()?12:30;   // de madrugada, pouca gente na rua
   const peds=Array.from({length:NPED},(_,i)=>{const look=PED_LOOKS[i%PED_LOOKS.length],near=i>=NPED-6,band=near?NEARB:FAR;
     const rush=i%7===3;
     return {id:i,x:R()*STREET_W,y:band[0]+R()*(band[1]-band[0]),near,dir:R()<.5?-1:1,v:rush?30+R()*6:14+R()*10,walk:R()*10,look,frames:personFrames(look),
@@ -198,6 +200,40 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   const debris=Array.from({length:18},(_,i)=>({x:R()*STREET_W,y:i<12?GY+50+R()*(CURB-GY-64):CURB+6+R()*4,vx:0,ph:R()*6.28,k:i%3,g:R()}));
   const flies=PROPS.filter(p=>p.k==='sacos-lixo'||p.k==='cacamba').flatMap(p=>[0,1,2].map(i=>({x:p.x,y:p.y-10,i})));
   const POLES=PROPS.filter(p=>p.k==='poste-luz'&&p.y===cy).map(p=>p.x).sort((a,b)=>a-b);
+  // de madrugada: a cabeça de cada poste (a lanterna fica no alto da arte oficial) e o que ela acende
+  const LAMPS=PROPS.filter(p=>p.k==='poste-luz').map(p=>({x:p.x,y:p.y,hy:(120-13)*PROP_S}));
+  const h01=n=>{const x=Math.sin(n*12.9898)*43758.5453;return x-Math.floor(x);};
+  const NIGHT_OFF=['sun.beams','sun.flare','sun.glints','sun.color','clouds','edge.glow','shadows'];
+  /** luzes da madrugada, somadas por cima da rua escurecida; map leva o X da rua para o X de quem desenha (a faixa da planta) */
+  function nightGlow(ctx,map,X0,X1,wins){
+    if(!F['night.lamps'])return;
+    ctx.globalCompositeOperation='lighter';
+    if(wins)for(const wn of WINS){if(wn.x+wn.w<X0||wn.x>X1)continue;const h=h01(wn.x*.7+wn.y*1.3);if(h>.42)continue;
+      ctx.globalAlpha=.28+.3*h;ctx.fillStyle=h<.1?'rgb(120,170,255)':'rgb(255,186,104)';ctx.fillRect(wn.x+2,wn.y+2,wn.w-4,wn.h-4);}
+    const sp=glowSprite('rgba(255,196,120,1)');
+    for(const p of LAMPS){const X=map(p.x);if(X<X0-160||X>X1+160)continue;const hy=p.y-p.hy;
+      ctx.globalAlpha=.95;ctx.drawImage(sp,X-14,hy-10,28,20);ctx.globalAlpha=.32;ctx.drawImage(sp,X-70,hy-46,140,92);
+      ctx.globalAlpha=.34;ctx.drawImage(sp,X-90,p.y-26,180,44);}
+    const hl=glowSprite('rgba(255,240,200,1)'),tl=glowSprite('rgba(255,40,30,1)');
+    for(const k of cars){if(k.lane==null)continue;const w=W(k),X=map(k.x+w/2)-w/2;if(X+w<X0-200||X>X1+200)continue;
+      const dir=LANES[k.lane].dir,m=meta(k.id),h=m.h*CAR_S,y=(k.yo??LANES[k.lane].y)+(k.yj||0),fx=dir>0?X+w:X,bx=dir>0?X:X+w,yy=y-h*.36;
+      ctx.globalAlpha=.85;ctx.drawImage(hl,fx-8,yy-6,16,12);ctx.globalAlpha=.26;ctx.drawImage(hl,dir>0?fx-10:fx-150,y-26,160,32);
+      ctx.globalAlpha=.65;ctx.drawImage(tl,bx-6,yy-5,12,10);}
+    ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+  }
+  // garoa: riscos finos na tela, caindo um pouco inclinados (clip tira o que não é céu aberto, na planta)
+  const DROPS=Array.from({length:180},()=>({u:Math.random(),v:Math.random(),s:.75+Math.random()*.5,l:Math.random()}));
+  function rain(ctx,cw,ch,rs,clip){
+    if(RM||!F['night.rain'])return;
+    const q=Q(),n=q<1?60:q>=2?180:110;
+    ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;if(clip)clip(ctx);
+    ctx.strokeStyle='rgba(176,196,230,.34)';ctx.lineWidth=Math.max(1,Math.round(rs*.6));ctx.beginPath();
+    for(let i=0;i<n;i++){const d=DROPS[i],L=(9+9*d.l)*rs,v=ch*1.15*d.s,y=((d.v*(ch+L)+t*v)%(ch+L))-L,x=((d.u*cw-t*v*.14)%cw+cw)%cw;ctx.moveTo(x,y);ctx.lineTo(x-L*.14,y+L);}
+    ctx.stroke();
+    // respingos no chão molhado
+    ctx.fillStyle='rgba(200,214,240,.4)';for(let i=0;i<n/3;i++){const d=DROPS[i],k=(t*1.7*d.s+d.v)%1;if(k>.18)continue;const x=d.u*cw,y=ch*(.55+.45*d.l);ctx.fillRect(Math.round(x-2*rs),Math.round(y),Math.round(4*rs),Math.max(1,Math.round(rs*.6)));}
+    ctx.restore();
+  }
   // vento: folhas soltas no ar nas rajadas
   const airLeaves=Array.from({length:10},()=>({x:R()*STREET_W,y:GY-220+R()*260,ph:R()*6.28,c:['#7a5a2a','#a8742a','#5a6a2a','#c08a3a'][Math.floor(R()*4)]}));
   let wv=.5,flagPh=0;
@@ -538,7 +574,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   const stats={ents:0,drawn:0,shadows:0,particles:0};
 
   function draw(ctx,cw,ch,rs,marker){
-    const q=Q();
+    const q=Q(),NT=isNight();let SAV=null;if(NT){SAV={};for(const k of NIGHT_OFF){SAV[k]=F[k];F[k]=false;}}
     const V=view(cw,ch,rs),{s,left,top,vw}=V;
     ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';ctx.filter='none';
     ctx.fillStyle='#8fa9c4';ctx.fillRect(0,0,cw,ch);ctx.imageSmoothingEnabled=false;
@@ -597,9 +633,10 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     if(F.steam)for(const p of puffs){if(p.x<x0||p.x>x1)continue;const u=p.t;if(fum){const f=Math.min(3,Math.floor(u*4));ctx.globalAlpha=1-u;ctx.drawImage(fum,f*12,0,12,8,p.x-9,p.y-6,18,12);ctx.globalAlpha=1;}
       else{ctx.fillStyle=`rgba(210,210,214,${.45*(1-u)})`;ctx.beginPath();ctx.ellipse(p.x,p.y,3+u*6,2+u*4,0,0,7);ctx.fill();}}
     // luzes que emitem: neon das lojas (com tremida rara), arandelas do DHPP, vitrines e o giroflex da viatura parada
-    ctx.globalCompositeOperation='lighter';
+    // (de madrugada, depois dos prédios de cá: a rua inteira escurece primeiro e as luzes vêm somadas por cima)
+    const emit=()=>{ctx.setTransform(s,0,0,s,ox,oyr);ctx.globalCompositeOperation='lighter';
     for(const b of BUILDINGS){if(!b.glows||b.X+b.w<x0||b.X>x1)continue;for(const gl of b.glows){
-      let a=gl.neon?.34:gl.lamp?.3:.12;if(gl.win)a=gl.tv&&!RM?.2*(.6+.4*Math.sin(t*12+gl.x)*Math.sin(t*4.1+gl.y)):.15;if(gl.neon&&!RM&&q>=1){const ph=Math.sin(t*1.3+gl.x)*Math.sin(t*7.1+gl.y);if(ph>.93)a*=.35;}
+      let a=gl.neon?.34:gl.lamp?.3:.12;if(gl.win)a=gl.tv&&!RM?.2*(.6+.4*Math.sin(t*12+gl.x)*Math.sin(t*4.1+gl.y)):.15;if(gl.neon&&!RM&&q>=1){const ph=Math.sin(t*1.3+gl.x)*Math.sin(t*7.1+gl.y);if(ph>.93)a*=.35;}if(NT)a=Math.min(1,a*2.4);
       const sp=glowSprite(rgba(gl.c,1));ctx.globalAlpha=a;const r=gl.r;ctx.drawImage(sp,gl.x-r,gl.y-r*.7,r*2,r*1.4);
       if(!gl.neon&&!gl.lamp&&!gl.win&&!gl.pole&&q>=1){ctx.globalAlpha=.1;ctx.drawImage(sp,gl.x-r*1.2,GY+2,r*2.4,34);}
       if(gl.lamp){ctx.globalAlpha=a*.5;ctx.drawImage(sp,gl.x-r*.8,GY-6,r*1.6,r*.5);}}}
@@ -607,11 +644,13 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
         const sp=glowSprite(red?'rgba(255,60,50,1)':'rgba(60,110,255,1)');ctx.globalAlpha=.5;ctx.drawImage(sp,cx-18,cyy-14,36,28);
         ctx.globalAlpha=.16;ctx.drawImage(sp,cx-130,yy-90,260,110);if(k===viatura){ctx.globalAlpha=.08;ctx.drawImage(sp,cx-160,GY-130,320,190);}};
       flash(viatura,viatura.y);for(const k of cars)if(k.siren)flash(k,(k.yo??LANES[k.lane].y)+(k.yj||0));}
-    ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
-    // retorno do toque: um anel no chão onde o Lemos vai
-    if(tapFx){const k=tapFx.t/.7;ctx.strokeStyle=`rgba(242,194,48,${.9*(1-k)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(tapFx.x,tapFx.y,6+k*14,2+k*5,0,0,7);ctx.stroke();}
+    ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';};
+    if(!NT)emit();
+    // retorno do toque: um anel no chão onde o Lemos vai (de madrugada, por cima do escuro)
+    const ui=()=>{if(tapFx){const k=tapFx.t/.7;ctx.strokeStyle=`rgba(242,194,48,${.9*(1-k)})`;ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(tapFx.x,tapFx.y,6+k*14,2+k*5,0,0,7);ctx.stroke();}
     if(marker){const b=Math.round(Math.sin(t*6)*2),X=DOOR.x,Y=GY-160+b;ctx.fillStyle='#1e1611';ctx.beginPath();ctx.moveTo(X,Y+9);ctx.lineTo(X-8,Y);ctx.lineTo(X,Y-9);ctx.lineTo(X+8,Y);ctx.fill();
-      ctx.fillStyle='#f2c230';ctx.beginPath();ctx.moveTo(X,Y+7);ctx.lineTo(X-6,Y);ctx.lineTo(X,Y-7);ctx.lineTo(X+6,Y);ctx.fill();ctx.fillStyle='#1e1611';ctx.fillRect(X-1,Y-4,2,6);ctx.fillRect(X-1,Y+3,2,1.5);}
+      ctx.fillStyle='#f2c230';ctx.beginPath();ctx.moveTo(X,Y+7);ctx.lineTo(X-6,Y);ctx.lineTo(X,Y-7);ctx.lineTo(X+6,Y);ctx.fill();ctx.fillStyle='#1e1611';ctx.fillRect(X-1,Y-4,2,6);ctx.fillRect(X-1,Y+3,2,1.5);}};
+    if(!NT)ui();
     // o sol da manhã, baixo e dourado, vindo do alto à esquerda: fachos de luz entre os prédios, poeira dentro deles,
     // brilho nas janelas, nas poças e no cromado dos carros
     let np=0;
@@ -656,8 +695,12 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
       ctx.setTransform(s,0,0,s,ox,oyr);
       if(q>=1){if(!RM&&F.wind)for(const l of airLeaves){if(l.x<x0||l.x>x1)continue;const fl=Math.abs(Math.sin(l.ph*1.7));ctx.globalAlpha=Math.min(1,.3+wv);ctx.fillStyle=l.c;ctx.fillRect(Math.round(l.x),Math.round(l.y),1+Math.round(fl*2),2);}ctx.globalAlpha=1;}
       if(F.front)front.draw(ctx,{s,top,left,vw,cw,ch},t,cameraDt,busy,RM||!F.wind,wv);}
+    if(NT){ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='multiply';ctx.fillStyle='rgb(60,72,116)';ctx.fillRect(0,0,cw,ch);ctx.restore();
+      ctx.setTransform(s,0,0,s,ox,oyr);nightGlow(ctx,x=>x,x0,x1,true);emit();ctx.setTransform(s,0,0,s,ox,oyr);ui();}
     ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='source-over';
+    if(NT)rain(ctx,cw,ch,rs,null);
     edges(ctx,cw,ch,rs,q,s,left,top,ox,oyr);
+    if(SAV)for(const k in SAV)F[k]=SAV[k];
     ctx.restore();
     lastView={...V,oy:oyr,ox,cw,ch};
     if(cameraDebug&&cameraInfo)drawCameraDebug(ctx,{width:cw,height:ch,dpr:rs,deadZone:{x:cw/rs/2-cameraInfo.zoneX,y:ch/rs/2-cameraInfo.zoneY,w:cameraInfo.zoneX*2,h:cameraInfo.zoneY*2},target:{x:cameraInfo.targetX,y:cameraInfo.targetY},lines:[`RUA · ${cameraInfo.mode}`,`prioridade ${cameraInfo.priority} · zoom ${camZoom.toFixed(2)} (${V.s}x)`,`cam ${camX.toFixed(1)}, ${camY.toFixed(1)}`]});
@@ -888,5 +931,6 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
       flash(viatura,viatura.y);for(const k of cars)if(k.siren)flash(k,(k.yo??LANES[k.lane].y)+(k.yj||0));
       ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';}
   }
-  return {strip:{reset:()=>{stripG=null;},ground:drawStripGround,ents:drawStripEnts,x:stripX,GY,NEAR,FG_TOP},toggleOverview,lanes:LANES,update,resume,debugRows,draw,tap,place,gestureStart,gestureMove,gestureEnd,zoomAt,lemos,door:DOOR,ready,stats,get view(){return lastView;},get cars(){return cars;},parked,peds,birds,trees,get t(){return t;},zoom:()=>camZoom};
+  return {strip:{reset:()=>{stripG=null;},ground:drawStripGround,ents:drawStripEnts,x:stripX,GY,NEAR,FG_TOP,
+    night:(ctx,s,ox,oy,X0,X1)=>{ctx.setTransform(s,0,0,s,ox,oy);nightGlow(ctx,stripX,X0,X1,false);},rain},toggleOverview,lanes:LANES,update,resume,debugRows,draw,tap,place,gestureStart,gestureMove,gestureEnd,zoomAt,lemos,door:DOOR,ready,stats,get view(){return lastView;},get cars(){return cars;},parked,peds,birds,trees,get t(){return t;},zoom:()=>camZoom};
 }

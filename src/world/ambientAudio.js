@@ -36,7 +36,16 @@ export function setScene(name){
   for(const k in beds){const b=beds[k];b.g.gain.setTargetAtTime(.0001,now(),.8);setTimeout(()=>{try{b.s.stop();}catch(e){/* já parou */}},4000);}beds={};
   if(name==='rua'){beds.air=loopNoise('bandpass',700,.012,.4);beds.rumble=loopNoise('lowpass',140,.05);beds.engine=loopNoise('lowpass',220,.0001,1.2);}
   if(name==='base'){beds.hvac=loopNoise('lowpass',320,.035);beds.room=loopNoise('bandpass',520,.006,.6);}
+  rainBed();
   master.gain.setTargetAtTime(on()&&!document.hidden?.9:.0001,now(),.6);
+}
+/** garoa da madrugada (plantão noturno): chiado fino na rua; dentro do DHPP, abafado pelas paredes */
+let rainOn=false;
+export function setRain(v){rainOn=!!v;if(C&&scene)rainBed();}
+function rainBed(){
+  const want=rainOn&&!!scene&&fxOn('sfx.rain'),b=beds.rain;
+  if(b&&(!want||b.sc!==scene)){b.g.gain.setTargetAtTime(.0001,now(),.6);setTimeout(()=>{try{b.s.stop();}catch(e){/* já parou */}},3000);delete beds.rain;}
+  if(want&&!beds.rain){beds.rain=scene==='rua'?loopNoise('highpass',2400,.022,.5):loopNoise('lowpass',900,.012,.5);beds.rain.sc=scene;}
 }
 /** chamado a cada ~quarto de segundo pela cena: trânsito perto da câmera (0..1) e para que lado */
 export function traffic(level,p){const b=beds.engine;if(!b||!C)return;b.g.gain.setTargetAtTime(.0001+.06*Math.min(1,level),now(),.25);b.fl.frequency.setTargetAtTime(160+level*220,now(),.3);}
@@ -72,6 +81,6 @@ export function fx(kind,p=0,a=1){
 // aba oculta: o ambiente some (e volta ao voltar); som desligado em Ajustes: some também
 if(typeof document!=='undefined'){document.addEventListener('visibilitychange',()=>{if(master&&C)master.gain.setTargetAtTime(document.hidden||!on()?.0001:.9,now(),.3);});
   addEventListener('storage',e=>{if(e.key==='invesphone.sfx'&&master&&C)master.gain.setTargetAtTime(on()?.9:.0001,now(),.3);});
-  onFxChange(()=>{if(master&&C)master.gain.setTargetAtTime(on()&&!document.hidden?.9:.0001,now(),.3);});}
+  onFxChange(()=>{if(master&&C){master.gain.setTargetAtTime(on()&&!document.hidden?.9:.0001,now(),.3);rainBed();}});}
 /** primeiro toque na página: destrava o áudio (iOS) e volta o leito, se já havia cena */
 export function unlock(){if(C&&C.state==='running'&&master)return;const s=scene;if(!ctx())return;if(s){scene=null;setScene(s);}}

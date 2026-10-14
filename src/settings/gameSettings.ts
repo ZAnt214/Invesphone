@@ -35,6 +35,7 @@ export const EFFECTS:Effect[] = [
   { id:'sun.glints', cat:'luz', label:'Brilhos', desc:'O sol batendo nas janelas, nas poças e no cromado dos carros.', def:true, where:'Rua' },
   { id:'sun.color', cat:'luz', label:'Cor da manhã', desc:'Tom dourado do lado do sol e frio do outro.', def:true, where:'Rua' },
   { id:'shadows', cat:'luz', label:'Sombras projetadas', desc:'Sombras de pessoas, carros, postes e árvores no chão.', def:true, where:'Rua' },
+  { id:'night.lamps', cat:'luz', label:'Luzes da noite', desc:'Postes, faróis dos carros e janelas acesas no plantão da madrugada.', def:true, where:'Rua e DHPP' },
   { id:'base.ao', cat:'luz', label:'Sombra nos cantos', desc:'O chão escurece junto às paredes das salas, dando volume aos cômodos.', def:true, where:'DHPP' },
   { id:'base.doorlight', cat:'luz', label:'Luz pelas portas', desc:'A luz de cada sala vaza pelas portas e passagens.', def:true, where:'DHPP' },
   // atmosfera
@@ -42,6 +43,7 @@ export const EFFECTS:Effect[] = [
   { id:'debris', cat:'atmosfera', label:'Folhas e papéis no chão', desc:'Levados pelo vento pela calçada e pela sarjeta.', def:true, where:'Rua' },
   { id:'clouds', cat:'atmosfera', label:'Sombra das nuvens', desc:'Nuvens passando devagar e sombreando a rua.', def:true, where:'Rua' },
   { id:'steam', cat:'atmosfera', label:'Vapor e fumaça', desc:'Vapor dos bueiros e fumaça dos escapamentos.', def:true, where:'Rua' },
+  { id:'night.rain', cat:'atmosfera', label:'Chuva na madrugada', desc:'Garoa fina caindo na rua e no pátio durante o plantão da noite.', def:true, where:'Rua e DHPP' },
   { id:'flies', cat:'atmosfera', label:'Moscas', desc:'Rondando os sacos de lixo e a caçamba.', def:true, where:'Rua' },
   // tela e bordas
   { id:'edge.blur', cat:'tela', label:'Desfoque nas bordas', desc:'O cenário perde um pouco de foco perto das bordas.', def:true, where:'Rua' },
@@ -61,6 +63,7 @@ export const EFFECTS:Effect[] = [
   { id:'hud.portrait', cat:'interface', label:'Retrato animado', desc:'Um anel âmbar pulsa em volta do rosto do Lemos quando chega uma descoberta.', def:true, where:'Rua e DHPP' },
   // som
   { id:'ambient', cat:'som', label:'Som ambiente', desc:'O ar da cidade, o trânsito, o burburinho e o ar-condicionado do DHPP.', def:true, where:'Rua e DHPP' },
+  { id:'sfx.rain', cat:'som', label:'Chuva', desc:'O chiado da garoa no plantão da madrugada, abafado dentro do DHPP.', def:true, where:'Rua e DHPP' },
   { id:'sfx.hud', cat:'som', label:'Sons da interface', desc:'Ao entrar numa sala, nas descobertas, nas pistas registradas e na caderneta.', def:true, where:'Rua e DHPP' },
   { id:'sfx.badge', cat:'som', label:'Leitora de crachá', desc:'O atrito do crachá na fenda, o bipe da leitora e a trava da porta soltando.', def:true, where:'DHPP' }
 ]
