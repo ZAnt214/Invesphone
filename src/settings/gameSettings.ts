@@ -50,7 +50,7 @@ export const EFFECTS:Effect[] = [
   { id:'edge.glow', cat:'tela', label:'Luz e partículas nas bordas', desc:'A luz do sol vazando do canto e pontinhos de luz flutuando.', def:true, where:'Rua' },
   { id:'front', cat:'tela', label:'Prédios em primeiro plano', desc:'Os prédios do lado de cá, entre a câmera e a rua.', def:true, where:'Rua' },
   // vida
-  { id:'base.life', cat:'vida', label:'Movimento no DHPP', desc:'Gente passando na calçada do outro lado, papéis no chão e a copiadora soltando folhas.', def:true, where:'DHPP' },
+  { id:'base.life', cat:'vida', label:'Movimento no DHPP', desc:'Papéis no chão da sala da equipe e a copiadora soltando folhas.', def:true, where:'DHPP' },
   { id:'dwellers', cat:'vida', label:'Gente nas janelas e lojas', desc:'Moradores nas janelas e varandas, funcionários e clientes nas vitrines.', def:true, where:'Rua' },
   // cenas rápidas
   { id:'scene.board', cat:'cenas', label:'Entrada do quadro do caso', desc:'A câmera passa por trás do Lemos até o quadro. Desligada, só a aproximação.', def:true, where:'DHPP' },
