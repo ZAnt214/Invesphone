@@ -36,6 +36,9 @@
 /* faixas de cinema: entram de cima e de baixo; o nome do lugar fica na de baixo. Ficam embaixo do cabeçalho (z 5). */
 .lh-room{position:absolute;inset:0;z-index:4;pointer-events:none}
 .lh-room:not(.on){visibility:hidden}
+/* durante as faixas, o cabeçalho e os avisos saem de cena */
+#app .hud.lh,#app #toast{transition:opacity .35s}
+#app.lh-cine .hud.lh,#app.lh-cine #toast,#app.lh-cine .lh-disc,#app.lh-cine .lh-ev{opacity:0!important;visibility:hidden;pointer-events:none!important;transition:opacity .35s,visibility 0s .35s}
 .lh-room .lb{position:absolute;left:0;right:0;display:block;background:#050608;transition:transform .6s cubic-bezier(.2,.8,.2,1)}
 .lh-room .top{top:0;height:calc(var(--st,env(safe-area-inset-top,0px)) + 46px);transform:translateY(-100%)}
 .lh-room .bot{bottom:0;height:calc(var(--sb,env(safe-area-inset-bottom,0px)) + 40px);box-sizing:border-box;padding-bottom:var(--sb,env(safe-area-inset-bottom,0px));transform:translateY(100%);

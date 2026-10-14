@@ -881,7 +881,7 @@ function partFailed(close,reopen){
 const loadDepo=lazyPart(()=>import('./deposition'));
 function startDepo(id){
   if(talk)closeTalk();
-  depoOpen=true;const host=$('#depo');host.hidden=false;document.body.classList.add('depo-on');
+  HUD.stopRoom();depoOpen=true;const host=$('#depo');host.hidden=false;document.body.classList.add('depo-on');
   // a base fica escondida atrás do depoimento: libera a memória das telas dela (no iPhone, faltar memória recarrega a página)
   cv.width=cv.height=1;lc.width=lc.height=1;
   const back=()=>{host.hidden=true;depoOpen=false;document.body.classList.remove('depo-on');sizeCanvas();refreshCase();buildVisitors();last=performance.now();};
@@ -907,7 +907,7 @@ prepIntro();
 function startBoard(){
   if(talk)closeTalk();
   // a base continua na tela (parada) até o quadro estar pronto para pintar a entrada: nunca aparece tela preta no meio
-  depoOpen=true;boardPrepT=0;const host=$('#board');hideHost(host);host.hidden=false;
+  HUD.stopRoom();depoOpen=true;boardPrepT=0;const host=$('#board');hideHost(host);host.hidden=false;
   const shown=()=>{host.style.visibility='';host.style.pointerEvents='';document.body.classList.add('depo-on');cv.width=cv.height=1;lc.width=lc.height=1;};
   const back=()=>{host.hidden=true;showHost(host);boardPrepared=false;depoOpen=false;document.body.classList.remove('depo-on');sizeCanvas();refreshCase();buildVisitors();last=performance.now();};
   loadBoard().then(m=>m.openBoard(host,boardOpts(shown,back)),()=>partFailed(back,'board'));
@@ -957,7 +957,7 @@ function openTalk(id){
   if(id==='quadro'){setSeen(id);startBoard();return;}
   const def=DLG[id];if(!def)return;
   refreshCase();
-  setSeen(id);talkOpen=true;document.body.classList.add('talking');
+  setSeen(id);HUD.stopRoom();talkOpen=true;document.body.classList.add('talking');
   const n=NPCS.find(x=>x.id===id);if(n){n.hold=true;n.path=[];n.moving=false;n.say=null;n.dir=P1.x<n.x?-1:1;}
   if(n&&Math.abs(P1.x-n.x)>0.3)P1.dir=n.x>P1.x?1:-1;
   talkStopAnims();
@@ -1100,9 +1100,26 @@ function hudWatch(){
 }
 HUD.setCount(HSEEN&&Array.isArray(HSEEN.clues)?HSEEN.clues.length:(CASE&&CASE.clues||[]).length);
 setInterval(hudWatch,900);
-// nome do lugar ao entrar: só nos lugares de ROOM_TITLE, espera Lemos assentar no cômodo e mostra uma vez por sessão
-let hudRoomT=0;const hudRoomShown={};
-function hudRoomEnter(key,name){const sub=ROOM_TITLE[key];if(!started||!sub||hudRoomShown[key])return;clearTimeout(hudRoomT);hudRoomT=setTimeout(()=>{if(depoOpen||talkOpen||hudRoomShown[key])return;hudRoomShown[key]=1;HUD.room(name,sub);},450);}
+// nome do lugar ao entrar: só nos lugares de ROOM_TITLE e uma vez por sessão do navegador (vale também depois de ir ao
+// aparelho e voltar, ou de o iPhone recarregar a aba). Espera Lemos ficar 450 ms no lugar e a tela estar livre: se ele
+// chegou já conversando (tocou na Sônia, na mesa de depoimento...), o nome entra quando a conversa fecha, se ele ainda
+// estiver ali.
+const HUD_PLACES='invesphone.hud.lugares';
+const hudRoomShown=safe(()=>JSON.parse(sessionStorage.getItem(HUD_PLACES)||'{}'),{})||{};
+// Se Lemos está a caminho de uma conversa (P1.pend), espera ela abrir e fechar. Se as faixas forem cortadas logo no
+// começo (o jogador tocou em alguém), o lugar não conta como mostrado e o nome volta depois.
+let hudRoomKey='',hudRoomAt=0,hudFreeAt=0;
+const hudFree=()=>started&&!talkOpen&&!depoOpen&&!BADGE.open&&!galOpen&&!(SCENE!=='rua'&&P1.pend)&&!$('#intro')?.offsetParent&&!HUD.bookOpen;
+const hudPlacesSave=()=>safe(()=>sessionStorage.setItem(HUD_PLACES,JSON.stringify(hudRoomShown)));
+function hudRoomTick(){
+  const key=SCENE==='rua'?'rua':roomOf(P1),now=performance.now();
+  if(!hudFree())hudFreeAt=now;
+  if(key!==hudRoomKey){hudRoomKey=key;hudRoomAt=now;return;}
+  if(!ROOM_TITLE[key]||hudRoomShown[key]||now-hudRoomAt<450||now-hudFreeAt<500)return;
+  const name=key==='rua'?'Rua do DHPP':ROOM_NAME[key];
+  if(HUD.room(name,ROOM_TITLE[key],()=>{delete hudRoomShown[key];hudPlacesSave();})){hudRoomShown[key]=1;hudPlacesSave();}
+}
+setInterval(hudRoomTick,200);
 /* ---------- Fotos ---------- */
 let galI=0,GAL=[];
 function openGallery(list,i){
@@ -1110,7 +1127,7 @@ function openGallery(list,i){
   if(!list.length)return;GAL=list;galI=clamp(i||0,0,list.length-1);const c=GAL[galI];
   $('#g-img').src=c.img;$('#g-title').textContent=c.title;$('#g-cap').textContent=c.cap||'';$('#g-n').textContent=`${galI+1} / ${GAL.length}`;
   $('#g-prev').hidden=$('#g-next').hidden=GAL.length<2;
-  $('#g-pic').classList.remove('z');$('#gal').hidden=false;galOpen=true;
+  $('#g-pic').classList.remove('z');$('#gal').hidden=false;galOpen=true;HUD.stopRoom();
 }
 let galOpen=false;
 $('#g-x').addEventListener('click',()=>{$('#gal').hidden=true;galOpen=false;});
@@ -1121,6 +1138,7 @@ $('#g-img').addEventListener('click',()=>$('#g-pic').classList.toggle('z'));
 /* ---------- Toques e movimento ---------- */
 let toastT=0;
 function toast(who,text,av){
+  if(HUD.roomOn()){setTimeout(()=>toast(who,text,av),500);return;}   // não cobre as faixas de cinema
   const el=$('#toast');el.innerHTML=`<span class="av" style="background:${av&&av.col||'#c9a24a'}">${av&&av.img?`<img src="${av.img}" alt="">`:(av&&av.ini)||''}</span><div><small>${who}</small><p>${text}</p></div>`;
   el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true;},4200);
 }
@@ -1195,7 +1213,7 @@ function stepAgent(a,sp,pass){
   if(Math.abs(dx)>0.01)a.dir=dx>0?1:-1;a.walk+=sp;a.moving=true;
 }
 function openGate(){
-  BADGE.open=true;P1.moving=false;
+  BADGE.open=true;HUD.stopRoom();P1.moving=false;
   openBadge(appEl,{pt:e=>({x:PX(e),y:PY(e)}),done:ok=>{BADGE.open=false;last=performance.now();follow=true;
     if(ok)BADGE.ok=true;else{P1.path=[];P1.pend=null;}}});
 }
@@ -1335,7 +1353,7 @@ const POOL={
   board_new:[{t:'Vou pôr no quadro.'},{t:'Isso muda a ordem aqui.'}]
 };
 const LCTX={};
-function bubble(n,pool,life=170){const txt=LINES.pick(LR,POOL[pool]||[],LCTX,n.id,performance.now()/1000);if(txt){n.say={txt,t:0,life};return true;}return false;}
+function bubble(n,pool,life=170){if(HUD.roomOn())return false;const txt=LINES.pick(LR,POOL[pool]||[],LCTX,n.id,performance.now()/1000);if(txt){n.say={txt,t:0,life};return true;}return false;}
 function soundAt(n,k,a=1){const dx=(n.x*T-cam.x)/(VW()/2/cam.z),dd=dist(P1.x,P1.y,n.x,n.y);if(SCENE!=='base')return;AMB.fx(k,Math.max(-1,Math.min(1,dx*.7)),a*Math.max(0,1-dd/13));}
 function pickAct(n){const R0=RT[n.id];if(!R0)return null;const o=choose(LR,R0.acts,null,n.mem,performance.now()/1000);return o;}
 function startAct(n,o){
@@ -1822,7 +1840,7 @@ const street=()=>STREET||(STREET=createStreet({lemosLook:LOOK.lemos,personFrames
 const streetView=()=>street();
 const FADE=document.createElement('div');FADE.id='fade';FADE.setAttribute('aria-hidden','true');appEl.appendChild(FADE);
 function fadeTo(fn){FADE.classList.add('on');setTimeout(()=>{fn();requestAnimationFrame(()=>FADE.classList.remove('on'));},200);}
-function setWhere(t){lastRoom=null;$('#where-n').textContent=t;$('#b-view').hidden=t!=='Rua do DHPP';if(t==='Rua do DHPP')hudRoomEnter('rua',t);}
+function setWhere(t){lastRoom=null;$('#where-n').textContent=t;$('#b-view').hidden=t!=='Rua do DHPP';}
 // entrou pela porta do DHPP: aparece na recepção, logo depois da porta
 function enterBase(instant){
   const go=()=>{SCENE='base';$('#b-view').hidden=true;AMB.setScene('base');streetLeft=performance.now();resumeBase();P1.x=16;P1.y=17;P1.path=[];P1.pend=null;P1.dir=1;
@@ -1852,7 +1870,7 @@ function goExit(){
   P1.path=pathTo(e);P1.pend={kind:'exit'};follow=true;
 }
 function updateUI(){
-  const r=roomOf(P1),nm=ROOM_NAME[r]||'';if(r!==lastRoom){lastRoom=r;$('#where-n').textContent=nm;if(nm)hudRoomEnter(r,nm);}
+  const r=roomOf(P1),nm=ROOM_NAME[r]||'';if(r!==lastRoom){lastRoom=r;$('#where-n').textContent=nm;}
   const c=clockStr();if(c!==lastClk){lastClk=c;$('#clk').textContent=c;}
 }
 let last=performance.now();

@@ -79,18 +79,23 @@ export function createHud(o){
 
   /* ---------- faixas de cinema ---------- */
   // as faixas entram (0,6 s), o nome aparece na de baixo, fica uns 3 s e tudo sai junto
-  let dissolveT=0,goneT=0;
-  function showRoom(name,sub){
-    if(!fxOn('hud.room'))return;
-    clearTimeout(dissolveT);clearTimeout(goneT);room.classList.remove('on','out');
+  // enquanto as faixas estão na tela, nada fica por cima: o cabeçalho e os avisos somem (#app.lh-cine) e a fila de
+  // descobertas espera; se o jogador abrir conversa, depoimento ou foto, as faixas saem na hora (stopRoom)
+  let dissolveT=0,goneT=0,roomAt=0,roomCut=null;
+  // onCut: chamado se as faixas forem interrompidas antes de o nome ser lido (menos de 2,5 s), para o jogo mostrar de novo
+  function showRoom(name,sub,onCut){
+    if(!fxOn('hud.room'))return false;
+    clearTimeout(dissolveT);clearTimeout(goneT);room.classList.remove('on','out');roomAt=performance.now();roomCut=onCut||null;
     room.querySelector('.t').textContent=name;room.querySelector('.s').textContent=sub||'';
-    void room.offsetWidth;room.classList.add('on');SFX.room();
-    dissolveT=later(dissolve,3800);
+    app.classList.add('lh-cine');void room.offsetWidth;room.classList.add('on');SFX.room();
+    dissolveT=later(dissolve,3800);return true;
   }
   function dissolve(){
-    if(!room.classList.contains('on'))return;
-    room.classList.add('out');goneT=later(()=>room.classList.remove('on','out'),700);
+    if(!room.classList.contains('on')||room.classList.contains('out'))return;
+    room.classList.add('out');app.classList.remove('lh-cine');goneT=later(()=>room.classList.remove('on','out'),700);
   }
+  const roomOn=()=>room.classList.contains('on')&&!room.classList.contains('out');
+  function stopRoom(){if(!roomOn())return;clearTimeout(dissolveT);if(roomCut&&performance.now()-roomAt<2500)roomCut();roomCut=null;dissolve();}
 
   /* ---------- última descoberta ---------- */
   let discT=0,discOpen=null;
@@ -128,7 +133,7 @@ export function createHud(o){
 
   /* ---------- fila: um acontecimento de cada vez ---------- */
   const Q=[];let qBusy=false;
-  function pump(){if(qBusy||!Q.length)return;if(o.canShow&&!o.canShow()){later(pump,600);return;}const it=Q.shift();qBusy=true;
+  function pump(){if(qBusy||!Q.length)return;if(roomOn()||(o.canShow&&!o.canShow())){later(pump,600);return;}const it=Q.shift();qBusy=true;
     if(it.k==='disc'){showDiscovery(it.d);later(()=>{qBusy=false;pump();},1300);}
     else if(it.k==='ev'){showEvidence(it.d,()=>{});later(()=>{qBusy=false;pump();},2300);}
     else{qBusy=false;pump();}}
@@ -160,7 +165,7 @@ export function createHud(o){
       if(!h)h='<li class="empty">Lembretes do Lemos: quem ouvir, o que pedir à equipe, o que conferir.</li>';}
     list.innerHTML=h;form.hidden=!PH[tab];if(PH[tab])input.placeholder=PH[tab];
   }
-  function openBook(t){if(t)tab=t;nb=loadNb();render();book.classList.add('on');scrim.classList.add('on');SFX.page();if(o.onBook)o.onBook(true);}
+  function openBook(t){stopRoom();if(t)tab=t;nb=loadNb();render();book.classList.add('on');scrim.classList.add('on');SFX.page();if(o.onBook)o.onBook(true);}
   function closeBook(){if(!book.classList.contains('on'))return;book.classList.remove('on');scrim.classList.remove('on');SFX.close();input.blur();if(o.onBook)o.onBook(false);}
   book.querySelector('.cl').addEventListener('click',closeBook);scrim.addEventListener('click',closeBook);
   book.querySelector('.lh-tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;tab=b.dataset.k;render();SFX.tick();});
@@ -179,6 +184,8 @@ export function createHud(o){
 
   return {
     room:showRoom,
+    roomOn,
+    stopRoom,
     discovery(d){Q.push({k:'disc',d});pump();},
     evidence(d){Q.push({k:'ev',d});pump();},
     setCount,
