@@ -1060,15 +1060,19 @@ $('#talk').addEventListener('click',advance);
 
 /* ---------- HUD do Lemos (src/hud/hud.js, docs/HUD_LEMOS.md) ---------- */
 // Onde o nome do lugar entra com as faixas de cinema (docs/HUD_LEMOS.md, "Onde o título aparece"). Só os lugares
-// que pesam na história; recepção, corredor restrito, sala da equipe, pátio e corredores são passagem e ficam só no
-// nome pequeno do cabeçalho. Cada um aparece uma vez por sessão de jogo.
+// que pesam na história e a chegada ao prédio; corredor restrito, sala da equipe e corredores são passagem e ficam só
+// no nome pequeno do cabeçalho. Cada um aparece uma vez por sessão.
 const ROOM_TITLE={
   rua:'São Paulo · outubro de 2002',      // chegada: situa tempo e lugar
+  predio:'Departamento de Homicídios',    // entrar no prédio (recepção ou pátio): o nome é "DHPP"
   sonia:'DHPP · Delegada Sônia Prado',    // primeira ordem do caso
   interro:'DHPP · Depoimentos',           // onde as pessoas são ouvidas
   pericia:'DHPP · Material do caso',      // onde as provas chegam
   arquivo:'DHPP · Casos encerrados'       // o Arquivo Morto
 };
+// a recepção e o pátio contam como "o prédio": a faixa entra uma vez quando Lemos chega ao DHPP
+const PLACE_OF={hall:'predio',fora:'predio'};
+const PLACE_NAME={rua:'Rua do DHPP',predio:'DHPP'};
 const HUD_SEEN='invesphone.hud.seen';
 const DEPO_TXT={chamar:'não chamado',sem_provas:'não chamado',ouvir:'chamado para depor',retomar:'depoimento em aberto',registrado:'depoimento registrado'};
 function hudData(){
@@ -1109,15 +1113,17 @@ const hudRoomShown=safe(()=>JSON.parse(sessionStorage.getItem(HUD_PLACES)||'{}')
 // Se Lemos está a caminho de uma conversa (P1.pend), espera ela abrir e fechar. Se as faixas forem cortadas logo no
 // começo (o jogador tocou em alguém), o lugar não conta como mostrado e o nome volta depois.
 let hudRoomKey='',hudRoomAt=0,hudFreeAt=0;
-const hudFree=()=>started&&!talkOpen&&!depoOpen&&!BADGE.open&&!galOpen&&!(SCENE!=='rua'&&P1.pend)&&!$('#intro')?.offsetParent&&!HUD.bookOpen;
+// chegar ao prédio não espera Lemos parar de andar: a faixa entra logo e a leitora de crachá aguarda o nome ser lido
+const hudFree=key=>started&&!talkOpen&&!depoOpen&&!BADGE.open&&!galOpen&&!(key!=='rua'&&key!=='predio'&&P1.pend)&&!$('#intro')?.offsetParent&&!HUD.bookOpen;
 const hudPlacesSave=()=>safe(()=>sessionStorage.setItem(HUD_PLACES,JSON.stringify(hudRoomShown)));
 function hudRoomTick(){
-  const key=SCENE==='rua'?'rua':roomOf(P1),now=performance.now();
-  if(!hudFree())hudFreeAt=now;
-  if(key!==hudRoomKey){hudRoomKey=key;hudRoomAt=now;return;}
-  if(!ROOM_TITLE[key]||hudRoomShown[key]||now-hudRoomAt<450||now-hudFreeAt<500)return;
-  const name=key==='rua'?'Rua do DHPP':ROOM_NAME[key];
-  if(HUD.room(name,ROOM_TITLE[key],()=>{delete hudRoomShown[key];hudPlacesSave();})){hudRoomShown[key]=1;hudPlacesSave();}
+  const r=SCENE==='rua'?'rua':roomOf(P1),key=PLACE_OF[r]||r,now=performance.now();
+  const free=hudFree(key);if(!free)hudFreeAt=now;
+  if(key!==hudRoomKey){hudRoomKey=key;hudRoomAt=now;if(key!=='predio')return;}
+  const wait=key==='predio'?0:450;
+  if(!free||!ROOM_TITLE[key]||hudRoomShown[key]||now-hudRoomAt<wait||(wait&&now-hudFreeAt<500))return;
+  const name=PLACE_NAME[key]||ROOM_NAME[key];
+  if(HUD.room(name,ROOM_TITLE[key],key==='predio'?null:()=>{delete hudRoomShown[key];hudPlacesSave();})){hudRoomShown[key]=1;hudPlacesSave();}
 }
 setInterval(hudRoomTick,200);
 /* ---------- Fotos ---------- */
@@ -1220,7 +1226,7 @@ function openGate(){
 function update(dt){
   if(talkOpen||BADGE.open)return;
   // vindo da recepção, a porta só abre com o crachá
-  if(P1.path.length&&!BADGE.ok&&P1.path[0]===idx(GATE_X,13)&&P1.y>13.5&&badgeOn()){openGate();return;}
+  if(P1.path.length&&!BADGE.ok&&P1.path[0]===idx(GATE_X,13)&&P1.y>13.5&&badgeOn()){if(HUD.roomAge()<2400){P1.moving=false;return;}openGate();return;}
   if(BADGE.ok&&(P1.y<12.6||P1.y>15.5||Math.abs(P1.x-GATE_X)>2))BADGE.ok=false;
   if(P1.y<12.9)BADGE.out=true;else if(P1.y>14.4)BADGE.out=false;
   stepAgent(P1,3.3*dt,i=>passable(i)&&!NPCS.some(n=>ti(n)===i));
