@@ -52,8 +52,8 @@ export const EFFECTS:Effect[] = [
   { id:'scene.badge', cat:'cenas', label:'Passar o crachá na porta', desc:'Passar o crachá na leitora para entrar na área restrita. Desligado, a porta abre sozinha.', def:true, where:'DHPP' },
   // interface (HUD do Lemos)
   { id:'hud.particles', cat:'interface', label:'Luz e partículas da interface', desc:'Reflexo de lente, poeira de luz e o rastro da evidência voando até a caderneta.', def:true, where:'Rua e DHPP' },
-  { id:'hud.room', cat:'interface', label:'Nome da sala ao entrar', desc:'O nome do lugar aparece no meio da tela quando Lemos entra.', def:true, where:'Rua e DHPP' },
-  { id:'hud.portrait', cat:'interface', label:'Retrato animado', desc:'O aro do retrato do Lemos gira e brilha, com grão de filme.', def:true, where:'Rua e DHPP' },
+  { id:'hud.room', cat:'interface', label:'Nome do lugar ao entrar', desc:'Faixas de cinema com o nome do lugar, uma vez por sessão, nos lugares que importam.', def:true, where:'Rua e DHPP' },
+  { id:'hud.portrait', cat:'interface', label:'Retrato animado', desc:'Um anel âmbar pulsa em volta do rosto do Lemos quando chega uma descoberta.', def:true, where:'Rua e DHPP' },
   // som
   { id:'ambient', cat:'som', label:'Som ambiente', desc:'O ar da cidade, o trânsito, o burburinho e o ar-condicionado do DHPP.', def:true, where:'Rua e DHPP' },
   { id:'sfx.hud', cat:'som', label:'Sons da interface', desc:'Ao entrar numa sala, nas descobertas, nas pistas registradas e na caderneta.', def:true, where:'Rua e DHPP' },

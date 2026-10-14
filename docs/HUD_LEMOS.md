@@ -4,7 +4,7 @@ Interface da rua e da base do DHPP: quase nada fica na tela até algo acontecer.
 
 Código:
 
-- `src/hud/hud.js`: mostrador, faixa do ambiente, descoberta, evidência, caderneta e partículas.
+- `src/hud/hud.js`: retrato, faixas de cinema com o nome do lugar, descoberta, evidência, caderneta e partículas.
 - `src/hud/hud.css`: estilos e animações.
 - `src/hud/hudAudio.js`: sons.
 
@@ -12,15 +12,8 @@ A integração com o jogo fica em `src/base/base.js` (bloco "HUD do Lemos") e no
 
 ## O que fica sempre na tela
 
-- **Retrato do Lemos** (`.lh-dial`), feito com um recorte do rosto da foto oficial do crachá (`public/characters/lemos/hud-rosto.jpg`, 144×144, tirado de `cracha-foto.png`):
-  - mostrador de 60 marcas girando devagar;
-  - brilho correndo pelo aro;
-  - grão de filme parado;
-  - uma luz que passa pelo rosto de vez em quando;
-  - luz verde de "em serviço".
-
-  Quando chega uma descoberta, o brilho do aro acelera (`#app.lh-alert`).
-- **Nome, lugar e hora:** "LEMOS", "Investigação · DHPP" e "lugar · hora" (`#where-n`, `#clk`).
+- **Retrato do Lemos** (`.lh-dial`): o recorte do rosto da foto oficial do crachá (`public/characters/lemos/hud-rosto.jpg`, 144×144, tirado de `cracha-foto.png`) num círculo de 30 px, sem moldura, com a luz verde de "em serviço". Quando chega uma descoberta, um anel âmbar fino pulsa duas vezes em volta do rosto (`#app.lh-alert`). O mostrador de 60 marcas, o brilho do aro, o grão e a luz passando pelo rosto saíram em 14/10/2026 a pedido do usuário.
+- **Nome, lugar e hora:** "LEMOS" e, embaixo, "lugar · hora" em letra fina (`#where-n`, `#clk`).
 - **Botões finos à direita:**
   - caderneta (`#b-book`, com o número de pistas);
   - visão geral da rua;
@@ -35,13 +28,29 @@ A integração com o jogo fica em `src/base/base.js` (bloco "HUD do Lemos") e no
 
 | Momento | Gatilho | O que aparece |
 |---|---|---|
-| Faixa do ambiente | Lemos entra num cômodo (`updateUI`) ou chega à rua (`setWhere`) | Reflexo de lente; o nome sai do desfoque letra por letra, com o subtítulo ("DHPP · Área restrita", "DHPP · Atendimento ao público", "São Paulo · outubro de 2002"); depois o nome perde o foco e some devagar (sem partículas). Espera Lemos ficar 450 ms no cômodo e não repete o mesmo lugar em menos de 45 s. |
+| Faixas de cinema | Lemos entra num lugar importante (`updateUI`) ou chega à rua (`setWhere`) | Faixas pretas entram de cima e de baixo; na de baixo, o nome do lugar em caixa-alta espaçada, um traço e o subtítulo em âmbar. Ficam uns 3 s e saem juntas. Espera Lemos ficar 450 ms no lugar e aparece **uma vez por sessão** em cada lugar. Ver "Onde o título aparece". |
 | Nova descoberta | Chegou no save um material da equipe, uma pessoa identificada ou um depoimento registrado | Cartão de vidro no canto de baixo com sino, faixa de luz e palavras saindo do desfoque; fio de 8 s. Tocar abre o material na galeria (fotos e documentos com `assetPaths`) ou a caderneta. Vários ao mesmo tempo viram um cartão só ("· +N"), com prioridade para o material. |
 | Pista anexada | Pista nova em `clues` | O documento brilha no centro, se comprime num ponto de luz e voa em rastro até a caderneta; na chegada, ondas, faíscas, o número rola e aparece "Anexado ao caso". No máximo três seguidas; as outras só somam no número. |
 
 O jogo descobre o que é novo comparando o save do caso com o que o HUD já mostrou (`invesphone.hud.seen`). Assim, o que chegou pelo aparelho também é anunciado ao voltar para a base.
 
 Na primeira vez, sem esse registro, ele só anota o estado atual, sem anunciar nada. A fila espera conversa, depoimento, galeria e leitora de crachá fecharem.
+
+## Onde o título aparece
+
+O nome do lugar só entra nos lugares que pesam na história; nos lugares de passagem ele ficaria repetindo e cansaria. A lista fica em `ROOM_TITLE` (`src/base/base.js`), com o subtítulo de cada um. Para incluir ou tirar um lugar, mexa só nela.
+
+| Lugar | Aparece? | Subtítulo | Por quê |
+|---|---|---|---|
+| Rua do DHPP | sim | São Paulo · outubro de 2002 | Chegada: situa tempo e lugar |
+| Sala da delegada | sim | DHPP · Delegada Sônia Prado | Primeira ordem do caso |
+| Sala de depoimentos | sim | DHPP · Depoimentos | Onde as pessoas são ouvidas |
+| Perícia | sim | DHPP · Material do caso | Onde as provas chegam |
+| Arquivo Morto | sim | DHPP · Casos encerrados | O lugar que dá nome ao jogo |
+| Sala da equipe | não | | Lemos passa por ela o tempo todo |
+| Recepção, corredor restrito, pátio, corredores | não | | Passagem |
+
+Cada lugar aparece uma vez por sessão (até recarregar o jogo). Se uma conversa ou um depoimento estiver aberto na hora, ele não conta como mostrado e aparece na próxima entrada. Nos outros lugares, o nome continua no cabeçalho, pequeno.
 
 ## Caderneta
 
@@ -61,7 +70,7 @@ Ficam em `src/settings/gameSettings.ts`:
 
 - **Gráficos > Interface:**
   - "Luz e partículas da interface" (`hud.particles`);
-  - "Nome da sala ao entrar" (`hud.room`);
+  - "Nome do lugar ao entrar" (`hud.room`);
   - "Retrato animado" (`hud.portrait`).
 - **Som > Sons da interface** (`sfx.hud`).
 
@@ -74,8 +83,6 @@ A qualidade gráfica reduz o número de partículas: na baixa, 40%. Quem usa a o
 - **Sem desfoque do fundo:** os cartões não usam `backdrop-filter`, porque no Safari o desfoque por cima do canvas deixa rastro. O "vidro" é um gradiente escuro.
 - **Fontes:** Cormorant Garamond (itálico 600) e Jost, hospedadas em `public/fonts`.
 - **Desempenho:**
-  - o mostrador gira como uma camada só (`will-change: transform` no `svg`), sem repintar as marcas a cada quadro;
-  - `isolation: isolate` no mostrador e na foto, para os modos de mistura não lerem o canvas do jogo que muda a cada quadro;
   - faixa, cartão, evidência, caderneta e o canvas de partículas ficam com `visibility: hidden` quando parados, para não serem compostos;
   - o canvas de partículas usa no máximo 1,5× de densidade;
   - o sinal amarelo da equipe só recalcula quando o save muda (`teamNewsCount` em `base.js`).

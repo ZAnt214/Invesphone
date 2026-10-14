@@ -1,11 +1,11 @@
 /* HUD do Lemos (docs/HUD_LEMOS.md): quase nada na tela até algo acontecer.
-   - Retrato do Lemos num mostrador fino de 60 marcas (o aro gira devagar e brilha, grão de filme, luz passando pelo rosto).
-   - Faixa do ambiente: reflexo de lente, o nome da sala sai do desfoque letra por letra e depois some devagar.
+   - Retrato do Lemos: o rosto num círculo pequeno, com o nome e a luz verde de "em serviço"; acende um anel âmbar quando há descoberta.
+   - Faixas de cinema: nos lugares que importam, faixas pretas entram em cima e embaixo e o nome do lugar aparece na de baixo.
    - Última descoberta: cartão de vidro com sino, luz atravessando e palavras saindo do desfoque; tocar abre o material.
    - Evidência: o documento se comprime num ponto de luz e voa em rastro até a caderneta (ondas, faíscas, o número rola).
    - Caderneta: pessoas e pistas do caso (do save) e as suspeitas, hipóteses e notas que o jogador escreve.
    Partículas e luz num canvas próprio por cima de tudo (só roda quando há algo animando). Cada efeito tem ajuste em
-   src/settings/gameSettings.ts: Gráficos > Interface (partículas, nome da sala, retrato animado) e Som > Sons da interface. */
+   src/settings/gameSettings.ts: Gráficos > Interface (partículas, nome do lugar, retrato animado) e Som > Sons da interface. */
 import './hud.css';
 import { hudSfx as SFX } from './hudAudio';
 import { fxOn, onFxChange } from '../settings/gameSettings';
@@ -29,9 +29,8 @@ function saveNb(nb){try{localStorage.setItem(NOTEBOOK_KEY,JSON.stringify(nb));}c
     o.onBook(aberta): avisa quando a caderneta abre/fecha (o jogo pausa o toque no mapa) */
 export function createHud(o){
   const app=o.app;
-  // marcas do mostrador
-  {const sv=app.querySelector('.lh-dial svg');if(sv){let h='<g class="ring">';for(let i=0;i<60;i++){const a=i/60*Math.PI*2,l=i%5===0,r1=l?25.5:27,r2=29.5;h+=`<line class="${l?'l':''}" x1="${(30+Math.sin(a)*r1).toFixed(2)}" y1="${(30-Math.cos(a)*r1).toFixed(2)}" x2="${(30+Math.sin(a)*r2).toFixed(2)}" y2="${(30-Math.cos(a)*r2).toFixed(2)}"/>`;}sv.innerHTML=h+'</g>';sv.querySelector('.ring').style.transformOrigin='30px 30px';}}
-  const room=el('div','lh-room',app,'<div class="t"></div><div class="s"></div>');room.setAttribute('aria-hidden','true');
+  // faixas de cinema: a de cima é só a faixa; a de baixo leva o nome do lugar
+  const room=el('div','lh-room',app,'<i class="lb top"></i><div class="lb bot"><b class="t"></b><i class="rl"></i><span class="s"></span></div>');room.setAttribute('aria-hidden','true');
   const disc=el('button','lh-disc lh-glass',app,'<small><i></i><em></em></small><b></b><span class="go"><span>Toque para abrir</span><span class="hr"></span></span><span class="tm"><i></i></span>');disc.type='button';
   const ev=el('div','lh-ev lh-glass',app,'<svg viewBox="0 0 38 46" aria-hidden="true"><path d="M2 2h24l10 10v32H2z"/><path d="M26 2v10h10M8 20h22M8 26h22M8 32h14"/></svg><div><small></small><b></b></div>');ev.setAttribute('aria-hidden','true');
   const scrim=el('div','lh-scrim',app);
@@ -78,21 +77,19 @@ export function createHud(o){
   // posição de um elemento dentro do #app, sem contar a rotação da tela
   function pos(e){let x=0,y=0;while(e&&e!==app){x+=e.offsetLeft;y+=e.offsetTop;e=e.offsetParent;}return {x,y};}
 
-  /* ---------- faixa do ambiente ---------- */
-  let dissolveT=0;
+  /* ---------- faixas de cinema ---------- */
+  // as faixas entram (0,6 s), o nome aparece na de baixo, fica uns 3 s e tudo sai junto
+  let dissolveT=0,goneT=0;
   function showRoom(name,sub){
     if(!fxOn('hud.room'))return;
-    clearTimeout(dissolveT);const t=room.querySelector('.t');room.classList.remove('on','out');
-    t.innerHTML=[...name].map((c,i)=>`<span style="animation-delay:${(.12+i*.045).toFixed(3)}s">${c===' '?'&nbsp;':esc(c)}</span>`).join('');room.querySelector('.s').textContent=sub||'';
+    clearTimeout(dissolveT);clearTimeout(goneT);room.classList.remove('on','out');
+    room.querySelector('.t').textContent=name;room.querySelector('.s').textContent=sub||'';
     void room.offsetWidth;room.classList.add('on');SFX.room();
-    if(fxOk()){start();const y=pos(t).y+t.offsetHeight/2;FX.push({k:'flare',y,dur:1.8,t:0});
-      const n=Math.round(24*mult());for(let i=0;i<n;i++)add({x:W/2+(Math.random()-.5)*Math.min(W*.8,620),y:y+(Math.random()-.5)*16,vx:(Math.random()-.5)*.6,vy:-.15-Math.random()*.3,life:1.6+Math.random()*1.4,size:1+Math.random()*1.8,turb:.6,alpha:.8,col:Math.random()<.5?'a':'w',delay:Math.random()*.4});}
-    dissolveT=later(dissolve,2900);
+    dissolveT=later(dissolve,3800);
   }
-  // o nome se despede devagar: perde o foco e some, sem virar partículas
   function dissolve(){
     if(!room.classList.contains('on'))return;
-    room.classList.add('out');later(()=>room.classList.remove('on','out'),900);
+    room.classList.add('out');goneT=later(()=>room.classList.remove('on','out'),700);
   }
 
   /* ---------- última descoberta ---------- */

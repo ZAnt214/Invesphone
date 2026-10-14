@@ -1059,7 +1059,16 @@ $('#talk').addEventListener('click',advance);
 
 
 /* ---------- HUD do Lemos (src/hud/hud.js, docs/HUD_LEMOS.md) ---------- */
-const ROOM_SUB={hall:'DHPP · Atendimento ao público',fora:'DHPP · Homicídios'};
+// Onde o nome do lugar entra com as faixas de cinema (docs/HUD_LEMOS.md, "Onde o título aparece"). Só os lugares
+// que pesam na história; recepção, corredor restrito, sala da equipe, pátio e corredores são passagem e ficam só no
+// nome pequeno do cabeçalho. Cada um aparece uma vez por sessão de jogo.
+const ROOM_TITLE={
+  rua:'São Paulo · outubro de 2002',      // chegada: situa tempo e lugar
+  sonia:'DHPP · Delegada Sônia Prado',    // primeira ordem do caso
+  interro:'DHPP · Depoimentos',           // onde as pessoas são ouvidas
+  pericia:'DHPP · Material do caso',      // onde as provas chegam
+  arquivo:'DHPP · Casos encerrados'       // o Arquivo Morto
+};
 const HUD_SEEN='invesphone.hud.seen';
 const DEPO_TXT={chamar:'não chamado',sem_provas:'não chamado',ouvir:'chamado para depor',retomar:'depoimento em aberto',registrado:'depoimento registrado'};
 function hudData(){
@@ -1091,9 +1100,9 @@ function hudWatch(){
 }
 HUD.setCount(HSEEN&&Array.isArray(HSEEN.clues)?HSEEN.clues.length:(CASE&&CASE.clues||[]).length);
 setInterval(hudWatch,900);
-// nome do lugar ao entrar: espera Lemos assentar no cômodo e não repete o mesmo lugar em menos de 45 s
-let hudRoomT=0;const hudRoomLast={};
-function hudRoomEnter(key,name,sub){if(!started)return;clearTimeout(hudRoomT);hudRoomT=setTimeout(()=>{const t=performance.now();if(hudRoomLast[key]&&t-hudRoomLast[key]<45000)return;if(depoOpen||talkOpen)return;hudRoomLast[key]=t;HUD.room(name,sub);},450);}
+// nome do lugar ao entrar: só nos lugares de ROOM_TITLE, espera Lemos assentar no cômodo e mostra uma vez por sessão
+let hudRoomT=0;const hudRoomShown={};
+function hudRoomEnter(key,name){const sub=ROOM_TITLE[key];if(!started||!sub||hudRoomShown[key])return;clearTimeout(hudRoomT);hudRoomT=setTimeout(()=>{if(depoOpen||talkOpen||hudRoomShown[key])return;hudRoomShown[key]=1;HUD.room(name,sub);},450);}
 /* ---------- Fotos ---------- */
 let galI=0,GAL=[];
 function openGallery(list,i){
@@ -1813,7 +1822,7 @@ const street=()=>STREET||(STREET=createStreet({lemosLook:LOOK.lemos,personFrames
 const streetView=()=>street();
 const FADE=document.createElement('div');FADE.id='fade';FADE.setAttribute('aria-hidden','true');appEl.appendChild(FADE);
 function fadeTo(fn){FADE.classList.add('on');setTimeout(()=>{fn();requestAnimationFrame(()=>FADE.classList.remove('on'));},200);}
-function setWhere(t){lastRoom=null;$('#where-n').textContent=t;$('#b-view').hidden=t!=='Rua do DHPP';if(t==='Rua do DHPP')hudRoomEnter('rua',t,'São Paulo · outubro de 2002');}
+function setWhere(t){lastRoom=null;$('#where-n').textContent=t;$('#b-view').hidden=t!=='Rua do DHPP';if(t==='Rua do DHPP')hudRoomEnter('rua',t);}
 // entrou pela porta do DHPP: aparece na recepção, logo depois da porta
 function enterBase(instant){
   const go=()=>{SCENE='base';$('#b-view').hidden=true;AMB.setScene('base');streetLeft=performance.now();resumeBase();P1.x=16;P1.y=17;P1.path=[];P1.pend=null;P1.dir=1;
@@ -1843,7 +1852,7 @@ function goExit(){
   P1.path=pathTo(e);P1.pend={kind:'exit'};follow=true;
 }
 function updateUI(){
-  const r=roomOf(P1),nm=ROOM_NAME[r]||'';if(r!==lastRoom){lastRoom=r;$('#where-n').textContent=nm;if(nm&&r!=='wall')hudRoomEnter(r,nm,ROOM_SUB[r]||'DHPP · Área restrita');}
+  const r=roomOf(P1),nm=ROOM_NAME[r]||'';if(r!==lastRoom){lastRoom=r;$('#where-n').textContent=nm;if(nm)hudRoomEnter(r,nm);}
   const c=clockStr();if(c!==lastClk){lastClk=c;$('#clk').textContent=c;}
 }
 let last=performance.now();
