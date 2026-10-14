@@ -11,6 +11,8 @@ export type InterrogationQuestion = {
    * além de ter sido liberada por outra pergunta.
    */
   requiresClue?:string
+  /** Confronto que só faz sentido depois de juntar TODAS estas pistas. */
+  requiresClues?:string[]
   /**
    * Apresentar material: só aparece depois que a equipe entregou este material (id da diligência em Equipe),
    * além de ter sido liberada por outra pergunta.
