@@ -92,6 +92,11 @@ Falas só usam fatos do início do Caso 01 (cena lida, painel, Thor, valores, lo
 
 Com a câmera afastada (zoom abaixo de 1), as outras salas escurecem (`focusPass`) e a do Lemos fica acesa; a troca é suave quando ele muda de sala. Fora das salas (pátio, corredores) nada escurece. Ajuste: `base.focus`, em Ajustes > Bordas da tela.
 
+## Nomes no chão e sinais de novidade (14/10/2026)
+
+- Ao afastar, o nome de cada sala aparece pintado no piso junto à parede da frente (`drawRoomLabels`), em letras espaçadas com contorno escuro, sem caixa por cima dos móveis. O do corredor restrito sobe para o chão do corredor (`LABEL_DY`), longe do balcão.
+- O sinal de novidade virou um ponto amarelo com um anel que se abre devagar (`drawMarker`), e aparecem **no máximo três** (`MARKS_MAX`): primeiro a Sônia, depois a equipe com novidade e os depoimentos, depois pessoas e coisas ainda não vistas; no empate, o mais perto do Lemos. Os outros aparecem quando esses forem vistos.
+
 ## Pendências
 - Sprites são pixel art procedural; retratos de Renata, Denise, Paulo e Maurício ainda usam iniciais nos balões (aguardam arte do ChatGPT).
 - Os links levam ao app inteiro; ligação direta a Equipe/Pessoas/Arquivo depende de rota no Invesphone.
