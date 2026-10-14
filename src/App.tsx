@@ -443,6 +443,18 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
   7:'Quem entrou, quem facilitou e por quê?',
   8:'Que conclusão as provas permitem sustentar?'
  } as Record<number,string>)[game.task] ?? 'Qual é a próxima pergunta do caso?'
+ // o que Lemos sabe de fato em cada etapa: registros e declarações já obtidos, sem antecipar culpas
+ const caseKnown=({
+  0:'Sônia ligou às 04:27: duas vítimas numa casa que parece assaltada.',
+  1:'Ricardo e Helena foram mortos em casa. Lívia diz ter encontrado tudo revirado.',
+  2:'Não houve arrombamento, e objetos de valor ficaram na casa.',
+  3:'Lívia e Caio dizem que passaram a noite juntos. A versão precisa de um registro independente.',
+  4:'O alarme foi desligado às 23:52 com o código mestre.',
+  5:'23:52, alarme desligado. 00:56, entrada no motel. Há 1h04 sem registro.',
+  6:'O pai ameaçou cortar a herança de Lívia, e um extrato de Ricardo chamou atenção.',
+  7:'A cinta dos dólares ligados a Téo bate com o saque de Ricardo: US$ 5.000.',
+  8:'Téo confirmou a participação, e as versões foram confrontadas.'
+ } as Record<number,string>)[game.task] ?? ''
  const go=(to:StepGo)=>{
   if(to.kind==='team')setGame(g=>({...g,app:'team',teamFocus:to.memberId}))
   else if(to.kind==='summon')setGame(g=>({...g,summonedPeople:(g.summonedPeople??['livia','caio']).includes(to.personId)?(g.summonedPeople??[]):[...(g.summonedPeople??['livia','caio']),to.personId]}))
@@ -456,7 +468,7 @@ function PolicePhone({game,setGame}:{game:GameSave;setGame:React.Dispatch<React.
  // enquanto a leva não existe (primeira abertura), mostra as primeiras sugestões
  const notes=(batch.length?batch:guideBatchOf(nextSteps(game).filter(x=>x.done))).map(b=>{const st=liveSteps.get(b.id);const finished=doneIds.includes(b.id)||!st;return {id:b.id,finished,doneText:b.done,tag:st?.tag??'',title:st?.title??'',text:st?.text??'',cta:st?.cta,locked:st?.locked,run:()=>{if(st)go(st.go)}}})
  const unread=caseTeam.reduce((n,m)=>n+teamNews(game,m.id).count,0)
- return <HandsetHome chapterNumber={chapter.number} chapterTitle={chapter.title} caseStatus={status} caseQuestion={caseQuestion} notes={notes} peopleOpen={game.task>=2} helenaOpen={game.task>=3||(game.requestedMaterials??[]).includes('termo_apreensao_celular_helena')} archiveOpen={game.task>=3} teamBadge={unread} clueBadge={game.clues.length} onOpenApp={openApp}/>
+ return <HandsetHome chapterNumber={chapter.number} chapterTitle={chapter.title} caseStatus={status} caseQuestion={caseQuestion} caseKnown={caseKnown} notes={notes} peopleOpen={game.task>=2} helenaOpen={game.task>=3||(game.requestedMaterials??[]).includes('termo_apreensao_celular_helena')} archiveOpen={game.task>=3} teamBadge={unread} clueBadge={game.clues.length} onOpenApp={openApp}/>
 }
 function HandsetStatus(){return <header className="handset-status"><span>VIVO&nbsp;&nbsp;▮▮▮</span><b>DHPP</b><BatteryMedium/></header>}
 function PhonePage({title,back,children}:{title:string;back:()=>void;children:React.ReactNode}){return <main className={`handset page${title==='Equipe'?' team-page':''}`}><HandsetStatus/><header className="page-head"><button onClick={back}><ChevronLeft/></button><b>{title}</b><span/></header><section className="page-body">{children}</section></main>}

@@ -25,6 +25,10 @@ export type Branch = {
   opts?:string[]
   people?:string[]
   ok:number|string[]
+  /** galho de pessoas cuja resposta certa depende de qual evidência foi presa (pista → pessoa) */
+  okBy?:Record<string,string>
+  /** antes desta etapa do caso (task), a resposta fica anotada como hipótese, sem conferir: o quadro não entrega papéis antes da hora */
+  confirmAfter?:number
   /** como o galho fica escrito quando acende */
   short:string
   /** Lemos, quando acende */
@@ -46,17 +50,17 @@ export const TREE:ChapterTree[] = [
       {id:'c1_casa',q:'O que sabiam da casa?',kind:'text',need:[['cao_canil'],['vitimas_dormindo']],
         opts:['Pegaram a família de surpresa','Sabiam do Thor e de que o casal dormia','Só conheciam a rua'],ok:1,
         short:'Sabiam do Thor e do sono',yes:'Thor no canil, o casal no quarto. Quem entrou sabia como a casa estava àquela hora.',no:'Um cachorro solto não deixa ninguém entrar em silêncio. Quem prendeu o Thor?'}]},
-  {short:'Versões',q:'Quem estava onde?',done:['Não foi um roubo aleatório.','Quem podia abrir a casa estava perto dela.'],
+  {short:'Versões',q:'Quem conhecia a casa?',done:['Lívia e Caio podiam entrar sem forçar.','O carro de Caio foi visto perto da casa. Falta conferir os horários.'],
     pool:['lan_paga','rafael_lan_confirmada','alibi_cida','cida_alibi_termo','livia_chave','livia_codigo','inconsistencia_caio_codigo','caio_viu_digitando','livia_porta_aberta','vigia_gol','caio_gol_dele','vigia_horario','brigas_namoro'],
     branches:[
-      {id:'c2_fora',q:'Quem fica fora da suspeita?',kind:'people',people:['livia','caio','rafael','cida'],ok:['rafael','cida'],need:[['lan_paga','rafael_lan_confirmada'],['alibi_cida','cida_alibi_termo']],
-        short:'Rafael e Cida estão fora',yes:'Recibo da LAN e o termo da irmã. Rafael e Cida têm como provar onde estavam.',no:'Quem estava longe dali tem como provar. Olhe os álibis de novo.'},
+      {id:'c2_fora',q:'Quem tem álibi confirmado?',kind:'people',people:['livia','caio','rafael','cida'],ok:[],okBy:{lan_paga:'rafael',rafael_lan_confirmada:'rafael',alibi_cida:'cida',cida_alibi_termo:'cida'},need:[['lan_paga','rafael_lan_confirmada','alibi_cida','cida_alibi_termo']],
+        short:'Álibi confirmado: fora da suspeita',yes:'Recibo ou confirmação de terceiros: quem estava longe dali tem como provar.',no:'De quem é o álibi que você prendeu?'},
       {id:'c2_acesso',q:'Quem podia entrar sem forçar?',kind:'people',people:['livia','caio','rafael','cida','jorge'],ok:['livia','caio'],need:[['livia_chave','livia_codigo','livia_porta_aberta'],['caio_viu_digitando','inconsistencia_caio_codigo']],
         short:'Lívia e Caio podiam entrar',yes:'Chave e código: Lívia tinha os dois, e Caio viu o código ser digitado.',no:'Não basta ter estado na casa. Quem tinha a chave e o código?'},
       {id:'c2_rua',q:'O que a rua viu?',kind:'text',need:[['vigia_gol'],['caio_gol_dele','vigia_horario']],
         opts:['Ninguém estranho passou','O Gol de Caio estava perto da casa','Um carro qualquer, sem dono'],ok:1,
-        short:'O Gol de Caio estava ali',yes:'O vigia viu o Gol branco, e o Gol é de Caio.',no:'O vigia lembra de um carro. De quem é?'}]},
-  {short:'A janela',q:'O que houve entre 23:52 e 00:56?',done:['O álibi não cobre a janela.','Entre o alarme e o motel, 1h04 sem explicação.'],
+        short:'O Gol de Caio estava ali',yes:'O vigia viu o Gol branco, e o Gol é de Caio. Quem dirigia, ele não viu.',no:'O vigia lembra de um carro. De quem é?'}]},
+  {short:'A janela',q:'O álibi cobre o horário?',done:['O álibi não cobre a janela.','Entre o alarme e o motel, 1h04 sem registro. Isso ainda não diz quem entrou.'],
     pool:['log_alarme','nota_motel','caio_horario','vigia_horario','caio_sem_intervalo','agenda_helena','ameaca_heranca','brigas_namoro','pergunta_inventario','livia_sabia_heranca'],
     branches:[
       {id:'c3_noite',q:'O álibi cobre a noite?',kind:'text',need:[['log_alarme'],['nota_motel']],
@@ -64,29 +68,29 @@ export const TREE:ChapterTree[] = [
         short:'Não cobre 23:52 → 00:56',yes:'Alarme desligado às 23:52, entrada no motel às 00:56. Uma hora e quatro minutos sem ninguém.',no:'Registro de sistema não tem pressa nem motivo. Compare as duas horas.'},
       {id:'c3_gol',q:'Onde estava o Gol?',kind:'text',need:[['vigia_horario'],['caio_horario','caio_sem_intervalo']],
         opts:['No motel a noite toda','Perto da casa, antes de chegar ao motel','Na casa de Téo'],ok:1,
-        short:'Perto da casa antes do motel',yes:'Caio diz “onze e pouco” no motel. O vigia viu o Gol perto da casa às 23h30.',no:'Duas versões para o mesmo carro na mesma hora. Qual tem testemunha?'},
+        short:'O Gol perto da casa antes do motel',yes:'Caio diz “onze e pouco” no motel. O vigia viu o Gol perto da casa às 23h30.',no:'Duas versões para o mesmo carro na mesma hora. Qual tem testemunha?'},
       {id:'c3_porque',q:'Por quê?',kind:'text',need:[['agenda_helena','brigas_namoro'],['ameaca_heranca','pergunta_inventario','livia_sabia_heranca']],
         opts:['Uma dívida de Ricardo','A família contra o namoro, com a herança em jogo','Um assalto que deu errado'],ok:1,
         short:'Namoro e herança',yes:'A agenda de Helena e a ameaça do pai. O namoro e a herança estavam em jogo.',no:'Volte ao que a família dizia sobre Lívia e Caio.'}]},
-  {short:'O dinheiro',q:'De onde vem o dinheiro?',done:['Téo comprometido.','O dinheiro dele saiu da casa.'],
-    pool:['extrato_ricardo','carta_cobranca','moto_dolares','cinta_bancaria','teo_adiantamento','agenda_helena'],
+  {short:'O dinheiro',q:'De onde vem o dinheiro de Téo?',done:['O dinheiro da casa chegou a Téo.','Falta explicar por que ele tinha esse dinheiro.'],
+    pool:['extrato_ricardo','carta_cobranca','moto_dolares','cinta_bancaria','teo_adiantamento','valores_intactos','busca_dirigida','agenda_helena'],
     branches:[
-      {id:'c4_divida',q:'A dívida de Ricardo explica?',kind:'text',need:[['carta_cobranca']],
-        opts:['Sim: um credor mandou cobrar','Não: a cobrança não tem ligação com a casa'],ok:1,
-        short:'A dívida é pista falsa',yes:'Credor, cobrança, negócio: nada liga a dívida à casa ou aos horários.',no:'A equipe checou o credor. O que ele tem a ver com a noite?'},
+      {id:'c4_alvo',q:'Por que quase nada sumiu?',kind:'text',need:[['valores_intactos','busca_dirigida']],
+        opts:['Os ladrões se assustaram e fugiram','Procuravam um dinheiro certo, e sabiam onde','Não acharam o cofre'],ok:1,
+        short:'Procuravam um dinheiro certo',yes:'Joias e relógio ficaram. Quem entrou foi atrás de uma coisa só.',no:'Se fosse susto, a bagunça não seria tão escolhida. Olhe o que ficou.'},
       {id:'c4_origem',q:'De onde saíram os dólares?',kind:'text',need:[['cinta_bancaria'],['extrato_ricardo']],
         opts:['De um negócio de Téo','Do dinheiro que Ricardo sacou e guardava em casa','De uma economia da família Duarte'],ok:1,
-        short:'Do dinheiro guardado na casa',yes:'Banco Meridional, agência 0431, 15/10. A mesma cinta do saque de Ricardo.',no:'Compare a cinta com o extrato de Ricardo.'},
+        short:'Do dinheiro guardado na casa',yes:'Banco Meridional, agência 0431, 15/10/2002, US$ 5.000. A mesma cinta do saque de Ricardo.',no:'Compare a cinta com o extrato de Ricardo.'},
       {id:'c4_teo',q:'Com quem estava o dinheiro?',kind:'people',people:['caio','teo','livia','rafael'],ok:['teo'],need:[['moto_dolares'],['teo_adiantamento']],
-        short:'Com Téo, dado por Caio',yes:'Os dólares da moto e o adiantamento que Caio dividiu. O dinheiro chegou a Téo.',no:'Quem gastou o que não tinha?'}]},
-  {short:'A última versão',q:'Quem fez o quê?',done:['Caio e Téo entraram. Lívia abriu o caminho.','Pela herança e pelo namoro que os pais não aceitavam.'],
+        short:'Com Téo, passado por Caio',yes:'Os dólares da moto e o que Téo admitiu: Caio lhe passou parte do dinheiro.',no:'Quem gastou o que não tinha?'}]},
+  {short:'A última versão',q:'Quem executou e quem facilitou?',done:['Caio e Téo entraram. Lívia abriu o caminho.','Pela herança e pelo namoro que os pais não aceitavam.'],
     pool:['teo_entrou_com_caio','caio_digitou_alarme','caio_admite_codigo','plano_preparado_antes','livia_thor_caio','livia_passou_codigo','confissao_teo','ameaca_heranca','livia_sabia_heranca','agenda_helena','log_alarme'],
     branches:[
       {id:'c5_dentro',q:'Quem entrou na casa?',kind:'people',people:['livia','caio','teo','rafael','jorge'],ok:['caio','teo'],need:[['teo_entrou_com_caio','confissao_teo'],['caio_digitou_alarme','caio_admite_codigo','log_alarme']],
         short:'Caio e Téo entraram',yes:'Téo entrou com Caio, e Caio digitou o código às 23:52.',no:'Quem digitou o código, e quem estava junto?'},
-      {id:'c5_caminho',q:'Quem abriu o caminho?',kind:'people',people:['livia','caio','teo','cida'],ok:['livia'],need:[['livia_passou_codigo','livia_thor_caio'],['plano_preparado_antes','confissao_teo']],
+      {id:'c5_caminho',q:'Quem abriu o caminho?',kind:'people',people:['livia','caio','teo','cida'],ok:['livia'],confirmAfter:8,need:[['livia_passou_codigo','livia_thor_caio'],['plano_preparado_antes','confissao_teo']],
         short:'Lívia preparou o acesso',yes:'O código, o Thor, o horário. Alguém de dentro deixou tudo pronto.',no:'Quem chegou sabendo de tudo aprendeu com alguém da casa.'},
-      {id:'c5_motivo',q:'Por quê?',kind:'text',need:[['ameaca_heranca'],['livia_sabia_heranca','agenda_helena']],
+      {id:'c5_motivo',q:'Por quê?',kind:'text',need:[['ameaca_heranca'],['livia_sabia_heranca','agenda_helena','brigas_namoro','pergunta_inventario']],
         opts:['Roubo','Herança e o conflito dos pais com o namoro','Vingança de Téo'],ok:1,
         short:'Herança e namoro',yes:'O pai ameaçou cortar a herança, e Lívia sabia o que receberia.',no:'Nada de valor saiu da casa, além do dinheiro guardado. O que mais estava em jogo?'}]},
 ]
@@ -194,10 +198,11 @@ export function fits(b:Branch,ids:(string|null)[]){
   if(b.need.length===1)return b.need[0].includes(ids[0]!)
   const [x,y]=ids as string[];return (b.need[0].includes(x)&&b.need[1].includes(y))||(b.need[0].includes(y)&&b.need[1].includes(x))
 }
-export function rightAnswer(b:Branch,a:number|string[]|undefined){
+export function rightAnswer(b:Branch,a:number|string[]|undefined,ids:(string|null)[]=[]){
   if(a==null)return false
   if(b.kind==='text')return a===b.ok
-  const s=(v:string[])=>[...v].sort().join();return Array.isArray(a)&&s(a)===s(b.ok as string[])
+  const ok=b.okBy?[...new Set(ids.filter((x):x is string=>!!x).map(id=>b.okBy![id]).filter(Boolean))]:b.ok as string[]
+  const s=(v:string[])=>[...v].sort().join();return Array.isArray(a)&&ok.length>0&&s(a)===s(ok)
 }
 
 /** Frases que o jogador de fato ouviu (a pergunta foi feita no depoimento). */
@@ -218,7 +223,7 @@ export function sourcesOf(g:CaseSave,id:string,found:string[]){
 export const discoveredOf=(g:CaseSave)=>g.discoveredPeople??DEFAULT_DISCOVERED
 
 /** Estado do quadro guardado no save (fios do jogador, falas postas na linha, o que ele já viu e o relatório em montagem). */
-export type BranchSave = {s:(string|null)[];lit?:boolean;a?:number|string[]}
+export type BranchSave = {s:(string|null)[];lit?:boolean;a?:number|string[];hyp?:boolean}
 export type BoardSave = {stage?:number;links:Record<string,string[]>;placed:string[];seen:string[];roles:Record<string,'exec'|'mentor'|'fora'>;motive?:'heranca'|'roubo';proofs:string[]
   /** árvore de dedução: o que está preso em cada galho e se ele já acendeu */
   tree:Record<string,BranchSave>}

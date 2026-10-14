@@ -135,6 +135,8 @@
 .ct-node.ready{transform:rotate(-1deg);outline:3px solid var(--gold);outline-offset:3px}
 .ct-node.ready b{font:700 21px/1 var(--hand);color:var(--red)}
 .ct-node.done{transform:rotate(.8deg)}
+.ct-node.hyp{transform:rotate(-.6deg);outline:2px dashed #5a5348;outline-offset:3px}
+.ct-node.hyp b{font:700 19px/1 var(--hand);color:#1f2a44}
 .ct-node.done b{color:#9e1c14}
 .ct-node.lock{background:rgba(248,244,234,.16);box-shadow:none;outline:2px dashed rgba(255,244,220,.4);cursor:default}
 .ct-node.lock small,.ct-node.lock b{color:rgba(255,244,220,.7)}

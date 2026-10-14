@@ -43,6 +43,8 @@ export const nextSteps=(game:CaseSave):GuideStepData[]=>{
     for(const x of roster){
       if(game.interviewed.includes(x.id)||!summoned.includes(x.id))continue
       const started=progressOf(game,x.id).asked.length>0
+      // já começou e não há pergunta disponível agora: a próxima depende de outra linha (não prender o jogador aqui)
+      if(started&&!pendingQuestions(interrogations[x.id],progressOf(game,x.id),game.clues,requested).length)continue
       out.push({id:'depo-'+x.id,done:`Interrogatório de ${nameOf(x.id)} concluído`,tag:'INTERROGATÓRIO',title:`${nameOf(x.id)} aguarda para ser interrogado`,text:started?'Você já começou: continue de onde parou.':personWhy[x.id]??x.role,cta:`Interrogar ${nameOf(x.id)}`,go:{kind:'depo',personId:x.id}})
     }
     // quem apareceu na investigação e ainda não foi chamado
@@ -95,7 +97,8 @@ export const nextSteps=(game:CaseSave):GuideStepData[]=>{
     if(game.task===4)return id==='team-paulo'?0:id==='retake-caio'?1:id==='team-renata'?2:12
     if(game.task===5)return id==='retake-livia'?0:id==='team-renata'?1:id==='team-denise'?2:12
     if(game.task===6)return id==='team-renata'?0:id==='depo-teo'||id==='call-teo'?1:12
-    if(game.task===7)return id==='retake-teo'||id==='depo-teo'?0:id==='retake-caio'||id==='retake-livia'?1:12
+    // com a cinta, a linha é Téo: chamar, ouvir e confrontar; depois testar as versões de Caio e Lívia
+    if(game.task===7)return id==='call-teo'||id==='depo-teo'||id==='retake-teo'?0:id==='retake-caio'||id==='retake-livia'?1:12
     return 20
   }
   const available=out.filter(x=>!x.locked).sort((a,b)=>priority(a)-priority(b))

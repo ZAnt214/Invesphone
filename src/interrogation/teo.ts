@@ -54,7 +54,7 @@ export const teoInterrogation:InterrogationConfig = {
       answer:'O Caio me deu uma parte. Falou que era de um negócio… eu não perguntei de onde vinha. Só isso.',
       expression:'nervous',
       unlocks:['confront_bank'],
-      highlights:[{ phrase:'O Caio disse que ia ter dinheiro', clue:'teo_adiantamento' }]
+      highlights:[{ phrase:'O Caio me deu uma parte', clue:'teo_adiantamento' }]
     },
     {
       id:'confront_bank',

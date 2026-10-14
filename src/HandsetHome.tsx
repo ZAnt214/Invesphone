@@ -11,6 +11,8 @@ type Props = {
   chapterTitle:string
   caseStatus:string
   caseQuestion:string
+  /** o que Lemos já sabe de fato (registro ou depoimento), em uma frase */
+  caseKnown:string
   notes:GuideNote[]
   teamBadge:number
   clueBadge:number
@@ -51,7 +53,8 @@ export default function HandsetHome(p:Props){
 
       <section className="hm-guide" aria-label="Próximos passos do caso">
         <header><i aria-hidden="true"/><b>Caso 01 · {p.caseStatus}</b></header>
-        <p className="hm-question">{p.caseQuestion}</p>
+        <p className="hm-known"><b>Sabemos</b>{p.caseKnown}</p>
+        <p className="hm-question"><b>Falta entender</b>{p.caseQuestion}</p>
         <ol key={p.notes.map(n=>n.id).join('|')}>
           {p.notes.map((n,i)=>{
             if(n.finished) return <li key={n.id} className="done"><span aria-hidden="true"><Check/></span><s>{n.doneText}</s></li>
