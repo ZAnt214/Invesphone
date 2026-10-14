@@ -85,7 +85,9 @@ export const teoInterrogation:InterrogationConfig = {
     },
     {
       id:'confess',
-      requiresClue:'livia_thor_caio',
+      // Só pergunta depois de confrontar a rotina de Thor com Lívia e o uso do código com Caio.
+      // A confirmação final não deve anteceder o teste da hipótese em ambos.
+      requiresClues:['livia_thor_caio','caio_admite_codigo'],
       question:'Quem preparou essas informações com o Caio?',
       answer:'A Lívia deixou tudo pronto. O código, o cachorro… O Caio me passou o resto. Eu entrei com ele. É isso.',
       expression:'teary',
