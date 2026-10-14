@@ -28,7 +28,7 @@ A integração com o jogo fica em `src/base/base.js` (bloco "HUD do Lemos") e no
 
 | Momento | Gatilho | O que aparece |
 |---|---|---|
-| Faixas de cinema | Lemos entra num lugar importante (`updateUI`) ou chega à rua (`setWhere`) | Faixas pretas entram de cima e de baixo; na de baixo, o nome do lugar em caixa-alta espaçada, um traço e o subtítulo em âmbar. Ficam uns 3 s e saem juntas. Espera Lemos ficar 450 ms no lugar e aparece **uma vez por sessão** em cada lugar. Ver "Onde o título aparece". |
+| Faixas de cinema | Lemos fica 450 ms num lugar importante com a tela livre (`hudRoomTick` em `src/base/base.js`, a cada 200 ms) | Faixas pretas entram de cima e de baixo; na de baixo, o nome do lugar em caixa-alta espaçada, um traço e o subtítulo em âmbar. Ficam uns 3 s e saem juntas. Enquanto estão na tela, nada fica por cima (ver "Tela limpa durante as faixas"). Aparece **uma vez por sessão** em cada lugar. Ver "Onde o título aparece". |
 | Nova descoberta | Chegou no save um material da equipe, uma pessoa identificada ou um depoimento registrado | Cartão de vidro no canto de baixo com sino, faixa de luz e palavras saindo do desfoque; fio de 8 s. Tocar abre o material na galeria (fotos e documentos com `assetPaths`) ou a caderneta. Vários ao mesmo tempo viram um cartão só ("· +N"), com prioridade para o material. |
 | Pista anexada | Pista nova em `clues` | O documento brilha no centro, se comprime num ponto de luz e voa em rastro até a caderneta; na chegada, ondas, faíscas, o número rola e aparece "Anexado ao caso". No máximo três seguidas; as outras só somam no número. |
 
@@ -50,7 +50,18 @@ O nome do lugar só entra nos lugares que pesam na história; nos lugares de pas
 | Sala da equipe | não | | Lemos passa por ela o tempo todo |
 | Recepção, corredor restrito, pátio, corredores | não | | Passagem |
 
-Cada lugar aparece uma vez por sessão (até recarregar o jogo). Se uma conversa ou um depoimento estiver aberto na hora, ele não conta como mostrado e aparece na próxima entrada. Nos outros lugares, o nome continua no cabeçalho, pequeno.
+Cada lugar aparece uma vez por sessão do navegador: o que já foi mostrado fica em `sessionStorage` (`invesphone.hud.lugares`), então ir ao aparelho e voltar, ou o iPhone recarregar a aba, não repete. Nos outros lugares, o nome continua no cabeçalho, pequeno.
+
+A tela precisa estar livre: sem conversa, depoimento, quadro, foto, caderneta, leitora de crachá ou tela de abertura, e sem Lemos a caminho de alguém que o jogador tocou (`P1.pend`). Como quase sempre se chega às salas importantes tocando em alguém (a Sônia, a mesa de depoimento), o nome entra quando a conversa fecha, se Lemos ainda estiver ali. Se as faixas forem cortadas nos primeiros 2,5 s porque o jogador abriu algo, o lugar não conta como mostrado e o nome volta depois.
+
+### Tela limpa durante as faixas
+
+Enquanto as faixas estão na tela, `#app` ganha a classe `lh-cine`:
+
+- o cabeçalho (retrato e botões), o aviso de mensagem (`#toast`) e os cartões de descoberta e de pista somem;
+- avisos novos esperam as faixas saírem (`toast` em `base.js` e a fila do HUD);
+- os personagens não começam balão de fala (`bubble`);
+- abrir conversa, depoimento, quadro, foto, caderneta ou a leitora de crachá tira as faixas na hora (`HUD.stopRoom`).
 
 ## Caderneta
 
