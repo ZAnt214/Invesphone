@@ -4,9 +4,10 @@
 
 Status: CANÔNICO PARA ESTRUTURA DE JOGO  
 Fonte narrativa: `docs/CASE01_STORY_BIBLE.md`  
-Resumo canônico: `docs/CASE01_CANON.json`
+Resumo canônico: `docs/CASE01_CANON.json`  
+**Guia prioritário para clareza e apresentação ao jogador:** `docs/CASE01_JORNADA_DO_JOGADOR.md`
 
-Este documento define **como o Caso 01 deve ser jogado do início ao fim**. Ele não substitui a bíblia narrativa: ele organiza a experiência do jogador.
+Este documento detalha cenas, acontecimentos e gatilhos. A sequência que o jogador **percebe**, as prioridades visíveis e o limite de informações concorrentes seguem `docs/CASE01_JORNADA_DO_JOGADOR.md`. Em caso de divergência sobre clareza ou conteúdo apresentado de uma vez, prevalece o guia; a Bíblia e o CANON continuam decidindo a verdade dos fatos.
 
 ---
 
@@ -139,7 +140,7 @@ A conexão financeira leva a Téo.
 
 ## ESTADO 9 — ESTRUTURA DO PLANO
 
-A confissão separa executor de mentor.
+O jogador deduz os papéis antes da confissão final; a confissão depois confirma.
 
 ## ESTADO 10 — ACUSAÇÃO
 
@@ -215,10 +216,11 @@ O cartão deve responder:
 - onde;
 - quem;
 - hipótese atual;
-- tarefa imediata.
+- pergunta principal em aberto;
+- caminho natural para verificar.
 
-Texto de tarefa:
-"Revise a cena antes de ouvir qualquer versão."
+Orientação contextual (sem nome de tarefa):
+"O que aconteceu nesta casa? Comece pela cena e veja o que não combina com um roubo."
 
 Ação principal:
 "Abrir cena"
@@ -235,12 +237,14 @@ ID: `scene_sweep`
 Tela:
 planta/ambiente investigável.
 
-Hotspots obrigatórios:
+Vestígios essenciais para a leitura inicial:
 - porta intacta;
 - painel do alarme;
 - Thor preso;
+- valores intactos.
+
+Vestígios complementares, disponíveis para quem quiser examinar mais:
 - escritório revirado;
-- valores intactos;
 - quarto da Lívia;
 - vítimas surpreendidas.
 
@@ -251,7 +255,7 @@ Sônia pode mandar uma mensagem depois de 3 achados:
 "Não olha só pro que mexeram. Olha pro que deixaram."
 
 Gatilho de conclusão:
-todos os hotspots essenciais vistos.
+os quatro vestígios essenciais reconhecidos; os complementares continuam disponíveis e não viram pedágio.
 
 Conclusão lógica mostrada no caderno:
 "Roubo comum não explica a cena."
@@ -295,12 +299,9 @@ ID: `first_versions`
 Capítulo:
 Versões.
 
-Pessoas disponíveis:
-- Lívia;
-- Rafael;
-- Cida;
-- Jorge;
-- Caio.
+Pessoas conhecidas inicialmente: Lívia, Caio, Rafael e Cida. **Jorge surge pela conversa com Paulo sobre a rua**, não como suspeito já visível no primeiro minuto.
+
+Linha principal: ouvir Lívia e Caio separadamente, mais uma versão adicional que ajude a conferir contexto. Rafael e Cida dão informação valiosa, mas não é obrigatório ouvir ambos para o próximo registro chegar. A equipe pode localizar Jorge independentemente deles.
 
 O jogador não precisa concluir todos de uma vez.
 
@@ -438,9 +439,11 @@ Saída:
 
 Condições recomendadas:
 - cena investigada;
-- pelo menos 4 depoimentos iniciais feitos;
-- `vigia_gol` obtido ou solicitado;
-- pedido do log já ativo.
+- Lívia e Caio ouvidos, além de pelo menos mais uma versão inicial;
+- linha de registros discutida com Renata;
+- pedido do log em andamento ou material entregue.
+
+A pista `vigia_gol` é desejável para sustentar a leitura da rua, mas sua obtenção pode ocorrer em paralelo; Rafael e Cida não são pedágio para o alarme.
 
 Evento:
 mensagem da Inteligência.
@@ -1490,6 +1493,8 @@ O jogador nunca deve conseguir pedir uma prova futura sem ter fundamento narrati
 
 
 # 55. INVESTIGAÇÃO SEM "TAREFAS"
+
+Guia de apresentação e redação: `docs/CASE01_JORNADA_DO_JOGADOR.md`. A home deve priorizar uma pergunta e uma ação viável; as demais frentes permanecem nos apps naturais.
 
 A camada de `task` pode continuar existindo internamente como estado técnico de compatibilidade, mas **não é um conceito apresentado ao jogador**.
 
