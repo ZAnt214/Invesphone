@@ -10,9 +10,14 @@ export type CaseSave = TeamGame & {version:number;summonedPeople?:string[];[k:st
 /** Começo do caso quando ainda não há save: o plantão de madrugada na base do DHPP. */
 const seed = ():CaseSave => ({version:SAVE_VERSION,screen:'incoming',app:'home',task:1,clues:[],interviewed:[],orders:[],discoveredPeople:[...DEFAULT_DISCOVERED],summonedPeople:['livia','caio'],score:1000})
 
-/** Recomeçar o caso: apaga o save e o que depende dele (caderneta do Lemos e o que o HUD já anunciou). */
+/** Recomeçar o caso: apaga o save e tudo o que depende dele, para o jogo voltar ao plantão de madrugada:
+    caderneta do Lemos, o que o HUD já anunciou, o fim da varredura da casa (sem ele a base volta a ser de madrugada),
+    o que Lemos já examinou na base e, na sessão, os lugares já anunciados e a reabertura de depoimento/quadro.
+    Os ajustes (gráficos, som, efeitos) e os tutoriais já vistos ficam. */
+export const CASE_STORAGE = [SAVE_KEY,'invesphone.caderneta','invesphone.hud.seen','varredura.fim','base.seen']
 export function resetCaseStorage(){
-  for(const k of [SAVE_KEY,'invesphone.caderneta','invesphone.hud.seen']){try{localStorage.removeItem(k)}catch{/* sem armazenamento */}}
+  for(const k of CASE_STORAGE){try{localStorage.removeItem(k)}catch{/* sem armazenamento */}}
+  for(const k of ['invesphone.hud.lugares','base.reopen']){try{sessionStorage.removeItem(k)}catch{/* sem armazenamento */}}
 }
 
 export function readCase():CaseSave{
