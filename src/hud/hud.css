@@ -1,4 +1,4 @@
-/* HUD do Lemos (src/hud/hud.js): retrato num mostrador, faixa do ambiente, última descoberta, evidência anexada e caderneta.
+/* HUD do Lemos (src/hud/hud.js): retrato, faixas de cinema com o nome do lugar, última descoberta, evidência anexada e caderneta.
    Quase nada fica na tela; o resto só aparece quando algo acontece. Fica dentro de #app e gira junto com o jogo. */
 @font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:600;font-display:swap;src:url('/fonts/cormorant-garamond-italic-600-latin.woff2') format('woff2')}
 @font-face{font-family:'Jost';font-style:normal;font-weight:300 500;font-display:swap;src:url('/fonts/jost-latin.woff2') format('woff2')}
@@ -7,27 +7,19 @@
 /* barra de cima: retrato à esquerda, botões finos à direita, sem placa por trás */
 .hud.lh{display:flex;align-items:flex-start;justify-content:space-between;height:62px;padding:calc(var(--st,env(safe-area-inset-top,0px)) + 10px) calc(var(--sr,env(safe-area-inset-right,0px)) + 14px) 0 calc(var(--sl,env(safe-area-inset-left,0px)) + 14px);box-sizing:content-box;
   background:linear-gradient(rgba(4,5,7,.55),rgba(4,5,7,0));pointer-events:none}
-.lh-id{display:flex;align-items:center;gap:12px;pointer-events:auto}
-.lh-dial{position:relative;width:60px;height:60px;flex:none;isolation:isolate}   /* a mistura de cor do grão e do tom fica só no retrato, sem ler o jogo por trás */
-.lh-dial svg{position:absolute;inset:0;width:100%;height:100%;will-change:transform;animation:lh-spin 90s linear infinite}
-.lh-dial svg line{stroke:rgba(255,255,255,.4);stroke-width:1}
-.lh-dial svg line.l{stroke:rgba(255,255,255,.82)}
-.lh-dial .sheen{position:absolute;inset:2px;will-change:transform;border-radius:50%;background:conic-gradient(from 0deg,transparent 0 72%,var(--lh-acc) 88%,#fff 90%,transparent 93%);-webkit-mask:radial-gradient(circle,transparent 25px,#000 26px,#000 27px,transparent 28px);mask:radial-gradient(circle,transparent 25px,#000 26px,#000 27px,transparent 28px);animation:lh-spin 5.5s linear infinite}
-.lh-dial .ph{position:absolute;left:7px;top:7px;width:46px;height:46px;border-radius:50%;overflow:hidden;isolation:isolate;box-shadow:0 0 0 1px rgba(0,0,0,.6),0 6px 16px rgba(0,0,0,.6)}
-.lh-dial .ph img{display:block;width:100%;height:100%;object-fit:cover;filter:contrast(1.08) saturate(.82) brightness(.97)}
-.lh-dial .ph::before{content:'';position:absolute;inset:0;z-index:1;background:radial-gradient(circle at 35% 30%,rgba(255,220,170,.18),transparent 55%),radial-gradient(circle,transparent 55%,rgba(0,0,0,.55));mix-blend-mode:soft-light}
-.lh-dial .ph::after{content:'';position:absolute;inset:-60%;z-index:2;will-change:transform;background:linear-gradient(115deg,transparent 42%,rgba(255,255,255,.36) 50%,transparent 58%);transform:translateX(-70%);animation:lh-sweep 9s 2s ease-in-out infinite}
-.lh-dial .grain{position:absolute;left:7px;top:7px;width:46px;height:46px;border-radius:50%;z-index:3;opacity:.2;mix-blend-mode:overlay;pointer-events:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='120' height='120' filter='url(%23n)'/></svg>")}
-.lh-dial .dot{position:absolute;right:4px;bottom:5px;z-index:4;width:8px;height:8px;border-radius:50%;background:#5fe39a;box-shadow:0 0 0 2px #0a0b0d,0 0 8px #5fe39a}
-.lh-dial .dot::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:1px solid #5fe39a;animation:lh-ping 2.4s ease-out infinite}
-#app.lh-alert .lh-dial .sheen{animation-duration:1.2s;filter:drop-shadow(0 0 5px var(--lh-acc))}
-#app.lh-still .lh-dial svg,#app.lh-still .lh-dial .sheen,#app.lh-still .lh-dial .ph::after,#app.lh-still .lh-dial .dot::after{animation:none}
-#app.lh-still .lh-dial .sheen{opacity:.35}
-.lh-nm{display:flex;flex-direction:column;gap:5px;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.85);min-width:0}
-.lh-nm b{font:500 12px/1 var(--lh-ui);letter-spacing:.46em}
-.lh-nm i{display:block;width:100%;height:1px;background:linear-gradient(90deg,var(--lh-acc),transparent)}
-.lh-nm span{font:400 8.5px/1 var(--lh-ui);letter-spacing:.32em;color:rgba(255,255,255,.66);text-transform:uppercase}
-.lh-nm em{font:300 10px/1 var(--lh-ui);letter-spacing:.22em;font-style:normal;color:rgba(255,255,255,.62);white-space:nowrap}
+.lh-id{display:flex;align-items:center;gap:10px;min-height:38px;pointer-events:auto}
+.lh-dial{position:relative;width:30px;height:30px;flex:none;border-radius:50%}
+.lh-dial .ph{display:block;width:30px;height:30px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.55),0 4px 12px rgba(0,0,0,.55)}
+.lh-dial .ph img{display:block;width:100%;height:100%;object-fit:cover}
+.lh-dial .dot{position:absolute;right:-2px;bottom:-1px;width:6px;height:6px;border-radius:50%;background:#5fe39a;box-shadow:0 0 0 2px #0a0b0d}
+/* descoberta: um anel âmbar pulsa em volta do rosto */
+.lh-dial::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:1px solid var(--lh-acc);opacity:0;pointer-events:none}
+#app.lh-alert .lh-dial::after{animation:lh-ring 1.3s ease-out 2}
+#app.lh-still .lh-dial::after{animation:none}
+#app.lh-still.lh-alert .lh-dial::after{opacity:.9}
+.lh-nm{display:flex;flex-direction:column;gap:6px;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.85);min-width:0}
+.lh-nm b{font:400 10px/1 var(--lh-ui);letter-spacing:.42em}
+.lh-nm em{font:300 9px/1 var(--lh-ui);letter-spacing:.2em;font-style:normal;color:rgba(255,255,255,.6);white-space:nowrap}
 .lh-btns{display:flex;align-items:center;gap:4px;pointer-events:auto}
 .lh-b{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;min-width:38px;height:38px;padding:0 8px;box-sizing:border-box;border:0;border-radius:19px;background:none;color:#fff;cursor:pointer;text-shadow:0 1px 6px rgba(0,0,0,.8);transition:background .2s}
 .lh-b:hover{background:rgba(255,255,255,.08)}
@@ -41,15 +33,25 @@
 .lh-nb .tag{position:absolute;right:4px;top:42px;font:italic 500 16px var(--lh-title);color:var(--lh-acc);white-space:nowrap;opacity:0;pointer-events:none;text-shadow:0 0 12px rgba(0,0,0,.9)}
 .lh-nb.hit .tag{animation:lh-tag 2s .1s ease-out}
 
-/* faixa do ambiente */
-.lh-room{position:absolute;left:0;right:0;top:40%;z-index:4;display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;color:#fff}
-.lh-room .t{font:italic 600 48px/1 var(--lh-title);white-space:nowrap;text-shadow:0 0 24px rgba(0,0,0,.65)}
-.lh-room .t span{display:inline-block;opacity:0}
-.lh-room .s{font:400 10px/1 var(--lh-ui);letter-spacing:.6em;color:var(--lh-acc);opacity:0;text-transform:uppercase;text-shadow:0 0 10px rgba(0,0,0,.9)}
-.lh-room.on .t span{animation:lh-letter .9s cubic-bezier(.2,.7,.2,1) forwards}
-.lh-room.on .s{animation:lh-sub 1s .7s ease-out forwards}
+/* faixas de cinema: entram de cima e de baixo; o nome do lugar fica na de baixo. Ficam embaixo do cabeçalho (z 5). */
+.lh-room{position:absolute;inset:0;z-index:4;pointer-events:none}
 .lh-room:not(.on){visibility:hidden}
-.lh-room.out{transition:opacity .8s ease-in,filter .8s ease-in,transform .8s ease-in;opacity:0;filter:blur(6px);transform:translateY(-6px)}
+.lh-room .lb{position:absolute;left:0;right:0;display:block;background:#050608;transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.lh-room .top{top:0;height:calc(var(--st,env(safe-area-inset-top,0px)) + 46px);transform:translateY(-100%)}
+.lh-room .bot{bottom:0;height:calc(var(--sb,env(safe-area-inset-bottom,0px)) + 40px);box-sizing:border-box;padding-bottom:var(--sb,env(safe-area-inset-bottom,0px));transform:translateY(100%);
+  display:flex;align-items:center;justify-content:center;gap:16px;color:#f4efe6}
+.lh-room.on .lb{transform:none}
+.lh-room .t{font:400 12px/1 var(--lh-ui);letter-spacing:.62em;padding-left:.62em;text-transform:uppercase;white-space:nowrap;opacity:0;transition:opacity .7s .45s,letter-spacing 1.4s .45s cubic-bezier(.2,.8,.2,1);letter-spacing:.9em}
+.lh-room .rl{display:block;width:0;height:1px;background:rgba(255,255,255,.35);transition:width .7s .7s}
+.lh-room .s{font:400 9px/1 var(--lh-ui);letter-spacing:.3em;text-transform:uppercase;color:var(--lh-acc);white-space:nowrap;opacity:0;transition:opacity .7s .8s}
+.lh-room.on .t{opacity:1;letter-spacing:.62em}
+.lh-room.on .rl{width:24px}
+.lh-room.on .s{opacity:1}
+.lh-room.out .lb{transition:transform .6s cubic-bezier(.6,0,.8,.2) .1s}
+.lh-room.out .top{transform:translateY(-100%)}
+.lh-room.out .bot{transform:translateY(100%)}
+.lh-room.out .t,.lh-room.out .s,.lh-room.out .rl{transition:opacity .25s;opacity:0}
+@media (max-width:520px){.lh-room .s,.lh-room .rl{display:none}.lh-room .t{letter-spacing:.42em}.lh-room.on .t{letter-spacing:.42em}}
 
 /* cartões de vidro (sem desfoque do fundo: no Safari, o desfoque por cima do canvas deixa rastro) */
 .lh-glass{background:linear-gradient(180deg,rgba(24,26,32,.86),rgba(11,12,15,.9));border:1px solid rgba(255,255,255,.09);box-shadow:0 24px 60px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08);color:#fff;font-family:var(--lh-ui)}
@@ -123,11 +125,6 @@
 
 /* depoimento e quadro do caso ocupam a tela: o HUD some junto */
 body.depo-on .lh-room,body.depo-on .lh-disc,body.depo-on .lh-ev,body.depo-on .lh-fx,body.depo-on .lh-book,body.depo-on .lh-scrim{display:none}
-@keyframes lh-spin{to{transform:rotate(360deg)}}
-@keyframes lh-sweep{0%,70%{transform:translateX(-70%)}100%{transform:translateX(70%)}}
-@keyframes lh-ping{0%{transform:scale(.6);opacity:.9}100%{transform:scale(1.8);opacity:0}}
-@keyframes lh-letter{0%{opacity:0;filter:blur(14px);transform:translateY(10px) scale(1.08)}100%{opacity:1;filter:blur(0);transform:none}}
-@keyframes lh-sub{0%{opacity:0;letter-spacing:1.1em}100%{opacity:1;letter-spacing:.6em}}
 @keyframes lh-dIn{to{opacity:1;transform:none;filter:none}}
 @keyframes lh-dOut{from{opacity:1;transform:none;filter:none}to{opacity:0;transform:translateY(8px);filter:blur(10px)}}
 @keyframes lh-light{to{transform:translateX(120%)}}
@@ -136,8 +133,9 @@ body.depo-on .lh-room,body.depo-on .lh-disc,body.depo-on .lh-ev,body.depo-on .lh
 @keyframes lh-evIn{0%{opacity:0;transform:scale(.86);filter:blur(12px) brightness(2)}100%{opacity:1;transform:none;filter:none}}
 @keyframes lh-evGo{0%{opacity:1;transform:none;filter:none}100%{opacity:0;transform:scale(.06);filter:blur(6px) brightness(4)}}
 @keyframes lh-hit{0%{transform:scale(1)}30%{transform:scale(1.35)}100%{transform:scale(1)}}
+@keyframes lh-ring{0%{opacity:.95;transform:scale(1)}100%{opacity:0;transform:scale(1.55)}}
 @keyframes lh-roll{from{transform:translateY(100%);filter:blur(2px)}}
 @keyframes lh-tag{0%{opacity:0;transform:translateY(-4px);filter:blur(6px)}15%,70%{opacity:1;transform:none;filter:none}100%{opacity:0;filter:blur(4px)}}
 @keyframes lh-li{to{opacity:1;transform:none;filter:none}}
 @keyframes lh-blink{50%{opacity:.35}}
-@media (prefers-reduced-motion:reduce){.hud.lh *,.lh-room *,.lh-disc,.lh-disc *,.lh-ev,.lh-book,.lh-book *{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
+@media (prefers-reduced-motion:reduce){.hud.lh *,.lh-room,.lh-room *,.lh-disc,.lh-disc *,.lh-ev,.lh-book,.lh-book *{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
