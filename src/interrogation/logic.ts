@@ -120,7 +120,7 @@ const clampPressure = (n:number) => Math.max(0,Math.min(100,n))
 export function questionPressure(q:InterrogationQuestion):number{
   if(q.pressure!==undefined) return q.pressure
   const base = Math.max(0,Math.round((emotionLevel(emotionOf(q.expression ?? 'neutral'))-30)/9))
-  return base + (q.requiresClue || q.requiresMaterial ? 6 : 0)
+  return base + (q.requiresClue || q.requiresClues?.length || q.requiresMaterial ? 6 : 0)
 }
 
 export const stagesOf = (cfg:InterrogationConfig) => cfg.pressureStages ?? DEFAULT_STAGES
