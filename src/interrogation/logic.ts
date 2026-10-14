@@ -15,6 +15,7 @@ export function getQuestion(cfg:InterrogationConfig, id:string):InterrogationQue
 export function pendingQuestions(cfg:InterrogationConfig, p:InterrogationProgress, registeredClues:string[] = [], registeredMaterials:string[] = []){
   return cfg.questions.filter(q=>p.unlocked.includes(q.id) && !p.asked.includes(q.id)
     && (!q.requiresClue || registeredClues.includes(q.requiresClue))
+    && (!q.requiresClues || q.requiresClues.every(c=>registeredClues.includes(c)))
     && (!q.requiresMaterial || registeredMaterials.includes(q.requiresMaterial)))
 }
 
