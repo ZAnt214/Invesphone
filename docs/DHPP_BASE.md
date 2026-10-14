@@ -83,6 +83,11 @@ Falas só usam fatos do início do Caso 01 (cena lida, painel, Thor, valores, lo
 - O aviso de mensagem (`#toast`) fica no canto de baixo à direita, sem cobrir as salas de cima.
 - As bandeiras ficam nas colunas 11 e 20, fora da placa do DHPP; o texto da placa "ÁREA RESTRITA" se ajusta à largura.
 
+## Luz com volume (14/10/2026)
+
+- **Sombra nos cantos** (`base.ao`, Ajustes > Luz e sol): o piso escurece junto às paredes de cada sala, mais forte embaixo da parede do fundo. É pintada no piso (`buildGround`) e o piso é refeito quando o ajuste muda.
+- **Luz pelas portas** (`base.doorlight`): cada porta entre salas e a passagem da sala da equipe têm uma luz (`DOORLIGHTS`) que vaza para os dois lados, mais um brilho suave no batente.
+
 ## Pendências
 - Sprites são pixel art procedural; retratos de Renata, Denise, Paulo e Maurício ainda usam iniciais nos balões (aguardam arte do ChatGPT).
 - Os links levam ao app inteiro; ligação direta a Equipe/Pessoas/Arquivo depende de rota no Invesphone.

@@ -12,7 +12,7 @@ import { openSettings } from '../settings/settingsPanel';
 import { badgeReady, openBadge } from './badgeSwipe';
 import { createHud } from '../hud/hud';
 import { clues as CLUE_LIST, people as PEOPLE } from '../case01';
-import { fxOn } from '../settings/gameSettings';
+import { fxOn, onFxChange } from '../settings/gameSettings';
 import { choose, eventLog, jitter, lifeDebug, lineBank } from '../world/life';
 import { CAMERA_PRIORITY, createCameraControl, createLead, damp, deadZoneTarget, drawCameraDebug } from '../camera/cameraDirector';
 (() => {
@@ -615,6 +615,13 @@ function buildGround(){
     g.shadowColor='rgba(16,10,6,.38)';g.shadowBlur=9;g.fillStyle='#000';g.fillRect(x+3-OFF,y+h2*0.45,w2-6,h2*0.55+5);
     g.shadowColor='rgba(16,10,6,.42)';g.shadowBlur=3;g.fillRect(x+4-OFF,y+h2-3,w2-8,5);}
   g.restore();
+  // sombra nos cantos (base.ao): o piso escurece junto às paredes, mais forte embaixo da parede do fundo
+  if(fxOn('base.ao'))for(const k in ROOM_RECT){const [a,b,cx,d]=ROOM_RECT[k],X0=a*T,Y0=b*T,X1=(cx+1)*T,Y1=(d+1)*T;
+    const band=(x0,y0,x1,y1,al)=>{const gr=g.createLinearGradient(x0,y0,x1,y1);gr.addColorStop(0,`rgba(18,12,8,${al})`);gr.addColorStop(1,'rgba(18,12,8,0)');return gr;};
+    g.fillStyle=band(0,Y0,0,Y0+26,.5);g.fillRect(X0,Y0,X1-X0,26);
+    g.fillStyle=band(X0,0,X0+16,0,.34);g.fillRect(X0,Y0,16,Y1-Y0);
+    g.fillStyle=band(X1,0,X1-16,0,.34);g.fillRect(X1-16,Y0,16,Y1-Y0);
+    g.fillStyle=band(0,Y1,0,Y1-12,.26);g.fillRect(X0,Y1-12,X1-X0,12);}
   return c;
 }
 
@@ -768,7 +775,8 @@ function newGame(){
 }
 function framesFor(p){if(!p.frames)p.frames=personFrames(p.look||LOOK[p.lookId]);return p.frames;}
 function framesHDFor(p){if(!p.framesHD)p.framesHD=personFramesHD(p.look,framesFor(p));return p.framesHD;}
-function initArt(){
+onFxChange(()=>{const v=fxOn('base.ao');if(BG&&v!==initArt.ao){initArt.ao=v;BG=buildGround();APRON=null;}});
+function initArt(){initArt.ao=fxOn('base.ao');
   for(const o of objs){o.spr=makeSprite(o);if(o.t==='secdoor'){o.sprC=o.spr;o.sprO=makeSprite({...o,open:true});}}
   BG=buildGround();WALLROWS=buildWalls();SIGN=buildSign();DOORSPR=buildDoor();LAMP=buildLamp();
   SHADOW=S2(22,8,(P,E)=>{E(11,4,10,3.5,'rgba(0,0,0,.30)');E(11,4,7,2.5,'rgba(0,0,0,.18)');});
@@ -1474,6 +1482,8 @@ const LC_SUN=[255,234,196],LC_MON=[110,230,180],LC_CLOUD=[176,180,196],LC_EMBER=
 function lightSprite(col){if(col._ls)return col._ls;const k=col.join(',');let c=LCACHE[k];if(c)return col._ls=c;c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,rgbs(col,1));gr.addColorStop(0.4,rgbs(col,0.55));gr.addColorStop(1,rgbs(col,0));g.fillStyle=gr;g.fillRect(0,0,64,64);return col._ls=LCACHE[k]=c;}
 const COOL=[225,236,255],WARM=[255,206,140],SUNC=[255,236,200];
 // [x, y, raio em tiles, cor, intensidade, cômodo, oscila]
+// portas entre as salas e a passagem da sala da equipe para o corredor: a luz atravessa (base.doorlight)
+const DOORLIGHTS=[[10,5,[255,226,180]],[22,5,[235,244,255]],[10,11,[255,214,160]],[22,11,[255,222,170]],[15.5,9,[230,240,255]]];
 const LIGHTS=[
   [6,5,4.6,[255,220,180],0.8,'sonia'],[4.6,3.4,2.2,[255,224,150],1,'sonia'],
   [13,4.6,4.2,COOL,0.95,'equipe'],[17,4.6,4.2,COOL,0.95,'equipe'],[20.5,5.2,3.8,COOL,0.85,'equipe'],
@@ -1503,6 +1513,7 @@ function lightPass(s,ox,oy){
     lctx.globalAlpha=Math.min(1,a);lctx.drawImage(lightSprite(col),X-rr,Y-rr*0.8,rr*2,rr*1.6);lctx.restore();};
   for(const l of LIGHTS){const fl=l[6]?0.86+0.14*vn(frame/9,l[0]*7,5)*(((frame>>3)%53)===0?0.2:1):1;draw(l[0]*T,l[1]*TH,l[2]*T,l[3],l[4]*fl,l[5]);if(l[4]>1)draw(l[0]*T,l[1]*TH,l[2]*T,l[3],l[4]-1,l[5]);}
   for(const [x,rm] of WINDOWS)draw(x*T+30,2.9*TH,2.1*T,SUNC,0.5*(1-0.7*sunShade(x*T)),rm);
+  if(fxOn('base.doorlight'))for(const [x,y,col] of DOORLIGHTS)draw(x*T+16,y*TH+TH/2,2.1*T,col,0.75,null);
   lctx.globalAlpha=1;lctx.globalCompositeOperation='multiply';if(GR.skyH!==lc.height){GR.skyH=lc.height;GR.sky=null;}if(!GR.sky){const g=GR.sky=lctx.createLinearGradient(0,0,0,lc.height);g.addColorStop(0,'rgb(255,238,218)');g.addColorStop(0.5,'rgb(250,248,246)');g.addColorStop(1,'rgb(212,224,246)');}lctx.fillStyle=GR.sky;lctx.fillRect(0,0,lc.width,lc.height);
   lctx.globalCompositeOperation='source-over';
   ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='multiply';ctx.imageSmoothingEnabled=true;ctx.drawImage(lc,0,0,cv.width,cv.height);ctx.globalCompositeOperation='source-over';
@@ -1511,6 +1522,8 @@ const DUST=Array.from({length:120},(_,k)=>({w:WINDOWS[k%WINDOWS.length][0],u:Mat
 function glowPass(){
   ctx.globalCompositeOperation='lighter';
   for(const h of HALOS){ctx.globalAlpha=h.a*(0.9+0.1*Math.sin(frame/6+h.x));ctx.drawImage(lightSprite(h.c),h.x-h.r,h.y-h.r*0.8,h.r*2,h.r*1.6);}
+  // a claridade da porta escorrendo no batente
+  if(fxOn('base.doorlight'))for(const [x,y,col] of DOORLIGHTS){ctx.globalAlpha=0.15;ctx.drawImage(lightSprite(col),x*T-12,y*TH-16,56,44);}
   // brilho das janelas do fundo (some quando a nuvem passa)
   if(FXMODE!=='off')for(const [x] of WINDOWS){const sh=1-0.75*sunShade(x*T);ctx.globalAlpha=0.3*sh;ctx.drawImage(lightSprite(LC_SUN),x*T-14,2*TH-34,60,40);}
   // sol da manhã entrando pelas janelas do fundo, com poeira no feixe
