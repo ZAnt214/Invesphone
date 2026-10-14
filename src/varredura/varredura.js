@@ -261,7 +261,7 @@ function runJob(a){
       if(Math.random()<0.012){flareAt(a.x*T+16+(a.dir||1)*6,a.y*TH+TH-30,0.7);SND.shutter(0.5);}
       if(room[j.tile]==='casal'&&nightF()>0.1&&Math.random()<0.18){const tx=(j.tile%W)*T+16,ty=((j.tile/W)|0)*TH+TH/2;fxAdd({k:'lum',x:tx+(Math.random()-0.5)*26,y:ty+(Math.random()-0.5)*14,z:0,t:0,life:70+Math.random()*50});}
       j.p+=a.skill*(a.energy<15?0.6:1)*(S.contam>60?0.75:1)*(wetOut?0.55:1)*(S.icUntil>S.tick?1.5:1)*(S.aguiaUntil>S.tick&&!inHouse(j.tile)&&nightF()>0.15?1.6:1);
-      if(j.p>=need){S.desig[j.tile]=0;S.exam[j.tile]=1;if(h&&!S.found[h])discover(h,j.tile);endJob(a);}
+      if(j.p>=need){S.desig[j.tile]=0;S.exam[j.tile]=1;if(h&&!S.found[h])discover(h,j.tile);const rmDone=inRoomSet(j.tile,'quintal')?'quintal':room[j.tile];endJob(a);roomClose(rmDone);if(sel===a.id||selTile!=null)updateInfo();}
       break;}
     case 'wander':
       if(!a.path.length){endJob(a);a.think=30;}
@@ -1881,7 +1881,7 @@ function orderStep(a){
     case 'guard':{const c=civNear(a,o.tile,GUARD_R+1.5);if(c){escortJob(a,c);return true;}if(ti(a)===o.tile){a.job={k:'hold',p:0};a.status='Guardando o posto';return true;}const r=findPath(a,i=>i===o.tile);if(r){a.job={k:'goto'};a.path=r.path;a.status='Indo para o posto';return true;}a.order=null;return false;}
     case 'sweep':{let best=null,bd=1e9;for(const c of S.civs){if(c.state==='leave'||S.res['c'+c.id])continue;const x=Math.round(c.x);if(!(inLot(x,Math.round(c.y))||x>=4))continue;const d=Math.hypot(c.x-a.x,c.y-a.y);if(d<bd){bd=d;best=c;}}if(best){escortJob(a,best);return true;}a.order=null;say(a,'Área limpa.',100);updateInfo();return false;}
     case 'tape':{const r=findPath(a,i=>S.tapeBp[i]&&!S.res['t'+i]);if(r){a.job={k:'tape',tile:r.end,resKey:'t'+r.end,p:0};S.res['t'+r.end]=a.id;a.path=r.path;a.status='Esticando fita (ordem)';return true;}a.order=null;say(a,S.tapeBp.some(v=>v)?'Já tem gente na fita.':'Não tem fita planejada.',110);updateInfo();return false;}
-    case 'pericia':{const rm=o.room;const r=periciaFind(a,i=>room[i]===rm||(rm==='quintal'&&hot[i]==='cao_canil'));if(r){a.job={k:'pericia',tile:r.tile,resKey:'p'+r.tile,p:0};S.res['p'+r.tile]=a.id;a.path=r.path;a.status='Indo periciar '+(ROOM_NAME[room[r.tile]]||'área');return true;}a.order=null;say(a,'Cômodo pronto.',100);updateInfo();return false;}
+    case 'pericia':{const rm=o.room;const r=periciaFind(a,i=>room[i]===rm||(rm==='quintal'&&hot[i]==='cao_canil'));if(r){a.job={k:'pericia',tile:r.tile,resKey:'p'+r.tile,p:0};S.res['p'+r.tile]=a.id;a.path=r.path;a.status='Indo periciar '+(ROOM_NAME[room[r.tile]]||'área');return true;}roomClose(rm);const nx=(a.queue||[]).shift();if(nx){a.order={k:'pericia',room:nx,tile:null};if(!roomPending(nx))markRoom(nx);say(a,'Agora '+ON_ROOM[nx]+'.',100);updateInfo();return orderStep(a);}a.order=null;say(a,'Cômodo pronto.',100);updateInfo();return false;}
     case 'rest':{const r=findPath(a,i=>adjacentToObj(i,'viatura'));if(r){a.job={k:'coffee',p:0};a.path=r.path;a.status='Indo tomar café na viatura';return true;}a.order=null;return false;}
   }
   return false;
@@ -2336,7 +2336,14 @@ function updateInfo(){
     infoEl.hidden=false;
     const title=rm==='rua'?'Rua das Acácias':rm==='terreno'?'Terreno':ROOM_NAME[rm]?ROOM_NAME[rm][0].toUpperCase()+ROOM_NAME[rm].slice(1):'Parede';
     const sub=rm==='rua'?'Via pública':rm==='terreno'?'Frente do terreno':rm==='quintal'?'Fundos da casa':HOUSE_ROOMS.has(rm)?'Dentro da casa':'Estrutura';
-    infoEl.innerHTML=`<div class="ic-hd"><span class="ic-pin"><img src="${ICONURL[h&&S.found[h]?'mag':'pin']}" alt=""></span><div class="ic-t"><h2>${title}</h2><div class="role">${sub}</div></div><button id="i-close" class="ic-b" aria-label="Fechar">${XSVG}</button></div><div class="lines">${lines.map(l=>`<span>${l}</span>`).join('')}</div>`;
+    // tocar num cômodo: mandar o Lemos periciar dali mesmo (ou ver em que ponto da fila ele está)
+    const pr=S.crew.find(c=>c.kind==='pericia'&&c.key==='lemos'),rmo=inRoomSet(i,'quintal')?'quintal':rm;let act='';
+    if(pr&&ON_ROOM[rmo]){const st=periciaState(pr,rmo),todo=roomPending(rmo)||roomTodo(rmo);
+      act=st==='agora'?`<div class="lines"><span>Lemos está periciando ${ON_ROOM[rmo]}.</span></div>`
+        :st?`<div class="lines"><span>Na fila de Lemos (${st.slice(5)}º).</span></div>`
+        :todo?`<div class="ords"><button data-room="${rmo}"><img src="${ICONURL.mag}" alt=""><span>Periciar ${ON_ROOM[rmo]}</span></button></div>`:'';
+      if(!st&&!todo&&lines.length<3)lines.push('Cômodo já periciado.');}
+    infoEl.innerHTML=`<div class="ic-hd"><span class="ic-pin"><img src="${ICONURL[h&&S.found[h]?'mag':'pin']}" alt=""></span><div class="ic-t"><h2>${title}</h2><div class="role">${sub}</div></div><button id="i-close" class="ic-b" aria-label="Fechar">${XSVG}</button></div><div class="lines">${lines.map(l=>`<span>${l}</span>`).join('')}</div>${act}`;
     return;
   }
   infoEl.hidden=true;infoEl.dataset.key='';
@@ -2344,6 +2351,8 @@ function updateInfo(){
 infoEl.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const id=b.id;SND.click();
   if(id==='i-close'){sel=null;selTile=null;follow=false;pendingOrder=null;updateInfo();updateCrew();return;}
   if(id==='i-follow'){follow=!follow;updateInfo();return;}
+  if(b.dataset.room){const a=S.crew.find(c=>c.key==='lemos'),rm=b.dataset.room;if(a){const r=findPath(a,i=>inRoomSet(i,rm)&&passable(i));
+      if(!r){sys('Sem caminho até lá.');return;}applyCmd(a,{k:'pericia',room:rm,tile:selTile,path:r.path});coachDone(true);}updateInfo();return;}
   const k=b.dataset.o;if(!k)return;const a=S.crew.find(m=>m.id===sel);if(!a)return;
   if(ORD[k].pick){pendingOrder={id:a.id,k};setTool(null);infoEl.hidden=true;modeSig='';updateMode();}else giveOrder(a,k,null);});
 function updateBadge(){const b=$('#badge');b.hidden=S.unread<=0;b.textContent=S.unread;}
@@ -2451,7 +2460,22 @@ const ORDN={move:'Ir até aqui',guard:'Guardar posto',escort:'Afastar',pericia:'
 let cmd=null,chipPress=null,suppressClickT=0;
 function inRoomSet(i,rm){return room[i]===rm||(rm==='quintal'&&hot[i]==='cao_canil');}
 function roomTodo(rm){let n=0;for(let i=0;i<N;i++)if(inRoomSet(i,rm)&&(S.desig[i]||periciavel(i)))n++;return n;}
-function markRoom(rm){let n=0;for(let i=0;i<N;i++)if(inRoomSet(i,rm)&&periciavel(i)){S.desig[i]=1;n++;}return n;}
+/* Perícia por cômodo (Lemos sozinho): ordenar um cômodo marca só os pontos que pedem exame, os vestígios ainda não
+   achados e até três pontos junto aos móveis, em vez de cada ladrilho do chão. Quando o último ponto do cômodo sai, o
+   cômodo inteiro conta como periciado (roomClose). Pedidos de outros cômodos durante o trabalho entram numa fila. */
+function roomPoints(rm){
+  const pts=[];for(let i=0;i<N;i++)if(inRoomSet(i,rm)&&hot[i]&&!S.found[hot[i]]&&!S.desig[i])pts.push(i);
+  const side=[];for(let i=0;i<N;i++){if(!inRoomSet(i,rm)||!periciavel(i)||hot[i]||!passable(i))continue;let byObj=false;nbs(i,n=>{if(occ[n]>=0)byObj=true;});if(byObj)side.push(i);}
+  // espalhados pelo cômodo: um a cada terço da lista
+  for(let k=0;k<3&&side.length;k++)pts.push(side[Math.min(side.length-1,Math.floor((k+.5)*side.length/3))]);
+  return [...new Set(pts)];
+}
+function markRoom(rm){const pts=roomPoints(rm);for(const i of pts)S.desig[i]=1;return pts.length;}
+function roomPending(rm){for(let i=0;i<N;i++)if(inRoomSet(i,rm)&&S.desig[i])return true;return false;}
+function roomClose(rm){if(!rm||!ON_ROOM[rm]||roomPending(rm))return;let n=0;for(let i=0;i<N;i++)if(inRoomSet(i,rm)&&periciavel(i)&&!hot[i]){S.exam[i]=1;n++;}
+  if(n||!S.flags['rc_'+rm]){S.flags['rc_'+rm]=1;const nm=ON_ROOM[rm];sys(nm[0].toUpperCase()+nm.slice(1)+' periciad'+(nm.startsWith('a ')?'a':'o')+'.');}}
+/** quem pericia agora e o que está na fila */
+function periciaState(a,rm){if(!a)return '';if(a.order&&a.order.k==='pericia'&&a.order.room===rm)return 'agora';const q=a.queue||[];const k=q.indexOf(rm);return k>=0?'fila '+(k+1):'';}
 function overHud(cx,cy){const el=document.elementFromPoint(cx,cy);return !!(el&&el!==cv&&el.closest&&el.closest('.hud-top,.hud-bot,#info,#evt,#bub,#cine,#mode,.sheet,#coach .cb'));}
 function cmdTarget(a){
   if(overHud(cmd.cx,cmd.cy))return {k:'cancel',label:'Solte aqui para cancelar'};
@@ -2505,8 +2529,12 @@ function applyCmd(a,tg){
     if(c.state==='leave'||!S.civs.includes(c)){sys('Ele já está indo embora.');return;}
     const ow=S.res['c'+c.id];if(ow!=null&&ow!==a.id){const o=S.crew.find(k=>k.id===ow);if(o&&o.job&&o.job.civ===c.id){endJob(o);o.think=20;}}
     endJob(a);escortJob(a,c);a.think=0;}
-  else if(tg.k==='pericia'){const n=markRoom(tg.room);a.order={k:'pericia',room:tg.room,tile:t};endJob(a);a.think=0;sys(`${SHORT[a.key]||a.name} vai periciar ${ON_ROOM[tg.room]}${n?' · '+n+(n>1?' pontos novos':' ponto novo'):''}.`);}
-  else{a.order={k:tg.k,tile:tg.k==='move'||tg.k==='guard'?t:null};endJob(a);a.think=0;}
+  else if(tg.k==='pericia'){
+    const st=periciaState(a,tg.room);if(st){sys(st==='agora'?`${SHORT[a.key]||a.name} já está periciando ${ON_ROOM[tg.room]}.`:`${ON_ROOM[tg.room][0].toUpperCase()+ON_ROOM[tg.room].slice(1)} já está na fila (${st.slice(5)}º).`);return;}
+    const busy=a.order&&a.order.k==='pericia'&&roomPending(a.order.room);
+    if(busy){a.queue=[...(a.queue||[]),tg.room];sys(`Na fila: ${ON_ROOM[tg.room]} (${a.queue.length}º). ${SHORT[a.key]||a.name} termina ${ON_ROOM[a.order.room]} antes.`);}
+    else{const n=roomPending(tg.room)?0:markRoom(tg.room);a.order={k:'pericia',room:tg.room,tile:t};endJob(a);a.think=0;sys(`${SHORT[a.key]||a.name} vai periciar ${ON_ROOM[tg.room]}${n?' · '+n+(n>1?' pontos':' ponto'):''}.`);}}
+  else{a.order={k:tg.k,tile:tg.k==='move'||tg.k==='guard'?t:null};a.queue=[];endJob(a);a.think=0;}
   say(a,pick(ACK[a.kind]||['Certo.']),90);
   ringFx(X,Y,col,24,46);setTimeout(()=>ringFx(X,Y,col,13,32),130);burstSparks(X,Y,12,col);floatText(X,Y-8,tg.k==='escort'&&a.kind==='campo'?'Conversar':ORDN[tg.k],a.accent,130);
   SND.drop();buzz(16);updateInfo();updateCrew();
@@ -2945,7 +2973,7 @@ setInterval(()=>{const m=middleBusy(),now=performance.now();
   if(m&&!midWas){midWas=true;midT=now;appEl.classList.add('mid-on');}
   else if(!m&&midWas){midWas=false;appEl.classList.remove('mid-on');if(BUSY_UNTIL>midT)BUSY_UNTIL+=now-midT;}
 },100);
-setTimeout(()=>{if(window.__acacias)Object.assign(window.__acacias,{dbg:{floor,F,passable,civPass,W,H,CROSS_Y,inLot,room,idx,hot:()=>hot,setSpeed}});},0);
+setTimeout(()=>{if(window.__acacias)Object.assign(window.__acacias,{dbg:{floor,F,passable,civPass,W,H,CROSS_Y,inLot,room,idx,hot:()=>hot,setSpeed,applyCmd,roomPoints}});},0);
 
 /* the closed stretch: cones go down once the cars already inside have driven out; cars arriving stop at the cones and back away */
 const CONE_TOP=1*TH+TH-4,CONE_BOT=(H-2)*TH+TH-4;
