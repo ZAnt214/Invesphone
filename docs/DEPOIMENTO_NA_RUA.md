@@ -20,6 +20,8 @@ Código: `src/rua/streetDepo.js` e `src/rua/streetDepo.css` (tudo dentro de `.sd
 
 - Fundo: `public/cenarios/rua-acacias/frente-noite.jpg` (fachada, muro, portão, calçada) e `frente-noite-poste.png` (o poste, por cima dos curiosos). Se não carregar, o fundo desenhado em código entra no lugar.
 - Curiosos atrás da fita: `public/characters/curiosos/fundo/curioso-01..08.png`, escurecidos para a madrugada, em duas fileiras (`CROWD_ART`). O rapaz filmando solta flash; a moça olhando o celular tem o rosto aceso; o holofote do helicóptero os clareia quando passa.
+- Os curiosos ficam na penumbra (`crowdLayer`, ajuste `depo.shade`): desenhados numa camada própria e escurecidos só onde há gente, mais fundo nas pernas e longe do poste, com a sombra da copa da árvore balançando sobre os rostos e o giroflex varrendo a fila. Quem os revela é luz de verdade: o flash do celular e o holofote do helicóptero.
+- Fitas de isolamento como tecido (`spanPts`/`strip`, ajuste `depo.tape`): a do portão vai do poste ao pilar da direita, a dos curiosos vem de fora do quadro até o poste, na altura da cintura (`TAPES`). Cada trecho cede no meio, ondula com o vento (zero nas pontas), torce mostrando o verso sem letra e bate quando o helicóptero passa; os nós ficam por cima do poste e do pilar, com pontas soltas penduradas.
 - Retratos de conversa da vizinha, do rapaz e do senhor (`public/characters/curiosos/<id>/expressions/`): prontos, ainda sem depoimento (falta escrever as falas dentro do cânone).
 
 ## O que acontece na tela

@@ -101,18 +101,102 @@ export function openStreetDepo(host,id,opts={}){
   /* [figura, centro x, pé y, altura, fileira de trás]: a fileira da frente encosta na fita, a de trás fica menor */
   const CROWD_ART=[[6,118,300,138,1],[4,212,302,146,1],[7,300,298,140,1],[0,60,336,180,0],[1,156,340,184,0],[3,246,334,178,0],[5,334,338,182,0],[2,410,340,184,0]];
   let FLA=false;
+  /* Os curiosos ficam na penumbra: desenhados numa camada própria, escurecidos por cima (só onde há gente),
+     com a sombra da copa da árvore balançando sobre os rostos e o giroflex passando por eles de vez em quando.
+     O que os revela de verdade é luz de verdade: o flash do celular e o holofote do helicóptero. */
+  const CC=document.createElement('canvas'),CCX={x:-20,y:120,w:500,h:228};
+  function crowdLayer(t,g){
+    const r=cvBg._r||.5,cw=Math.ceil(CCX.w*r),ch=Math.ceil(CCX.h*r);if(CC.width!==cw||CC.height!==ch){CC.width=cw;CC.height=ch}
+    const x=CC.getContext('2d');x.setTransform(1,0,0,1,0,0);x.globalCompositeOperation='source-over';x.clearRect(0,0,cw,ch);
+    x.setTransform(r,0,0,r,-CCX.x*r,-CCX.y*r);
+    for(const [n,x0,yb,h,far] of CROWD_ART){const im=(far?ART.far:ART.crowd)[n];if(!im)continue;const P=crowdPos(n,x0,yb,h,t);x.drawImage(im,P.x-P.w/2,P.y,P.w,h)}
+    x.globalCompositeOperation='source-atop';
+    /* penumbra geral, mais funda nas pernas e no lado longe do poste */
+    x.fillStyle='rgba(3,6,14,.42)';x.fillRect(CCX.x,CCX.y,CCX.w,CCX.h);
+    x.fillStyle=lin(x,0,CCX.y,0,CCX.y+CCX.h,[[0,'rgba(2,4,10,.05)'],[.45,'rgba(2,4,10,.18)'],[1,'rgba(2,4,10,.6)']]);x.fillRect(CCX.x,CCX.y,CCX.w,CCX.h);
+    x.fillStyle=lin(x,CCX.x,0,CCX.x+CCX.w,0,[[0,'rgba(2,4,10,.32)'],[.7,'rgba(2,4,10,.06)'],[1,'rgba(2,4,10,0)']]);x.fillRect(CCX.x,CCX.y,CCX.w,CCX.h);
+    /* sombra da copa: manchas largas que balançam com o vento sobre cabeças e ombros */
+    const wd=RM?0:t;
+    for(let i=0;i<6;i++){const bx=10+i*84+Math.sin(wd*.55+i*2.1)*16+Math.sin(wd*1.3+i)*5,by=176+((i*37)%30)+Math.sin(wd*.8+i*1.4)*6,br=52+((i*23)%26);
+      const gr=x.createRadialGradient(bx,by,0,bx,by,br);gr.addColorStop(0,'rgba(1,2,6,.44)');gr.addColorStop(.6,'rgba(1,2,6,.26)');gr.addColorStop(1,'rgba(1,2,6,0)');x.fillStyle=gr;x.fillRect(bx-br,by-br,br*2,br*2)}
+    /* o giroflex varre a fila: vermelho entra pela esquerda, azul pelo lado do poste */
+    if(g.r>.05){const gr=x.createRadialGradient(-60,210,0,-60,210,360);gr.addColorStop(0,`rgba(${RED},${.3*g.r})`);gr.addColorStop(1,`rgba(${RED},0)`);x.fillStyle=gr;x.fillRect(CCX.x,CCX.y,CCX.w,CCX.h)}
+    if(g.b>.05){const gr=x.createRadialGradient(470,200,0,470,200,300);gr.addColorStop(0,`rgba(${BLUE},${.26*g.b})`);gr.addColorStop(1,`rgba(${BLUE},0)`);x.fillStyle=gr;x.fillRect(CCX.x,CCX.y,CCX.w,CCX.h)}
+    x.globalCompositeOperation='source-over';
+    return CC;
+  }
+  function crowdPos(n,x0,yb,h,t){const x=x0+(RM?0:Math.sin(t*.31+n*1.7)*1.4),y=yb-h+(RM?0:Math.sin(t*.27+n)*.6);return{x,y,w:h/2}}
   function drawCrowdArt(c,t,g){
+    const shade=FXON('depo.shade');
+    if(shade)c.drawImage(crowdLayer(t,g),CCX.x,CCX.y,CCX.w,CCX.h);
     for(const [n,x0,yb,h,far] of CROWD_ART){
-      const im=(far?ART.far:ART.crowd)[n];if(!im)continue;const i=n,w=h/2;
-      const x=x0+(RM?0:Math.sin(t*.31+i*1.7)*1.4),y=yb-h+(RM?0:Math.sin(t*.27+i)*.6);
-      c.drawImage(im,x-w/2,y,w,h);
+      const im=(far?ART.far:ART.crowd)[n];if(!im)continue;const P=crowdPos(n,x0,yb,h,t),x=P.x,y=P.y,w=P.w;
+      if(!shade)c.drawImage(im,x-w/2,y,w,h);
       /* o holofote do helicóptero passando por eles */
-      if(HS&&HS.S>.02&&Math.abs(HS.sx-x0)<180){const k=HS.S*(1-Math.abs(HS.sx-x0)/180);c.save();c.globalCompositeOperation='lighter';c.globalAlpha=.45*k;c.drawImage(im,x-w/2,y,w,h);c.restore()}
+      if(HS&&HS.S>.02&&Math.abs(HS.sx-x0)<180){const k=HS.S*(1-Math.abs(HS.sx-x0)/180);c.save();c.globalCompositeOperation='lighter';c.globalAlpha=(shade?.6:.45)*k;c.drawImage(im,x-w/2,y,w,h);c.restore()}
       /* celulares: o rapaz filmando solta um flash de vez em quando; a moça olhando a tela fica com o rosto aceso */
-      if(n===1&&!far){const px=x-w/2+w*.3,py=y+h*.38;glow(c,px,py,10,'190,215,255',.5);const f=!RM&&(t%5.3)<.09;if(f)glow(c,px,py,170,'255,255,255',.75);if(f&&!FLA)SFX.shutter(-.5);FLA=f}
-      if(n===5&&!far)glow(c,x-w/2+w*.6,y+h*.6,16,'170,200,255',.4);
+      if(n===1&&!far){const px=x-w/2+w*.3,py=y+h*.38;glow(c,px,py,10,'190,215,255',.5);const f=!RM&&(t%5.3)<.09;
+        if(f){glow(c,px,py,170,'255,255,255',.75);if(shade){c.save();c.globalCompositeOperation='lighter';c.globalAlpha=.35;for(const [m,a0,b0,hh,ff] of CROWD_ART){if(ff||Math.abs(a0-x0)>130)continue;const Q=crowdPos(m,a0,b0,hh,t);c.drawImage(ART.crowd[m]||im,Q.x-Q.w/2,Q.y,Q.w,hh)}c.restore()}}
+        if(f&&!FLA)SFX.shutter(-.5);FLA=f}
+      if(n===5&&!far){const fx=x-w/2+w*.6,fy=y+h*.6;glow(c,fx,fy,16,'170,200,255',.4);if(shade)glow(c,fx,fy-h*.2,26,'150,185,255',.16)}
     }
   }
+
+  /* ---------- fita de isolamento: tecido, não régua ----------
+     Cada trecho é presa nas duas pontas, cede no meio (flecha), ondula com o vento (ondas que andam pela fita,
+     maiores no meio e zero nas pontas) e torce: quando vira, estreita e mostra o verso, sem letra.
+     O helicóptero faz a fita bater. Desenhada em fatias, cada uma com o pedaço certo da textura impressa. */
+  const TS=2,TW=1200,TH=11;
+  const TAPE={front:[],back:[]};
+  {const shades=[.36,.52,.68,.86];
+    for(const k of shades){
+      const f=document.createElement('canvas');f.width=TW*TS;f.height=TH*TS;const x=f.getContext('2d');x.scale(TS,TS);
+      x.fillStyle='#e3bd1c';x.fillRect(0,0,TW,TH);x.fillStyle='rgba(255,240,170,.35)';x.fillRect(0,0,TW,1);x.fillStyle='rgba(0,0,0,.28)';x.fillRect(0,TH-2,TW,2);
+      x.fillStyle='#14120a';x.font='bold 7.5px ui-monospace,Menlo,monospace';x.textBaseline='alphabetic';for(let p=8;p<TW;p+=170)x.fillText('ISOLAMENTO · NÃO ULTRAPASSE',p,8);
+      x.fillStyle=`rgba(0,0,0,${1-k})`;x.fillRect(0,0,TW,TH);TAPE.front.push(f);
+      const b=document.createElement('canvas');b.width=TW*TS;b.height=TH*TS;const y=b.getContext('2d');y.scale(TS,TS);
+      y.fillStyle='#c9a418';y.fillRect(0,0,TW,TH);y.globalAlpha=.16;y.fillStyle='#14120a';y.font='bold 7.5px ui-monospace,Menlo,monospace';
+      y.save();y.scale(-1,1);for(let p=8;p<TW;p+=170)y.fillText('ISOLAMENTO · NÃO ULTRAPASSE',-p-150,8);y.restore();y.globalAlpha=1;
+      y.fillStyle=`rgba(0,0,0,${1-k*.85})`;y.fillRect(0,0,TW,TH);TAPE.back.push(b)}
+  }
+  const tapeMove=()=>FXON('depo.tape')&&!RM;
+  /* pontos ao longo de um trecho preso nas duas pontas: [x,y,torção] */
+  function spanPts(ax,ay,bx,by,sag,seed,t){
+    const N=low()?14:26,mv=tapeMove(),tt=mv?t:0,hA=(mv&&typeof HS!=='undefined'&&HS)?HS.A:0,len=Math.hypot(bx-ax,by-ay),sc=len/400;
+    const gust=.55+.45*Math.sin(tt*.43+seed)*Math.sin(tt*.17+seed*.7),out=[];
+    for(let i=0;i<=N;i++){const u=i/N,e=Math.sin(Math.PI*u);
+      let x=ax+(bx-ax)*u,y=ay+(by-ay)*u+sag*4*u*(1-u);
+      if(mv){y+=e*sc*((1.5*Math.sin(u*7-tt*2.3+seed)+.7*Math.sin(u*15-tt*3.9+seed*2))*gust+1.1*Math.sin(tt*.8+seed))+e*hA*3.6*Math.sin(u*10-tt*10+seed);
+        x+=e*.8*Math.sin(u*5-tt*1.6+seed)}
+      const tw=mv?e*((.6*Math.sin(u*6-tt*1.7+seed)+.3*Math.sin(u*14-tt*3.1+seed))*(.6+gust*.6)+hA*2.6*Math.sin(u*8-tt*7+seed)):e*.35*Math.sin(u*6+seed);
+      out.push([x,y,tw])}
+    return out;
+  }
+  /* ponta solta pendurada no nó: cai, e o vento a empurra */
+  function tailPts(x0,y0,len,seed,t){
+    const mv=tapeMove(),tt=mv?t:0,hA=(mv&&typeof HS!=='undefined'&&HS)?HS.A:0,w=mv?windAt(tt):.1,N=8,out=[];let x=x0,y=y0;
+    for(let i=0;i<=N;i++){const u=i/N;out.push([x,y,(mv?(.9*Math.sin(tt*3.1+seed+u*4)+hA*2.4*Math.sin(tt*9+u*5)):.4)*u]);
+      const a=Math.PI/2-(w*2.2+(mv?.38*Math.sin(tt*2.2+seed+u*3)*u+hA*.9*Math.sin(tt*8+seed+u*4):0))*(.4+u);x+=Math.cos(a)*len/N;y+=Math.sin(a)*len/N}
+    return out;
+  }
+  function strip(c,P,s0){
+    let s=s0||0;
+    for(let i=0;i<P.length-1;i++){const [x0,y0,a0]=P[i],[x1,y1,a1]=P[i+1],dx=x1-x0,dy=y1-y0,L=Math.hypot(dx,dy);if(L<.01)continue;
+      const tx=dx/L,ty=dy/L,nx=-ty,ny=tx,cs=Math.cos((a0+a1)/2),m=Math.abs(cs),hw=TH/2*Math.max(.14,m)*(cs<0?-1:1);
+      const set=cs<0?TAPE.back:TAPE.front,lvl=Math.min(3,Math.floor(m*4)),tex=set[lvl];
+      const sx=(s%(TW-60))*TS,sw=(L+1.2)*TS;
+      c.save();c.transform(tx/TS,ty/TS,nx*hw*2/(TH*TS),ny*hw*2/(TH*TS),x0-nx*hw,y0-ny*hw);c.drawImage(tex,sx,0,sw,TH*TS,0,0,sw,TH*TS);c.restore();
+      s+=L}
+  }
+  /* o nó em volta do poste/pilar: voltas da fita e a ponta solta */
+  function knot(c,x,y,w,seed,t,tail){
+    c.fillStyle='#b8960f';c.fillRect(x-w/2,y-1,w,TH+2);c.fillStyle='rgba(255,236,150,.45)';c.fillRect(x-w/2,y+1,w,1.4);
+    c.fillStyle='rgba(0,0,0,.35)';c.fillRect(x-w/2,y+TH-1,w,2);c.fillStyle='rgba(0,0,0,.4)';c.fillRect(x-w/2,y-1,w*.18,TH+2);c.fillRect(x+w/2-w*.22,y-1,w*.22,TH+2);
+    c.fillStyle='#9c800d';c.save();c.translate(x,y+TH/2);c.rotate(.5);c.fillRect(-w*.32,-2.5,w*.64,5);c.restore();
+    if(tail)strip(c,tailPts(x+w*.15,y+TH/2,tail,seed,t),seed*40);
+  }
+  const TAPES={gate:[459,196,790,192,9,1.3],crowd:[-30,252,446,262,11,4.1]};
+  function tapeSpan(c,k,t){const a=TAPES[k];strip(c,spanPts(a[0],a[1],a[2],a[3],a[4],a[5],t),k==='gate'?40:0)}
 
   /* ---------- tamanho: a tela do jogo deitada (844×390), encaixada no espaço que houver ---------- */
   const wrap=$('.sd-wrap'),stage=$('#sd-stage'),cvBg=$('#sd-bg'),cvAc=$('#sd-ac'),cvFg=$('#sd-fg');
@@ -534,12 +618,7 @@ export function openStreetDepo(host,id,opts={}){
   function drawCrowd(c,t,g){for(const p of CROWD)drawPerson(c,p,t,g);
     if(!RM&&typeof SFX!=='undefined'){const f1=(t%5.3)<.09,f2=((t+3.3)%6.1)<.08;if(f1)glow(c,241,236,150,'255,255,255',.6);if(f1&&!FL1)SFX.shutter(-.55);if(f2&&!FL2)SFX.shutter(-.35);FL1=f1;FL2=f2}}
 
-  function tape(c,x,y,w,ang){
-    const tw=(typeof HS!=='undefined'&&HS&&!RM)?HS.A:0,tt=performance.now()/1000;
-    c.save();c.translate(x,y+Math.sin(tt*13+x)*1.6*tw);c.rotate(ang+Math.sin(tt*11+x*.1)*.012*tw);c.fillStyle='#e3bd1c';c.fillRect(0,0,w,11);
-    c.fillStyle='rgba(0,0,0,.25)';c.fillRect(0,9,w,2);c.fillStyle='#14120a';c.font='bold 7.5px ui-monospace,Menlo,monospace';
-    for(let k=8;k<w;k+=170)c.fillText('ISOLAMENTO · NÃO ULTRAPASSE',k,8);c.restore();
-  }
+  function tape(c,x,y,w,ang){const P=spanPts(x,y,x+Math.cos(ang)*w,y+Math.sin(ang)*w,6,x*.01,performance.now()/1000);strip(c,P,0)}
   function houses(c,base,seed,col,win){
     let x=-20,i=seed;
     while(x<W+20){const w=70+(i*37)%60,h=50+(i*53)%70;c.fillStyle=col;c.fillRect(x,base-h,w,h);
@@ -590,10 +669,12 @@ export function openStreetDepo(host,id,opts={}){
         /* o giroflex chega pelos lados e a calçada molhada devolve as cores */
         c.fillStyle=lin(c,0,0,W,0,[[0,`rgba(${RED},${.32*g.r})`],[.5,'rgba(0,0,0,0)'],[1,`rgba(${BLUE},${.32*g.b})`]]);c.fillRect(0,292,W,98);
         c.globalCompositeOperation='lighter';glow(c,-40,200,640,RED,.24*g.r);glow(c,900,170,580,BLUE,.26*g.b);c.globalCompositeOperation='source-over';
-        tape(c,462,196,380,.015);
+        tapeSpan(c,'gate',t);
         drawCrowdArt(c,t,g);
-        tape(c,0,252,432,-.01);
+        tapeSpan(c,'crowd',t);
         if(ART.poste)c.drawImage(ART.poste,0,0,W,H);
+        /* as duas fitas amarradas no poste, por cima dele; a do portão também no pilar da direita */
+        knot(c,445.5,TAPES.crowd[3]-TH/2+.5,29,2.2,t,24);knot(c,445.5,TAPES.gate[1]-TH/2+.5,29,3.7,t,0);knot(c,789,TAPES.gate[3]-TH/2+.5,29,5.1,t,18);
       }else{
         SC.casa.bg(c,t,g);
         drawCrowd(c,t,g);
@@ -960,7 +1041,7 @@ export function openStreetDepo(host,id,opts={}){
     setTimeout(()=>{
       SFX.rustle();stage.classList.remove('pick');stage.classList.add('listen','answering');focusEl.textContent=cfg.name.split(' ')[0].toUpperCase();setExpr(q.e);
       camMode('answer',q.e==='shaken'||q.e==='uncomfortable'||q.e==='nervous'||q.e==='teary');
-      q._shown=false;seq={q,chunks:subtitleChunks(q.a),i:-1,timer:0};setTimeout(nextChunk,250);
+      q._shown=false;seq={q,chunks:subtitleChunks(q.a),i:-1,timer:0};seq.timer=setTimeout(nextChunk,250);
     },RM?150:750);
   }
   /* resposta respondida: grava no save como o depoimento da base faria */
@@ -1004,7 +1085,8 @@ export function openStreetDepo(host,id,opts={}){
       if(my.i>=my.chunks.length-1){nextChunk();return}            /* era a última frase: o caderno já está na mão, a conversa volta para ele */
       stage.classList.remove('noting');camMode('answer');focusEl.textContent=cfg.name.split(' ')[0].toUpperCase();SFX.rustle();my.timer=setTimeout(nextChunk,700)});
   }
-  stage.addEventListener('click',e=>{if(e.target.closest('.pad')||!seq||seq.hold)return;if(typing)finishTyping();else if(seq.clueHere)clueAfterSpeech();else nextChunk()});
+  /* antes da primeira frase o toque não faz nada: senão ele e o início da fala avançavam juntos e pulavam a frase da pista */
+  stage.addEventListener('click',e=>{if(e.target.closest('.pad')||!seq||seq.hold||seq.i<0)return;if(typing)finishTyping();else if(seq.clueHere)clueAfterSpeech();else nextChunk()});
   function startTyping(text){
     const chars=[...text],cl=seq&&seq.q.clue,c0=cl?text.indexOf(cl):-1,c1=c0>=0?c0+cl.length:-1;let kk=0;
     sub.innerHTML=`<span>${chars.map((ch,i)=>{const k=i>=c0&&i<c1;const d=k?(kk++)*16:0;return `<i class="c${k?' k':''}" style="font-style:normal${k?`;transition-delay:0s,${d}ms,${d}ms,${d}ms`:''}">${esc(ch)}</i>`}).join('')}<i class="nx"></i></span>`;

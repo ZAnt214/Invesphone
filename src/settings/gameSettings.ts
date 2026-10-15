@@ -66,6 +66,8 @@ export const EFFECTS:Effect[] = [
   { id:'depo.rain', cat:'depo', label:'Chuva na cena', desc:'Garoa em camadas, acesa pela luz do poste, com pingos e névoa no facho.', def:true, where:'Casa' },
   { id:'depo.lens', cat:'depo', label:'Gotas na lente', desc:'Gotas paradas na câmera que às vezes escorrem.', def:true, where:'Casa' },
   { id:'depo.flyby', cat:'depo', label:'Viatura e helicóptero passando', desc:'A luz de uma viatura e o holofote de um helicóptero passando pela cena, com vento e folhas.', def:true, where:'Casa' },
+  { id:'depo.tape', cat:'depo', label:'Fita ao vento', desc:'A fita de isolamento cede no meio, ondula e torce com o vento e o helicóptero.', def:true, where:'Casa' },
+  { id:'depo.shade', cat:'depo', label:'Sombra nos curiosos', desc:'Os curiosos atrás da fita ficam na penumbra, com a sombra da árvore e o giroflex passando por eles.', def:true, where:'Casa' },
   { id:'depo.film', cat:'depo', label:'Cor de cinema e granulação', desc:'Sombras azuladas, luzes âmbar e grão de filme.', def:true, where:'Casa' },
   { id:'depo.camera', cat:'depo', label:'Câmera na mão', desc:'O balanço leve da câmera, a aproximação na pista e a tremida do helicóptero.', def:true, where:'Casa' },
   // som

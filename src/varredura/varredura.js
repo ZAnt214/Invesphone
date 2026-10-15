@@ -1192,7 +1192,7 @@ function lightPass(L,s,ox,oy,amb){
   const sp=(x,y)=>[(x*s+ox)/LS,(y*s+oy)/LS];
   lctx.setTransform(1,0,0,1,0,0);lctx.globalAlpha=1;lctx.globalCompositeOperation='source-over';lctx.fillStyle=rgbs(amb);lctx.fillRect(0,0,lc.width,lc.height);
   lctx.globalCompositeOperation='lighter';
-  for(const l of L){if(l.a<=0.01)continue;const [x,y]=sp(l.x,l.y),rr=l.r*s/LS;if(x<-rr||y<-rr||x>lc.width+rr||y>lc.height+rr)continue;
+  for(const l of L){if(l.a<=0.01)continue;const [x,y]=sp(l.x,l.y),rr=l.r*s/LS;if(!(rr>0))continue;if(x<-rr||y<-rr||x>lc.width+rr||y>lc.height+rr)continue;
     const spr=lightSprite(l.c);lctx.save();
     if(l.clip){const r=roomClip(l.clip),[a0,b0]=sp(r[0],r[1]),[a1,b1]=sp(r[2],r[3]);lctx.beginPath();lctx.rect(a0,b0,a1-a0,b1-b0);lctx.clip();}
     lctx.globalAlpha=Math.min(1,l.a);
