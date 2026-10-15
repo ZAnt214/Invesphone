@@ -39,7 +39,7 @@ export function openStreetDepo(host,id,opts={}){
 
   const root=document.createElement('div');root.className='sd';root.setAttribute('role','dialog');root.setAttribute('aria-label',`Depoimento na rua: ${cfg.name}`);
   root.innerHTML=`<div class="sd-wrap"><div class="sd-stage" id="sd-stage">
-    <div class="scene"><div class="layer" id="sd-Lbg"><canvas id="sd-bg"></canvas></div><div class="dim"></div><div class="layer" id="sd-Lac"><canvas id="sd-ac"></canvas></div><div class="layer" id="sd-Lfg"><canvas id="sd-debM"></canvas><canvas id="sd-fg"></canvas><canvas id="sd-debN"></canvas></div></div>
+    <div class="scene"><div class="layer" id="sd-Lbg"><canvas id="sd-bg"></canvas><canvas id="sd-tape"></canvas></div><div class="dim"></div><div class="layer" id="sd-Lac"><canvas id="sd-ac"></canvas></div><div class="layer" id="sd-Lfg"><canvas id="sd-debM"></canvas><canvas id="sd-fg"></canvas><canvas id="sd-debN"></canvas></div></div>
     <div class="grade"></div><canvas id="sd-grain" width="422" height="195"></canvas><div class="vig"></div>
     <div class="rec"><i></i>REC <b id="sd-clock">00:00:00</b><span>NA CENA · RUA DAS ACÁCIAS</span></div>
     <div class="focus">FOCO · <b id="sd-focus">CADERNO</b></div>
@@ -101,6 +101,21 @@ export function openStreetDepo(host,id,opts={}){
   /* [figura, centro x, pé y, altura, fileira de trás]: a fileira da frente encosta na fita, a de trás fica menor */
   const CROWD_ART=[[6,118,300,138,1],[4,212,302,146,1],[7,300,298,140,1],[0,60,336,180,0],[1,156,340,184,0],[3,246,334,178,0],[5,334,338,182,0],[2,410,340,184,0]];
   let FLA=false;
+  /* fundo parado em cache, no tamanho real do canvas do fundo: refeito só quando o tamanho muda ou a arte chega */
+  const BGC={k:''};
+  function bgCache(){
+    const r=cvBg._r||.5,k=cvBg.width+'x'+cvBg.height+(ART.poste?'p':'');if(BGC.k===k)return BGC;BGC.k=k;
+    const mk=(w,h)=>{const c=document.createElement('canvas');c.width=Math.max(1,Math.ceil(w));c.height=Math.max(1,Math.ceil(h));return c};
+    BGC.bg=mk(cvBg.width,cvBg.height);{const x=BGC.bg.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(ART.bg,0,0,BGC.bg.width,BGC.bg.height);x.fillStyle='rgba(4,8,18,.26)';x.fillRect(0,0,BGC.bg.width,BGC.bg.height)}
+    /* só a faixa do poste (x 200..712), não a tela toda */
+    if(ART.poste){const x0=200,x1=712;BGC.px=Math.floor(x0*r);BGC.poste=mk((x1-x0)*r,cvBg.height);const x=BGC.poste.getContext('2d');x.imageSmoothingQuality='high';
+      const sw=ART.poste.naturalWidth||ART.poste.width,sc=sw/W;x.drawImage(ART.poste,BGC.px/r*sc,0,BGC.poste.width/r*sc,ART.poste.naturalHeight||ART.poste.height,0,0,BGC.poste.width,BGC.poste.height)}
+    else BGC.poste=null;
+    /* reflexo do giroflex no chão: vermelho à esquerda, azul à direita; a intensidade vai no globalAlpha */
+    for(const [key,rgb,left] of [['floorR',RED,1],['floorB',BLUE,0]]){const c=mk(256,8),x=c.getContext('2d');
+      x.fillStyle=lin(x,0,0,256,0,left?[[0,`rgba(${rgb},.32)`],[.5,`rgba(${rgb},0)`]]:[[.5,`rgba(${rgb},0)`],[1,`rgba(${rgb},.32)`]]);x.fillRect(0,0,256,8);BGC[key]=c}
+    return BGC;
+  }
   /* Os curiosos ficam na penumbra: desenhados numa camada própria, escurecidos por cima (só onde há gente),
      com a sombra da copa da árvore balançando sobre os rostos e o giroflex passando por eles de vez em quando.
      O que os revela de verdade é luz de verdade: o flash do celular e o holofote do helicóptero. */
@@ -111,17 +126,17 @@ export function openStreetDepo(host,id,opts={}){
     x.setTransform(r,0,0,r,-CCX.x*r,-CCX.y*r);
     for(const [n,x0,yb,h,far] of CROWD_ART){const im=(far?ART.far:ART.crowd)[n];if(!im)continue;const P=crowdPos(n,x0,yb,h,t);x.drawImage(im,P.x-P.w/2,P.y,P.w,h)}
     x.globalCompositeOperation='source-atop';
-    /* penumbra geral, mais funda nas pernas e no lado longe do poste */
-    x.fillStyle='rgba(3,6,14,.42)';x.fillRect(CCX.x,CCX.y,CCX.w,CCX.h);
-    x.fillStyle=lin(x,0,CCX.y,0,CCX.y+CCX.h,[[0,'rgba(2,4,10,.05)'],[.45,'rgba(2,4,10,.18)'],[1,'rgba(2,4,10,.6)']]);x.fillRect(CCX.x,CCX.y,CCX.w,CCX.h);
-    x.fillStyle=lin(x,CCX.x,0,CCX.x+CCX.w,0,[[0,'rgba(2,4,10,.32)'],[.7,'rgba(2,4,10,.06)'],[1,'rgba(2,4,10,0)']]);x.fillRect(CCX.x,CCX.y,CCX.w,CCX.h);
+    /* penumbra geral, mais funda nas pernas e no lado longe do poste: pintada uma vez, copiada por cima */
+    if(!CC.pen){const c=document.createElement('canvas');c.width=250;c.height=114;const y=c.getContext('2d');y.scale(.5,.5);y.translate(-CCX.x,-CCX.y);
+      y.fillStyle='rgba(3,6,14,.42)';y.fillRect(CCX.x,CCX.y,CCX.w,CCX.h);
+      y.fillStyle=lin(y,0,CCX.y,0,CCX.y+CCX.h,[[0,'rgba(2,4,10,.05)'],[.45,'rgba(2,4,10,.18)'],[1,'rgba(2,4,10,.6)']]);y.fillRect(CCX.x,CCX.y,CCX.w,CCX.h);
+      y.fillStyle=lin(y,CCX.x,0,CCX.x+CCX.w,0,[[0,'rgba(2,4,10,.32)'],[.7,'rgba(2,4,10,.06)'],[1,'rgba(2,4,10,0)']]);y.fillRect(CCX.x,CCX.y,CCX.w,CCX.h);CC.pen=c}
+    x.drawImage(CC.pen,CCX.x,CCX.y,CCX.w,CCX.h);
     /* sombra da copa: manchas largas que balançam com o vento sobre cabeças e ombros */
     const wd=RM?0:t;
-    for(let i=0;i<6;i++){const bx=10+i*84+Math.sin(wd*.55+i*2.1)*16+Math.sin(wd*1.3+i)*5,by=176+((i*37)%30)+Math.sin(wd*.8+i*1.4)*6,br=52+((i*23)%26);
-      const gr=x.createRadialGradient(bx,by,0,bx,by,br);gr.addColorStop(0,'rgba(1,2,6,.44)');gr.addColorStop(.6,'rgba(1,2,6,.26)');gr.addColorStop(1,'rgba(1,2,6,0)');x.fillStyle=gr;x.fillRect(bx-br,by-br,br*2,br*2)}
+    for(let i=0;i<6;i++){const bx=10+i*84+Math.sin(wd*.55+i*2.1)*16+Math.sin(wd*1.3+i)*5,by=176+((i*37)%30)+Math.sin(wd*.8+i*1.4)*6,br=52+((i*23)%26);glow(x,bx,by,br*1.1,'1,2,6',.5)}
     /* o giroflex varre a fila: vermelho entra pela esquerda, azul pelo lado do poste */
-    if(g.r>.05){const gr=x.createRadialGradient(-60,210,0,-60,210,360);gr.addColorStop(0,`rgba(${RED},${.3*g.r})`);gr.addColorStop(1,`rgba(${RED},0)`);x.fillStyle=gr;x.fillRect(CCX.x,CCX.y,CCX.w,CCX.h)}
-    if(g.b>.05){const gr=x.createRadialGradient(470,200,0,470,200,300);gr.addColorStop(0,`rgba(${BLUE},${.26*g.b})`);gr.addColorStop(1,`rgba(${BLUE},0)`);x.fillStyle=gr;x.fillRect(CCX.x,CCX.y,CCX.w,CCX.h)}
+    glow(x,-60,210,360,RED,.3*g.r);glow(x,470,200,300,BLUE,.26*g.b);
     x.globalCompositeOperation='source-over';
     return CC;
   }
@@ -147,22 +162,18 @@ export function openStreetDepo(host,id,opts={}){
      maiores no meio e zero nas pontas) e torce: quando vira, estreita e mostra o verso, sem letra.
      O helicóptero faz a fita bater. Desenhada em fatias, cada uma com o pedaço certo da textura impressa. */
   const TS=2,TW=1200,TH=11;
-  const TAPE={front:[],back:[]};
-  {const shades=[.36,.52,.68,.86];
-    for(const k of shades){
-      const f=document.createElement('canvas');f.width=TW*TS;f.height=TH*TS;const x=f.getContext('2d');x.scale(TS,TS);
-      x.fillStyle='#e3bd1c';x.fillRect(0,0,TW,TH);x.fillStyle='rgba(255,240,170,.35)';x.fillRect(0,0,TW,1);x.fillStyle='rgba(0,0,0,.28)';x.fillRect(0,TH-2,TW,2);
-      x.fillStyle='#14120a';x.font='bold 7.5px ui-monospace,Menlo,monospace';x.textBaseline='alphabetic';for(let p=8;p<TW;p+=170)x.fillText('ISOLAMENTO · NÃO ULTRAPASSE',p,8);
-      x.fillStyle=`rgba(0,0,0,${1-k})`;x.fillRect(0,0,TW,TH);TAPE.front.push(f);
-      const b=document.createElement('canvas');b.width=TW*TS;b.height=TH*TS;const y=b.getContext('2d');y.scale(TS,TS);
-      y.fillStyle='#c9a418';y.fillRect(0,0,TW,TH);y.globalAlpha=.16;y.fillStyle='#14120a';y.font='bold 7.5px ui-monospace,Menlo,monospace';
-      y.save();y.scale(-1,1);for(let p=8;p<TW;p+=170)y.fillText('ISOLAMENTO · NÃO ULTRAPASSE',-p-150,8);y.restore();y.globalAlpha=1;
-      y.fillStyle=`rgba(0,0,0,${1-k*.85})`;y.fillRect(0,0,TW,TH);TAPE.back.push(b)}
-  }
+  /* textura impressa em 2× (o canvas da fita fica perto disso: nítida com filtro simples), uma frente (com o texto) e um verso (amarelo mais fosco, o texto vazando de leve) */
+  const TAPE=(()=>{const mk=(back)=>{const f=document.createElement('canvas');f.width=TW*TS;f.height=TH*TS;const x=f.getContext('2d');x.scale(TS,TS);
+      x.fillStyle=back?'#c9a418':'#e3bd1c';x.fillRect(0,0,TW,TH);
+      if(!back){x.fillStyle='rgba(255,240,170,.35)';x.fillRect(0,0,TW,1);x.fillStyle='rgba(0,0,0,.25)';x.fillRect(0,TH-1.6,TW,1.6)}
+      x.fillStyle='#14120a';x.font='800 7.4px ui-monospace,Menlo,Consolas,monospace';x.textBaseline='middle';
+      if(back){x.globalAlpha=.16;x.save();x.scale(-1,1);for(let p=8;p<TW;p+=170)x.fillText('ISOLAMENTO · NÃO ULTRAPASSE',-p-150,TH/2+.3);x.restore()}
+      else for(let p=8;p<TW;p+=170)x.fillText('ISOLAMENTO · NÃO ULTRAPASSE',p,TH/2+.3);
+      return f};return{front:mk(0),back:mk(1)}})();
   const tapeMove=()=>FXON('depo.tape')&&!RM;
   /* pontos ao longo de um trecho preso nas duas pontas: [x,y,torção] */
   function spanPts(ax,ay,bx,by,sag,seed,t){
-    const N=low()?14:26,mv=tapeMove(),tt=mv?t:0,hA=(mv&&typeof HS!=='undefined'&&HS)?HS.A:0,len=Math.hypot(bx-ax,by-ay),sc=len/400;
+    const N=low()?16:24,mv=tapeMove(),tt=mv?t:0,hA=(mv&&HS)?HS.A:0,len=Math.hypot(bx-ax,by-ay),sc=len/400;
     const gust=.55+.45*Math.sin(tt*.43+seed)*Math.sin(tt*.17+seed*.7),out=[];
     for(let i=0;i<=N;i++){const u=i/N,e=Math.sin(Math.PI*u);
       let x=ax+(bx-ax)*u,y=ay+(by-ay)*u+sag*4*u*(1-u);
@@ -174,44 +185,80 @@ export function openStreetDepo(host,id,opts={}){
   }
   /* ponta solta pendurada no nó: cai, e o vento a empurra */
   function tailPts(x0,y0,len,seed,t){
-    const mv=tapeMove(),tt=mv?t:0,hA=(mv&&typeof HS!=='undefined'&&HS)?HS.A:0,w=mv?windAt(tt):.1,N=8,out=[];let x=x0,y=y0;
+    const mv=tapeMove(),tt=mv?t:0,hA=(mv&&HS)?HS.A:0,w=mv?windAt(tt):.1,N=10,out=[];let x=x0,y=y0;
     for(let i=0;i<=N;i++){const u=i/N;out.push([x,y,(mv?(.9*Math.sin(tt*3.1+seed+u*4)+hA*2.4*Math.sin(tt*9+u*5)):.4)*u]);
       const a=Math.PI/2-(w*2.2+(mv?.38*Math.sin(tt*2.2+seed+u*3)*u+hA*.9*Math.sin(tt*8+seed+u*4):0))*(.4+u);x+=Math.cos(a)*len/N;y+=Math.sin(a)*len/N}
     return out;
   }
+  /* A fita é um contorno só (bordas com normal em cada ponto, que se cruzam quando ela torce), usado como recorte:
+     dentro dele as fatias da textura (opacas, sobrepostas sem emenda) e por cima uma única sombra contínua
+     ao longo do comprimento, que escurece onde ela vira de lado. Nada de degraus entre fatias. */
   function strip(c,P,s0){
+    const n=P.length;if(n<2)return;const E=new Array(n);
+    for(let i=0;i<n;i++){const a=P[Math.max(0,i-1)],b=P[Math.min(n-1,i+1)];let tx=b[0]-a[0],ty=b[1]-a[1];const L=Math.hypot(tx,ty)||1;tx/=L;ty/=L;
+      const cs=Math.cos(P[i][2]),hw=TH/2*Math.max(.12,Math.abs(cs))*(cs<0?-1:1);E[i]=[-ty*hw,tx*hw,cs]}
+    c.save();c.beginPath();
+    for(let i=0;i<n;i++){const p=P[i],e=E[i];i?c.lineTo(p[0]-e[0],p[1]-e[1]):c.moveTo(p[0]-e[0],p[1]-e[1])}
+    for(let i=n-1;i>=0;i--){const p=P[i],e=E[i];c.lineTo(p[0]+e[0],p[1]+e[1])}
+    c.closePath();c.clip();c.fillStyle='#d6b21a';c.fill();
     let s=s0||0;
-    for(let i=0;i<P.length-1;i++){const [x0,y0,a0]=P[i],[x1,y1,a1]=P[i+1],dx=x1-x0,dy=y1-y0,L=Math.hypot(dx,dy);if(L<.01)continue;
-      const tx=dx/L,ty=dy/L,nx=-ty,ny=tx,cs=Math.cos((a0+a1)/2),m=Math.abs(cs),hw=TH/2*Math.max(.14,m)*(cs<0?-1:1);
-      const set=cs<0?TAPE.back:TAPE.front,lvl=Math.min(3,Math.floor(m*4)),tex=set[lvl];
-      const sx=(s%(TW-60))*TS,sw=(L+1.2)*TS;
-      c.save();c.transform(tx/TS,ty/TS,nx*hw*2/(TH*TS),ny*hw*2/(TH*TS),x0-nx*hw,y0-ny*hw);c.drawImage(tex,sx,0,sw,TH*TS,0,0,sw,TH*TS);c.restore();
+    for(let i=0;i<n-1;i++){const [x0,y0]=P[i],[x1,y1]=P[i+1],dx=x1-x0,dy=y1-y0,L=Math.hypot(dx,dy);if(L<.01)continue;
+      const tx=dx/L,ty=dy/L,nx=-ty,ny=tx,cs=(E[i][2]+E[i+1][2])/2,hw=TH/2*Math.max(.12,Math.abs(cs))*(cs<0?-1:1),tex=cs<0?TAPE.back:TAPE.front;
+      const sx=(s%(TW-60))*TS,sw=(L+2)*TS;
+      c.save();c.transform(tx/TS,ty/TS,nx*hw*2/(TH*TS),ny*hw*2/(TH*TS),x0-tx-nx*hw,y0-ty-ny*hw);c.drawImage(tex,sx-TS,0,sw+TS,TH*TS,0,0,sw+TS,TH*TS);c.restore();
       s+=L}
+    /* sombra contínua: onde a fita fica de lado ela recebe menos luz */
+    const A=P[0],B=P[n-1],cx=B[0]-A[0],cy=B[1]-A[1],cl=cx*cx+cy*cy||1,gr=c.createLinearGradient(A[0],A[1],B[0],B[1]);
+    for(let i=0;i<n;i++){const u=Math.min(1,Math.max(0,((P[i][0]-A[0])*cx+(P[i][1]-A[1])*cy)/cl)),m=Math.abs(E[i][2]);gr.addColorStop(u,`rgba(6,5,2,${(.62-.5*m).toFixed(3)})`)}
+    const bx=Math.min(A[0],B[0])-30,by=Math.min(A[1],B[1])-40,bw=Math.abs(cx)+60,bh=Math.abs(cy)+80;
+    c.fillStyle=gr;c.fillRect(bx,by,bw,bh);
+    /* a luz da cena, só dentro da fita: giroflex dos lados, viatura passando, holofote */
+    if(LT.on){c.globalCompositeOperation='lighter';c.fillStyle=LT.grad;c.fillRect(bx,by,bw,bh);
+      if(LT.ps)glow(c,LT.ps[0],220,300,'255,240,215',LT.ps[1]);if(LT.hs)glow(c,LT.hs[0],230,200,'235,243,255',LT.hs[1]);c.globalCompositeOperation='source-over'}
+    c.restore();
   }
   /* o nó em volta do poste/pilar: voltas da fita e a ponta solta */
   function knot(c,x,y,w,seed,t,tail){
-    c.fillStyle='#b8960f';c.fillRect(x-w/2,y-1,w,TH+2);c.fillStyle='rgba(255,236,150,.45)';c.fillRect(x-w/2,y+1,w,1.4);
-    c.fillStyle='rgba(0,0,0,.35)';c.fillRect(x-w/2,y+TH-1,w,2);c.fillStyle='rgba(0,0,0,.4)';c.fillRect(x-w/2,y-1,w*.18,TH+2);c.fillRect(x+w/2-w*.22,y-1,w*.22,TH+2);
-    c.fillStyle='#9c800d';c.save();c.translate(x,y+TH/2);c.rotate(.5);c.fillRect(-w*.32,-2.5,w*.64,5);c.restore();
+    c.fillStyle='#a8890e';c.fillRect(x-w/2,y-1,w,TH+2);c.fillStyle='rgba(255,236,150,.4)';c.fillRect(x-w/2,y+1,w,1.2);
+    c.fillStyle='rgba(0,0,0,.3)';c.fillRect(x-w/2,y+TH-1,w,2);c.fillStyle='rgba(0,0,0,.38)';c.fillRect(x-w/2,y-1,w*.18,TH+2);c.fillRect(x+w/2-w*.22,y-1,w*.22,TH+2);
+    c.fillStyle='#8f750c';c.save();c.translate(x,y+TH/2);c.rotate(.5);c.fillRect(-w*.32,-2.5,w*.64,5);c.restore();
     if(tail)strip(c,tailPts(x+w*.15,y+TH/2,tail,seed,t),seed*40);
   }
-  const TAPES={gate:[459,196,790,192,9,1.3],crowd:[-30,252,446,262,11,4.1]};
+  /* trechos: a do portão sai da borda direita do poste até o pilar; a dos curiosos vem de fora do quadro até a borda esquerda do poste */
+  const TAPES={gate:[458,196,790,192,9,1.3],crowd:[-30,252,433,262,11,4.1]};
   function tapeSpan(c,k,t){const a=TAPES[k];strip(c,spanPts(a[0],a[1],a[2],a[3],a[4],a[5],t),k==='gate'?40:0)}
+  /* As fitas ficam num canvas próprio, em resolução cheia, só na faixa da tela onde elas passam (y 150..320),
+     por cima do fundo e na mesma camada dele (andam juntas com a câmera). Recebem o giroflex e o holofote. */
+  const LT={on:false,grad:null,ps:null,hs:null};
+  function drawTapes(t,g){
+    const c=cvTape.getContext('2d'),r=cvTape._r||1;c.setTransform(r,0,0,r,0,-TB.y*r);c.clearRect(0,TB.y,W,TB.h);
+    if(!ART.bg)return;
+    c.imageSmoothingEnabled=true;c.imageSmoothingQuality='low';
+    const gr=c.createLinearGradient(0,0,W,0);gr.addColorStop(0,`rgba(${RED},${(.3*g.r).toFixed(3)})`);gr.addColorStop(.45,'rgba(0,0,0,0)');gr.addColorStop(.55,'rgba(0,0,0,0)');gr.addColorStop(1,`rgba(${BLUE},${(.3*g.b).toFixed(3)})`);
+    LT.grad=gr;LT.ps=PS&&PS.I>.02?[PS.x,.35*PS.I]:null;LT.hs=HS&&HS.S>.02?[HS.sx-HS.lean*120,.45*HS.S]:null;LT.on=true;
+    tapeSpan(c,'gate',t);tapeSpan(c,'crowd',t);
+    knot(c,445.5,TAPES.crowd[3]-TH/2+.5,29,2.2,t,24);knot(c,445.5,TAPES.gate[1]-TH/2+.5,29,3.7,t,0);knot(c,789,TAPES.gate[3]-TH/2+.5,29,5.1,t,18);
+    LT.on=false;
+  }
 
   /* ---------- tamanho: a tela do jogo deitada (844×390), encaixada no espaço que houver ---------- */
-  const wrap=$('.sd-wrap'),stage=$('#sd-stage'),cvBg=$('#sd-bg'),cvAc=$('#sd-ac'),cvFg=$('#sd-fg');
+  const wrap=$('.sd-wrap'),stage=$('#sd-stage'),cvBg=$('#sd-bg'),cvTape=$('#sd-tape'),TB={y:172,h:132},cvAc=$('#sd-ac'),cvFg=$('#sd-fg');
   function setC(c,w,h,r){c.width=Math.max(1,Math.round(w*r));c.height=Math.max(1,Math.round(h*r));c._r=r}
   let K=1;
   function size(){
     const w=wrap.clientWidth,h=wrap.clientHeight;K=Math.min(w/W,h/H)||1;
     stage.style.transform=`translate(${(w-W*K)/2}px,${(h-H*K)/2}px) scale(${K})`;
     const D=Math.min(1.5,window.devicePixelRatio||1)*K*(low()?.7:1)*(DEG>0?.8:1);
-    setC(cvBg,W,H,D*.5);setC(cvAc,400,430,D);setC(cvFg,W,H,D);setC($('#sd-debM'),W,H,D*.35);setC($('#sd-debN'),W,H,D*.18);if(typeof rainResize==='function'&&RAINREADY)rainResize();
+    setC(cvBg,W,H,D*.5);setC(cvTape,W,TB.h,Math.min(2,D*1.15));BGC.k='';setC(cvAc,400,430,D);setC(cvFg,W,H,D);setC($('#sd-debM'),W,H,D*.35);setC($('#sd-debN'),W,H,D*.18);if(typeof rainResize==='function'&&RAINREADY)rainResize();
   }
   const ro=new ResizeObserver(()=>{if(alive)size()});ro.observe(wrap);
 
   /* ---------- desenho ---------- */
-  function glow(c,x,y,r,rgb,a){if(a<=.01)return;const g=c.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(${rgb},${a})`);g.addColorStop(1,`rgba(${rgb},0)`);c.fillStyle=g;c.fillRect(x-r,y-r,r*2,r*2)}
+  /* brilho radial: um sprite por cor, feito uma vez (antes era um gradiente novo a cada chamada, dezenas por quadro) */
+  const GLS={};
+  function glowSpr(rgb){let s=GLS[rgb];if(s)return s;s=GLS[rgb]=document.createElement('canvas');s.width=s.height=256;const x=s.getContext('2d'),g=x.createRadialGradient(128,128,0,128,128,128);
+    g.addColorStop(0,`rgba(${rgb},1)`);g.addColorStop(1,`rgba(${rgb},0)`);x.fillStyle=g;x.fillRect(0,0,256,256);return s}
+  function glow(c,x,y,r,rgb,a){if(a<=.01||r<=0)return;const ga=c.globalAlpha;c.globalAlpha=ga*Math.min(1,a);c.drawImage(glowSpr(rgb),x-r,y-r,r*2,r*2);c.globalAlpha=ga}
   function lin(c,x0,y0,x1,y1,stops){const g=c.createLinearGradient(x0,y0,x1,y1);stops.forEach(([o,col])=>g.addColorStop(o,col));return g}
   function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
   function giro(t){
@@ -284,12 +331,15 @@ export function openStreetDepo(host,id,opts={}){
      - o volume do facho aparece na garoa e na névoa, metade atrás e metade na frente das pessoas. */
   const HAZE=Array.from({length:7},(_,i)=>({o:i/7,s:.6+((i*37)%10)/12,w:.6+((i*53)%10)/14}));
   /* facho sem bordas marcadas: pintado em faixas finas, cada uma com queda suave para os dois lados */
+  const BEAM={c:null};
   function beamVolume(c,t,a){
     const {sx,S,lean}=HS,topX=sx-lean*420;
     c.globalCompositeOperation='lighter';
+    if(!BEAM.c){const b=BEAM.c=document.createElement('canvas');b.width=256;b.height=1;const x=b.getContext('2d'),g=x.createLinearGradient(0,0,256,0);
+      g.addColorStop(0,'rgba(228,238,255,0)');g.addColorStop(.3,'rgba(228,238,255,.45)');g.addColorStop(.5,'rgba(228,238,255,1)');g.addColorStop(.7,'rgba(228,238,255,.45)');g.addColorStop(1,'rgba(228,238,255,0)');x.fillStyle=g;x.fillRect(0,0,256,1)}
     for(let y=-10;y<H+10;y+=5){const f=(y+60)/(H+100),cx=topX+(sx-topX)*f,hw=34+150*f,al=(.16-.08*f)*S*a;
-      const g=c.createLinearGradient(cx-hw*1.6,0,cx+hw*1.6,0);g.addColorStop(0,'rgba(228,238,255,0)');g.addColorStop(.3,`rgba(228,238,255,${al*.45})`);g.addColorStop(.5,`rgba(228,238,255,${al})`);g.addColorStop(.7,`rgba(228,238,255,${al*.45})`);g.addColorStop(1,'rgba(228,238,255,0)');
-      c.fillStyle=g;c.fillRect(cx-hw*1.6,y,hw*3.2,5)}
+      c.globalAlpha=Math.min(1,al);c.drawImage(BEAM.c,cx-hw*1.6,y,hw*3.2,5)}
+    c.globalAlpha=1;
     for(const h of HAZE){const f=((t*.07*h.s+h.o)%1),y=-60+f*(H+100),x=topX+(sx-topX)*(y+60)/(H+100)+Math.sin(t*.5+h.o*9)*20;c.save();c.translate(x,y);c.scale(1.5*h.w,1);glow(c,0,0,50+f*60,'225,236,255',.05*S*a*Math.sin(Math.PI*f));c.restore()}
     c.globalCompositeOperation='source-over';
   }
@@ -323,6 +373,8 @@ export function openStreetDepo(host,id,opts={}){
   const DEB=Array.from({length:16},(_,i)=>({near:i%3===0,x:-50-Math.random()*400,y:120+Math.random()*260,vx:0,vy:0,r:Math.random()*6,s:2+Math.random()*3,c:i%4===0?'#c9c2b0':(i%3?'#2a2416':'#3b3420'),live:false}));
   const DM=$('#sd-debM'),DN=$('#sd-debN');
   function debris(_c,dt,t){
+    /* só mexe nos dois canvases quando há folha voando (ou acabou de sair): canvas parado não é reenviado para a tela */
+    const any=!RM&&(DEB.some(d=>d.live)||(HS&&HS.A>.35));if(!any&&!DEB.dirty)return;DEB.dirty=any;
     const cm=DM.getContext('2d'),cn=DN.getContext('2d');cm.setTransform(DM._r,0,0,DM._r,0,0);cn.setTransform(DN._r,0,0,DN._r,0,0);cm.clearRect(0,0,W,H);cn.clearRect(0,0,W,H);
     if(RM)return;const A=HS?HS.A:0,dir=HELI?HELI.dir:1;
     for(const d of DEB){
@@ -451,8 +503,9 @@ export function openStreetDepo(host,id,opts={}){
     for(const L of specs){
       const p=PATS[L.k]||(PATS[L.k]=x.createPattern(RL[L.k],'repeat'));
       const off=(t*L.s/L.sc)%256;
-      x.setTransform(r*L.sc,0,r*L.sc*w,r*L.sc,0,0);x.translate(0,off);x.globalAlpha=L.a;x.fillStyle=p;
-      x.fillRect(-500/L.sc,-300/L.sc,(W+1000)/L.sc,(H+600)/L.sc);
+      /* a inclinação e a queda vão na matriz do padrão; o preenchimento cobre só o canvas (antes era ~5× a área da tela) */
+      if(p.setTransform&&typeof DOMMatrix!=='undefined'){p.setTransform(new DOMMatrix([r*L.sc,0,r*L.sc*w,r*L.sc,0,0]).translate(0,off));x.setTransform(1,0,0,1,0,0);x.globalAlpha=L.a;x.fillStyle=p;x.fillRect(0,0,dst.width,dst.height)}
+      else{x.setTransform(r*L.sc,0,r*L.sc*w,r*L.sc,0,0);x.translate(0,off);x.globalAlpha=L.a;x.fillStyle=p;x.fillRect(-500/L.sc,-300/L.sc,(W+1000)/L.sc,(H+600)/L.sc)}
     }
     x.setTransform(1,0,0,1,0,0);x.globalAlpha=1;
     /* a chuva só aparece onde há luz; a máscara já leva a cor de sódio */
@@ -469,6 +522,8 @@ export function openStreetDepo(host,id,opts={}){
   /* gotas soltas (meio e perto) */
   const DROPS2=Array.from({length:120},()=>newDrop2(true));
   function newDrop2(any){const z=Math.random()**1.4;return{x:Math.random()*(W+260)-160,y:any?Math.random()*(H+60)-40:-30-Math.random()*90,z,s:620+z*900,gy:328+Math.random()*60,j:(Math.random()-.5)*.02}}
+  const LSPR=(()=>{const mk=(stops)=>{const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,40,6.4,32,32,32);stops.forEach(([o,col])=>g.addColorStop(o,col));x.fillStyle=g;x.beginPath();x.arc(32,32,32,0,7);x.fill();return c};
+    return{d:mk([[0,'rgba(0,0,0,.1)'],[.75,'rgba(0,0,0,0)']]),l:mk([[0,'rgba(255,230,200,0)'],[.75,'rgba(255,230,200,.05)'],[.92,'rgba(255,235,210,.13)'],[1,'rgba(255,235,210,0)']])}})();
   const SPL=[],DRIP=[],LENS=[];let dripT=0;
   for(let i=0;i<4;i++)LENS.push(newLens(true));
   function newLens(any){
@@ -476,13 +531,15 @@ export function openStreetDepo(host,id,opts={}){
     const y=side<.8?40+Math.random()*320:330+Math.random()*50;
     return{x,y,r:5+Math.random()*9,life:any?Math.random()*8:0,max:7+Math.random()*9,slide:Math.random()<.4?4+Math.random()*10:0}
   }
+  let RBF=0;
   function rainBack(c,t,g){
     if(!FXON('depo.rain')||DEG>1)return;
     {const tt=RM?0:t;c.globalCompositeOperation='lighter';
       for(let i=0;i<4;i++){const mx=620+Math.sin(tt*.07+i*1.7)*70,my=60+i*80+Math.sin(tt*.05*(i+1))*25;c.save();c.translate(mx,my);c.scale(1.6,1);glow(c,0,0,110,'255,200,150',.05);c.restore()}
       c.globalCompositeOperation='source-over'}
     if(!RAINREADY)return;const tt=RM?0:t;
-    layer(RL.back,RL.maskB,cvBg._r,tt,g,[{k:'far',s:240,sc:1,a:.75},{k:'far',s:330,sc:1.35,a:.6}]);
+    /* a garoa do fundo é refeita a cada dois quadros (como antes); o resto do fundo anda a cada quadro */
+    if(!(RBF++&1))layer(RL.back,RL.maskB,cvBg._r,tt,g,[{k:'far',s:240,sc:1,a:.75},{k:'far',s:330,sc:1.35,a:.6}]);
     c.save();c.globalCompositeOperation='lighter';c.drawImage(RL.back,0,0,W,H);c.restore();
   }
   function rainFront(c,t,g){
@@ -529,9 +586,8 @@ export function openStreetDepo(host,id,opts={}){
       const o=LENS[i];o.life+=dt;if(o.life>o.max){LENS[i]=newLens(false);continue}
       const a=Math.min(1,o.life/.4,(o.max-o.life)/1.2);if(o.slide&&o.life>2)o.y+=o.slide*dt;
       const L=.35+lightAt(o.x,o.y)*.65;
-      const rg=c.createRadialGradient(o.x,o.y+o.r*.25,o.r*.2,o.x,o.y,o.r);
-      rg.addColorStop(0,`rgba(0,0,0,${.1*a})`);rg.addColorStop(.75,`rgba(255,230,200,${.05*a*L})`);rg.addColorStop(.92,`rgba(255,235,210,${.13*a*L})`);rg.addColorStop(1,'rgba(255,235,210,0)');
-      c.fillStyle=rg;c.beginPath();c.arc(o.x,o.y,o.r,0,7);c.fill();
+      /* gota: miolo escuro e aro claro, de sprites feitos uma vez */
+      c.globalAlpha=a;c.drawImage(LSPR.d,o.x-o.r,o.y-o.r,o.r*2,o.r*2);c.globalAlpha=a*L;c.drawImage(LSPR.l,o.x-o.r,o.y-o.r,o.r*2,o.r*2);c.globalAlpha=1;
       c.fillStyle=`rgba(255,245,230,${.2*a*L})`;c.beginPath();c.ellipse(o.x-o.r*.35,o.y-o.r*.4,o.r*.18,o.r*.1,-.6,0,7);c.fill();
     }
   }
@@ -628,6 +684,7 @@ export function openStreetDepo(host,id,opts={}){
   }
 
 
+  const ALS={c:null};
   const SC={
    casa:{
     bg(c,t,g){
@@ -663,18 +720,15 @@ export function openStreetDepo(host,id,opts={}){
    mix:{
     bg(c,t,g){
       if(ART.bg){
-        /* cenário oficial (public/cenarios/rua-acacias): a fachada dos Valença, o muro, o portão e a calçada molhada */
-        c.drawImage(ART.bg,0,0,W,H);
-        c.fillStyle='rgba(4,8,18,.26)';c.fillRect(0,0,W,H);
+        /* cenário oficial (public/cenarios/rua-acacias): a fachada dos Valença, o muro, o portão e a calçada molhada.
+           A foto grande e o poste são reduzidos e escurecidos uma vez só (cache no tamanho da tela); por quadro é uma cópia. */
+        const C=bgCache();c.save();c.setTransform(1,0,0,1,0,0);c.drawImage(C.bg,0,0);c.restore();
         /* o giroflex chega pelos lados e a calçada molhada devolve as cores */
-        c.fillStyle=lin(c,0,0,W,0,[[0,`rgba(${RED},${.32*g.r})`],[.5,'rgba(0,0,0,0)'],[1,`rgba(${BLUE},${.32*g.b})`]]);c.fillRect(0,292,W,98);
+        if(g.r>.01){c.globalAlpha=g.r;c.drawImage(C.floorR,0,292,W,98);c.globalAlpha=1}
+        if(g.b>.01){c.globalAlpha=g.b;c.drawImage(C.floorB,0,292,W,98);c.globalAlpha=1}
         c.globalCompositeOperation='lighter';glow(c,-40,200,640,RED,.24*g.r);glow(c,900,170,580,BLUE,.26*g.b);c.globalCompositeOperation='source-over';
-        tapeSpan(c,'gate',t);
         drawCrowdArt(c,t,g);
-        tapeSpan(c,'crowd',t);
-        if(ART.poste)c.drawImage(ART.poste,0,0,W,H);
-        /* as duas fitas amarradas no poste, por cima dele; a do portão também no pilar da direita */
-        knot(c,445.5,TAPES.crowd[3]-TH/2+.5,29,2.2,t,24);knot(c,445.5,TAPES.gate[1]-TH/2+.5,29,3.7,t,0);knot(c,789,TAPES.gate[3]-TH/2+.5,29,5.1,t,18);
+        if(C.poste){c.save();c.setTransform(1,0,0,1,0,0);c.drawImage(C.poste,C.px,0);c.restore()}
       }else{
         SC.casa.bg(c,t,g);
         drawCrowd(c,t,g);
@@ -694,11 +748,13 @@ export function openStreetDepo(host,id,opts={}){
     },
     fg(c,t,g){rainFront(c,t,g);passFg(c);heliFg(c)},
     light(c,w,h,g){
-      c.fillStyle='rgba(6,10,24,.34)';c.fillRect(0,0,w,h);
-      c.fillStyle=lin(c,0,0,0,h,[[0,'rgba(255,178,96,.3)'],[.5,'rgba(255,178,96,0)']]);c.fillRect(0,0,w,h);
-      c.fillStyle=lin(c,0,0,0,h,[[.5,'rgba(4,6,14,0)'],[1,'rgba(4,6,14,.5)']]);c.fillRect(0,0,w,h);
-      c.fillStyle=lin(c,0,0,w,0,[[0,`rgba(${RED},${.32*g.r})`],[.24,`rgba(${RED},0)`]]);c.fillRect(0,0,w,h);
-      c.fillStyle=lin(c,0,0,w,0,[[.76,`rgba(${BLUE},0)`],[1,`rgba(${BLUE},${.32*g.b})`]]);c.fillRect(0,0,w,h);
+      /* luz fixa (escuro geral, âmbar do poste por cima, pé no escuro) pintada uma vez; o giroflex num gradiente só */
+      if(!ALS.c){const k=ALS.c=document.createElement('canvas');k.width=100;k.height=108;const x=k.getContext('2d');x.scale(100/w,108/h);
+        x.fillStyle='rgba(6,10,24,.34)';x.fillRect(0,0,w,h);
+        x.fillStyle=lin(x,0,0,0,h,[[0,'rgba(255,178,96,.3)'],[.5,'rgba(255,178,96,0)']]);x.fillRect(0,0,w,h);
+        x.fillStyle=lin(x,0,0,0,h,[[.5,'rgba(4,6,14,0)'],[1,'rgba(4,6,14,.5)']]);x.fillRect(0,0,w,h)}
+      c.drawImage(ALS.c,0,0,w,h);
+      if(g.r>.01||g.b>.01){c.fillStyle=lin(c,0,0,w,0,[[0,`rgba(${RED},${(.32*g.r).toFixed(3)})`],[.24,`rgba(${RED},0)`],[.76,`rgba(${BLUE},0)`],[1,`rgba(${BLUE},${(.32*g.b).toFixed(3)})`]]);c.fillRect(0,0,w,h)}
       passActor(c,w,h);heliActor(c,w,h);
     }
    }
@@ -999,7 +1055,9 @@ export function openStreetDepo(host,id,opts={}){
     stage.classList.toggle('passing',!busy&&!!(PS&&PASS&&(performance.now()/1000-PASS.t0)/PASS.dur<.82));
     if(PS&&PS.I>.55&&!busy&&expr==='neutral'){setExpr('uncomfortable');glare=true}else if(glare&&(!PS||PS.I<.3)){glare=false;if(!busy)setExpr(IDLE)}
     const gr=giro(t),s=SC[cur];GS.r+=(gr.r-GS.r)*Math.min(1,dt*9);GS.b+=(gr.b-GS.b)*Math.min(1,dt*9);const g=GS;
-    if(!(FN++&1)){const b=cvBg.getContext('2d');b.setTransform(cvBg._r,0,0,cvBg._r,0,0);s.bg(b,t,g)}
+    /* fundo a cada quadro; num aparelho que já precisou aliviar (DEG>0), a cada dois */
+    if(DEG===0||!(FN++&1)){const b=cvBg.getContext('2d');b.setTransform(cvBg._r,0,0,cvBg._r,0,0);s.bg(b,t,g)}
+    drawTapes(t,g);
     perf(dt);
     mouthStep(now,dt);typeStep(now);drawActor(now,t,g);camStep(now,t,dt);
     const f=cvFg.getContext('2d');f.setTransform(cvFg._r,0,0,cvFg._r,0,0);f.clearRect(0,0,W,H);s.fg(f,t,g);
