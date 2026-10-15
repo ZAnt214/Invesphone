@@ -2147,7 +2147,7 @@ function render(){
   for(const c of S.civs){const ic=emoteOf(c,false);if(ic){const X=Math.round(c.x*T)+16,Y=Math.round(c.y*TH)+TH-52+Math.round(Math.sin(frame/12+c.id)*1.2);drawBubble(X+9,Y,ic);}}
   if(FX.bark>0&&FX.dog){drawBubble(FX.dog.x+4,FX.dog.y-2,ICON.ex);}
   for(const p of [...S.crew,...S.civs]){if(!p.say)continue;p.say.t++;if(p.say.t>p.say.life){p.say=null;continue;}const al=Math.min(1,(p.say.life-p.say.t)/20,p.say.t/6);drawSay(Math.round(p.x*T)+16,Math.round(p.y*TH)+TH-(S.crew.includes(p)?78:56),p.say.txt,al);}
-  drawCmdPreview();drawRoomLabels();drawLabels();drawOverlayFx();
+  drawRoomSel();drawCmdPreview();drawRoomLabels();drawLabels();drawOverlayFx();
   // mist + vignette (one low-res layer)
   drawAtmos(s,ox,oy,nf);
   drawFlyby();
@@ -2243,8 +2243,53 @@ cv.addEventListener('wheel',e=>{e.preventDefault();CAMCTRL.beginManual();ZA=null
 function tap(sx,sy){
   const w=s2w(sx,sy);let best=null,bd=22;
   for(const a of S.crew){const d=Math.hypot(a.x*T+16-w.x,a.y*TH+TH-22-w.ys);if(d<bd){bd=d;best=a;}}
+  if(!best&&roomTap(tileAt(sx,sy)))return;
+  ROOMSEL=null;
   if(best){sel=best.id;selTile=null;}else{sel=null;selTile=tileAt(sx,sy);follow=false;}
   updateInfo();updateCrew();
+}
+/* ---------- Perícia no próprio mapa (14/10/2026) ----------
+   Sem cartão: tocar num cômodo o seleciona como num jogo de estratégia. Cantos em pixel se fecham sobre ele, o nome
+   aparece no alto do cômodo e o Lemos pensa numa lupa. Tocar de novo no mesmo cômodo manda o Lemos periciar (ou põe
+   na fila); tocar fora desfaz. O cômodo em andamento e os da fila ficam marcados de leve o tempo todo. */
+let ROOMSEL=null;const ROOMBOX={};
+function roomBox(rm){if(ROOMBOX[rm])return ROOMBOX[rm];let x0=1e9,y0=1e9,x1=-1,y1=-1;for(let i=0;i<N;i++)if(room[i]===rm){const x=i%W,y=(i/W)|0;if(x<x0)x0=x;if(y<y0)y0=y;if(x>x1)x1=x;if(y>y1)y1=y;}
+  return ROOMBOX[rm]=x1<0?null:{x:x0*T,y:y0*TH-(HOUSE_ROOMS.has(rm)?8:0),w:(x1-x0+1)*T,h:(y1-y0+1)*TH+(HOUSE_ROOMS.has(rm)?8:0)};}
+function roomTap(t){
+  const rm=hot[t]==='cao_canil'?'quintal':room[t];if(!ON_ROOM[rm])return false;
+  const a=S.crew.find(c=>c.key==='lemos');if(!a)return false;
+  sel=null;selTile=null;infoEl.hidden=true;
+  if(ROOMSEL&&ROOMSEL.rm===rm){
+    const st=periciaState(a,rm),todo=roomPending(rm)||roomTodo(rm);
+    if(!st&&todo){const r=findPath(a,i=>inRoomSet(i,rm)&&passable(i));if(r){applyCmd(a,{k:'pericia',room:rm,tile:t,path:r.path});coachDone(true);ROOMSEL=null;}else sys('Sem caminho até lá.');}
+    else ROOMSEL=null;
+  }else{ROOMSEL={rm,t0:frame};SND.click&&SND.click();}
+  updateInfo();updateCrew();return true;
+}
+// cantos em pixel: um "L" de 2 px em cada canto, fechando sobre o cômodo quando ele é escolhido
+function pxCorners(b,inset,len,col,al){ctx.globalAlpha=al;ctx.fillStyle='rgba(10,8,6,.65)';
+  const X0=Math.round(b.x+inset),Y0=Math.round(b.y+inset),X1=Math.round(b.x+b.w-inset),Y1=Math.round(b.y+b.h-inset);
+  const L=(x,y,dx,dy)=>{ctx.fillRect(x+(dx<0?-len:0)-1,y-1+(dy<0?-2:0),len+2,4);ctx.fillRect(x-1+(dx<0?-2:0),y+(dy<0?-len:0)-1,4,len+2);};
+  L(X0,Y0,1,1);L(X1,Y0,-1,1);L(X0,Y1,1,-1);L(X1,Y1,-1,-1);
+  ctx.fillStyle=col;const M=(x,y,dx,dy)=>{ctx.fillRect(x+(dx<0?-len:0),y+(dy<0?-2:0),len,2);ctx.fillRect(x+(dx<0?-2:0),y+(dy<0?-len:0),2,len);};
+  M(X0,Y0,1,1);M(X1,Y0,-1,1);M(X0,Y1,1,-1);M(X1,Y1,-1,-1);ctx.globalAlpha=1;}
+function pxTag(X,Y,txt,col,al){ctx.globalAlpha=al;ctx.font='bold 8px ui-monospace,Menlo,monospace';ctx.textAlign='center';const w=Math.ceil(ctx.measureText(txt).width)+8;
+  ctx.fillStyle='rgba(8,10,12,.82)';ctx.fillRect(Math.round(X-w/2),Math.round(Y-9),w,12);ctx.fillStyle=col;ctx.fillText(txt,Math.round(X),Math.round(Y));ctx.textAlign='left';ctx.globalAlpha=1;}
+function drawRoomSel(){
+  const a=S.crew.find(c=>c.key==='lemos');if(!a)return;
+  // em andamento e na fila: marcas leves e permanentes
+  if(a.order&&a.order.k==='pericia'){const b=roomBox(a.order.room);if(b&&!(ROOMSEL&&ROOMSEL.rm===a.order.room))pxCorners(b,3,6,'#f2c230',0.55+0.25*Math.sin(frame/14));}
+  (a.queue||[]).forEach((rm,k)=>{const b=roomBox(rm);if(!b||(ROOMSEL&&ROOMSEL.rm===rm))return;pxCorners(b,3,5,'#e9edf0',0.45);atUI(b.x+12,b.y+14,()=>pxTag(b.x+12,b.y+14,String(k+2),'#e9edf0',0.9));});
+  if(!ROOMSEL)return;const b=roomBox(ROOMSEL.rm);if(!b){ROOMSEL=null;return;}
+  const age=frame-ROOMSEL.t0,k=Math.min(1,age/9),e=1-Math.pow(1-k,3),open=(1-e)*14;
+  const st=periciaState(a,ROOMSEL.rm),todo=roomPending(ROOMSEL.rm)||roomTodo(ROOMSEL.rm),done=!st&&!todo;
+  const col=done?'#8fd6a0':'#f2c230',bob=Math.round(Math.sin(frame/10))*(st||done?0:1);
+  pxCorners(b,3-open-bob,8,col,0.25+0.75*e);
+  const nm=ROOM_NAME[ROOMSEL.rm].toUpperCase(),cx=b.x+b.w/2,ty=b.y+16;
+  const tag=done?nm+' · PERICIADO':st==='agora'?nm+' · AGORA':st?nm+' · NA FILA':nm;
+  atUI(cx,ty,()=>pxTag(cx,ty,tag,col,e));
+  if(!st&&!done&&age>14){const bl=(Math.floor(frame/24)%2)?1:0.55;atUI(cx,ty+14,()=>pxTag(cx,ty+14,'TOQUE DE NOVO',`rgba(233,237,240,${bl})`,e));
+    const X=Math.round(a.x*T)+16,Y=Math.round(a.y*TH)+TH-68+Math.round(Math.sin(frame/12)*1.2);drawBubble(X+11,Y+4,ICON.mag);}
 }
 addEventListener('keydown',e=>{
   if(e.key==='Escape'&&cmd){cmdCancel();return;}

@@ -30,7 +30,7 @@ export function caseGuide(g:CaseSave,{casa,briefed,sweep}:{casa:boolean;briefed:
       known:found?`Ricardo e Helena foram mortos em casa. ${found} de ${total} pontos da cena já registrados pela perícia.`:'Ricardo e Helena foram mortos em casa. Lívia diz ter encontrado tudo revirado.',
       question:QUESTION[1],
       next:done?{title:'Volte à base',text:'A cena está registrada. O material segue para o DHPP, e as versões começam de manhã.',cta:'Voltar à base',go:{kind:'base'}}
-        :{title:'Registre a cena',text:`${found} de ${total} marcadores. Toque num cômodo e mande o Lemos periciar; outros pedidos entram na fila dele. Peça à PM que isole a frente antes que os curiosos entrem no terreno.`,cta:'Ver os achados',go:{kind:'achados'}}}
+        :{title:'Registre a cena',text:`${found} de ${total} marcadores. Toque num cômodo e toque de novo para mandar o Lemos periciar; outros pedidos entram na fila dele. Peça à PM que isole a frente antes que os curiosos entrem no terreno.`,cta:'Ver os achados',go:{kind:'achados'}}}
   }
   if(!casa){
     // plantão de madrugada: primeiro a Sônia, depois a casa
