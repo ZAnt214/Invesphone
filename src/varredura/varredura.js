@@ -240,7 +240,7 @@ function runJob(a){
         c.state='leave';c.escorted=1;c.path=[];c.wait=0;S.escorts++;
         say(a,pick(a.kind==='campo'?PAULO_LINES:PM_LINES),120);if(Math.random()<0.4)setTimeout(()=>say(c,pick(['Tá bom, tá bom.','Só queria ajudar…','Calma, já vou.'])),900);
         a.done++;
-        if(a.kind==='pm'&&S.escorts===3&&!S.flags.jorge){S.flags.jorge=1;setTimeout(()=>msg('pm','Doutor, um dos curiosos é o Jorge, vigia da rua. Presta atenção em carro e movimento. Separei ele dos outros.'),1500);}
+        if(a.kind==='pm'&&S.escorts===3&&!S.flags.jorge){S.flags.jorge=1;setTimeout(()=>{msg('pm','Doutor, um dos curiosos é o Jorge, vigia da rua. Presta atenção em carro e movimento. Separei ele dos outros, perto da fita, se o senhor quiser ouvir.');revealWitness('jorge');},1500);}
         endJob(a);return;
       }
       if(--j.re<=0||!a.path.length){j.re=12;const target=ti(c);const r=findPath(a,i=>i===target);if(r)a.path=r.path;else{endJob(a);return;}}
@@ -3156,24 +3156,41 @@ addEventListener('resize',()=>applyLayout(false));
 newGame();
 /* ---------- HUD do Lemos na casa (docs/HUD_LEMOS.md): retrato, faixas de cinema, caderneta e pistas no save do caso ---------- */
 let CASE=readCase();
+let streetDepo=null;
 const casePhoto=id=>id==='livia'?'/characters/livia/expressions/neutral.jpg':`/characters/${id}/portrait.jpg`;
 // o achado da perícia entra no save do caso na hora: a base já o tem quando Lemos voltar
 function caseClue(id){if(!CLUE_LIST.some(c=>c.id===id))return;CASE=writeCase(g=>g.clues.includes(id)?g:{...g,clues:[...g.clues,id]});if(HUD){HUD.setCount(CASE.clues.length,true);HUD.refresh();}}
 function hudData(){
-  // na casa, Lemos só conhece quem a Sônia citou no plantão: a filha, que encontrou a cena
-  const people=CASE_PEOPLE.filter(p=>p.id==='livia').map(p=>({id:p.id,name:p.name,role:p.role,photo:casePhoto(p.id),state:'encontrou a cena'}));
+  // na casa, Lemos só conhece quem a Sônia citou no plantão (a filha, que encontrou a cena) e, se a PM apontou, o vigia na fita
+  const known=CASE.discoveredPeople||[];
+  const people=CASE_PEOPLE.filter(p=>p.id==='livia'||(p.id==='jorge'&&known.includes('jorge'))).map(p=>({id:p.id,name:p.name,role:p.role,photo:casePhoto(p.id),state:p.id==='livia'?'encontrou a cena':CASE.interviewed.includes(p.id)?'ouvido na rua':'na fita, separado pela PM'}));
   const clues=(CASE.clues||[]).map(id=>{const k=CLUE_LIST.find(x=>x.id===id);return k?{id,title:k.title,desc:k.description}:null;}).filter(Boolean);
   const [pl]=presLabel();
   return {people,clues,guide:caseGuide(CASE,{casa:false,briefed:true,sweep:{found:S.order.length,total:CLUE_IDS.length,done:!!S.flags.end,cena:pl,fita:Math.max(0,FITA_MAX-tapeUsed())}})};
 }
 HUD=createHud({app:appEl,data:hudData,clock:()=>clockStr(),
-  canShow:()=>!evOpen&&$('#end').hidden&&$('#fin').hidden&&$('#intro').hidden,
+  canShow:()=>!evOpen&&!streetDepo&&$('#end').hidden&&$('#fin').hidden&&$('#intro').hidden,
   onBook:open=>appEl.classList.toggle('book-on',open),
   onGuide:()=>{const G=hudData().guide,go=G.next&&G.next.go;if(!go)return;if(go.kind==='base')location.href='/base/';else if(go.kind==='achados')HUD.openBook('achados');},
   tabs:[{k:'achados',label:'Achados',count:()=>S.order.length,html:achadosHtml,
           click:e=>{const ph=e.target.closest('[data-photo]');if(ph){openViewer(ph.dataset.photo);return false;}if(e.target.closest('[data-gore]')){setGore(!GORE);return true;}return false;}},
         {k:'radio',label:'Rádio',html:radioHtml}]});
 HUD.setCount(CASE.clues.length,false);
+/* ---------- depoimento na rua (src/rua/streetDepo.js, docs/DEPOIMENTO_NA_RUA.md) ----------
+   A PM separa o vigia na fita; o botão "Jorge" na barra de baixo abre a conversa ali mesmo, na frente da casa.
+   O progresso é o mesmo do depoimento da base: o que for perguntado aqui já conta lá. */
+function syncWitness(){const b=$('#t-depo');if(!b)return;const g=readCase();b.hidden=!((g.discoveredPeople||[]).includes('jorge')&&!g.interviewed.includes('jorge'));}
+function revealWitness(id){CASE=writeCase(g=>{const k=g.discoveredPeople||[],s=g.summonedPeople||[];return {...g,discoveredPeople:k.includes(id)?k:[...k,id],summonedPeople:s.includes(id)?s:[...s,id]};});syncWitness();const b=$('#t-depo');if(b&&!b.hidden)b.classList.add('new');if(HUD)HUD.refresh();}
+function openWitness(){
+  if(streetDepo)return;const b=$('#t-depo');if(b)b.classList.remove('new');
+  const wasPaused=paused,sp=speed,snd=SND.on;setSpeed(0);if(snd)SND.set(false);
+  import('../rua/streetDepo').then(m=>{streetDepo=m.openStreetDepo(appEl,'jorge',{sound:snd,clock:()=>clockStr(),
+    onClose:()=>{streetDepo=null;if(snd)SND.set(true);if(!wasPaused)setSpeed(sp);CASE=readCase();HUD.setCount(CASE.clues.length,false);HUD.refresh();syncWitness();}});
+    if(!streetDepo){if(snd)SND.set(true);if(!wasPaused)setSpeed(sp);}
+  }).catch(()=>{if(snd)SND.set(true);if(!wasPaused)setSpeed(sp);});
+}
+$('#t-depo').addEventListener('click',openWitness);
+syncWitness();
 addEventListener('storage',()=>{CASE=readCase();HUD.setCount(CASE.clues.length,false);});
 initArt();buildAmbient();buildSeg7();buildRail();buildCrew();applyLayout(true);
 setTimeout(()=>{for(const a of S.crew)framesHDFor(a);bedOverlay(BODIES,GORE,true);},400);

@@ -1054,3 +1054,9 @@ body:not(.land) .hud-top.lx .ht .brk{background:none;height:0;margin:0}
    com o Lemos e os botões, como na base. Os elementos continuam no DOM (o jogo atualiza), escondidos; o achado voa
    para a caderneta, e cena e fita aparecem na aba Caso. */
 .hud-top.lx .ht>.h-sub,.hud-top.lx .ht .brk{display:none!important}
+/* depoimento na rua: o vigia separado pela PM (src/rua/streetDepo.js) */
+#t-depo .kb{position:relative;color:#f2c230}
+#t-depo .led{position:absolute;top:5px;right:7px;width:6px;height:6px;border-radius:50%;background:#f2c230;box-shadow:0 0 6px rgba(242,194,48,.8)}
+#t-depo.new .kb{animation:depoPing 1.4s ease-out infinite}
+@keyframes depoPing{0%{box-shadow:0 0 0 0 rgba(242,194,48,.55)}70%,100%{box-shadow:0 0 0 10px rgba(242,194,48,0)}}
+@media(prefers-reduced-motion:reduce){#t-depo.new .kb{animation:none}}

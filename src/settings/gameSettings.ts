@@ -10,7 +10,7 @@
  * o que a qualidade baixa desliga.
  */
 
-export type CategoryId = 'luz'|'atmosfera'|'tela'|'vida'|'cenas'|'interface'|'som'
+export type CategoryId = 'luz'|'atmosfera'|'tela'|'vida'|'cenas'|'interface'|'depo'|'som'
 export type SectionId = 'graficos'|'som'
 /** cada categoria pertence a uma seção dos Ajustes: tudo o que é visual fica em Gráficos, junto da qualidade */
 export type Category = { id:CategoryId; label:string; section:SectionId }
@@ -23,6 +23,7 @@ export const CATEGORIES:Category[] = [
   { id:'vida', label:'Vida no cenário', section:'graficos' },
   { id:'cenas', label:'Cenas rápidas', section:'graficos' },
   { id:'interface', label:'Interface', section:'graficos' },
+  { id:'depo', label:'Depoimento na rua', section:'graficos' },
   { id:'som', label:'Som', section:'som' }
 ]
 export const SECTIONS:{ id:SectionId; label:string }[] = [{ id:'graficos', label:'Gráficos' },{ id:'som', label:'Som' }]
@@ -61,10 +62,18 @@ export const EFFECTS:Effect[] = [
   { id:'hud.particles', cat:'interface', label:'Luz e partículas da interface', desc:'Reflexo de lente, poeira de luz e o rastro da evidência voando até a caderneta.', def:true, where:'Rua e DHPP' },
   { id:'hud.room', cat:'interface', label:'Nome do lugar ao entrar', desc:'Faixas de cinema com o nome do lugar, uma vez por sessão, nos lugares que importam.', def:true, where:'Rua e DHPP' },
   { id:'hud.portrait', cat:'interface', label:'Retrato animado', desc:'Um anel âmbar pulsa em volta do rosto do Lemos quando chega uma descoberta.', def:true, where:'Rua e DHPP' },
+  // depoimento na rua (src/rua/streetDepo.js)
+  { id:'depo.rain', cat:'depo', label:'Chuva na cena', desc:'Garoa em camadas, acesa pela luz do poste, com pingos e névoa no facho.', def:true, where:'Casa' },
+  { id:'depo.lens', cat:'depo', label:'Gotas na lente', desc:'Gotas paradas na câmera que às vezes escorrem.', def:true, where:'Casa' },
+  { id:'depo.flyby', cat:'depo', label:'Viatura e helicóptero passando', desc:'A luz de uma viatura e o holofote de um helicóptero passando pela cena, com vento e folhas.', def:true, where:'Casa' },
+  { id:'depo.film', cat:'depo', label:'Cor de cinema e granulação', desc:'Sombras azuladas, luzes âmbar e grão de filme.', def:true, where:'Casa' },
+  { id:'depo.camera', cat:'depo', label:'Câmera na mão', desc:'O balanço leve da câmera, a aproximação na pista e a tremida do helicóptero.', def:true, where:'Casa' },
   // som
   { id:'ambient', cat:'som', label:'Som ambiente', desc:'O ar da cidade, o trânsito, o burburinho e o ar-condicionado do DHPP.', def:true, where:'Rua e DHPP' },
   { id:'sfx.rain', cat:'som', label:'Chuva', desc:'O chiado da garoa no plantão da madrugada, abafado dentro do DHPP.', def:true, where:'Rua e DHPP' },
   { id:'sfx.hud', cat:'som', label:'Sons da interface', desc:'Ao entrar numa sala, nas descobertas, nas pistas registradas e na caderneta.', def:true, where:'Rua e DHPP' },
+  { id:'sfx.depoAmb', cat:'som', label:'Ambiente do depoimento na rua', desc:'Chuva, cidade, rádio da viatura, curiosos, carros e helicóptero passando.', def:true, where:'Casa' },
+  { id:'sfx.depoFx', cat:'som', label:'Efeitos do depoimento na rua', desc:'Caneta, caderno, marca-texto, papel voando e o toque da pista.', def:true, where:'Casa' },
   { id:'sfx.badge', cat:'som', label:'Leitora de crachá', desc:'O atrito do crachá na fenda, o bipe da leitora e a trava da porta soltando.', def:true, where:'DHPP' }
 ]
 
