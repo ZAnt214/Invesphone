@@ -280,6 +280,8 @@ export function openStreetDepo(host,id,opts={}){
      - fundo: textura densa de riscos finos, atrás do Jorge, na tela desfocada (profundidade);
      - meio: segunda textura, mais rala, na frente;
      - perto: gotas soltas, maiores e mais rápidas; as muito perto saem do foco (largas e fracas).
+     Regra de fluidez: o risco de cada gota é sempre maior que o quanto ela anda entre dois quadros (as soltas usam o tempo
+     real do quadro, as texturas têm risco longo o bastante até ~40 quadros); senão ela parece pular e a cena parece travada.
      A chuva quase não aparece no escuro: só brilha onde a luz do poste a atravessa (e pisca vermelho/azul com o giroflex).
      O vento muda devagar e inclina tudo junto. No chão, respingos; do braço do poste, pingos; na lente, gotas paradas. */
   var RAINREADY=false;
@@ -296,7 +298,7 @@ export function openStreetDepo(host,id,opts={}){
   const RL={
     back:document.createElement('canvas'),front:document.createElement('canvas'),
     maskB:document.createElement('canvas'),maskF:document.createElement('canvas'),
-    far:makePat(520,5,8,.55,.55),mid:makePat(150,9,14,.7,.85)
+    far:makePat(440,8,12,.5,.55),mid:makePat(130,14,20,.62,.85)
   };
   function lightAt(x,y){const dx=(x-640)/(140+Math.max(0,y)*.48);return Math.exp(-dx*dx)*(.45+.55*Math.min(1,Math.max(0,y)/280))+passLit(x,y)}
   /* ===== viatura passando atrás da câmera: não aparece, só a luz dos faróis e do giroflex varrendo a cena e o som ===== */
@@ -538,8 +540,8 @@ export function openStreetDepo(host,id,opts={}){
       for(let i=0;i<4;i++){const mx=620+Math.sin(tt*.07+i*1.7)*70,my=60+i*80+Math.sin(tt*.05*(i+1))*25;c.save();c.translate(mx,my);c.scale(1.6,1);glow(c,0,0,110,'255,200,150',.05);c.restore()}
       c.globalCompositeOperation='source-over'}
     if(!RAINREADY)return;const tt=RM?0:t;
-    /* a garoa do fundo é refeita a cada dois quadros (como antes); o resto do fundo anda a cada quadro */
-    if(!(RBF++&1))layer(RL.back,RL.maskB,cvBg._r,tt,g,[{k:'far',s:240,sc:1,a:.75},{k:'far',s:330,sc:1.35,a:.6}]);
+    /* a garoa do fundo anda a cada quadro (a cada dois só num aparelho que já precisou aliviar): pulando, ela parece quadro baixo */
+    if(DEG===0||!(RBF++&1))layer(RL.back,RL.maskB,cvBg._r,tt,g,[{k:'far',s:240,sc:1,a:.75},{k:'far',s:330,sc:1.35,a:.6}]);
     c.save();c.globalCompositeOperation='lighter';c.drawImage(RL.back,0,0,W,H);c.restore();
   }
   function rainFront(c,t,g){
@@ -554,7 +556,7 @@ export function openStreetDepo(host,id,opts={}){
     for(let i=0;i<nDrops;i++){
       const d=DROPS2[i];const vx=d.s*(w+d.j);d.y+=d.s*dt;d.x+=vx*dt;
       if(d.y>H+60){DROPS2[i]=newDrop2(false);continue}
-      const len=d.s*SHUT,L=lightAt(d.x,d.y),ox=len*(w+d.j);
+      const len=d.s*Math.max(SHUT,dt*1.15),L=lightAt(d.x,d.y),ox=len*(w+d.j);
       if(d.z>.9){ /* fora de foco, bem perto da câmera */
         const al=.025+L*.09;if(al<.03)continue;
         const q=Math.round(al*40)/40;add('n|'+q,d.x-ox*1.6,d.y-len*1.6,d.x,d.y);
@@ -579,7 +581,7 @@ export function openStreetDepo(host,id,opts={}){
     /* pingos que escorrem do braço do poste */
     dripT-=dt;if(dripT<=0){dripT=.25+Math.random()*.7;const u=Math.random();DRIP.push({x:437+(560-437)*u+3,y:46*(1-u)*(1-u)+(-4)*2*u*(1-u)+(-16)*u*u+4,v:0,hold:.15+Math.random()*.3})}
     for(let i=DRIP.length-1;i>=0;i--){const d=DRIP[i];if(d.hold>0){d.hold-=dt;c.fillStyle='rgba(255,220,180,.5)';c.beginPath();c.arc(d.x,d.y,1.2,0,7);c.fill();continue}
-      d.v+=900*dt;d.y+=d.v*dt;if(d.y>H){DRIP.splice(i,1);continue}const l=Math.max(2,d.v*SHUT),L=lightAt(d.x,d.y);
+      d.v+=900*dt;d.y+=d.v*dt;if(d.y>H){DRIP.splice(i,1);continue}const l=Math.max(2,d.v*Math.max(SHUT,dt*1.15)),L=lightAt(d.x,d.y);
       c.strokeStyle=`rgba(255,224,190,${.25+.45*L})`;c.lineWidth=1.3;c.beginPath();c.moveTo(d.x,d.y-l);c.lineTo(d.x,d.y);c.stroke()}
     /* gotas na lente: aparecem, às vezes escorrem, somem */
     if(FXON('depo.lens'))for(let i=0;i<LENS.length;i++){
