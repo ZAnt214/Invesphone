@@ -366,6 +366,9 @@ export function openStreetDepo(host,id,opts={}){
   }
   function rainBack(c,t,g){
     if(!FXON('depo.rain')||DEG>1)return;
+    {const tt=RM?0:t;c.globalCompositeOperation='lighter';
+      for(let i=0;i<4;i++){const mx=620+Math.sin(tt*.07+i*1.7)*70,my=60+i*80+Math.sin(tt*.05*(i+1))*25;c.save();c.translate(mx,my);c.scale(1.6,1);glow(c,0,0,110,'255,200,150',.05);c.restore()}
+      c.globalCompositeOperation='source-over'}
     if(!RAINREADY)return;const tt=RM?0:t;
     layer(RL.back,RL.maskB,cvBg._r,tt,g,[{k:'far',s:240,sc:1,a:.75},{k:'far',s:330,sc:1.35,a:.6}]);
     c.save();c.globalCompositeOperation='lighter';c.drawImage(RL.back,0,0,W,H);c.restore();
@@ -373,11 +376,7 @@ export function openStreetDepo(host,id,opts={}){
   function rainFront(c,t,g){
     if(!FXON('depo.rain'))return;
     if(!RAINREADY)return;const dt=RM?0:RDT,tt=RM?0:t,w=windAt(tt);
-    /* névoa no facho, que anda devagar */
-    c.globalCompositeOperation='lighter';
-    for(let i=0;i<4;i++){const mx=620+Math.sin(tt*.07+i*1.7)*70,my=60+i*80+Math.sin(tt*.05*(i+1))*25;c.save();c.translate(mx,my);c.scale(1.6,1);glow(c,0,0,110,'255,200,150',.045);c.restore()}
-    c.globalCompositeOperation='source-over';
-    layer(RL.front,RL.maskF,cvFg._r/2.5,tt,g,[{k:'mid',s:520,sc:1,a:.55}]);
+    layer(RL.front,RL.maskF,cvFg._r/2.5,tt,g,[{k:'mid',s:520,sc:1,a:.32}]);
     c.save();c.globalCompositeOperation='lighter';c.drawImage(RL.front,0,0,W,H);c.restore();
     c.lineCap='round';
     /* as gotas vão agrupadas em poucos traços (por cor, força e espessura): um traço por grupo, não um por gota */
@@ -669,7 +668,7 @@ export function openStreetDepo(host,id,opts={}){
   function camArrive(){if(RM)return;CAM.x=34;CAM.y=6;CAM.z=1.07;CAM.r=.6;CAM.vx=CAM.vy=CAM.vz=CAM.vr=0}
   function spring(p,v,target,k,dt){const c=2*Math.sqrt(k)*.92;const a=k*(target-CAM[p])-c*CAM[v];CAM[v]+=a*dt;CAM[p]+=CAM[v]*dt}
   const GR=$('#sd-grain'),grx=GR.getContext('2d');let gfr=0;
-  const GFR=Array.from({length:4},()=>{const c=document.createElement('canvas');c.width=211;c.height=98;const x=c.getContext('2d'),im=x.createImageData(211,98),d=im.data;for(let i=0;i<d.length;i+=4){const v=Math.random()*255|0;d[i]=d[i+1]=d[i+2]=v;d[i+3]=255}x.putImageData(im,0,0);return c});
+  const GFR=Array.from({length:4},()=>{const c=document.createElement('canvas');c.width=211;c.height=98;const x=c.getContext('2d'),im=x.createImageData(211,98),d=im.data;for(let i=0;i<d.length;i+=4){d[i]=d[i+1]=d[i+2]=0;d[i+3]=Math.random()*255|0}x.putImageData(im,0,0);return c});
   function grainStep(){if(root.classList.contains('nofilm'))return;if(RM){if(!gfr++)grx.drawImage(GFR[0],0,0,422,195);return}if(gfr++%3)return;grx.drawImage(GFR[(gfr/3|0)%4],0,0,422,195)}
   function camStep(now,t,dt){grainStep();
     const el=(now-CAM.since)/1000;let tz=1,tx=0,ty=0,k=26;
