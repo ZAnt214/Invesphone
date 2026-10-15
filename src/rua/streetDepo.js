@@ -86,6 +86,34 @@ export function openStreetDepo(host,id,opts={}){
     ready=true;
   });
 
+  /* ---------- cenário e curiosos oficiais (creative-requests/deliveries/2026-10-15) ---------- */
+  const ART={bg:null,poste:null,crowd:[],far:[]};
+  {const B=import.meta.env.BASE_URL||'/';
+    loadImg(B+'cenarios/rua-acacias/frente-noite.jpg').then(i=>{if(alive)ART.bg=i});
+    loadImg(B+'cenarios/rua-acacias/frente-noite-poste.png').then(i=>{if(alive)ART.poste=i});
+    Promise.all([1,2,3,4,5,6,7,8].map(n=>loadImg(`${B}characters/curiosos/fundo/curioso-0${n}.png`))).then(list=>{if(!alive)return;
+      /* de madrugada: cada figura escurecida e fria uma vez só; a fileira de trás ainda mais apagada pela garoa */
+      list.forEach((im,i)=>{if(!im)return;for(const far of [0,1]){const c=document.createElement('canvas');c.width=150;c.height=300;const x=c.getContext('2d');x.drawImage(im,0,0,150,300);
+        x.globalCompositeOperation='source-atop';x.fillStyle=far?'rgba(22,28,42,.62)':'rgba(8,12,26,.42)';x.fillRect(0,0,150,300);
+        x.fillStyle=lin(x,0,0,0,300,[[0,'rgba(255,190,130,.10)'],[.35,'rgba(0,0,0,0)'],[1,'rgba(0,0,0,.35)']]);x.fillRect(0,0,150,300);
+        (far?ART.far:ART.crowd)[i]=c}});
+    });}
+  /* [figura, centro x, pé y, altura, fileira de trás]: a fileira da frente encosta na fita, a de trás fica menor */
+  const CROWD_ART=[[6,118,300,138,1],[4,212,302,146,1],[7,300,298,140,1],[0,60,336,180,0],[1,156,340,184,0],[3,246,334,178,0],[5,334,338,182,0],[2,410,340,184,0]];
+  let FLA=false;
+  function drawCrowdArt(c,t,g){
+    for(const [n,x0,yb,h,far] of CROWD_ART){
+      const im=(far?ART.far:ART.crowd)[n];if(!im)continue;const i=n,w=h/2;
+      const x=x0+(RM?0:Math.sin(t*.31+i*1.7)*1.4),y=yb-h+(RM?0:Math.sin(t*.27+i)*.6);
+      c.drawImage(im,x-w/2,y,w,h);
+      /* o holofote do helicóptero passando por eles */
+      if(HS&&HS.S>.02&&Math.abs(HS.sx-x0)<180){const k=HS.S*(1-Math.abs(HS.sx-x0)/180);c.save();c.globalCompositeOperation='lighter';c.globalAlpha=.45*k;c.drawImage(im,x-w/2,y,w,h);c.restore()}
+      /* celulares: o rapaz filmando solta um flash de vez em quando; a moça olhando a tela fica com o rosto aceso */
+      if(n===1&&!far){const px=x-w/2+w*.3,py=y+h*.38;glow(c,px,py,10,'190,215,255',.5);const f=!RM&&(t%5.3)<.09;if(f)glow(c,px,py,170,'255,255,255',.75);if(f&&!FLA)SFX.shutter(-.5);FLA=f}
+      if(n===5&&!far)glow(c,x-w/2+w*.6,y+h*.6,16,'170,200,255',.4);
+    }
+  }
+
   /* ---------- tamanho: a tela do jogo deitada (844×390), encaixada no espaço que houver ---------- */
   const wrap=$('.sd-wrap'),stage=$('#sd-stage'),cvBg=$('#sd-bg'),cvAc=$('#sd-ac'),cvFg=$('#sd-fg');
   function setC(c,w,h,r){c.width=Math.max(1,Math.round(w*r));c.height=Math.max(1,Math.round(h*r));c._r=r}
@@ -555,14 +583,25 @@ export function openStreetDepo(host,id,opts={}){
    },
    mix:{
     bg(c,t,g){
-      SC.casa.bg(c,t,g);
-      drawCrowd(c,t,g);
-      tape(c,0,252,412,-.01);
-      /* o poste fica na calçada, atrás do Jorge; o braço e a lâmpada saem pelo alto do quadro */
-      c.fillStyle='#16171a';c.fillRect(432,0,11,334);c.fillRect(426,318,23,14);
-      c.strokeStyle='#16171a';c.lineWidth=7;c.beginPath();c.moveTo(437,46);c.quadraticCurveTo(440,-4,560,-16);c.stroke();
-      c.fillStyle=`rgba(${RED},${.4*g.r})`;c.fillRect(432,0,3,318);c.fillStyle=`rgba(${BLUE},${.4*g.b})`;c.fillRect(440,0,3,318);
-      c.fillStyle=`rgba(${SOD},.18)`;c.fillRect(441,0,2,318);
+      if(ART.bg){
+        /* cenário oficial (public/cenarios/rua-acacias): a fachada dos Valença, o muro, o portão e a calçada molhada */
+        c.drawImage(ART.bg,0,0,W,H);
+        c.fillStyle='rgba(4,8,18,.26)';c.fillRect(0,0,W,H);
+        /* o giroflex chega pelos lados e a calçada molhada devolve as cores */
+        c.fillStyle=lin(c,0,0,W,0,[[0,`rgba(${RED},${.32*g.r})`],[.5,'rgba(0,0,0,0)'],[1,`rgba(${BLUE},${.32*g.b})`]]);c.fillRect(0,292,W,98);
+        c.globalCompositeOperation='lighter';glow(c,-40,200,640,RED,.24*g.r);glow(c,900,170,580,BLUE,.26*g.b);c.globalCompositeOperation='source-over';
+        tape(c,462,196,380,.015);
+        drawCrowdArt(c,t,g);
+        tape(c,0,252,432,-.01);
+        if(ART.poste)c.drawImage(ART.poste,0,0,W,H);
+      }else{
+        SC.casa.bg(c,t,g);
+        drawCrowd(c,t,g);
+        tape(c,0,252,412,-.01);
+        c.fillStyle='#16171a';c.fillRect(432,0,11,334);c.fillRect(426,318,23,14);
+        c.strokeStyle='#16171a';c.lineWidth=7;c.beginPath();c.moveTo(437,46);c.quadraticCurveTo(440,-4,560,-16);c.stroke();
+      }
+      c.fillStyle=`rgba(${RED},${.4*g.r})`;c.fillRect(438,0,3,322);c.fillStyle=`rgba(${BLUE},${.4*g.b})`;c.fillRect(447,0,3,322);
       /* luz do poste no ar: difusa, sem borda; a garoa é que desenha o facho */
       c.globalCompositeOperation='lighter';
       c.save();c.translate(640,-40);c.scale(.85,1.7);glow(c,0,0,300,SOD,.13);c.restore();

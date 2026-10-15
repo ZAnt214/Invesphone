@@ -16,6 +16,12 @@ Código: `src/rua/streetDepo.js` e `src/rua/streetDepo.css` (tudo dentro de `.sd
   fazer a pergunta final, o Jorge fica `interviewed` e o botão some; o que ficar faltando (por exemplo, o croqui da
   rua, que depende de material da equipe) continua na base como "retomar".
 
+## Arte oficial
+
+- Fundo: `public/cenarios/rua-acacias/frente-noite.jpg` (fachada, muro, portão, calçada) e `frente-noite-poste.png` (o poste, por cima dos curiosos). Se não carregar, o fundo desenhado em código entra no lugar.
+- Curiosos atrás da fita: `public/characters/curiosos/fundo/curioso-01..08.png`, escurecidos para a madrugada, em duas fileiras (`CROWD_ART`). O rapaz filmando solta flash; a moça olhando o celular tem o rosto aceso; o holofote do helicóptero os clareia quando passa.
+- Retratos de conversa da vizinha, do rapaz e do senhor (`public/characters/curiosos/<id>/expressions/`): prontos, ainda sem depoimento (falta escrever as falas dentro do cânone).
+
 ## O que acontece na tela
 
 - Cenário: o portão dos Valença com a fita e um PM, o poste da calçada (a luz vem de cima, o braço sai do quadro), o

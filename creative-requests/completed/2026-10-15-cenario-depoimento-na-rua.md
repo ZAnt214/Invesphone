@@ -51,3 +51,6 @@ Madrugada depois do crime, garoa fina, a PM segurando a frente da casa. A cena p
 - guia de integração: `creative-requests/deliveries/2026-10-15-LEIA-ME-CLAUDE.md`.
 - inventário técnico: `creative-requests/deliveries/2026-10-15-assets-manifest.json`.
 - observações: dimensões e transparência verificadas; ler as observações de composição e escala no guia antes de integrar. Não foram alterados código, save ou narrativa. Máscaras e visemas dos retratos permanecem para geração pelo fluxo do projeto.
+
+## Integração (Claude, 15/10/2026)
+Integrado em `src/rua/streetDepo.js`: a fachada e o poste oficiais substituem o fundo desenhado em código; garoa, fita, giroflex e luzes continuam por cima.

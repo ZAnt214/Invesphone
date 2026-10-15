@@ -1569,7 +1569,11 @@ function buildCars(){
   TRAFFIC=[['#2e589c'],['#c4a17a'],['#712e32'],['#455338'],['#fcbb29','taxi'],['#e9c898','perua'],['#6c3e32','furgao']]
     .map(([c,m])=>outlined(S2(64,84,(P,E)=>drawCarPx(P,E,carPal(c),false,m==='furgao',m))));
   VANSPR=outlined(S2(64,84,(P,E)=>drawCarPx(P,E,{b:'#d9dcd8',hi:'#eef0ec',sh:'#aeb3af',dk:'#7f8580',fr:'#c4c8c4'},false,true)));
+  // os carros oficiais vistos de cima (public/base/rua/veiculos/cima) entram no lugar dos desenhados assim que carregam
+  ['sedan-azul','sedan-bege','sedan-bordo','sedan-verde','taxi','perua-madeira','furgao-marrom'].forEach((n,i)=>carArt(n,c=>{TRAFFIC[i]=c;}));
 }
+/* carro oficial em pixel art, no mesmo tamanho dos desenhados (64×84 com 1 px de folga) */
+function carArt(name,done){const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=66;c.height=86;const g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(im,1,1,64,84);done(c);};im.src=`${import.meta.env.BASE_URL||'/'}base/rua/veiculos/cima/${name}.png`;}
 function spawnCar(){FX.cars.push({spr:pick(TRAFFIC),x:2*T,y:-6*TH,v:1.5,vmax:1.3+Math.random()*0.6,wait:0,honked:0,brake:0,wh:0});}
 function updCars(dt){
   if(!dt)return;const m=minutes(),rate=(m<5*60+30?0.0012:0.0045)*dt;
@@ -3064,7 +3068,7 @@ $('#b-again').addEventListener('click',()=>{SND.click();location.reload();});
 let POLSPR=null,ICSPR=null,ASSSPR=null;
 function svcSprites(){if(POLSPR)return;
   // as viaturas que chegam são a viatura do DHPP da rua da base (preta, teto creme, giroflex)
-  POLSPR=outlined(S2(64,84,(P,E)=>drawCarPx(P,E,carPal('#1a191c'),true,false,'viatura')));
+  POLSPR=outlined(S2(64,84,(P,E)=>drawCarPx(P,E,carPal('#1a191c'),true,false,'viatura')));carArt('viatura-dhpp',c=>{POLSPR=c;});
   ICSPR=outlined(S2(64,84,(P,E)=>drawCarPx(P,E,carPal('#2c3e57'),false,true)));
   ASSSPR=outlined(S2(64,84,(P,E)=>drawCarPx(P,E,carPal('#26282c'),false,false)));}
 const SLOT_Y={a:5*TH,b:14.6*TH,c:19.2*TH};

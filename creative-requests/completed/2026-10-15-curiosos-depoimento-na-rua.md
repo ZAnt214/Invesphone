@@ -68,3 +68,6 @@ Madrugada, garoa fina, Rua das Acácias em frente à casa da família Valença. 
 - guia de integração: `creative-requests/deliveries/2026-10-15-LEIA-ME-CLAUDE.md`.
 - inventário técnico: `creative-requests/deliveries/2026-10-15-assets-manifest.json`.
 - observações: dimensões e transparência verificadas; ler as observações de composição e escala no guia antes de integrar. Não foram alterados código, save ou narrativa. Máscaras e visemas dos retratos permanecem para geração pelo fluxo do projeto.
+
+## Integração (Claude, 15/10/2026)
+Figuras de fundo integradas em `src/rua/streetDepo.js` (multidão atrás da fita). Os retratos de conversa estão no repositório, prontos para quando houver falas aprovadas para os curiosos.
