@@ -3096,6 +3096,8 @@ CLOC.imprensa=()=>[6,6];
 /* ---------- Boot ---------- */
 let last=performance.now(),acc=0;
 function loop(now){
+  // com o depoimento na rua aberto por cima, a casa não desenha (as telas dela ficam mínimas para sobrar memória no iPhone)
+  if(streetDepo){last=now;requestAnimationFrame(loop);return;}
   const dt=Math.min(0.1,(now-last)/1000);last=now;updFly(dt);
   if(!paused){acc+=dt*20*speed;let n=0;while(acc>=1&&n<100){stepWorld();acc-=1;n++;}if(n>=100)acc=0;}
   updWeather();updParticles();{const dt=paused?0:speed;updCars(dt);updLife(dt);}
@@ -3183,11 +3185,11 @@ function syncWitness(){const b=$('#t-depo');if(!b)return;const g=readCase();b.hi
 function revealWitness(id){CASE=writeCase(g=>{const k=g.discoveredPeople||[],s=g.summonedPeople||[];return {...g,discoveredPeople:k.includes(id)?k:[...k,id],summonedPeople:s.includes(id)?s:[...s,id]};});syncWitness();const b=$('#t-depo');if(b&&!b.hidden)b.classList.add('new');if(HUD)HUD.refresh();}
 function openWitness(){
   if(streetDepo)return;const b=$('#t-depo');if(b)b.classList.remove('new');
-  const wasPaused=paused,sp=speed,snd=SND.on;setSpeed(0);if(snd)SND.set(false);
+  const wasPaused=paused,sp=speed,snd=SND.on;setSpeed(0);if(snd)SND.set(false);streetDepo={pending:true};cv.width=cv.height=1;lc.width=lc.height=1;
   import('../rua/streetDepo').then(m=>{streetDepo=m.openStreetDepo(appEl,'jorge',{sound:snd,clock:()=>clockStr(),
-    onClose:()=>{streetDepo=null;if(snd)SND.set(true);if(!wasPaused)setSpeed(sp);CASE=readCase();HUD.setCount(CASE.clues.length,false);HUD.refresh();syncWitness();}});
-    if(!streetDepo){if(snd)SND.set(true);if(!wasPaused)setSpeed(sp);}
-  }).catch(()=>{if(snd)SND.set(true);if(!wasPaused)setSpeed(sp);});
+    onClose:()=>{streetDepo=null;resize();if(snd)SND.set(true);if(!wasPaused)setSpeed(sp);CASE=readCase();HUD.setCount(CASE.clues.length,false);HUD.refresh();syncWitness();}});
+    if(!streetDepo){resize();if(snd)SND.set(true);if(!wasPaused)setSpeed(sp);}
+  }).catch(()=>{streetDepo=null;resize();if(snd)SND.set(true);if(!wasPaused)setSpeed(sp);});
 }
 $('#t-depo').addEventListener('click',openWitness);
 syncWitness();

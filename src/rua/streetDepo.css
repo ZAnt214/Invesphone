@@ -15,17 +15,19 @@
 .sd .scene{position:absolute;inset:0}
 .sd .layer{position:absolute;inset:-2%;transform-origin:73% 34%;will-change:transform}
 .sd .layer canvas{position:absolute}
-.sd #sd-bg{left:2%;top:2%;width:844px;height:390px;filter:blur(1.2px);transition:filter 1.1s ease}
-.sd .sd-stage.answering #sd-bg{filter:blur(2.6px) brightness(.9)}
-.sd .sd-stage.pick #sd-bg{filter:blur(1.8px)}
+.sd #sd-bg{left:2%;top:2%;width:844px;height:390px}
+.sd .dim{position:absolute;inset:0;pointer-events:none;background:#000;opacity:0;transition:opacity .9s ease}
+.sd .sd-stage.answering .dim{opacity:.12}
+.sd .sd-stage.noting .dim{opacity:.16}
+
 .sd #sd-fg{left:2%;top:2%;width:844px;height:390px}
 .sd #sd-debM, .sd #sd-debN{left:2%;top:2%;width:844px;height:390px;pointer-events:none}
-.sd #sd-debM{filter:blur(1.4px)}
-.sd #sd-debN{filter:blur(4px)}
+
+
 .sd #sd-ac{left:calc(2% + 420px);top:calc(2% - 24px);width:400px;height:430px}
 .sd .vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 75% 70% at 55% 45%,transparent 55%,rgba(0,0,0,.42) 100%);box-shadow:inset 0 0 110px rgba(0,0,0,.55)}
-.sd .grade{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;background:linear-gradient(180deg,rgba(0,70,95,.55),rgba(0,40,60,.25) 45%,rgba(160,90,30,.3));opacity:.55}
-.sd #sd-grain{position:absolute;inset:0;width:844px;height:390px;pointer-events:none;mix-blend-mode:overlay;opacity:.09}
+.sd .grade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,52,72,.16),rgba(0,30,45,.06) 45%,rgba(140,80,20,.08))}
+.sd #sd-grain{position:absolute;inset:0;width:844px;height:390px;pointer-events:none;opacity:.035}
 .sd .rec{position:absolute;left:14px;top:10px;z-index:5;display:flex;gap:8px;align-items:center;font:700 10px var(--mono);letter-spacing:.09em;text-shadow:0 1px 3px #000}
 .sd .rec i{width:8px;height:8px;border-radius:50%;background:var(--rec);animation:sd-blink 1.1s steps(2) infinite}
 .sd .rec span{color:#a0a9ae}
@@ -75,8 +77,8 @@
 .sd .sub .hlon .c.k{background-size:100% 80%;color:#1b1606;text-shadow:none}
 .sd .flyer{position:absolute;z-index:13;pointer-events:none;white-space:nowrap;font:600 16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#1b1606;background:rgba(255,212,60,.92);padding:0 3px;border-radius:2px;box-shadow:0 6px 18px rgba(0,0,0,.5);transform-origin:0 50%}
 .sd .sd-stage.listen.noting .pad{transform:translate(-2%,26%);filter:none}
-.sd .sd-stage.noting #sd-bg{filter:blur(2px) brightness(.85)}
-.sd .sd-stage.noting .scene{filter:brightness(.9)}
+
+
 .sd .pad .nts{display:flex;flex-direction:column;gap:2px;margin-top:4px;padding-left:4px}
 .sd .pad .nts small{font:700 9px var(--mono);letter-spacing:.18em;color:#8a7a45}
 .sd .pad .nt{position:relative;align-self:flex-start;font:700 19px/1.15 var(--hand);color:var(--pen);padding:0 4px 0 18px}

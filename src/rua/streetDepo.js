@@ -39,7 +39,7 @@ export function openStreetDepo(host,id,opts={}){
 
   const root=document.createElement('div');root.className='sd';root.setAttribute('role','dialog');root.setAttribute('aria-label',`Depoimento na rua: ${cfg.name}`);
   root.innerHTML=`<div class="sd-wrap"><div class="sd-stage" id="sd-stage">
-    <div class="scene"><div class="layer" id="sd-Lbg"><canvas id="sd-bg"></canvas></div><div class="layer" id="sd-Lac"><canvas id="sd-ac"></canvas></div><div class="layer" id="sd-Lfg"><canvas id="sd-debM"></canvas><canvas id="sd-fg"></canvas><canvas id="sd-debN"></canvas></div></div>
+    <div class="scene"><div class="layer" id="sd-Lbg"><canvas id="sd-bg"></canvas></div><div class="dim"></div><div class="layer" id="sd-Lac"><canvas id="sd-ac"></canvas></div><div class="layer" id="sd-Lfg"><canvas id="sd-debM"></canvas><canvas id="sd-fg"></canvas><canvas id="sd-debN"></canvas></div></div>
     <div class="grade"></div><canvas id="sd-grain" width="422" height="195"></canvas><div class="vig"></div>
     <div class="rec"><i></i>REC <b id="sd-clock">00:00:00</b><span>NA CENA · RUA DAS ACÁCIAS</span></div>
     <div class="focus">FOCO · <b id="sd-focus">CADERNO</b></div>
@@ -57,21 +57,23 @@ export function openStreetDepo(host,id,opts={}){
   const W=844,H=390;
   const RED='255,48,48',BLUE='70,120,255',SOD='255,170,70',FLUO='215,255,240',WARM='255,200,130';
   const cur='mix';
+  let DEG=0;
   let busy=false,curQ=null,circled=false,seq=null,typing=null,clueCount=0;const NOTES2=[];
 
   /* ---------- retrato oficial: uma imagem por expressão, recortada pela máscara da figura ---------- */
-  const imgs={},skins={};let ready=false;
+  const imgs={},skins={};let ready=false;const PW=540,PH=720;
   const loadImg=src=>new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src});
   const EXPRS=[...new Set([cfg.idleExpression||'neutral','neutral','uncomfortable',...cfg.questions.map(q=>q.expression).filter(Boolean)])].filter(e=>CH.assets[e]);
   Promise.all([loadImg(CH.figureMask),VD?loadImg(VD.src):null,...EXPRS.map(e=>loadImg(CH.assets[e].src))]).then(([mask,vis,...ims])=>{
     if(!alive)return;
+    const tmp=document.createElement('canvas');tmp.width=300;tmp.height=400;const x=tmp.getContext('2d');
     EXPRS.forEach((e,i)=>{const im=ims[i];if(!im)return;
-      const c=document.createElement('canvas');c.width=600;c.height=800;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0,600,800);
-      if(mask){x.globalCompositeOperation='destination-in';x.drawImage(mask,0,0,600,800);x.globalCompositeOperation='source-over'}
-      imgs[e]=c;
+      const c=document.createElement('canvas');c.width=PW;c.height=PH;const cx2=c.getContext('2d');cx2.drawImage(im,0,0,PW,PH);
+      if(mask){cx2.globalCompositeOperation='destination-in';cx2.drawImage(mask,0,0,PW,PH);cx2.globalCompositeOperation='source-over'}
+      imgs[e]=c;x.clearRect(0,0,300,400);x.drawImage(im,0,0,300,400);
       /* tom da pele (bochecha) para a pálpebra do piscar */
       try{const a=CH.assets[e],L=a.eyes.left,R=a.eyes.right,dist=R.cx-L.cx,mx=(L.cx+R.cx)/2,my=(L.cy+R.cy)/2;
-        const d=x.getImageData(Math.round((mx-dist*.52)*2/3-3),Math.round((my+dist*.71)*2/3-3),7,7).data;let r=0,g=0,b=0,n=0;
+        const d=x.getImageData(Math.round((mx-dist*.52)/3-2),Math.round((my+dist*.71)/3-2),5,5).data;let r=0,g=0,b=0,n=0;
         for(let k=0;k<d.length;k+=4){r+=d[k];g+=d[k+1];b+=d[k+2];n++}skins[e]=`rgb(${r/n|0},${g/n|0},${b/n|0})`}catch(_){skins[e]='rgb(150,95,60)'}
     });
     /* bocas oficiais (folha de visemas) com a borda esfumada, para assentar sobre o retrato */
@@ -79,7 +81,8 @@ export function openStreetDepo(host,id,opts={}){
       const m=document.createElement('canvas');m.width=c.width;m.height=c.height;const mx=m.getContext('2d');
       for(let i=0;i<VD.order.length;i++){const cx=i*VD.cellW+VD.center[0],cy=VD.center[1]+3,rx=VD.cellW*.24,ry=VD.cellH*.42;
         mx.save();mx.translate(cx,cy);mx.scale(1,ry/rx);const g=mx.createRadialGradient(0,0,0,0,0,rx);g.addColorStop(0,'#000');g.addColorStop(.78,'#000');g.addColorStop(1,'rgba(0,0,0,0)');mx.fillStyle=g;mx.fillRect(-rx,-rx,rx*2,rx*2);mx.restore()}
-      x.globalCompositeOperation='destination-in';x.drawImage(m,0,0);imgs.visemes=c}
+      x.globalCompositeOperation='destination-in';x.drawImage(m,0,0);m.width=m.height=0;imgs.visemes=c}
+    tmp.width=tmp.height=0;
     ready=true;
   });
 
@@ -90,8 +93,8 @@ export function openStreetDepo(host,id,opts={}){
   function size(){
     const w=wrap.clientWidth,h=wrap.clientHeight;K=Math.min(w/W,h/H)||1;
     stage.style.transform=`translate(${(w-W*K)/2}px,${(h-H*K)/2}px) scale(${K})`;
-    const D=Math.min(2,window.devicePixelRatio||1)*K*(low()?.7:1);
-    setC(cvBg,W,H,D*.6);setC(cvAc,400,430,D*1.04);setC(cvFg,W,H,D);setC($('#sd-debM'),W,H,D*.6);setC($('#sd-debN'),W,H,D*.4);if(typeof rainResize==='function'&&RAINREADY)rainResize();
+    const D=Math.min(1.5,window.devicePixelRatio||1)*K*(low()?.7:1)*(DEG>0?.8:1);
+    setC(cvBg,W,H,D*.5);setC(cvAc,400,430,D);setC(cvFg,W,H,D);setC($('#sd-debM'),W,H,D*.35);setC($('#sd-debN'),W,H,D*.18);if(typeof rainResize==='function'&&RAINREADY)rainResize();
   }
   const ro=new ResizeObserver(()=>{if(alive)size()});ro.observe(wrap);
 
@@ -127,7 +130,7 @@ export function openStreetDepo(host,id,opts={}){
     const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');x.lineCap='round';x.lineWidth=w;
     for(let i=0;i<n;i++){const px=Math.random()*256,py=Math.random()*256,l=l0+Math.random()*(l1-l0);
       const g=x.createLinearGradient(0,py,0,py+l);const al=a*(.35+Math.random()*.65);
-      g.addColorStop(0,`rgba(255,255,255,0)`);g.addColorStop(.35,`rgba(255,255,255,${al})`);g.addColorStop(1,`rgba(255,255,255,${al*.8})`);
+      g.addColorStop(0,`rgba(255,228,198,0)`);g.addColorStop(.35,`rgba(255,228,198,${al})`);g.addColorStop(1,`rgba(255,228,198,${al*.8})`);
       x.strokeStyle=g;for(const oy of [0,-256]){x.beginPath();x.moveTo(px,py+oy);x.lineTo(px,py+oy+l);x.stroke()}}
     return c;
   }
@@ -323,8 +326,8 @@ export function openStreetDepo(host,id,opts={}){
     }
   }
   function rainResize(){
-    RL.back.width=cvBg.width;RL.back.height=cvBg.height;RL.front.width=cvFg.width;RL.front.height=cvFg.height;
-    buildMask(RL.maskB,cvBg.width,cvBg.height,cvBg._r);buildMask(RL.maskF,cvFg.width,cvFg.height,cvFg._r);
+    RL.back.width=cvBg.width;RL.back.height=cvBg.height;RL.front.width=Math.ceil(cvFg.width/2.5);RL.front.height=Math.ceil(cvFg.height/2.5);
+    buildMask(RL.maskB,cvBg.width,cvBg.height,cvBg._r);buildMask(RL.maskF,RL.front.width,RL.front.height,cvFg._r/2.5);
   }
   const PATS={};
   const MTMP={};
@@ -344,16 +347,15 @@ export function openStreetDepo(host,id,opts={}){
     if(PS){x.globalCompositeOperation='destination-in';const m2=x.createRadialGradient(PS.x*r,210*r,0,PS.x*r,210*r,420*r);m2.addColorStop(0,`rgba(0,0,0,1)`);m2.addColorStop(1,'rgba(0,0,0,0)');
       const tmp=layerMaskTmp(dst,mask,m2);x.drawImage(tmp,0,0)}else{x.globalCompositeOperation='destination-in';x.drawImage(mask,0,0)}
     x.globalCompositeOperation='source-atop';
-    x.globalAlpha=.55;x.drawImage(mask,0,0);
     if(PS){x.setTransform(r,0,0,r,0,0);x.globalAlpha=1;const gp=x.createRadialGradient(PS.x,210,0,PS.x,210,380);gp.addColorStop(0,`rgba(255,246,228,${PS.I})`);gp.addColorStop(1,'rgba(255,246,228,0)');x.fillStyle=gp;x.fillRect(0,0,W,H);x.setTransform(1,0,0,1,0,0)}
     /* o giroflex acende a garoa dos lados quando pisca */
     x.setTransform(r,0,0,r,0,0);
-    x.globalAlpha=Math.min(1,1.1*g.r);x.fillStyle=lin(x,0,0,W,0,[[0,'rgba(255,60,60,1)'],[.45,'rgba(255,60,60,0)']]);x.fillRect(0,0,W,H);
-    x.globalAlpha=Math.min(1,1.1*g.b);x.fillStyle=lin(x,0,0,W,0,[[.55,'rgba(80,130,255,0)'],[1,'rgba(80,130,255,1)']]);x.fillRect(0,0,W,H);
+    if(g.r>.08){x.globalAlpha=Math.min(1,1.1*g.r);x.fillStyle=lin(x,0,0,W,0,[[0,'rgba(255,60,60,1)'],[.45,'rgba(255,60,60,0)']]);x.fillRect(0,0,W*.45,H)}
+    if(g.b>.08){x.globalAlpha=Math.min(1,1.1*g.b);x.fillStyle=lin(x,0,0,W,0,[[.55,'rgba(80,130,255,0)'],[1,'rgba(80,130,255,1)']]);x.fillRect(W*.55,0,W*.45,H)}
     x.globalAlpha=1;x.globalCompositeOperation='source-over';
   }
   /* gotas soltas (meio e perto) */
-  const DROPS2=Array.from({length:170},()=>newDrop2(true));
+  const DROPS2=Array.from({length:120},()=>newDrop2(true));
   function newDrop2(any){const z=Math.random()**1.4;return{x:Math.random()*(W+260)-160,y:any?Math.random()*(H+60)-40:-30-Math.random()*90,z,s:620+z*900,gy:328+Math.random()*60,j:(Math.random()-.5)*.02}}
   const SPL=[],DRIP=[],LENS=[];let dripT=0;
   for(let i=0;i<4;i++)LENS.push(newLens(true));
@@ -363,7 +365,7 @@ export function openStreetDepo(host,id,opts={}){
     return{x,y,r:5+Math.random()*9,life:any?Math.random()*8:0,max:7+Math.random()*9,slide:Math.random()<.4?4+Math.random()*10:0}
   }
   function rainBack(c,t,g){
-    if(!FXON('depo.rain'))return;
+    if(!FXON('depo.rain')||DEG>1)return;
     if(!RAINREADY)return;const tt=RM?0:t;
     layer(RL.back,RL.maskB,cvBg._r,tt,g,[{k:'far',s:240,sc:1,a:.75},{k:'far',s:330,sc:1.35,a:.6}]);
     c.save();c.globalCompositeOperation='lighter';c.drawImage(RL.back,0,0,W,H);c.restore();
@@ -375,23 +377,29 @@ export function openStreetDepo(host,id,opts={}){
     c.globalCompositeOperation='lighter';
     for(let i=0;i<4;i++){const mx=620+Math.sin(tt*.07+i*1.7)*70,my=60+i*80+Math.sin(tt*.05*(i+1))*25;c.save();c.translate(mx,my);c.scale(1.6,1);glow(c,0,0,110,'255,200,150',.045);c.restore()}
     c.globalCompositeOperation='source-over';
-    layer(RL.front,RL.maskF,cvFg._r,tt,g,[{k:'mid',s:520,sc:1,a:.55}]);
+    layer(RL.front,RL.maskF,cvFg._r/2.5,tt,g,[{k:'mid',s:520,sc:1,a:.55}]);
     c.save();c.globalCompositeOperation='lighter';c.drawImage(RL.front,0,0,W,H);c.restore();
     c.lineCap='round';
-    for(let i=0;i<DROPS2.length;i++){
+    /* as gotas vão agrupadas em poucos traços (por cor, força e espessura): um traço por grupo, não um por gota */
+    const BK=new Map();const add=(key,x0,y0,x1,y1)=>{let a=BK.get(key);if(!a)BK.set(key,a=[]);a.push(x0,y0,x1,y1)};
+    const nDrops=DEG>1?DROPS2.length>>1:DROPS2.length;
+    for(let i=0;i<nDrops;i++){
       const d=DROPS2[i];const vx=d.s*(w+d.j);d.y+=d.s*dt;d.x+=vx*dt;
       if(d.y>H+60){DROPS2[i]=newDrop2(false);continue}
       const len=d.s*SHUT,L=lightAt(d.x,d.y),ox=len*(w+d.j);
       if(d.z>.9){ /* fora de foco, bem perto da câmera */
         const al=.025+L*.09;if(al<.03)continue;
-        for(const [lw,k] of [[7,.35],[4,.6],[1.8,1]]){c.lineWidth=lw;c.strokeStyle=`rgba(255,226,196,${al*k})`;c.beginPath();c.moveTo(d.x-ox*1.6,d.y-len*1.6);c.lineTo(d.x,d.y);c.stroke()}
+        const q=Math.round(al*40)/40;add('n|'+q,d.x-ox*1.6,d.y-len*1.6,d.x,d.y);
         continue;
       }
       const al=.02+.04*d.z+L*(.22+.38*d.z);if(al<.035)continue;
       const col=L>.22?'255,216,176':'176,192,220';
-      const g2=c.createLinearGradient(d.x-ox,d.y-len,d.x,d.y);g2.addColorStop(0,`rgba(${col},0)`);g2.addColorStop(.4,`rgba(${col},${al})`);g2.addColorStop(1,`rgba(${col},${al*.85})`);
-      c.strokeStyle=g2;c.lineWidth=.5+d.z*1.1;c.beginPath();c.moveTo(d.x-ox,d.y-len);c.lineTo(d.x,d.y);c.stroke();
+      const q=Math.round(al*20)/20,lw=d.z>.55?1.4:d.z>.25?1:.6;
+      add(col+'|'+q+'|'+lw,d.x-ox*.75,d.y-len*.75,d.x,d.y);
     }
+    for(const [key,a] of BK){const k=key.split('|');c.beginPath();for(let i=0;i<a.length;i+=4){c.moveTo(a[i],a[i+1]);c.lineTo(a[i+2],a[i+3])}
+      if(k[0]==='n'){const al=+k[1];for(const [lw,f] of [[7,.35],[4,.6],[1.8,1]]){c.lineWidth=lw;c.strokeStyle=`rgba(255,226,196,${al*f})`;c.stroke()}}
+      else{c.lineWidth=+k[2];c.strokeStyle=`rgba(${k[0]},${k[1]})`;c.stroke()}}
     /* respingos: coroa e duas gotinhas que pulam */
     for(let i=SPL.length-1;i>=0;i--){
       const p=SPL[i];p.a+=dt/.28;if(p.a>=1){SPL.splice(i,1);continue}
@@ -661,8 +669,8 @@ export function openStreetDepo(host,id,opts={}){
   function camArrive(){if(RM)return;CAM.x=34;CAM.y=6;CAM.z=1.07;CAM.r=.6;CAM.vx=CAM.vy=CAM.vz=CAM.vr=0}
   function spring(p,v,target,k,dt){const c=2*Math.sqrt(k)*.92;const a=k*(target-CAM[p])-c*CAM[v];CAM[v]+=a*dt;CAM[p]+=CAM[v]*dt}
   const GR=$('#sd-grain'),grx=GR.getContext('2d');let gfr=0;
-  const GFR=Array.from({length:6},()=>{const im=grx.createImageData(422,195),d=im.data;for(let i=0;i<d.length;i+=4){const v=Math.random()*255|0;d[i]=d[i+1]=d[i+2]=v;d[i+3]=255}return im});
-  function grainStep(){if(RM){if(!gfr++)grx.putImageData(GFR[0],0,0);return}if(gfr++%2)return;grx.putImageData(GFR[(gfr>>1)%6],0,0)}
+  const GFR=Array.from({length:4},()=>{const c=document.createElement('canvas');c.width=211;c.height=98;const x=c.getContext('2d'),im=x.createImageData(211,98),d=im.data;for(let i=0;i<d.length;i+=4){const v=Math.random()*255|0;d[i]=d[i+1]=d[i+2]=v;d[i+3]=255}x.putImageData(im,0,0);return c});
+  function grainStep(){if(root.classList.contains('nofilm'))return;if(RM){if(!gfr++)grx.drawImage(GFR[0],0,0,422,195);return}if(gfr++%3)return;grx.drawImage(GFR[(gfr/3|0)%4],0,0,422,195)}
   function camStep(now,t,dt){grainStep();
     const el=(now-CAM.since)/1000;let tz=1,tx=0,ty=0,k=26;
     if(CAM.mode==='pick'){tz=1.018;tx=-3;ty=-1;k=34}
@@ -860,8 +868,11 @@ export function openStreetDepo(host,id,opts={}){
   }
 
   /* ---------- laço ---------- */
-  const GS={r:0,b:0};let last=performance.now();const t0=performance.now();
-  const filmSync=()=>root.classList.toggle('nofilm',!FXON('depo.film'));filmSync();
+  const GS={r:0,b:0};let last=performance.now(),FN=0;const t0=performance.now();
+  /* se o aparelho não segura ~40 quadros, alivia em dois passos: menos resolução e sem filme; depois metade da garoa */
+  let pAcc=0,pN=0;function perf(dt){if(DEG>=2)return;pAcc+=dt;pN++;if(pAcc<2)return;const avg=pAcc/pN;pAcc=0;pN=0;
+    if(avg>1/40){DEG++;root.classList.add('nofilm');size()}}
+  const filmSync=()=>root.classList.toggle('nofilm',!FXON('depo.film')||DEG>0);filmSync();
   function frame(now){
     if(!alive)return;
     const dt=Math.min(.05,(now-last)/1000);last=now;RDT=dt;const t=now/1000;
@@ -869,7 +880,8 @@ export function openStreetDepo(host,id,opts={}){
     stage.classList.toggle('passing',!busy&&!!(PS&&PASS&&(performance.now()/1000-PASS.t0)/PASS.dur<.82));
     if(PS&&PS.I>.55&&!busy&&expr==='neutral'){setExpr('uncomfortable');glare=true}else if(glare&&(!PS||PS.I<.3)){glare=false;if(!busy)setExpr(IDLE)}
     const gr=giro(t),s=SC[cur];GS.r+=(gr.r-GS.r)*Math.min(1,dt*9);GS.b+=(gr.b-GS.b)*Math.min(1,dt*9);const g=GS;
-    const b=cvBg.getContext('2d');b.setTransform(cvBg._r,0,0,cvBg._r,0,0);s.bg(b,t,g);
+    if(!(FN++&1)){const b=cvBg.getContext('2d');b.setTransform(cvBg._r,0,0,cvBg._r,0,0);s.bg(b,t,g)}
+    perf(dt);
     mouthStep(now,dt);typeStep(now);drawActor(now,t,g);camStep(now,t,dt);
     const f=cvFg.getContext('2d');f.setTransform(cvFg._r,0,0,cvFg._r,0,0);f.clearRect(0,0,W,H);s.fg(f,t,g);
     const sec=Math.floor((now-t0)/1000),p=n=>String(n).padStart(2,'0');
