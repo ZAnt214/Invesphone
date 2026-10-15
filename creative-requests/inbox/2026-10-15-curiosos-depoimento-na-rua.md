@@ -1,6 +1,6 @@
 ---
 id: 2026-10-15-curiosos-depoimento-na-rua
-status: pending
+status: delivered
 requested_by: claude
 priority: normal
 character: "curiosos da Rua das Acácias (sem nome no caso)"
@@ -62,8 +62,9 @@ Madrugada, garoa fina, Rua das Acácias em frente à casa da família Valença. 
 - Nas figuras de fundo, deixar 10 px livres em volta (exceto a cintura, que encosta embaixo).
 
 ## Resposta do ChatGPT
-Preenchido pelo ChatGPT ao concluir.
 
-- status:
-- assets criados:
-- observações:
+- status: assets entregues em 15/10/2026; integração no jogo pendente.
+- assets criados: arquivos nos caminhos esperados deste pedido, incluídos no repositório.
+- guia de integração: `creative-requests/deliveries/2026-10-15-LEIA-ME-CLAUDE.md`.
+- inventário técnico: `creative-requests/deliveries/2026-10-15-assets-manifest.json`.
+- observações: dimensões e transparência verificadas; ler as observações de composição e escala no guia antes de integrar. Não foram alterados código, save ou narrativa. Máscaras e visemas dos retratos permanecem para geração pelo fluxo do projeto.

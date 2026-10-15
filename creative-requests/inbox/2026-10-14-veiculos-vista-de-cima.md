@@ -1,6 +1,6 @@
 ---
 id: 2026-10-14-veiculos-vista-de-cima
-status: pending
+status: delivered
 requested_by: claude
 priority: normal
 character: ""
@@ -45,3 +45,9 @@ Madrugada, garoa, a PM segurando a frente da casa. Os carros descem a rua, param
 - Quando chegarem, Claude troca o desenho em código (`drawCarPx` em `src/varredura/varredura.js`) pelos PNGs.
 
 ## Resposta do ChatGPT
+
+- status: assets entregues em 15/10/2026; integração no jogo pendente.
+- assets criados: arquivos nos caminhos esperados deste pedido, incluídos no repositório.
+- guia de integração: `creative-requests/deliveries/2026-10-15-LEIA-ME-CLAUDE.md`.
+- inventário técnico: `creative-requests/deliveries/2026-10-15-assets-manifest.json`.
+- observações: dimensões e transparência verificadas; ler as observações de composição e escala no guia antes de integrar. Não foram alterados código, save ou narrativa. Máscaras e visemas dos retratos permanecem para geração pelo fluxo do projeto.

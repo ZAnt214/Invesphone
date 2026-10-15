@@ -1,0 +1,233 @@
+[
+  {
+    "file": "public/characters/curiosos/vizinha/expressions/neutral.jpg",
+    "width": 900,
+    "height": 1200,
+    "alpha": false,
+    "bytes": 163489
+  },
+  {
+    "file": "public/characters/curiosos/vizinha/expressions/uncomfortable.jpg",
+    "width": 900,
+    "height": 1200,
+    "alpha": false,
+    "bytes": 165350
+  },
+  {
+    "file": "public/characters/curiosos/vizinha/expressions/nervous.jpg",
+    "width": 900,
+    "height": 1200,
+    "alpha": false,
+    "bytes": 165247
+  },
+  {
+    "file": "public/characters/curiosos/vizinha/expressions/defensive.jpg",
+    "width": 900,
+    "height": 1200,
+    "alpha": false,
+    "bytes": 164559
+  },
+  {
+    "file": "public/characters/curiosos/vizinha/expressions/tired.jpg",
+    "width": 900,
+    "height": 1200,
+    "alpha": false,
+    "bytes": 162250
+  },
+  {
+    "file": "public/characters/curiosos/rapaz/expressions/neutral.jpg",
+    "width": 900,
+    "height": 1200,
+    "alpha": false,
+    "bytes": 150452
+  },
+  {
+    "file": "public/characters/curiosos/rapaz/expressions/uncomfortable.jpg",
+    "width": 900,
+    "height": 1200,
+    "alpha": false,
+    "bytes": 153616
+  },
+  {
+    "file": "public/characters/curiosos/rapaz/expressions/nervous.jpg",
+    "width": 900,
+    "height": 1200,
+    "alpha": false,
+    "bytes": 154272
+  },
+  {
+    "file": "public/characters/curiosos/rapaz/expressions/defensive.jpg",
+    "width": 900,
+    "height": 1200,
+    "alpha": false,
+    "bytes": 154127
+  },
+  {
+    "file": "public/characters/curiosos/rapaz/expressions/tired.jpg",
+    "width": 900,
+    "height": 1200,
+    "alpha": false,
+    "bytes": 153547
+  },
+  {
+    "file": "public/characters/curiosos/senhor/expressions/neutral.jpg",
+    "width": 900,
+    "height": 1200,
+    "alpha": false,
+    "bytes": 162417
+  },
+  {
+    "file": "public/characters/curiosos/senhor/expressions/uncomfortable.jpg",
+    "width": 900,
+    "height": 1200,
+    "alpha": false,
+    "bytes": 162867
+  },
+  {
+    "file": "public/characters/curiosos/senhor/expressions/nervous.jpg",
+    "width": 900,
+    "height": 1200,
+    "alpha": false,
+    "bytes": 166461
+  },
+  {
+    "file": "public/characters/curiosos/senhor/expressions/defensive.jpg",
+    "width": 900,
+    "height": 1200,
+    "alpha": false,
+    "bytes": 162816
+  },
+  {
+    "file": "public/characters/curiosos/senhor/expressions/tired.jpg",
+    "width": 900,
+    "height": 1200,
+    "alpha": false,
+    "bytes": 159981
+  },
+  {
+    "file": "public/characters/curiosos/fundo/curioso-01.png",
+    "width": 300,
+    "height": 600,
+    "alpha": true,
+    "bytes": 190828
+  },
+  {
+    "file": "public/characters/curiosos/fundo/curioso-02.png",
+    "width": 300,
+    "height": 600,
+    "alpha": true,
+    "bytes": 161981
+  },
+  {
+    "file": "public/characters/curiosos/fundo/curioso-03.png",
+    "width": 300,
+    "height": 600,
+    "alpha": true,
+    "bytes": 178092
+  },
+  {
+    "file": "public/characters/curiosos/fundo/curioso-04.png",
+    "width": 300,
+    "height": 600,
+    "alpha": true,
+    "bytes": 191047
+  },
+  {
+    "file": "public/characters/curiosos/fundo/curioso-05.png",
+    "width": 300,
+    "height": 600,
+    "alpha": true,
+    "bytes": 164844
+  },
+  {
+    "file": "public/characters/curiosos/fundo/curioso-06.png",
+    "width": 300,
+    "height": 600,
+    "alpha": true,
+    "bytes": 189845
+  },
+  {
+    "file": "public/characters/curiosos/fundo/curioso-07.png",
+    "width": 300,
+    "height": 600,
+    "alpha": true,
+    "bytes": 161876
+  },
+  {
+    "file": "public/characters/curiosos/fundo/curioso-08.png",
+    "width": 300,
+    "height": 600,
+    "alpha": true,
+    "bytes": 197328
+  },
+  {
+    "file": "public/base/rua/veiculos/cima/sedan-azul.png",
+    "width": 64,
+    "height": 84,
+    "alpha": true,
+    "bytes": 5663
+  },
+  {
+    "file": "public/base/rua/veiculos/cima/sedan-bege.png",
+    "width": 64,
+    "height": 84,
+    "alpha": true,
+    "bytes": 6811
+  },
+  {
+    "file": "public/base/rua/veiculos/cima/sedan-bordo.png",
+    "width": 64,
+    "height": 84,
+    "alpha": true,
+    "bytes": 6148
+  },
+  {
+    "file": "public/base/rua/veiculos/cima/sedan-verde.png",
+    "width": 64,
+    "height": 84,
+    "alpha": true,
+    "bytes": 5717
+  },
+  {
+    "file": "public/base/rua/veiculos/cima/taxi.png",
+    "width": 64,
+    "height": 84,
+    "alpha": true,
+    "bytes": 7045
+  },
+  {
+    "file": "public/base/rua/veiculos/cima/perua-madeira.png",
+    "width": 64,
+    "height": 84,
+    "alpha": true,
+    "bytes": 7234
+  },
+  {
+    "file": "public/base/rua/veiculos/cima/furgao-marrom.png",
+    "width": 64,
+    "height": 84,
+    "alpha": true,
+    "bytes": 7084
+  },
+  {
+    "file": "public/base/rua/veiculos/cima/viatura-dhpp.png",
+    "width": 64,
+    "height": 84,
+    "alpha": true,
+    "bytes": 6771
+  },
+  {
+    "file": "public/cenarios/rua-acacias/frente-noite.jpg",
+    "width": 1688,
+    "height": 780,
+    "alpha": false,
+    "bytes": 290275
+  },
+  {
+    "file": "public/cenarios/rua-acacias/frente-noite-poste.png",
+    "width": 1688,
+    "height": 780,
+    "alpha": true,
+    "bytes": 97010
+  }
+]
