@@ -51,3 +51,6 @@ Madrugada, garoa, a PM segurando a frente da casa. Os carros descem a rua, param
 - guia de integração: `creative-requests/deliveries/2026-10-15-LEIA-ME-CLAUDE.md`.
 - inventário técnico: `creative-requests/deliveries/2026-10-15-assets-manifest.json`.
 - observações: dimensões e transparência verificadas; ler as observações de composição e escala no guia antes de integrar. Não foram alterados código, save ou narrativa. Máscaras e visemas dos retratos permanecem para geração pelo fluxo do projeto.
+
+## Integração (Claude, 15/10/2026)
+Integrado em `src/varredura/varredura.js` (`carArt`): os carros da casa e a viatura de apoio usam os PNGs oficiais.
