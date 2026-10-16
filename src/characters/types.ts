@@ -69,6 +69,8 @@ export type CharacterDef = {
   /** Imagens oficiais por expressão. `neutral` é obrigatória; expressão sem imagem usa a neutra. */
   /** Expressão sem imagem própria que mostra a imagem de outra (ex.: `lying` usa `defensive`). */
   alias?: Partial<Record<Expression,Expression>>
+  /** Cabelo em camadas para balançar com o vento (manifest.json das mechas, por expressão). Ver src/rua/hairWind.js. */
+  hair?:string
   assets: { neutral:ExpressionAsset } & Partial<Record<Expression,ExpressionAsset>>
   /** Formas de boca para sincronizar a fala. Sem isso, a boca fala abrindo o lábio de baixo. */
   visemes?: VisemeAtlas

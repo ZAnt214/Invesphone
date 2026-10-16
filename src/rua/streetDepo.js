@@ -14,6 +14,7 @@ import { progressOf, withProgress } from '../case/depositions'
 import { DEFAULT_DISCOVERED } from '../team/teamData'
 import { fxOn, onFxChange } from '../settings/gameSettings'
 import { getQuality } from '../characters/quality'
+import { createHair } from './hairWind'
 
 const LUPA='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>';
 const esc=s=>String(s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
@@ -84,7 +85,18 @@ export function openStreetDepo(host,id,opts={}){
       x.globalCompositeOperation='destination-in';x.drawImage(m,0,0);m.width=m.height=0;imgs.visemes=c}
     tmp.width=tmp.height=0;
     ready=true;
+    /* cabelo ao vento (src/rua/hairWind.js): só se o personagem tem as camadas e o ajuste está ligado */
+    if(CH.hair)HAIR=createHair({url:CH.hair,PW,PH,mask});hairSync();
   });
+  /* ---------- cabelo ao vento ----------
+     Com o ajuste "Cabelo ao vento" (depo.hair), qualidade não baixa e sem movimento reduzido, o retrato da expressão em
+     uso é recomposto a cada quadro: base sem as mechas + mechas dobradas pelo mesmo vento da garoa (windAt), mais forte
+     quando o helicóptero passa. Desligado, volta o retrato oficial e as camadas saem da memória. */
+  let HAIR=null;
+  const hairOn=()=>!!HAIR&&FXON('depo.hair')&&!low()&&!RM;
+  function hairSync(){if(!HAIR)return;HAIR.keep(hairOn()?[...new Set([expr,prev].filter(Boolean))]:[])}
+  function hairWind(t){const w=windAt(t),g=Math.max(0,w-.1),hA=HS?HS.A:0;
+    const x=Math.min(12,2.6+g*28);return {x,y:-.12*x,flutter:.45+g*7+hA*1.6}}
 
   /* ---------- cenário e curiosos oficiais (creative-requests/deliveries/2026-10-15) ---------- */
   const ART={bg:null,poste:null,crowd:[],far:[]};
@@ -875,7 +887,7 @@ export function openStreetDepo(host,id,opts={}){
   const vis={A:0,E:0,I:0,O:0,U:0,M:0},ORDER=['A','E','I','O','U','M'];
   let mouthOn=0,openV=0,speech=null;
   const gcv=document.createElement('canvas');gcv.width=400;gcv.height=120;const gx=gcv.getContext('2d');
-  function setExpr(e){if(e===expr)return;prev=expr;expr=e;fadeAt=performance.now()}
+  function setExpr(e){if(e===expr)return;prev=expr;expr=e;fadeAt=performance.now();hairSync()}
   function track(text){
     const out=[];let ci=0;
     for(const ch of text.toLowerCase()){
@@ -927,7 +939,7 @@ export function openStreetDepo(host,id,opts={}){
     c.save();c.translate(200-450*S,br*1.1);c.scale(S,S*(1+br*.0025));
     const f=Math.min(1,(now-fadeAt)/320);
     if(prev&&f<1&&imgs[prev]){c.drawImage(imgs[prev],0,0,900,1200);c.globalAlpha=f}
-    c.drawImage(imgs[expr],0,0,900,1200);c.globalAlpha=1;
+    if(!(hairOn()&&HAIR.draw(c,expr,RM?0:t,hairWind(t))))c.drawImage(imgs[expr],0,0,900,1200);c.globalAlpha=1;
     drawMouth(c);drawLids(c,now);c.restore();
     c.globalCompositeOperation='source-atop';SC[cur].light(c,400,430,g,t);c.globalCompositeOperation='source-over';
     /* holofote no Jorge: soma a própria imagem dentro do círculo de luz (clareia sem lavar a cor), com borda dura */
@@ -1276,13 +1288,14 @@ export function openStreetDepo(host,id,opts={}){
   }
 
   /* ---------- abrir e fechar ---------- */
-  const offFx=onFxChange(()=>{filmSync();if(AMBOUT&&AC)AMBOUT.gain.setTargetAtTime(fxOn('sfx.depoAmb')?1.6:0,AC.currentTime,.2)});
+  const offFx=onFxChange(()=>{filmSync();hairSync();if(AMBOUT&&AC)AMBOUT.gain.setTargetAtTime(fxOn('sfx.depoAmb')?1.6:0,AC.currentTime,.2)});
   const onDown=()=>ensureAudio();root.addEventListener('pointerdown',onDown,true);
   function close(){
     if(!alive)return;alive=false;
     for(const t of TM)window.clearTimeout(t);for(const t of IV)window.clearInterval(t);
     try{ro.disconnect()}catch(_){}
     if(typeof offFx==='function')offFx();
+    if(HAIR)HAIR.destroy();
     try{if(AC)AC.close()}catch(_){}
     root.classList.add('out');window.setTimeout(()=>root.remove(),350);
     opts.onClose&&opts.onClose();
