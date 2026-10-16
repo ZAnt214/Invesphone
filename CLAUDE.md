@@ -255,6 +255,10 @@ Todo efeito visual ou sonoro (os que já existem e os que vierem) precisa estar 
 - A tela de ajustes é gerada desse registro: o botão de engrenagem no cabeçalho do jogo (`src/settings/settingsPanel.ts`, que gira junto com o jogo no celular em pé). Não escrever opção à mão nela.
 - A qualidade gráfica continua valendo por cima (a baixa desliga efeitos pesados mesmo que estejam ligados aqui).
 
+## Limite de 60 quadros por segundo
+
+O jogo inteiro roda a no máximo 60 quadros por segundo, mesmo em tela de 120 Hz: `src/world/frameCap.js` embrulha `requestAnimationFrame` uma vez e é o primeiro import de `src/base/base.js` e `src/varredura/varredura.js`. Uma página nova do jogo também precisa importá-lo primeiro. As animações usam o tempo real entre quadros, então nada fica mais lento.
+
 ## Jornal Sereno
 
 A imprensa acompanha o caso ("Lar Doce Lar"): cada fato do save libera uma edição, que abre sozinha na base quando a tela está livre (nunca no meio de conversa, depoimento, quadro, foto, caderneta ou faixas de cinema). Não criar botão para abrir o jornal. O que o Lemos diz à imprensa fica em `press` no save (`pressSay` em `src/news/press.js`) e entra na edição daquele momento. Código em `src/news/`; antes de mexer, ler `docs/JORNAL_SERENO.md`.

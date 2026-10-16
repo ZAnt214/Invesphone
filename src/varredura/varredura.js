@@ -1,4 +1,5 @@
 /* Varredura das Acácias: cena 2D do Caso 01 (página inicial do site). */
+import '../world/frameCap';   // limite de 60 quadros por segundo (antes de qualquer cena pedir quadro)
 import { applyQuality, getQuality, onQualityChange } from '../characters/quality';
 import { perfHud } from '../perfHud';
 import { choose as chooseLife } from '../world/life';
