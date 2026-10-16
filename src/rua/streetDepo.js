@@ -885,7 +885,10 @@ export function openStreetDepo(host,id,opts={}){
         x.fillStyle=lin(x,0,0,0,h,[[0,'rgba(255,178,96,.3)'],[.5,'rgba(255,178,96,0)']]);x.fillRect(0,0,w,h);
         x.fillStyle=lin(x,0,0,0,h,[[.5,'rgba(4,6,14,0)'],[1,'rgba(4,6,14,.5)']]);x.fillRect(0,0,w,h)}
       c.drawImage(ALS.c,0,0,w,h);
-      if(g.r>.01||g.b>.01){c.fillStyle=lin(c,0,0,w,0,[[0,`rgba(${RED},${(.32*g.r).toFixed(3)})`],[.24,`rgba(${RED},0)`],[.76,`rgba(${BLUE},0)`],[1,`rgba(${BLUE},${(.32*g.b).toFixed(3)})`]]);c.fillRect(0,0,w,h)}
+      if(g.r>.01||g.b>.01){c.fillStyle=lin(c,0,0,w,0,[[0,`rgba(${RED},${(.32*g.r).toFixed(3)})`],[.24,`rgba(${RED},0)`],[.76,`rgba(${BLUE},0)`],[1,`rgba(${BLUE},${(.32*g.b).toFixed(3)})`]]);c.fillRect(0,0,w,h);
+        /* o giroflex atravessando o rosto (no retrato parado; com o cabelo ao vento, a placa de vídeo faz isso com luz somada) */
+        c.fillStyle=lin(c,0,0,w,0,[[0,`rgba(${RED},${(.3*g.r).toFixed(3)})`],[.85,`rgba(${RED},0)`]]);c.fillRect(0,0,w,h);
+        c.fillStyle=lin(c,0,0,w,0,[[.15,`rgba(${BLUE},0)`],[1,`rgba(${BLUE},${(.3*g.b).toFixed(3)})`]]);c.fillRect(0,0,w,h)}
       passActor(c,w,h);heliActor(c,w,h);
     }
    }

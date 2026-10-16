@@ -14,7 +14,8 @@
    - Desempenho: a figura inteira (base + mechas) é desenhada pela placa de vídeo num canvas próprio, que fica na tela
      por baixo do canvas do retrato (boca, piscar). Nada volta da placa de vídeo para o canvas 2D (isso custava metade do
      quadro). A luz da cena sobre o Jorge (escuro geral, âmbar do poste, giroflex, farol da viatura) é calculada no
-     próprio sombreador, então até a ponta que saiu da silhueta recebe a mesma luz.
+     próprio sombreador, então até a ponta que saiu da silhueta recebe a mesma luz; o giroflex soma luz vermelha (da
+     esquerda) e azul (da direita) sobre o rosto e o corpo, com contorno nas bordas viradas para ele.
    Sem WebGL, ou se o contexto cair, ok() fica falso e o jogo volta ao retrato oficial parado. */
 const GRID=6;      // célula da malha, em px da imagem original
 const FEATHER=13;  // largura do esfumado nas bordas de corte, em px da imagem original
@@ -41,7 +42,7 @@ precision highp float;
 #else
 precision mediump float;
 #endif
-uniform sampler2D uTex,uFea;uniform float uFeaK,uAlpha,uGr,uGb,uPI,uPx,uPr,uPb;uniform vec2 uViewF;
+uniform sampler2D uTex,uFea;uniform float uFeaK,uAlpha,uGr,uGb,uPI,uPx,uPr,uPb,uRim;uniform vec2 uViewF,uTexel;
 varying vec2 vUV;varying vec2 vA;
 vec3 over(vec3 p,float pa,vec3 c,float a){return p*(1.0-a)+c*a*pa;}
 void main(){
@@ -54,6 +55,18 @@ void main(){
   p=over(p,t.a,vec3(4.,6.,14.)/255.,.5*clamp((y-.5)/.5,0.0,1.0));
   p=over(p,t.a,vec3(255.,48.,48.)/255.,.32*uGr*clamp(1.0-x/.24,0.0,1.0));
   p=over(p,t.a,vec3(70.,120.,255.)/255.,.32*uGb*clamp((x-.76)/.24,0.0,1.0));
+  /* giroflex batendo no Jorge: a luz vermelha vem da esquerda e a azul da direita (onde a viatura brilha no cenário).
+     Soma luz (não só tinge): mais forte no lado de onde vem, atravessando o rosto, e mais nas partes claras (pele,
+     camisa) que nas escuras; nas bordas viradas para a luz, um contorno forte (a borda da silhueta, na base) */
+  float lum=dot(p,vec3(.3,.55,.15))/max(t.a,.001);
+  float xr=clamp(1.0-x/.9,0.0,1.0),xb=clamp((x-.1)/.9,0.0,1.0);
+  vec3 RED=vec3(1.0,.2,.18),BLU=vec3(.3,.5,1.0);
+  p+=RED*uGr*(.5*xr*xr+.07)*t.a*(.45+.75*lum);
+  p+=BLU*uGb*(.5*xb*xb+.07)*t.a*(.45+.75*lum);
+  if(uRim>.5){
+    float rl=clamp(t.a-texture2D(uTex,vUV-vec2(uTexel.x*7.0,0.0)).a,0.0,1.0);
+    float rr=clamp(t.a-texture2D(uTex,vUV+vec2(uTexel.x*7.0,0.0)).a,0.0,1.0);
+    p+=RED*uGr*rl*.85*t.a+BLU*uGb*rr*.85*t.a;}
   if(uPI>.001){
     float d1=distance(vA,vec2(uPx,h*.4));float g1=d1<20.0?.5:(d1<192.0?mix(.5,.22,(d1-20.0)/172.0):mix(.22,0.0,clamp((d1-192.0)/128.0,0.0,1.0)));
     p=over(p,t.a,vec3(255.,246.,228.)/255.,g1*uPI);
@@ -81,7 +94,7 @@ export function createHair(o){
     if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){try{console.warn('cabelo: sombreador',gl.getProgramInfoLog(prog),gl.getShaderInfoLog(gl.getAttachedShaders(prog)[1]));}catch(_){/* sem log */}gl=null;lost=true;return false;}
     gl.useProgram(prog);L={};
     for(const n of ['aPos','aUV','aW','aR'])L[n]=gl.getAttribLocation(prog,n);
-    for(const n of ['uView','uViewF','uRoot','uShear','uMix','uXf','uK','uBend','uWob','uGust','uT','uPh','uTex','uFea','uFeaK','uAlpha','uGr','uGb','uPI','uPx','uPr','uPb'])L[n]=gl.getUniformLocation(prog,n);
+    for(const n of ['uRim','uTexel','uView','uViewF','uRoot','uShear','uMix','uXf','uK','uBend','uWob','uGust','uT','uPh','uTex','uFea','uFeaK','uAlpha','uGr','uGb','uPI','uPx','uPr','uPb'])L[n]=gl.getUniformLocation(prog,n);
     gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
     gl.uniform1i(L.uTex,0);gl.uniform1i(L.uFea,1);
@@ -106,7 +119,7 @@ export function createHair(o){
     gl.enableVertexAttribArray(L.aUV);gl.vertexAttribPointer(L.aUV,2,gl.FLOAT,false,24,8);
     gl.enableVertexAttribArray(L.aW);gl.vertexAttribPointer(L.aW,1,gl.FLOAT,false,24,16);
     gl.enableVertexAttribArray(L.aR);gl.vertexAttribPointer(L.aR,1,gl.FLOAT,false,24,20);
-    gl.uniform2f(L.uRoot,u.root[0],u.root[1]);gl.uniform2f(L.uShear,u.sh[0],u.sh[1]);gl.uniform1f(L.uMix,u.mix);gl.uniform1f(L.uBend,u.bend);gl.uniform1f(L.uWob,u.wob);gl.uniform1f(L.uPh,u.ph);gl.uniform1f(L.uFeaK,u.fea);
+    gl.uniform1f(L.uRim,u.rim?1:0);gl.uniform2f(L.uTexel,1/o.PW,1/o.PH);gl.uniform2f(L.uRoot,u.root[0],u.root[1]);gl.uniform2f(L.uShear,u.sh[0],u.sh[1]);gl.uniform1f(L.uMix,u.mix);gl.uniform1f(L.uBend,u.bend);gl.uniform1f(L.uWob,u.wob);gl.uniform1f(L.uPh,u.ph);gl.uniform1f(L.uFeaK,u.fea);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,m.ib);gl.drawElements(gl.TRIANGLES,m.n,gl.UNSIGNED_SHORT,0);}
 
   async function build(e){
@@ -195,7 +208,7 @@ export function createHair(o){
     gl.uniform1f(L.uGr,light.gr||0);gl.uniform1f(L.uGb,light.gb||0);gl.uniform1f(L.uPI,light.pI||0);gl.uniform1f(L.uPx,light.px||200);gl.uniform1f(L.uPr,light.pr||0);gl.uniform1f(L.uPb,light.pb||0);
     for(const ly of layers){const v=cache.get(ly.e);if(!v||!v.gpu)continue;const k=W0()/o.PW;
       gl.uniform1f(L.uK,k);gl.uniform1f(L.uAlpha,ly.alpha);
-      mesh(v.gpu.base,{root:[0,0],sh:[0,0],mix:0,bend:0,wob:0,ph:0,fea:0});
+      mesh(v.gpu.base,{root:[0,0],sh:[0,0],mix:0,bend:0,wob:0,ph:0,fea:0,rim:1});
       v.gpu.strands.forEach((m,i)=>{const st=v.strands[i],ph=PHY[i]||{a:0,x:0,y:0};
         // rígidas (laterais) empurradas rente à cabeça; soltas (topo) dobram em volta da raiz
         const mix=Math.min(1,Math.max(0,(st.stiff-.68)/.16)),sx=ph.x*v.s,sy=ph.y*v.s;
