@@ -1,7 +1,7 @@
 /**
  * Medidor de FPS (Ajustes → Gráficos → Interface → "Medidor de FPS", desligado por padrão).
  *
- * Fica no alto, no meio da tela do jogo (dentro de #app, então gira junto no celular em pé) e mostra:
+ * Fica no canto de baixo à direita da tela do jogo (dentro de #app, então gira junto no celular em pé) e mostra:
  * - quantos quadros por segundo o navegador está desenhando (média do último meio segundo);
  * - o pior quadro do último segundo, em fps ("mín"), que é o que o olho sente como tranco.
  * Verde a partir de 55, âmbar a partir de 40, vermelho abaixo disso.
@@ -17,9 +17,9 @@ let host:HTMLElement|null = null
 function ensureStyle(){
   if(document.getElementById('fps-meter-style')) return
   const s = document.createElement('style'); s.id = 'fps-meter-style'
-  s.textContent = `.fps-meter{position:absolute;top:max(4px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:9999;pointer-events:none;
-    font:600 11px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.04em;color:#e8f5e9;background:rgba(6,8,12,.72);
-    border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:4px 7px;white-space:nowrap;font-variant-numeric:tabular-nums}
+  s.textContent = `.fps-meter{position:absolute;bottom:max(6px,env(safe-area-inset-bottom));right:max(6px,env(safe-area-inset-right));z-index:9999;pointer-events:none;
+    font:600 10px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.04em;color:#e8f5e9;background:rgba(6,8,12,.6);
+    border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:3px 6px;white-space:nowrap;font-variant-numeric:tabular-nums}
   .fps-meter b{font-weight:800}
   .fps-meter i{font-style:normal;opacity:.7}
   .fps-meter.ok b{color:#7ee08a}.fps-meter.mid b{color:#ffc65c}.fps-meter.bad b{color:#ff6b5e}`

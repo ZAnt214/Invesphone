@@ -64,7 +64,8 @@ export const EFFECTS:Effect[] = [
   { id:'hud.fps', cat:'interface', label:'Medidor de FPS', desc:'Mostra no alto da tela quantos quadros por segundo o jogo está desenhando e o pior quadro do último segundo.', def:false, where:'Todo o jogo' },
   { id:'hud.portrait', cat:'interface', label:'Retrato animado', desc:'Um anel âmbar pulsa em volta do rosto do Lemos quando chega uma descoberta.', def:true, where:'Rua e DHPP' },
   // depoimento na rua (src/rua/streetDepo.js)
-  { id:'depo.rain', cat:'depo', label:'Garoa na cena', desc:'Garoa leve, acesa pela luz do poste, com alguns pingos do poste e névoa no facho.', def:true, where:'Casa' },
+  { id:'depo.rain', cat:'depo', label:'Garoa na cena', desc:'Garoa leve em gotas soltas, acesa pela luz do poste, com respingos nas poças e névoa no facho.', def:true, where:'Casa' },
+  { id:'depo.life', cat:'depo', label:'Fachada viva', desc:'Folhas e moitas balançando no vento, a cortina acesa ondulando, reflexos tremendo na rua, nuvens, névoa, pingos do portão e mariposas no poste.', def:true, where:'Casa' },
   { id:'depo.lens', cat:'depo', label:'Gotas na lente', desc:'Gotas paradas na câmera que às vezes escorrem.', def:true, where:'Casa' },
   { id:'depo.flyby', cat:'depo', label:'Viatura e helicóptero passando', desc:'A luz de uma viatura e o holofote de um helicóptero passando pela cena, com vento e folhas.', def:true, where:'Casa' },
   { id:'depo.tape', cat:'depo', label:'Fita ao vento', desc:'A fita de isolamento cede no meio, ondula e torce com o vento e o helicóptero.', def:true, where:'Casa' },

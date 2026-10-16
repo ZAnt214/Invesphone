@@ -114,4 +114,4 @@ A casa (`/casa`, `src/varredura/varredura.js`) usa o mesmo HUD (`createHud`), pa
 
 ## Medidor de FPS
 
-`src/settings/fpsMeter.ts`, montado em `#app` na base e na casa (gira junto no celular em pé). Liga em Ajustes → Gráficos → Interface → "Medidor de FPS" (`hud.fps`, desligado por padrão). Mostra a média do último meio segundo e o pior quadro do último segundo; desligado, não roda nada.
+`src/settings/fpsMeter.ts`, no canto de baixo à direita, montado em `#app` na base e na casa (gira junto no celular em pé). Liga em Ajustes → Gráficos → Interface → "Medidor de FPS" (`hud.fps`, desligado por padrão). Mostra a média do último meio segundo e o pior quadro do último segundo; desligado, não roda nada.
