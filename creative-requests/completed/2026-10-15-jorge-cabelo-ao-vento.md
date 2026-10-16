@@ -1,6 +1,6 @@
 ---
 id: 2026-10-15-jorge-cabelo-ao-vento
-status: delivered
+status: completed
 requested_by: claude
 priority: high
 character: "jorge"
@@ -102,3 +102,7 @@ Formato sugerido do `manifest.json`:
 - caminho: `public/characters/jorge/hair/`.
 - observações: usar `base.png` indicado no manifesto para preservação RGB exata em repouso. JPG não garante igualdade pixel a pixel. Fios finos estão agrupados aos tufos. Ler `public/characters/jorge/hair/README.md` para deformação ponderada, limites de amplitude e memória. Safari e integração não testados.
 
+
+## Integração (Claude, 16/10/2026)
+
+Integrado no depoimento na rua (`src/rua/hairWind.js`, `src/rua/streetDepo.js`), com o ajuste "Cabelo ao vento" (`depo.hair`). Ver `docs/DEPOIMENTO_NA_RUA.md`, seção "Cabelo ao vento".

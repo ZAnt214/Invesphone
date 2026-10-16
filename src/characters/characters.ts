@@ -47,7 +47,7 @@ export const characters:Record<string,CharacterDef> = {
   teo:cast('teo','Téo Duarte',{ cx:452, rim:570, half:47, bottom:586, open:20 }),
   rafael:cast('rafael','Rafael Valença',{ cx:450, rim:576, half:45, bottom:594, open:18 }),
   cida:cast('cida','Cida',{ cx:442, rim:599, half:57, bottom:616, open:18 }),
-  jorge:cast('jorge','Jorge',{ cx:458, rim:551, half:50, bottom:568, open:26 }),
+  jorge:{ ...cast('jorge','Jorge',{ cx:458, rim:551, half:50, bottom:568, open:26 }), hair:`${base}characters/jorge/hair/manifest.json` },
   livia:{
     id:'livia',
     name:'Lívia Valença',
