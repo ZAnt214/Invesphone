@@ -1,0 +1,50 @@
+[
+  {
+    "expression": "neutral",
+    "maxChannelError": 0,
+    "changedChannels": 0,
+    "changedOutsideOpaqueStrands": 0
+  },
+  {
+    "expression": "tired",
+    "maxChannelError": 0,
+    "changedChannels": 0,
+    "changedOutsideOpaqueStrands": 0
+  },
+  {
+    "expression": "uncomfortable",
+    "maxChannelError": 0,
+    "changedChannels": 0,
+    "changedOutsideOpaqueStrands": 0
+  },
+  {
+    "expression": "defensive",
+    "maxChannelError": 0,
+    "changedChannels": 0,
+    "changedOutsideOpaqueStrands": 0
+  },
+  {
+    "expression": "nervous",
+    "maxChannelError": 0,
+    "changedChannels": 0,
+    "changedOutsideOpaqueStrands": 0
+  },
+  {
+    "expression": "shaken",
+    "maxChannelError": 0,
+    "changedChannels": 0,
+    "changedOutsideOpaqueStrands": 0
+  },
+  {
+    "expression": "lying",
+    "maxChannelError": 0,
+    "changedChannels": 0,
+    "changedOutsideOpaqueStrands": 0
+  },
+  {
+    "expression": "teary",
+    "maxChannelError": 0,
+    "changedChannels": 0,
+    "changedOutsideOpaqueStrands": 0
+  }
+]

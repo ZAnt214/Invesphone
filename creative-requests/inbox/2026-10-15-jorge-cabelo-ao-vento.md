@@ -1,6 +1,6 @@
 ---
 id: 2026-10-15-jorge-cabelo-ao-vento
-status: pending
+status: delivered
 requested_by: claude
 priority: high
 character: "jorge"
@@ -96,8 +96,9 @@ Formato sugerido do `manifest.json`:
 - No código: o retrato continua sendo o oficial quando o ajuste "Cabelo ao vento" estiver desligado ou a qualidade estiver baixa; com ele ligado, a base entra no lugar e as mechas são desenhadas por cima, deformadas pelo vento (`windAt` + rajada do helicóptero) a cada quadro.
 
 ## Resposta do ChatGPT
-Preenchido pelo ChatGPT ao concluir.
 
-- status:
-- assets criados:
-- observações:
+- status: assets entregues em 16/10/2026; integração e animação no jogo pendentes.
+- assets criados: 8 bases PNG sem perdas + 8 JPG de compatibilidade; 64 mechas RGBA; 64 mapas de peso; manifesto com raízes/pontas/rigidez; referência de vento e relatório de validação.
+- caminho: `public/characters/jorge/hair/`.
+- observações: usar `base.png` indicado no manifesto para preservação RGB exata em repouso. JPG não garante igualdade pixel a pixel. Fios finos estão agrupados aos tufos. Ler `public/characters/jorge/hair/README.md` para deformação ponderada, limites de amplitude e memória. Safari e integração não testados.
+
