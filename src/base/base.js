@@ -10,6 +10,7 @@ import { applyQuality, getQuality, onQualityChange } from '../characters/quality
 import { perfHud } from '../perfHud';
 import * as AMB from '../world/ambientAudio';
 import { openSettings } from '../settings/settingsPanel';
+import { mountFpsMeter } from '../settings/fpsMeter';
 import { badgeReady, openBadge } from './badgeSwipe';
 import { createHud } from '../hud/hud';
 import { caseGuide } from '../case/guide';
@@ -2146,6 +2147,7 @@ function fitCard(){
   const k=Math.min(1,avH/c.offsetHeight,avW/c.offsetWidth);if(k<1)c.style.transform=`scale(${k.toFixed(3)})`;
 }
 $('#b-set').addEventListener('click',()=>openSettings(appEl));
+mountFpsMeter(appEl);
 $('#b-view').addEventListener('click',()=>{if(SCENE==='rua')streetView().toggleOverview();});
 $('#rot').addEventListener('click',()=>{ROT=ROT===0?90:ROT===90?-90:0;userVert=(ROT===0);lastL=null;applyLayout(true);});
 addEventListener('resize',()=>applyLayout(false));

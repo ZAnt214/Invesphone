@@ -49,6 +49,9 @@ Em Gráficos > **Depoimento na rua**: `depo.rain`, `depo.lens`, `depo.flyby`, `d
 
 ## Desempenho
 
+- Chuva: só uma garoa leve (uma camada fina no fundo, uma rala na frente, ~28 gotas soltas lentas e finas, pingos do poste espaçados). O risco de cada gota é sempre maior que o deslocamento entre dois quadros.
+- Medidor de FPS: Ajustes → Gráficos → Interface → "Medidor de FPS" (`hud.fps`, desligado por padrão; `src/settings/fpsMeter.ts`), em todo o jogo.
+
 - O fundo é desenhado a cada quadro (a cada dois só se o aparelho já precisou aliviar, `DEG>0`). A foto, o poste e o reflexo do giroflex no chão ficam em cache no tamanho do canvas (`bgCache`), refeitos só quando o tamanho muda.
 - A garoa do fundo é refeita a cada dois quadros; a da frente, a cada quadro.
 - Brilhos (`glow`), gotas na lente e o volume do holofote usam sprites feitos uma vez, não gradientes por quadro. A luz fixa sobre o Jorge é uma imagem pronta; o giroflex nele é um gradiente só.

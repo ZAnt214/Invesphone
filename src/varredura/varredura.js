@@ -8,6 +8,7 @@ import { readCase, writeCase } from '../case/caseSave';
 import { caseGuide } from '../case/guide';
 import { clues as CLUE_LIST, people as CASE_PEOPLE } from '../case01';
 import { openSettings } from '../settings/settingsPanel';
+import { mountFpsMeter } from '../settings/fpsMeter';
 (() => {
 'use strict';
 const T=32,W=36,H=26,N=W*H;
@@ -2331,6 +2332,7 @@ function updateMode(){
   if(tool||pendingOrder){$('#mode-t').textContent=title;$('#mode-h').textContent=h;$('#mode-x').textContent=pendingOrder?'Cancelar':'Concluir';}el.classList.toggle('off',off);el.classList.toggle('hot',!!painting);
 }
 $('#b-set').addEventListener('click',()=>openSettings(appEl));
+mountFpsMeter(appEl);
 
 /* ---------- Crew dock: pixel portraits with an energy ring and what each one is doing ---------- */
 const crewEl=$('#crew');
