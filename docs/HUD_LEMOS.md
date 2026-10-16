@@ -111,3 +111,7 @@ A casa (`/casa`, `src/varredura/varredura.js`) usa o mesmo HUD (`createHud`), pa
 - **Faixas de cinema**: "Rua das Acácias · Casa da família Valença", ao entrar na cena.
 - **Ajustes**: engrenagem no cabeçalho (`openSettings`), o mesmo painel da base.
 - A Sônia fala pelo **rádio da base** (não há celular). De manhã, a equipe da base comenta a noite na casa (falas com condição em `varredura.fim`); de madrugada, o plantão fala de noite.
+
+## Medidor de FPS
+
+`src/settings/fpsMeter.ts`, montado em `#app` na base e na casa (gira junto no celular em pé). Liga em Ajustes → Gráficos → Interface → "Medidor de FPS" (`hud.fps`, desligado por padrão). Mostra a média do último meio segundo e o pior quadro do último segundo; desligado, não roda nada.
