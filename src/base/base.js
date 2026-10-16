@@ -9,7 +9,8 @@ import { createStreet } from './street';
 import { applyQuality, getQuality, onQualityChange } from '../characters/quality';
 import { perfHud } from '../perfHud';
 import * as AMB from '../world/ambientAudio';
-import { openSettings } from '../settings/settingsPanel';
+import { openSettings, settingsOpen } from '../settings/settingsPanel';
+import { createNewspaper, newsFacts } from '../news/newspaper';
 import { mountFpsMeter } from '../settings/fpsMeter';
 import { badgeReady, openBadge } from './badgeSwipe';
 import { createHud } from '../hud/hud';
@@ -1188,7 +1189,17 @@ function runGuide(){
   else if(go.kind==='report')goTalk('hot','quadro');
   else if(go.kind==='clues')HUD.openBook('pistas');
 }
-const HUD=createHud({app:appEl,clock:()=>clockStr(),data:hudData,onGuide:()=>runGuide(),canShow:()=>started&&!talkOpen&&!depoOpen&&!BADGE.open&&!galOpen&&!$('#intro')?.offsetParent});
+// a aba "Jornal" da caderneta vem do Jornal Sereno (criado logo abaixo, porque ele precisa do HUD para saber se a tela está livre)
+const NEWS_TAB={k:'jornal',label:'Jornal',count:()=>NEWS?NEWS.bookTab.count():0,html:()=>NEWS?NEWS.bookTab.html():'',click:e=>NEWS?NEWS.bookTab.click(e):false};
+const HUD=createHud({app:appEl,clock:()=>clockStr(),data:hudData,onGuide:()=>runGuide(),tabs:[NEWS_TAB],canShow:()=>started&&!talkOpen&&!depoOpen&&!newsOpen&&!BADGE.open&&!galOpen&&!$('#intro')?.offsetParent});
+/* ---------- Jornal Sereno (src/news/newspaper.js, docs/JORNAL_SERENO.md) ----------
+   Abre sozinho quando um fato do save libera edição nova, só com a tela livre: sem conversa, depoimento, quadro, foto,
+   crachá, caderneta, ajustes, faixas de cinema nem Lemos a caminho de alguém. Enquanto está aberto, o jogo para de desenhar. */
+let newsOpen=false;
+const NEWS=createNewspaper({app:appEl,facts:()=>newsFacts(readCase(),FIM),pt:e=>[PX(e),PY(e)],
+  canOpen:()=>hudFree('jornal')&&!HUD.roomOn()&&!settingsOpen()&&document.visibilityState==='visible',
+  onOpen:()=>{newsOpen=true;HUD.stopRoom();P1.moving=false;},onClose:()=>{newsOpen=false;last=performance.now();},
+  closeBook:()=>HUD.closeBook(),onKeep:()=>{}});
 let HSEEN=safe(()=>JSON.parse(localStorage.getItem(HUD_SEEN)||'null'),null);
 const hudSig=c=>({clues:[...(c.clues||[])],mats:[...(c.requestedMaterials||[])],ppl:[...(c.discoveredPeople||DEFAULT_DISCOVERED)],heard:[...(c.interviewed||[])]});
 // o que chegou no save desde a última olhada vira descoberta (material, pessoa, depoimento) ou pista anexada
@@ -1221,7 +1232,7 @@ const hudRoomShown=safe(()=>JSON.parse(sessionStorage.getItem(HUD_PLACES)||'{}')
 // começo (o jogador tocou em alguém), o lugar não conta como mostrado e o nome volta depois.
 let hudRoomKey='',hudRoomAt=0,hudFreeAt=0;
 // chegar ao prédio não espera Lemos parar de andar: a faixa entra logo e a leitora de crachá aguarda o nome ser lido
-const hudFree=key=>started&&!talkOpen&&!depoOpen&&!BADGE.open&&!galOpen&&!(key!=='rua'&&key!=='predio'&&P1.pend)&&!$('#intro')?.offsetParent&&!HUD.bookOpen;
+const hudFree=key=>started&&!talkOpen&&!depoOpen&&!newsOpen&&!BADGE.open&&!galOpen&&!(key!=='rua'&&key!=='predio'&&P1.pend)&&!$('#intro')?.offsetParent&&!HUD.bookOpen;
 const hudPlacesSave=()=>safe(()=>sessionStorage.setItem(HUD_PLACES,JSON.stringify(hudRoomShown)));
 function hudRoomTick(){
   const r=SCENE==='rua'?'rua':roomOf(P1),key=PLACE_OF[r]||r,now=performance.now();
@@ -1251,7 +1262,7 @@ $('#g-img').addEventListener('click',()=>$('#g-pic').classList.toggle('z'));
 /* ---------- Toques e movimento ---------- */
 let toastT=0;
 function toast(who,text,av){
-  if(HUD.roomOn()){setTimeout(()=>toast(who,text,av),500);return;}   // não cobre as faixas de cinema
+  if(HUD.roomOn()||newsOpen){setTimeout(()=>toast(who,text,av),500);return;}   // não cobre as faixas de cinema nem o jornal
   const el=$('#toast');el.innerHTML=`<span class="av" style="background:${av&&av.col||'#c9a24a'}">${av&&av.img?`<img src="${av.img}" alt="">`:(av&&av.ini)||''}</span><div><small>${who}</small><p>${text}</p></div>`;
   el.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{el.hidden=true;},4200);
 }
@@ -2043,7 +2054,7 @@ function updateUI(){
 let last=performance.now();
 const PROF={r2d:0};
 function loop(now){
-  if(depoOpen){last=now;requestAnimationFrame(loop);return;}
+  if(depoOpen||newsOpen){last=now;requestAnimationFrame(loop);return;}
   // o relógio pode ser reiniciado fora do quadro (passagem rua ⇄ planta): o passo nunca anda para trás
   const raw=Math.max(0,now-last),dt=Math.min(0.1,raw/1000);last=now;adaptRS(raw);
   {const et=SCENE!=='rua'||!fxOn('edge.tint');if(ETN.hidden!==et)ETN.hidden=et;const vg=fxOn('edge.tint')?'':'none';if(VIG.style.display!==vg)VIG.style.display=vg;}
@@ -2177,6 +2188,6 @@ $('#b-start').addEventListener('click',()=>{
   setTimeout(()=>NIGHT?toast('Sônia Prado',briefed()?'Lemos, a casa. A PM está te esperando.':'Lemos, na minha sala. Chegou um caso.',{img:'/sonia.jpg',col:'#c9a24a'})
     :toast('Sônia Prado','Lemos, na minha sala. A equipe já está com o material da casa.',{img:'/sonia.jpg',col:'#c9a24a'}),1200);
 });
-window.__base={amb:()=>AMB.ambientState(),badge:()=>BADGE,refreshCase:()=>refreshCase(),hud:()=>HUD,get BG(){return BG;},get scene(){return SCENE;},setScene:s=>{if(s==='base')enterBase(true);else{SCENE='rua';street().place('porta');}},street:()=>street(),startDepo,startBoard,get CASE(){return CASE;},VIS:()=>VIS,get P1(){return P1;},NPCS:()=>NPCS,cam,goTalk,goTile,openTalk,openGallery,FOUND,get started(){return started;},objs:()=>objs,tap,idx,W,H,T,TH,ti,passable,zoomTo,get ROT(){return ROT;},get LODV(){return LODV;},get FITZ(){return FITZ;},get GL(){return !!POST;},prof:()=>({r2d:+PROF.r2d.toFixed(2),post:+FX.ms.toFixed(2),frame:+frameMs.toFixed(2),RS})};
+window.__base={amb:()=>AMB.ambientState(),badge:()=>BADGE,refreshCase:()=>refreshCase(),hud:()=>HUD,news:()=>NEWS,get BG(){return BG;},get scene(){return SCENE;},setScene:s=>{if(s==='base')enterBase(true);else{SCENE='rua';street().place('porta');}},street:()=>street(),startDepo,startBoard,get CASE(){return CASE;},VIS:()=>VIS,get P1(){return P1;},NPCS:()=>NPCS,cam,goTalk,goTile,openTalk,openGallery,FOUND,get started(){return started;},objs:()=>objs,tap,idx,W,H,T,TH,ti,passable,zoomTo,get ROT(){return ROT;},get LODV(){return LODV;},get FITZ(){return FITZ;},get GL(){return !!POST;},prof:()=>({r2d:+PROF.r2d.toFixed(2),post:+FX.ms.toFixed(2),frame:+frameMs.toFixed(2),RS})};
 requestAnimationFrame(loop);
 })();

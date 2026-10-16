@@ -69,6 +69,7 @@ Enquanto as faixas estão na tela, `#app` ganha a classe `lh-cine`:
 
 Painel da direita, com o resto da tela escurecido. As abas são:
 
+- **Jornal:** as edições do Jornal Sereno já publicadas, com as guardadas e os grifos; "Ler" reabre a edição (`docs/JORNAL_SERENO.md`).
 - **Pessoas:** quem a investigação já conhece (`discoveredPeople`), com foto, papel e situação do depoimento. O alvo marca alguém como suspeito.
 - **Pistas:** as pistas registradas, da mais nova para a mais antiga; as ainda não vistas aparecem como "novo".
 - **Suspeitas:** as pessoas marcadas e as suspeitas escritas pelo jogador.

@@ -255,6 +255,10 @@ Todo efeito visual ou sonoro (os que já existem e os que vierem) precisa estar 
 - A tela de ajustes é gerada desse registro: o botão de engrenagem no cabeçalho do jogo (`src/settings/settingsPanel.ts`, que gira junto com o jogo no celular em pé). Não escrever opção à mão nela.
 - A qualidade gráfica continua valendo por cima (a baixa desliga efeitos pesados mesmo que estejam ligados aqui).
 
+## Jornal Sereno
+
+A imprensa acompanha o caso ("Lar Doce Lar"): cada fato do save libera uma edição, que abre sozinha na base quando a tela está livre (nunca no meio de conversa, depoimento, quadro, foto, caderneta ou faixas de cinema). Não criar botão para abrir o jornal. O que o Lemos diz à imprensa fica em `press` no save (`pressSay` em `src/news/press.js`) e entra na edição daquele momento. Código em `src/news/`; antes de mexer, ler `docs/JORNAL_SERENO.md`.
+
 ## Depoimento na rua
 
 Testemunhas podem ser ouvidas na própria cena da casa (`src/rua/streetDepo.js`): o mesmo depoimento da base, com o fundo da rua de madrugada, e o mesmo progresso no save. O Jorge é o primeiro: a PM o separa na fita e o botão "Jorge" aparece na barra de baixo. Antes de mexer, ler `docs/DEPOIMENTO_NA_RUA.md`.
