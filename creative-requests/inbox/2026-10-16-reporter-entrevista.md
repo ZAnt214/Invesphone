@@ -1,6 +1,6 @@
 ---
 id: 2026-10-16-reporter-entrevista
-status: pending
+status: delivered
 requested_by: claude
 priority: high
 character: "reporter"
@@ -65,6 +65,6 @@ public/characters/reporter/manifest.json
 ## Resposta do ChatGPT
 Preenchido pelo ChatGPT ao concluir.
 
-- status:
-- assets criados:
-- observações:
+- status: entregue em 16/10/2026.
+- assets criados: seis expressões 900×1200, portrait igual ao neutral, figure-mask com alfa, face-mask em tons de cinza, seis visemas em folha 2400×120, manifest com marcas por expressão, folha de referência e relatório de validação. Destino: `public/characters/reporter/`.
+- observações: roupa, microfone e silhueta fixos; pequenas alterações restritas ao rosto. Em asking, a intenção de avançar vem da expressão, mantendo a pose para troca suave. figure-mask usa alfa transparente fora da figura, compatível com destination-in do streetDepo.js. Integração da personagem, entrevista, animação e teste Safari ficam com Claude. Consulte README.md junto dos assets.

@@ -1,0 +1,251 @@
+{
+  "character": "reporter",
+  "displayName": "Repórter · TV Sereno",
+  "basePath": "/characters/reporter/",
+  "resolution": {
+    "width": 900,
+    "height": 1200
+  },
+  "expressions": [
+    "neutral",
+    "asking",
+    "insisting",
+    "surprised",
+    "satisfied",
+    "annoyed"
+  ],
+  "expressionMeanings": {
+    "neutral": "atenta, esperando a resposta",
+    "asking": "perguntando com firmeza",
+    "insisting": "insistente e impaciente",
+    "surprised": "surpresa com uma revelação",
+    "satisfied": "satisfeita com a frase obtida",
+    "annoyed": "contrariada pela recusa"
+  },
+  "visemes": {
+    "file": "visemes.png",
+    "order": [
+      "A",
+      "E",
+      "I",
+      "O",
+      "U",
+      "M"
+    ],
+    "sheet": {
+      "width": 2400,
+      "height": 120
+    },
+    "cell": {
+      "width": 400,
+      "height": 120,
+      "mouthCenter": {
+        "x": 200,
+        "y": 60
+      },
+      "nominalLipWidth": 108
+    }
+  },
+  "figureMask": "figure-mask.png",
+  "faceMask": "face-mask.png",
+  "marks": {
+    "neutral": {
+      "eyes": {
+        "left": {
+          "cx": 370.5,
+          "cy": 390,
+          "rx": 31.5,
+          "ry": 14
+        },
+        "right": {
+          "cx": 522,
+          "cy": 384,
+          "rx": 33,
+          "ry": 15
+        }
+      },
+      "mouth": {
+        "cx": 447,
+        "rimY": 535,
+        "halfWidth": 60,
+        "bottom": 561,
+        "arch": 2,
+        "maxOpen": 30
+      },
+      "align": {
+        "eyeMid": [
+          446.25,
+          387
+        ],
+        "scale": 1,
+        "neckY": 730,
+        "shoulderY": 650
+      }
+    },
+    "asking": {
+      "eyes": {
+        "left": {
+          "cx": 371,
+          "cy": 388,
+          "rx": 32,
+          "ry": 14
+        },
+        "right": {
+          "cx": 521.5,
+          "cy": 383,
+          "rx": 33.5,
+          "ry": 15
+        }
+      },
+      "mouth": {
+        "cx": 447,
+        "rimY": 535,
+        "halfWidth": 60,
+        "bottom": 561,
+        "arch": 2,
+        "maxOpen": 30
+      },
+      "align": {
+        "eyeMid": [
+          446.25,
+          387
+        ],
+        "scale": 1,
+        "neckY": 730,
+        "shoulderY": 650
+      }
+    },
+    "insisting": {
+      "eyes": {
+        "left": {
+          "cx": 371.5,
+          "cy": 389.5,
+          "rx": 31.5,
+          "ry": 12.5
+        },
+        "right": {
+          "cx": 521,
+          "cy": 386.5,
+          "rx": 34,
+          "ry": 12.5
+        }
+      },
+      "mouth": {
+        "cx": 447,
+        "rimY": 535,
+        "halfWidth": 60,
+        "bottom": 561,
+        "arch": 2,
+        "maxOpen": 30
+      },
+      "align": {
+        "eyeMid": [
+          446.25,
+          387
+        ],
+        "scale": 1,
+        "neckY": 730,
+        "shoulderY": 650
+      }
+    },
+    "surprised": {
+      "eyes": {
+        "left": {
+          "cx": 371.5,
+          "cy": 385,
+          "rx": 31.5,
+          "ry": 18
+        },
+        "right": {
+          "cx": 521,
+          "cy": 381,
+          "rx": 34,
+          "ry": 19
+        }
+      },
+      "mouth": {
+        "cx": 447,
+        "rimY": 535,
+        "halfWidth": 60,
+        "bottom": 561,
+        "arch": 2,
+        "maxOpen": 30
+      },
+      "align": {
+        "eyeMid": [
+          446.25,
+          387
+        ],
+        "scale": 1,
+        "neckY": 730,
+        "shoulderY": 650
+      }
+    },
+    "satisfied": {
+      "eyes": {
+        "left": {
+          "cx": 373,
+          "cy": 389.5,
+          "rx": 34,
+          "ry": 13.5
+        },
+        "right": {
+          "cx": 521,
+          "cy": 384,
+          "rx": 34,
+          "ry": 14
+        }
+      },
+      "mouth": {
+        "cx": 447,
+        "rimY": 535,
+        "halfWidth": 60,
+        "bottom": 561,
+        "arch": 2,
+        "maxOpen": 30
+      },
+      "align": {
+        "eyeMid": [
+          446.25,
+          387
+        ],
+        "scale": 1,
+        "neckY": 730,
+        "shoulderY": 650
+      }
+    },
+    "annoyed": {
+      "eyes": {
+        "left": {
+          "cx": 372.5,
+          "cy": 392.5,
+          "rx": 33.5,
+          "ry": 10.5
+        },
+        "right": {
+          "cx": 520.5,
+          "cy": 387.5,
+          "rx": 33.5,
+          "ry": 11.5
+        }
+      },
+      "mouth": {
+        "cx": 447,
+        "rimY": 535,
+        "halfWidth": 60,
+        "bottom": 561,
+        "arch": 2,
+        "maxOpen": 30
+      },
+      "align": {
+        "eyeMid": [
+          446.25,
+          387
+        ],
+        "scale": 1,
+        "neckY": 730,
+        "shoulderY": 650
+      }
+    }
+  }
+}

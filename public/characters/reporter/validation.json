@@ -1,0 +1,38 @@
+{
+  "portraits": [
+    {
+      "expression": "neutral",
+      "dimensions": "900x1200",
+      "changedChannelsOutsideFace": 0
+    },
+    {
+      "expression": "asking",
+      "dimensions": "900x1200",
+      "changedChannelsOutsideFace": 0
+    },
+    {
+      "expression": "insisting",
+      "dimensions": "900x1200",
+      "changedChannelsOutsideFace": 0
+    },
+    {
+      "expression": "surprised",
+      "dimensions": "900x1200",
+      "changedChannelsOutsideFace": 0
+    },
+    {
+      "expression": "satisfied",
+      "dimensions": "900x1200",
+      "changedChannelsOutsideFace": 0
+    },
+    {
+      "expression": "annoyed",
+      "dimensions": "900x1200",
+      "changedChannelsOutsideFace": 0
+    }
+  ],
+  "portraitMatchesNeutral": true,
+  "visemeSheet": "2400x120, A E I O U M",
+  "figureMaskAlphaChecked": true,
+  "runtimeIntegrationTested": false
+}
