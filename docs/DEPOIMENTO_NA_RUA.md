@@ -65,11 +65,11 @@ A foto oficial é mexida em código, sem redesenhar: a árvore, a copa atrás do
 
 O cabelo do Jorge balança com o mesmo vento da garoa (`windAt`) e é empurrado quando o helicóptero passa. As camadas são do ChatGPT (`public/characters/jorge/hair/`, pedido `creative-requests/completed/2026-10-15-jorge-cabelo-ao-vento.md`): por expressão, uma base sem as mechas soltas (`base.png`), oito mechas e o mapa de peso de cada uma (vermelho: 0 na raiz, 1 na ponta). O personagem declara as camadas em `src/characters/characters.ts` (`hair`) e o código fica em `src/rua/hairWind.js`.
 
-- **Como a mecha dobra:** cada mecha é dividida, uma vez só, em 10 faixas de peso que somam 1. A cada quadro, cada faixa anda conforme o seu peso e as faixas são somadas num canvas da própria mecha. Assim a raiz fica presa e a ponta vai, sem girar o recorte inteiro e sem abrir emenda. Em repouso, base + mechas reconstituem o retrato oficial.
-- **Força:**
-  - brisa: cerca de 2 a 3 px na imagem original;
-  - rajada do helicóptero: até 12 px, com tremor nos fios soltos.
+- **Como a mecha dobra:** cada mecha vira uma malha fina (grade de cerca de 6 px da imagem original) presa pelo mapa de peso. A deformação roda na placa de vídeo (WebGL), num canvas pequeno só do retrato. A cada quadro, cada vértice anda conforme o próprio peso: a raiz fica presa e a ponta dobra mais. Duas ondas lentas correm da raiz para a ponta e, na rajada, entra um tremor por cima. É uma deformação contínua, sem fantasma nem emenda. O resultado entra no canvas do retrato com um único `drawImage`. Sem WebGL, ou se o contexto cair, volta o retrato oficial parado.
+- **Força:** o vento do cabelo segue o da garoa (`windAt`), suavizado para ter inércia.
+  - brisa: cerca de 7 px na imagem original, com balanço de 3,5 px;
+  - rajada do helicóptero: até 24 px, com balanço de até 11 px.
 
-  Cada mecha usa a própria rigidez do manifesto.
+  As mechas laterais, mais rígidas no manifesto, mexem menos que as do topo.
 - **Memória:** só a expressão em uso (e a anterior, durante a troca) fica carregada, com cada mecha recortada na sua caixa. Enquanto uma expressão nova carrega, aparece o retrato oficial, que é igual em repouso.
-- **Ajuste:** Gráficos > Depoimento na rua > Cabelo ao vento (`depo.hair`). Desligado, na qualidade baixa ou com movimento reduzido, fica o retrato oficial e as camadas saem da memória.
+- **Ajuste:** Gráficos > Depoimento na rua > Cabelo ao vento (`depo.hair`). Desligado, na qualidade baixa, com movimento reduzido ou num aparelho que já precisou aliviar a cena duas vezes, fica o retrato oficial e as camadas saem da memória.

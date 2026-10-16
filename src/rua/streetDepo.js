@@ -93,10 +93,14 @@ export function openStreetDepo(host,id,opts={}){
      uso é recomposto a cada quadro: base sem as mechas + mechas dobradas pelo mesmo vento da garoa (windAt), mais forte
      quando o helicóptero passa. Desligado, volta o retrato oficial e as camadas saem da memória. */
   let HAIR=null;
-  const hairOn=()=>!!HAIR&&FXON('depo.hair')&&!low()&&!RM;
+  const hairOn=()=>!!HAIR&&FXON('depo.hair')&&!low()&&!RM&&DEG<2;   // aparelho que já precisou aliviar duas vezes: retrato parado
   function hairSync(){if(!HAIR)return;HAIR.keep(hairOn()?[...new Set([expr,prev].filter(Boolean))]:[])}
-  function hairWind(t){const w=windAt(t),g=Math.max(0,w-.1),hA=HS?HS.A:0;
-    const x=Math.min(12,2.6+g*28);return {x,y:-.12*x,flutter:.45+g*7+hA*1.6}}
+  /* o vento do cabelo segue o da garoa, suavizado (o cabelo tem inércia): brisa ~7 px, rajada do helicóptero até 24 px */
+  const HW={lean:0,flutter:0,gust:0,t:0};
+  function hairWind(t){const dt=Math.min(.1,Math.max(0,t-HW.t));HW.t=t;const w=windAt(t),g=Math.max(0,w-.05),hA=HS?HS.A:0;
+    const tl=Math.min(24,4+g*56),tf=Math.min(11,2.6+g*16+hA*4);
+    HW.lean+=(tl-HW.lean)*Math.min(1,dt*1.6);HW.flutter+=(tf-HW.flutter)*Math.min(1,dt*2.2);HW.gust+=(hA-HW.gust)*Math.min(1,dt*3);
+    return HW}
 
   /* ---------- cenário e curiosos oficiais (creative-requests/deliveries/2026-10-15) ---------- */
   const ART={bg:null,poste:null,crowd:[],far:[]};
