@@ -101,6 +101,73 @@ export function openStreetDepo(host,id,opts={}){
   /* [figura, centro x, pé y, altura, fileira de trás]: a fileira da frente encosta na fita, a de trás fica menor */
   const CROWD_ART=[[6,118,300,138,1],[4,212,302,146,1],[7,300,298,140,1],[0,60,336,180,0],[1,156,340,184,0],[3,246,334,178,0],[5,334,338,182,0],[2,410,340,184,0]];
   let FLA=false;
+  /* ===== fachada viva =====
+     A foto oficial não pode parecer uma imagem parada. Sem redesenhar nada, a própria arte é mexida em código:
+     - folhas: a árvore da esquerda, a copa atrás do telhado, a folhagem da direita e as moitas sobre o muro balançam com o
+       vento (faixas horizontais deslocadas, mais no alto que na base), recortadas por uma máscara de folhagem calculada da
+       própria imagem (cor + densidade, só dentro das caixas onde há planta);
+     - cortina da janela acesa: ondula de leve com a corrente de ar e a luz respira;
+     - reflexos na rua molhada: tremem com a garoa (faixas deslocadas em onda);
+     - céu: nuvens baixas passando devagar, só onde a máscara diz que é céu;
+     - névoa rasteira atravessando a rua, na altura dos pés dos curiosos.
+     O vento é o mesmo da chuva (windAt): quando o helicóptero passa, tudo balança junto. */
+  const LIFE={ok:false,fol:null,sky:null,lum:null,LW:422,LH:195,FW:document.createElement('canvas'),CL:document.createElement('canvas')};
+  function buildLife(){
+    const LW=LIFE.LW,LH=LIFE.LH,t=document.createElement('canvas');t.width=LW;t.height=LH;const x=t.getContext('2d',{willReadFrequently:true});x.drawImage(ART.bg,0,0,LW,LH);
+    let d;try{d=x.getImageData(0,0,LW,LH).data}catch(_){return}
+    const n=LW*LH,leaf=new Uint8Array(n),lum=new Uint8Array(n),box=new Uint8Array(n);
+    for(const [x0,y0,x1,y1] of [[0,0,64,88],[0,62,214,87],[305,0,352,32],[396,6,422,66]])for(let y=y0;y<y1;y++)for(let i=x0;i<x1;i++)box[y*LW+i]=1;
+    for(let i=0;i<n;i++){const r=d[i*4],g=d[i*4+1],b=d[i*4+2];lum[i]=(r*.3+g*.59+b*.11)|0;leaf[i]=(box[i]&&g-r>=3&&g>=b-8)?1:0}
+    /* densidade 7×7 por imagem integral: fica só onde há mancha cheia de folha (tira o ruído das paredes) */
+    const I=new Uint32Array((LW+1)*(LH+1));for(let y=0;y<LH;y++){let acc=0;for(let i=0;i<LW;i++){acc+=leaf[y*LW+i];I[(y+1)*(LW+1)+i+1]=I[y*(LW+1)+i+1]+acc}}
+    const mk=()=>{const c=document.createElement('canvas');c.width=LW;c.height=LH;return c};
+    const fol=mk(),fx=fol.getContext('2d'),fi=fx.createImageData(LW,LH);
+    const sky=mk(),sx=sky.getContext('2d'),si=sx.createImageData(LW,LH);
+    for(let y=0;y<LH;y++)for(let i=0;i<LW;i++){const k=y*LW+i;
+      if(box[k]){const a0=Math.max(0,i-3),b0=Math.max(0,y-3),a1=Math.min(LW,i+4),b1=Math.min(LH,y+4),sum=I[b1*(LW+1)+a1]-I[b0*(LW+1)+a1]-I[b1*(LW+1)+a0]+I[b0*(LW+1)+a0];
+        if(sum/((a1-a0)*(b1-b0))>.35)fi.data[k*4+3]=255}
+      const r=d[k*4],g=d[k*4+1],b=d[k*4+2];if(y<45&&b>r+18&&b>g+4&&r+g+b<200)si.data[k*4+3]=255}
+    fx.putImageData(fi,0,0);sx.putImageData(si,0,0);
+    LIFE.fol=fol;LIFE.sky=sky;LIFE.lum=lum;LIFE.ok=true;
+  }
+  const lumAt=(x,y)=>{if(!LIFE.lum)return 0;const i=Math.max(0,Math.min(LIFE.LW-1,x/2|0)),j=Math.max(0,Math.min(LIFE.LH-1,y/2|0));return LIFE.lum[j*LIFE.LW+i]/255};
+  /* faixas horizontais da arte (do cache, já escurecido), cada uma deslocada em x */
+  function rows(c,src,r,x0,y0,w,h,step,dxf){for(let y=y0;y<y0+h;y+=step){const dx=dxf(y);c.drawImage(src,x0*r,y*r,w*r,(step+.6)*r,x0+dx,y,w,step+.6)}}
+  const lifeOn=()=>FXON('depo.life')&&!RM;
+  function lifeBg(c,t,g,C){
+    if(!LIFE.ok&&ART.bg)buildLife();
+    const r=cvBg._r||.5,src=C.bg,hA=HS?HS.A:0,w=windAt(t),gust=(w-.1)*6+hA*2.2;
+    /* folhas: desenhadas deslocadas num canvas à parte e recortadas pela máscara de folhagem */
+    if(LIFE.ok){
+      const FW=LIFE.FW,fw=Math.ceil(W*r),fh=Math.ceil(178*r);if(FW.width!==fw||FW.height!==fh){FW.width=fw;FW.height=fh}
+      const x=FW.getContext('2d');x.setTransform(1,0,0,1,0,0);x.globalCompositeOperation='source-over';x.clearRect(0,0,fw,fh);x.setTransform(r,0,0,r,0,0);
+      const sway=(y,top,hgt,amp,ph)=>{const k=1-Math.min(1,Math.max(0,(y-top)/hgt));return amp*(.35+.65*k)*((1+gust)*Math.sin(t*1.25+y*.045+ph)+.45*Math.sin(t*2.9+y*.13+ph*2)+.25*gust*Math.sin(t*6.1+y*.3))};
+      const st=low()?4:3;
+      rows(x,src,r,0,0,128,176,st,y=>sway(y,0,176,1.9,0));
+      rows(x,src,r,0,124,428,52,st,y=>sway(y,124,52,1.1,1.7));
+      rows(x,src,r,610,0,96,64,st,y=>sway(y,0,64,1.3,3.1));
+      rows(x,src,r,792,12,52,122,st,y=>sway(y,12,122,1.5,4.4));
+      x.setTransform(1,0,0,1,0,0);x.globalCompositeOperation='destination-in';x.drawImage(LIFE.fol,0,0,LIFE.LW,178/2,0,0,fw,fh);x.globalCompositeOperation='source-over';
+      c.drawImage(FW,0,0,W,178);
+      /* nuvens baixas: manchas largas passando devagar, só no céu */
+      const CL=LIFE.CL,cw=Math.ceil(W*r),chh=Math.ceil(90*r);if(CL.width!==cw||CL.height!==chh){CL.width=cw;CL.height=chh}
+      const y=CL.getContext('2d');y.setTransform(1,0,0,1,0,0);y.globalCompositeOperation='source-over';y.clearRect(0,0,cw,chh);y.setTransform(r,0,0,r,0,0);
+      for(let i=0;i<6;i++){const px=((i*190+t*(5+i*1.3))%1300)-230,py=8+((i*29)%34);y.save();y.translate(px,py);y.scale(3.2,.75);glow(y,0,0,46,'92,100,128',.55);glow(y,10,-6,30,'150,120,110',.18);y.restore()}
+      y.setTransform(1,0,0,1,0,0);y.globalCompositeOperation='destination-in';y.drawImage(LIFE.sky,0,0,LIFE.LW,45,0,0,cw,chh);
+      c.drawImage(CL,0,0,W,90);
+    }
+    /* cortina da janela acesa: duas folhas de vidro, a parte de baixo mexe mais */
+    rows(c,src,r,124,95,50,52,3,y=>.7*((y-95)/52)*Math.sin(t*.9+y*.09)+.3*Math.sin(t*2.1+y*.2));
+    rows(c,src,r,178,95,52,52,3,y=>.7*((y-95)/52)*Math.sin(t*.8+y*.08+1.3)+.3*Math.sin(t*1.9+y*.2+.7));
+    c.globalCompositeOperation='lighter';glow(c,177,124,70,WARM,.035+.02*Math.sin(t*.7)+.01*Math.sin(t*2.3));c.globalCompositeOperation='source-over';
+    /* reflexos na rua molhada tremendo com a garoa */
+    rows(c,src,r,0,306,W,84,3,y=>{const k=(y-306)/84;return (.5+k)*(1.1*Math.sin(y*.62-t*2.3)+.6*Math.sin(y*1.7+t*1.4))});
+  }
+  /* névoa rasteira atravessando a rua (por cima dos pés dos curiosos, antes do poste) */
+  function lifeFog(c,t){
+    for(let i=0;i<5;i++){const px=((i*260+t*(9+i*2.5))%1400)-280,py=328+((i*17)%46);c.save();c.translate(px,py);c.scale(4.2,.42);glow(c,0,0,70,'120,132,156',.13);c.restore()}
+  }
+
   /* fundo parado em cache, no tamanho real do canvas do fundo: refeito só quando o tamanho muda ou a arte chega */
   const BGC={k:''};
   function bgCache(){
@@ -239,10 +306,54 @@ export function openStreetDepo(host,id,opts={}){
     tapeSpan(c,'gate',t);tapeSpan(c,'crowd',t);
     knot(c,445.5,TAPES.crowd[3]-TH/2+.5,29,2.2,t,24);knot(c,445.5,TAPES.gate[1]-TH/2+.5,29,3.7,t,0);knot(c,789,TAPES.gate[3]-TH/2+.5,29,5.1,t,18);
     LT.on=false;
+    midLife(c,t,g);
+  }
+  /* ===== vida no plano do meio (atrás do Jorge, na frente da casa), em resolução cheia =====
+     - garoa do fundo: gotas soltas, cada uma com distância, velocidade e deriva próprias (nada de textura deslizando);
+       o risco é sempre maior que o deslocamento entre dois quadros, e ela só brilha onde há luz;
+     - respingos: anéis abrindo nas poças (mais visíveis onde a rua reflete luz);
+     - pingos do portão e da calha da garagem, que crescem, caem e respingam na calçada;
+     - mariposas rodando na luz do poste. */
+  const BD=Array.from({length:170},(_,i)=>newBD(true)),RIP=[],GD=[];let ripT=0,gdT=0,lastMid=performance.now();
+  function newBD(any){const z=Math.random();return{x:Math.random()*(W+120)-80,y:any?Math.random()*H:-10-Math.random()*60,z,s:120+z*210,ph:Math.random()*7}}
+  const MOTHS=Array.from({length:4},(_,i)=>({a:Math.random()*7,r:14+i*9,sp:1.4+Math.random()*1.6,ph:Math.random()*7}));
+  function midLife(c,t,g){
+    const now=performance.now(),dt=RM?0:Math.min(.05,(now-lastMid)/1000);lastMid=now;
+    const rain=FXON('depo.rain')&&DEG<2,life=lifeOn(),w=windAt(t);
+    if(rain){
+      /* garoa do fundo */
+      const BK=new Map(),n=low()||DEG>0?BD.length>>1:BD.length;
+      for(let i=0;i<n;i++){const d=BD[i];const vx=d.s*(w+.04*Math.sin(t*1.3+d.ph));d.y+=d.s*dt;d.x+=vx*dt;
+        if(d.y>H+10||d.x>W+60){BD[i]=newBD(false);continue}
+        const len=Math.max(2.2,d.s*Math.max(SHUT,dt*1.2)),L=lightAt(d.x,d.y),al=.035+.05*d.z+L*(.2+.32*d.z)+(g.r*(d.x<300)+g.b*(d.x>560))*.06;
+        if(al<.04)continue;const q=Math.round(al*20)/20,lw=d.z>.6?.9:.6,col=L>.18?'255,220,184':'178,192,220',key=col+'|'+q+'|'+lw;
+        let a=BK.get(key);if(!a)BK.set(key,a=[]);a.push(d.x-len*(w+.04),d.y-len,d.x,d.y)}
+      c.lineCap='round';
+      for(const [key,a] of BK){const k=key.split('|');c.beginPath();for(let i=0;i<a.length;i+=4){c.moveTo(a[i],a[i+1]);c.lineTo(a[i+2],a[i+3])}c.lineWidth=+k[2];c.strokeStyle=`rgba(${k[0]},${k[1]})`;c.stroke()}
+      /* respingos nas poças */
+      ripT-=dt;while(ripT<0){ripT+=1/(low()?7:13);const yy=304+Math.random()*84,xx=Math.random()*W;if(xx<470&&yy<346)continue;RIP.push({x:xx,y:yy,a:0,sz:.6+(yy-300)/90})}
+      c.lineWidth=.7;
+      for(let i=RIP.length-1;i>=0;i--){const p=RIP[i];p.a+=dt/.55;if(p.a>=1){RIP.splice(i,1);continue}
+        const k=(1-p.a)*(.05+.7*lumAt(p.x,p.y)+.35*lightAt(p.x,p.y));if(k<.02)continue;
+        c.strokeStyle=`rgba(255,226,196,${Math.min(.5,k).toFixed(3)})`;c.beginPath();c.ellipse(p.x,p.y,(1+p.a*5)*p.sz,(.35+p.a*1.3)*p.sz,0,0,7);c.stroke()}
+    }
+    if(life){
+      /* pingos do trilho do portão (y 114) e da calha da garagem (y 76), caindo até a calçada */
+      gdT-=dt;if(gdT<=0){gdT=.35+Math.random()*.9;const top=Math.random()<.6;GD.push({x:top?462+Math.random()*310:468+Math.random()*270,y:top?115:77,v:0,hold:.4+Math.random()*.8,floor:top?262:258})}
+      for(let i=GD.length-1;i>=0;i--){const d=GD[i];
+        if(d.hold>0){d.hold-=dt;const grow=Math.min(1,1-d.hold);c.fillStyle=`rgba(200,214,236,${(.25+.3*grow).toFixed(3)})`;c.beginPath();c.arc(d.x,d.y+grow,.7+grow*.6,0,7);c.fill();continue}
+        d.v+=780*dt;d.y+=d.v*dt;if(d.y>=d.floor){GD.splice(i,1);RIP.push({x:d.x,y:d.floor+6,a:.1,sz:.5});continue}
+        const l=Math.max(2,d.v*Math.max(SHUT,dt*1.2));c.strokeStyle='rgba(200,214,236,.4)';c.lineWidth=.8;c.beginPath();c.moveTo(d.x,d.y-l);c.lineTo(d.x,d.y);c.stroke()}
+      /* mariposas na luz do poste */
+      c.globalCompositeOperation='lighter';
+      for(const m of MOTHS){m.a+=dt*m.sp*(1+.6*Math.sin(t*3.1+m.ph));const mx=640+Math.cos(m.a)*m.r*1.5+Math.sin(t*5.3+m.ph)*4,my=14+Math.sin(m.a*1.3)*m.r*.7+Math.cos(t*4.1+m.ph)*3;
+        const fl=.55+.45*Math.abs(Math.sin(t*38+m.ph));glow(c,mx,my,4.2,'255,214,160',.5*fl);c.fillStyle=`rgba(255,236,206,${(.75*fl).toFixed(3)})`;c.fillRect(mx-.7,my-.5,1.4,1)}
+      c.globalCompositeOperation='source-over';
+    }
   }
 
   /* ---------- tamanho: a tela do jogo deitada (844×390), encaixada no espaço que houver ---------- */
-  const wrap=$('.sd-wrap'),stage=$('#sd-stage'),cvBg=$('#sd-bg'),cvTape=$('#sd-tape'),TB={y:172,h:132},cvAc=$('#sd-ac'),cvFg=$('#sd-fg');
+  const wrap=$('.sd-wrap'),stage=$('#sd-stage'),cvBg=$('#sd-bg'),cvTape=$('#sd-tape'),TB={y:0,h:390},cvAc=$('#sd-ac'),cvFg=$('#sd-fg');
   function setC(c,w,h,r){c.width=Math.max(1,Math.round(w*r));c.height=Math.max(1,Math.round(h*r));c._r=r}
   let K=1;
   function size(){
@@ -522,7 +633,7 @@ export function openStreetDepo(host,id,opts={}){
     x.globalAlpha=1;x.globalCompositeOperation='source-over';
   }
   /* gotas soltas (meio e perto) */
-  const DROPS2=Array.from({length:28},()=>newDrop2(true));
+  const DROPS2=Array.from({length:34},()=>newDrop2(true));
   function newDrop2(any){const z=Math.random()**1.4;return{x:Math.random()*(W+260)-160,y:any?Math.random()*(H+60)-40:-30-Math.random()*90,z,s:360+z*380,gy:328+Math.random()*60,j:(Math.random()-.5)*.02}}
   const LSPR=(()=>{const mk=(stops)=>{const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,40,6.4,32,32,32);stops.forEach(([o,col])=>g.addColorStop(o,col));x.fillStyle=g;x.beginPath();x.arc(32,32,32,0,7);x.fill();return c};
     return{d:mk([[0,'rgba(0,0,0,.1)'],[.75,'rgba(0,0,0,0)']]),l:mk([[0,'rgba(255,230,200,0)'],[.75,'rgba(255,230,200,.05)'],[.92,'rgba(255,235,210,.13)'],[1,'rgba(255,235,210,0)']])}})();
@@ -539,16 +650,11 @@ export function openStreetDepo(host,id,opts={}){
     {const tt=RM?0:t;c.globalCompositeOperation='lighter';
       for(let i=0;i<4;i++){const mx=620+Math.sin(tt*.07+i*1.7)*70,my=60+i*80+Math.sin(tt*.05*(i+1))*25;c.save();c.translate(mx,my);c.scale(1.6,1);glow(c,0,0,110,'255,200,150',.05);c.restore()}
       c.globalCompositeOperation='source-over'}
-    if(!RAINREADY)return;const tt=RM?0:t;
-    /* a garoa do fundo anda a cada quadro (a cada dois só num aparelho que já precisou aliviar): pulando, ela parece quadro baixo */
-    if(DEG===0||!(RBF++&1))layer(RL.back,RL.maskB,cvBg._r,tt,g,[{k:'far',s:170,sc:1,a:.42}]);
-    c.save();c.globalCompositeOperation='lighter';c.drawImage(RL.back,0,0,W,H);c.restore();
+    /* a garoa do fundo não é mais uma textura deslizando (parecia um lençol travado): são gotas soltas, no canvas do meio (backDrizzle) */
   }
   function rainFront(c,t,g){
     if(!FXON('depo.rain'))return;
     if(!RAINREADY)return;const dt=RM?0:RDT,tt=RM?0:t,w=windAt(tt);
-    layer(RL.front,RL.maskF,cvFg._r/2.5,tt,g,[{k:'mid',s:330,sc:1,a:.16}]);
-    c.save();c.globalCompositeOperation='lighter';c.drawImage(RL.front,0,0,W,H);c.restore();
     c.lineCap='round';
     /* as gotas vão agrupadas em poucos traços (por cor, força e espessura): um traço por grupo, não um por gota */
     const BK=new Map();const add=(key,x0,y0,x1,y1)=>{let a=BK.get(key);if(!a)BK.set(key,a=[]);a.push(x0,y0,x1,y1)};
@@ -725,11 +831,13 @@ export function openStreetDepo(host,id,opts={}){
         /* cenário oficial (public/cenarios/rua-acacias): a fachada dos Valença, o muro, o portão e a calçada molhada.
            A foto grande e o poste são reduzidos e escurecidos uma vez só (cache no tamanho da tela); por quadro é uma cópia. */
         const C=bgCache();c.save();c.setTransform(1,0,0,1,0,0);c.drawImage(C.bg,0,0);c.restore();
+        if(lifeOn())lifeBg(c,t,g,C);
         /* o giroflex chega pelos lados e a calçada molhada devolve as cores */
         if(g.r>.01){c.globalAlpha=g.r;c.drawImage(C.floorR,0,292,W,98);c.globalAlpha=1}
         if(g.b>.01){c.globalAlpha=g.b;c.drawImage(C.floorB,0,292,W,98);c.globalAlpha=1}
         c.globalCompositeOperation='lighter';glow(c,-40,200,640,RED,.24*g.r);glow(c,900,170,580,BLUE,.26*g.b);c.globalCompositeOperation='source-over';
         drawCrowdArt(c,t,g);
+        if(lifeOn())lifeFog(c,t);
         if(C.poste){c.save();c.setTransform(1,0,0,1,0,0);c.drawImage(C.poste,C.px,0);c.restore()}
       }else{
         SC.casa.bg(c,t,g);

@@ -47,9 +47,13 @@ Código: `src/rua/streetDepo.js` e `src/rua/streetDepo.css` (tudo dentro de `.sd
 Em Gráficos > **Depoimento na rua**: `depo.rain`, `depo.lens`, `depo.flyby`, `depo.film`, `depo.camera`. Em Som:
 `sfx.depoAmb` e `sfx.depoFx`. A qualidade baixa desliga as gotas na lente e a cor de cinema e reduz a resolução.
 
+## Fachada viva (`depo.life`)
+
+A foto oficial é mexida em código, sem redesenhar: a árvore, a copa atrás do telhado, a folhagem da direita e as moitas balançam com o vento (faixas deslocadas, recortadas por uma máscara de folhagem calculada da própria imagem: cor + densidade dentro de caixas, `buildLife`); a cortina acesa ondula e a luz respira; os reflexos da rua tremem; nuvens passam só onde a máscara diz que é céu; névoa rasteira atravessa a rua. No canvas do meio (`#sd-tape`, tela inteira, resolução cheia): garoa, respingos, pingos do trilho do portão e da calha da garagem, e mariposas na luz do poste. O vento é o mesmo da chuva (`windAt`), então o helicóptero balança tudo junto.
+
 ## Desempenho
 
-- Chuva: só uma garoa leve (uma camada fina no fundo, uma rala na frente, ~28 gotas soltas lentas e finas, pingos do poste espaçados). O risco de cada gota é sempre maior que o deslocamento entre dois quadros.
+- Chuva: só uma garoa leve, toda em gotas soltas (sem textura deslizando, que parecia travada): ~170 no plano do meio, atrás do Jorge (`midLife`), e ~34 na frente; respingos nas poças. Pingos do poste espaçados. O risco de cada gota é sempre maior que o deslocamento entre dois quadros.
 - Medidor de FPS: Ajustes → Gráficos → Interface → "Medidor de FPS" (`hud.fps`, desligado por padrão; `src/settings/fpsMeter.ts`), em todo o jogo.
 
 - O fundo é desenhado a cada quadro (a cada dois só se o aparelho já precisou aliviar, `DEG>0`). A foto, o poste e o reflexo do giroflex no chão ficam em cache no tamanho do canvas (`bgCache`), refeitos só quando o tamanho muda.

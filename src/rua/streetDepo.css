@@ -21,7 +21,7 @@
 .sd .sd-stage.noting .dim{opacity:.16}
 
 .sd #sd-fg{left:2%;top:2%;width:844px;height:390px}
-.sd #sd-tape{left:2%;top:calc(2% + 172px);width:844px;height:132px}
+.sd #sd-tape{left:2%;top:2%;width:844px;height:390px}
 .sd #sd-debM, .sd #sd-debN{left:2%;top:2%;width:844px;height:390px;pointer-events:none}
 
 
