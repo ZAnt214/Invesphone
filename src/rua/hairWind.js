@@ -21,13 +21,17 @@ const FEATHER=13;  // largura do esfumado nas bordas de corte, em px da imagem o
 const loadImg=src=>new Promise(r=>{const i=new Image();i.decoding='async';i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src});
 
 const VS=`attribute vec2 aPos;attribute vec2 aUV;attribute float aW;attribute float aR;
-uniform vec2 uView,uRoot;uniform vec4 uXf;uniform float uK,uBend,uWob,uGust,uT,uPh;varying vec2 vUV;varying vec2 vA;
+uniform vec2 uView,uRoot,uShear;uniform vec4 uXf;uniform float uK,uBend,uWob,uGust,uT,uPh,uMix;varying vec2 vUV;varying vec2 vA;
 void main(){
   float wave=sin(uT*2.2-aR*2.6+uPh)*.6+sin(uT*3.9-aR*3.4+uPh*1.7)*.4
     +uGust*(sin(uT*9.1-aR*5.0+uPh*2.3)*.55+sin(uT*13.7-aR*6.2+uPh*3.1)*.3+sin(uT*5.3-aR*3.0+uPh*.7)*.4);
   float phi=(uBend+uWob*wave)*aW;
   vec2 r=aPos-uRoot;float c=cos(phi),s=sin(phi);
-  vec2 q=(uRoot+vec2(r.x*c-r.y*s,r.x*s+r.y*c))*uK;      /* px da imagem original */
+  vec2 rot=uRoot+vec2(r.x*c-r.y*s,r.x*s+r.y*c);
+  /* mechas curtas e coladas na cabeça (as laterais) não giram em volta de um ponto: o vento as empurra rente à
+     cabeça (cisalhamento pelo peso), para fora do lado de onde ele vai e para dentro do lado de onde ele vem */
+  vec2 sh=aPos+uShear*aW*(1.0+.3*wave)+vec2(-uShear.y,uShear.x)*aW*.18*wave;
+  vec2 q=mix(rot,sh,uMix)*uK;                             /* px da imagem original */
   vec2 a=q*uXf.zw+uXf.xy;                                 /* px do retrato na tela (400×430) */
   vA=a;vec2 p=a/uView*2.0-1.0;
   gl_Position=vec4(p.x,-p.y,0.0,1.0);vUV=aUV;}`;
@@ -77,7 +81,7 @@ export function createHair(o){
     if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){try{console.warn('cabelo: sombreador',gl.getProgramInfoLog(prog),gl.getShaderInfoLog(gl.getAttachedShaders(prog)[1]));}catch(_){/* sem log */}gl=null;lost=true;return false;}
     gl.useProgram(prog);L={};
     for(const n of ['aPos','aUV','aW','aR'])L[n]=gl.getAttribLocation(prog,n);
-    for(const n of ['uView','uViewF','uRoot','uXf','uK','uBend','uWob','uGust','uT','uPh','uTex','uFea','uFeaK','uAlpha','uGr','uGb','uPI','uPx','uPr','uPb'])L[n]=gl.getUniformLocation(prog,n);
+    for(const n of ['uView','uViewF','uRoot','uShear','uMix','uXf','uK','uBend','uWob','uGust','uT','uPh','uTex','uFea','uFeaK','uAlpha','uGr','uGb','uPI','uPx','uPr','uPb'])L[n]=gl.getUniformLocation(prog,n);
     gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
     gl.uniform1i(L.uTex,0);gl.uniform1i(L.uFea,1);
@@ -102,7 +106,7 @@ export function createHair(o){
     gl.enableVertexAttribArray(L.aUV);gl.vertexAttribPointer(L.aUV,2,gl.FLOAT,false,24,8);
     gl.enableVertexAttribArray(L.aW);gl.vertexAttribPointer(L.aW,1,gl.FLOAT,false,24,16);
     gl.enableVertexAttribArray(L.aR);gl.vertexAttribPointer(L.aR,1,gl.FLOAT,false,24,20);
-    gl.uniform2f(L.uRoot,u.root[0],u.root[1]);gl.uniform1f(L.uBend,u.bend);gl.uniform1f(L.uWob,u.wob);gl.uniform1f(L.uPh,u.ph);gl.uniform1f(L.uFeaK,u.fea);
+    gl.uniform2f(L.uRoot,u.root[0],u.root[1]);gl.uniform2f(L.uShear,u.sh[0],u.sh[1]);gl.uniform1f(L.uMix,u.mix);gl.uniform1f(L.uBend,u.bend);gl.uniform1f(L.uWob,u.wob);gl.uniform1f(L.uPh,u.ph);gl.uniform1f(L.uFeaK,u.fea);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,m.ib);gl.drawElements(gl.TRIANGLES,m.n,gl.UNSIGNED_SHORT,0);}
 
   async function build(e){
@@ -168,14 +172,17 @@ export function createHair(o){
   function step(t,d){
     const dt=lastT<0?0:Math.min(.05,Math.max(0,t-lastT));lastT=t;D=d;
     const v=[...cache.values()][0];if(!v)return;
-    v.strands.forEach((st,i)=>{const ph=PHY[i]||(PHY[i]={a:0,w:0});
+    v.strands.forEach((st,i)=>{const ph=PHY[i]||(PHY[i]={a:0,w:0,x:0,y:0,vx:0,vy:0});
       const dx=Math.cos(st.dir),dy=Math.sin(st.dir),soft=1-st.stiff*.35;
       const cr=dx*d.wy-dy*d.wx,dot=dx*d.wx+dy*d.wy,over=Math.max(0,-dot)*.6*Math.max(0,-dy)*Math.max(-1,Math.min(1,d.wx*6));
       const turb=(d.gust||0)*(.35*Math.sin(t*3.1+st.ph*2.1)+.22*Math.sin(t*5.7+st.ph*3.3)+.13*Math.sin(t*8.9+st.ph));
       const target=(cr+over)*1.35*soft+turb*soft;
       const K=26-st.stiff*8,C=2*Math.sqrt(K)*.6;
       if(dt>0){ph.w+=(K*(target-ph.a)-C*ph.w)*dt;ph.a+=ph.w*dt;}
-      ph.a=Math.max(-1.8,Math.min(1.8,ph.a));});}
+      ph.a=Math.max(-1.8,Math.min(1.8,ph.a));
+      // empurrão rente à cabeça (usado pelas mechas rígidas): segue o vento com a mesma mola, em px da imagem original
+      const amp=26*soft,tx=d.wx*amp+turb*6*soft,ty=d.wy*amp;
+      if(dt>0){ph.vx+=(K*(tx-ph.x)-C*ph.vx)*dt;ph.x+=ph.vx*dt;ph.vy+=(K*(ty-ph.y)-C*ph.vy)*dt;ph.y+=ph.vy*dt;}});}
   /** a figura pronta para desenhar? (expressões carregadas e WebGL vivo) */
   const ok=(...es)=>!lost&&es.every(e=>!e||(cache.get(e)&&cache.get(e).gpu));
   /** tamanho do canvas visível: css (VW×VH, o espaço do retrato) × resolução r */
@@ -188,11 +195,13 @@ export function createHair(o){
     gl.uniform1f(L.uGr,light.gr||0);gl.uniform1f(L.uGb,light.gb||0);gl.uniform1f(L.uPI,light.pI||0);gl.uniform1f(L.uPx,light.px||200);gl.uniform1f(L.uPr,light.pr||0);gl.uniform1f(L.uPb,light.pb||0);
     for(const ly of layers){const v=cache.get(ly.e);if(!v||!v.gpu)continue;const k=W0()/o.PW;
       gl.uniform1f(L.uK,k);gl.uniform1f(L.uAlpha,ly.alpha);
-      mesh(v.gpu.base,{root:[0,0],bend:0,wob:0,ph:0,fea:0});
-      v.gpu.strands.forEach((m,i)=>{const st=v.strands[i],ph=PHY[i]||{a:0};
+      mesh(v.gpu.base,{root:[0,0],sh:[0,0],mix:0,bend:0,wob:0,ph:0,fea:0});
+      v.gpu.strands.forEach((m,i)=>{const st=v.strands[i],ph=PHY[i]||{a:0,x:0,y:0};
+        // rígidas (laterais) empurradas rente à cabeça; soltas (topo) dobram em volta da raiz
+        const mix=Math.min(1,Math.max(0,(st.stiff-.68)/.16)),sx=ph.x*v.s,sy=ph.y*v.s;
         // o esfumado do corte entra conforme a mecha sai do lugar (parada, a imagem é a oficial)
-        const fea=Math.min(1,Math.abs(ph.a)*6+(D.wob||0)*(D.gust||0)*4+(D.wob||0)*1.5);
-        mesh(m,{root:m.root,bend:ph.a,wob:(D.wob||0)*(1.2-st.stiff*.5),ph:st.ph,fea});});}
+        const fea=Math.min(1,(Math.abs(ph.a)*6)*(1-mix)+Math.hypot(ph.x,ph.y)*.12*mix+(D.wob||0)*(D.gust||0)*4+(D.wob||0)*1.5);
+        mesh(m,{root:m.root,sh:[sx,sy],mix,bend:ph.a,wob:(D.wob||0)*(1.2-st.stiff*.5),ph:st.ph,fea});});}
     return true;}
   return {ready,want,keep,step,render,resize,ok,_phy:()=>PHY.map(p=>p.a),has:e=>cache.has(e),
     destroy(){dead=true;keep([]);if(gl){const x=gl.getExtension('WEBGL_lose_context');if(x)x.loseContext();}gl=null;}};
