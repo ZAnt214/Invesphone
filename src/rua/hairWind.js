@@ -117,26 +117,42 @@ export function createHair(o){
     tc.width=tc.height=0;
     return {base:bc,strands,s,gpu:null};
   }
-  function want(e){if(cache.has(e)||wait.has(e))return;const p=ready.then(ok=>ok?build(e):null).then(v=>{wait.delete(e);if(v&&!dead)cache.set(e,v);return v;});wait.set(e,p);}
+  function want(e){if(cache.has(e)||wait.has(e))return;const p=ready.then(ok=>ok?build(e):null).then(v=>{wait.delete(e);if(v&&!dead){cache.set(e,v);upload(v);}/* sobe já para a placa de vídeo: a troca de expressão não engasga */return v;});wait.set(e,p);}
   /** mantém só as expressões pedidas carregadas */
   function keep(list){for(const e of [...cache.keys()])if(!list.includes(e)){const v=cache.get(e);unload(v);v.base.width=v.base.height=0;for(const s of v.strands)s.src.width=s.src.height=0;cache.delete(e);}for(const e of list)want(e);}
-  /** desenha a expressão e com as mechas ao vento. c já está nas coordenadas do retrato original (900×1200).
-      d: ang = para onde o vento sopra (radianos, tela, y para baixo); bend = 0..1, quanto cada mecha se deita na direção
-      do vento; wob = amplitude do balanço (radianos); gust = 0..1 da rajada (turbulência); lean = empurrão em px originais.
+  /* ---------- física: cada mecha é um pêndulo com mola em volta da raiz ----------
+     O ângulo de cada mecha não é imposto quadro a quadro: ele persegue o alvo (mola + amortecimento, um pouco
+     abaixo do crítico, então passa um pouco e volta, como cabelo). O alvo vem do torque do vento sobre a mecha
+     (produto vetorial direção da mecha × vento), que é contínuo para qualquer direção de vento: nada salta, nem
+     quando o helicóptero passa por cima e o vento gira. O estado é guardado pelo índice da mecha (o mesmo nas oito
+     expressões), então trocar de expressão não reinicia o movimento. */
+  const PHY=[];let lastT=-1;
+  /** avança a física uma vez por quadro. d: wx,wy = vetor do vento (tela, y para baixo; o tamanho é a força, até ~1);
+      wob = balanço (radianos); gust = 0..1 da rajada (turbulência). */
+  function step(t,d){
+    const dt=lastT<0?0:Math.min(.05,Math.max(0,t-lastT));lastT=t;
+    const v=[...cache.values()][0];if(!v)return;
+    v.strands.forEach((st,i)=>{const ph=PHY[i]||(PHY[i]={a:0,w:0});
+      const dx=Math.cos(st.dir),dy=Math.sin(st.dir),soft=1-st.stiff*.35;
+      // torque do vento; a mecha que aponta contra o vento ainda é empurrada um pouco por cima da cabeça
+      const cr=dx*d.wy-dy*d.wx,dot=dx*d.wx+dy*d.wy,over=Math.max(0,-dot)*.6*Math.max(0,-dy)*Math.max(-1,Math.min(1,d.wx*6));
+      // rajada: empurrões irregulares, mas lisos (soma de senos incomensuráveis)
+      const turb=(d.gust||0)*(.35*Math.sin(t*3.1+st.ph*2.1)+.22*Math.sin(t*5.7+st.ph*3.3)+.13*Math.sin(t*8.9+st.ph));
+      const target=(cr+over)*1.35*soft+turb*soft;
+      const K=26-st.stiff*8,C=2*Math.sqrt(K)*.6;
+      if(dt>0){ph.w+=(K*(target-ph.a)-C*ph.w)*dt;ph.a+=ph.w*dt;}
+      ph.a=Math.max(-1.8,Math.min(1.8,ph.a));});
+    step.d=d;}
+  /** desenha a expressão e com o estado atual da física. c já está nas coordenadas do retrato original (900×1200).
       Devolve false se a expressão ainda não carregou ou não há WebGL (aí vale o retrato oficial). */
-  function draw(c,e,t,d){const v=cache.get(e);if(!v||lost)return false;if(!upload(v))return false;
-    const s=v.s,k=W0()/o.PW,LIM=1.75;   // uma mecha deita no máximo ~100° em relação a como foi desenhada
+  function draw(c,e,t){const v=cache.get(e);if(!v||lost)return false;if(!upload(v))return false;
+    const d=step.d||{wob:0,gust:0},k=W0()/o.PW;
     gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
     gl.uniform1f(L.uT,t%1000);gl.uniform1f(L.uGust,d.gust||0);
     mesh(v.gpu.base,{root:[0,0],bend:0,wob:0,lean:0,ph:0});
-    for(const m of v.gpu.strands){
-      // quanto falta para a mecha apontar para onde o vento sopra; a que aponta contra o vento passa por cima da cabeça
-      let dl=d.ang-m.dir;while(dl>Math.PI)dl-=2*Math.PI;while(dl<-Math.PI)dl+=2*Math.PI;
-      if(Math.abs(dl)>2.6)dl=Math.sin(m.dir)<0?Math.sign(Math.cos(d.ang)||1)*Math.abs(dl):dl;
-      dl=Math.max(-LIM,Math.min(LIM,dl));
-      const soft=1-m.stiff*.35;
-      mesh(m,{root:m.root,bend:dl*d.bend*soft,wob:d.wob*(1.2-m.stiff*.5),lean:d.lean*s*soft,ph:m.ph});}
+    v.gpu.strands.forEach((m,i)=>{const ph=PHY[i]||{a:0};
+      mesh(m,{root:m.root,bend:ph.a,wob:(d.wob||0)*(1.2-m.stiff*.5),lean:0,ph:m.ph});});
     c.drawImage(cv,0,0,o.PW*k,o.PH*k);
     return true;}
-  return {ready,want,keep,draw,has:e=>cache.has(e),destroy(){dead=true;keep([]);if(gl){const x=gl.getExtension('WEBGL_lose_context');if(x)x.loseContext();}gl=null;}};
+  return {ready,want,keep,step,draw,_phy:()=>PHY.map(p=>p.a),has:e=>cache.has(e),destroy(){dead=true;keep([]);if(gl){const x=gl.getExtension('WEBGL_lose_context');if(x)x.loseContext();}gl=null;}};
 }
