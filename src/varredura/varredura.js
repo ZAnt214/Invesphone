@@ -5,6 +5,7 @@ import { choose as chooseLife } from '../world/life';
 import { CAMERA_PRIORITY, createCameraControl, createLead, damp, deadZoneTarget, drawCameraDebug } from '../camera/cameraDirector';
 import { createHud } from '../hud/hud';
 import { readCase, writeCase } from '../case/caseSave';
+import { pressSay } from '../news/press';
 import { caseGuide } from '../case/guide';
 import { clues as CLUE_LIST, people as CASE_PEOPLE } from '../case01';
 import { openSettings } from '../settings/settingsPanel';
@@ -1401,8 +1402,8 @@ const EVENTS={
     {t:'Começa pelo quintal',sub:'O canil vai primeiro; a casa espera um pouco.',fn:()=>{S.flags.prioQ=1;for(let i=0;i<N;i++)if(hot[i]==='cao_canil'&&periciavel(i))S.desig[i]=1;msg('lemos','Canil primeiro, antes que a água leve alguma coisa. Depois eu entro.');}},
     {t:'Primeiro a casa',sub:'Lá fora, a perícia rende menos enquanto chover.',fn:()=>{S.flags.prioQ=0;msg('lemos','Casa primeiro. O quintal vai sofrer com essa garoa.');}}]},
   imprensa:{who:'pm',title:'Imprensa no portão',text:'Estão pedindo alguém para falar. Se ninguém atender, vão ficar forçando a frente da casa.',opts:[
-    {t:'Lemos atende rápido',sub:'Você para a perícia um tempo; a imprensa sossega.',fn:()=>{S.flags.pressCalm=1;const a=S.crew.find(k=>k.key==='lemos');if(a){endJob(a);const r=findPath(a,i=>i===idx(5,6));a.job={k:'talk',p:0};a.path=r?r.path:[];a.status='Indo falar com a imprensa';}for(const c of S.civs)if(c.press&&c.state==='gawk')c.wait=Math.min(c.wait,160);}},
-    {t:'Ninguém fala agora',sub:'A perícia segue; a imprensa insiste por mais tempo.',fn:()=>{S.flags.pressCalm=-1;for(const c of S.civs)if(c.press)c.wait=Math.round(c.wait*1.4);}}]}
+    {t:'Lemos atende rápido',sub:'Você para a perícia um tempo; a imprensa sossega.',fn:()=>{S.flags.pressCalm=1;pressSay('e1','cedo');const a=S.crew.find(k=>k.key==='lemos');if(a){endJob(a);const r=findPath(a,i=>i===idx(5,6));a.job={k:'talk',p:0};a.path=r?r.path:[];a.status='Indo falar com a imprensa';}for(const c of S.civs)if(c.press&&c.state==='gawk')c.wait=Math.min(c.wait,160);}},
+    {t:'Ninguém fala agora',sub:'A perícia segue; a imprensa insiste por mais tempo.',fn:()=>{S.flags.pressCalm=-1;pressSay('e1','ausente');for(const c of S.civs)if(c.press)c.wait=Math.round(c.wait*1.4);}}]}
 };
 const EVQ=[];let evOpen=null,evPrev=1;
 function queueEvent(k){EVQ.push(k);}

@@ -12,9 +12,9 @@ const seed = ():CaseSave => ({version:SAVE_VERSION,screen:'incoming',app:'home',
 
 /** Recomeçar o caso: apaga o save e tudo o que depende dele, para o jogo voltar ao plantão de madrugada:
     caderneta do Lemos, o que o HUD já anunciou, o fim da varredura da casa (sem ele a base volta a ser de madrugada),
-    o que Lemos já examinou na base e, na sessão, os lugares já anunciados e a reabertura de depoimento/quadro.
+    o que Lemos já examinou na base, as edições do Jornal Sereno já lidas e guardadas e, na sessão, os lugares já anunciados e a reabertura de depoimento/quadro.
     Os ajustes (gráficos, som, efeitos) e os tutoriais já vistos ficam. */
-export const CASE_STORAGE = [SAVE_KEY,'invesphone.caderneta','invesphone.hud.seen','varredura.fim','base.seen']
+export const CASE_STORAGE = [SAVE_KEY,'invesphone.caderneta','invesphone.hud.seen','varredura.fim','base.seen','invesphone.jornal']
 export function resetCaseStorage(){
   for(const k of CASE_STORAGE){try{localStorage.removeItem(k)}catch{/* sem armazenamento */}}
   for(const k of ['invesphone.hud.lugares','base.reopen']){try{sessionStorage.removeItem(k)}catch{/* sem armazenamento */}}

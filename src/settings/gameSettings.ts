@@ -62,6 +62,7 @@ export const EFFECTS:Effect[] = [
   { id:'hud.particles', cat:'interface', label:'Luz e partículas da interface', desc:'Reflexo de lente, poeira de luz e o rastro da evidência voando até a caderneta.', def:true, where:'Rua e DHPP' },
   { id:'hud.room', cat:'interface', label:'Nome do lugar ao entrar', desc:'Faixas de cinema com o nome do lugar, uma vez por sessão, nos lugares que importam.', def:true, where:'Rua e DHPP' },
   { id:'hud.fps', cat:'interface', label:'Medidor de FPS', desc:'Mostra no alto da tela quantos quadros por segundo o jogo está desenhando e o pior quadro do último segundo.', def:false, where:'Todo o jogo' },
+  { id:'news.anim', cat:'interface', label:'Jornal animado', desc:'O Jornal Sereno chega dobrado e se abre, a página vira e o Lemos rabisca as anotações à mão. Desligado, tudo aparece pronto.', def:true, where:'DHPP' },
   { id:'hud.portrait', cat:'interface', label:'Retrato animado', desc:'Um anel âmbar pulsa em volta do rosto do Lemos quando chega uma descoberta.', def:true, where:'Rua e DHPP' },
   // depoimento na rua (src/rua/streetDepo.js)
   { id:'depo.rain', cat:'depo', label:'Garoa na cena', desc:'Garoa leve em gotas soltas, acesa pela luz do poste, com respingos nas poças e névoa no facho.', def:true, where:'Casa' },
@@ -78,6 +79,8 @@ export const EFFECTS:Effect[] = [
   { id:'sfx.hud', cat:'som', label:'Sons da interface', desc:'Ao entrar numa sala, nas descobertas, nas pistas registradas e na caderneta.', def:true, where:'Rua e DHPP' },
   { id:'sfx.depoAmb', cat:'som', label:'Ambiente do depoimento na rua', desc:'Chuva, cidade, rádio da viatura, curiosos, carros e helicóptero passando.', def:true, where:'Casa' },
   { id:'sfx.depoFx', cat:'som', label:'Efeitos do depoimento na rua', desc:'Caneta, caderno, marca-texto, papel voando e o toque da pista.', def:true, where:'Casa' },
+  { id:'sfx.newsSting', cat:'som', label:'Vinheta do jornal', desc:'O plantão de notícia nova quando sai uma edição do Jornal Sereno.', def:true, where:'DHPP' },
+  { id:'sfx.news', cat:'som', label:'Jornal', desc:'O papel abrindo, virando e fechando, o marca-texto e a caneta do Lemos.', def:true, where:'DHPP' },
   { id:'sfx.badge', cat:'som', label:'Leitora de crachá', desc:'O atrito do crachá na fenda, o bipe da leitora e a trava da porta soltando.', def:true, where:'DHPP' }
 ]
 
