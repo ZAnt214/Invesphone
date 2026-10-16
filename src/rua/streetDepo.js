@@ -94,19 +94,17 @@ export function openStreetDepo(host,id,opts={}){
      quando o helicóptero passa. Desligado, volta o retrato oficial e as camadas saem da memória. */
   let HAIR=null;
   const hairOn=()=>!!HAIR&&FXON('depo.hair')&&!low()&&!RM&&DEG<2;   // aparelho que já precisou aliviar duas vezes: retrato parado
-  function hairSync(){if(!HAIR)return;HAIR.keep(hairOn()?[...new Set([expr,prev].filter(Boolean))]:[])}
-  /* vento do cabelo, com inércia (o cabelo não reage num quadro só):
-     - brisa da garoa: sopra para a direita, um pouco para baixo; o cabelo se deita ~5° e balança devagar;
-     - helicóptero: o vento vem de onde ele está (de lado, deita o cabelo para o lado, sobre a testa e a orelha; em cima,
-       achata para baixo), com força quase total e turbulência rápida. */
-  const HW={ang:.17,cx:Math.cos(.17),cy:Math.sin(.17),bend:0,wob:0,gust:0,lean:0,t:0};
+  function hairSync(){if(!HAIR)return;HAIR.keep(hairOn()?[...new Set([expr,...EXPRS])]:[])}   // todas as expressões do depoimento: trocar de rosto nunca volta ao retrato parado
+  /* vento do cabelo, como vetor (nunca como ângulo, para não dar salto quando o vento gira), suavizado:
+     - brisa da garoa: para a direita, um pouco para baixo, fraca;
+     - helicóptero: vem de onde ele está (de lado, deita o cabelo para o lado, sobre a testa e a orelha; em cima,
+       achata para baixo), forte, com turbulência. A física de cada mecha (hairWind.js) dá a inércia. */
+  const HW={wx:0,wy:0,wob:0,gust:0,t:0};
   function hairWind(t){const dt=Math.min(.1,Math.max(0,t-HW.t));HW.t=t;const w=windAt(t),g=Math.max(0,w-.05),hA=HS?HS.A:0;
-    let tx=Math.cos(.17),ty=Math.sin(.17);
-    if(HS&&hA>.01){const dx=(640-HS.sx)/260,a=Math.atan2(1,dx);tx=tx*(1-hA)+Math.cos(a)*hA;ty=ty*(1-hA)+Math.sin(a)*hA;}
-    const kd=Math.min(1,dt*3);HW.cx+=(tx-HW.cx)*kd;HW.cy+=(ty-HW.cy)*kd;HW.ang=Math.atan2(HW.cy,HW.cx);
-    const tb=Math.min(.82,.06+g*.35+hA*.72),tw=Math.min(.36,.06+g*.3+hA*.24);
-    HW.bend+=(tb-HW.bend)*Math.min(1,dt*(tb>HW.bend?2.6:1.2));HW.wob+=(tw-HW.wob)*Math.min(1,dt*2.4);
-    HW.gust+=(hA-HW.gust)*Math.min(1,dt*3);HW.lean=1.5+g*6+hA*4;
+    const br=.07+g*.35;let tx=Math.cos(.17)*br,ty=Math.sin(.17)*br;
+    if(HS&&hA>.001){const dx=(640-HS.sx)/260,l=Math.hypot(dx,1);tx+=dx/l*hA*.8;ty+=1/l*hA*.8;}
+    const kd=Math.min(1,dt*2.2);HW.wx+=(tx-HW.wx)*kd;HW.wy+=(ty-HW.wy)*kd;
+    HW.wob+=(Math.min(.3,.05+g*.25+hA*.2)-HW.wob)*Math.min(1,dt*1.8);HW.gust+=(hA-HW.gust)*Math.min(1,dt*1.8);
     return HW}
 
   /* ---------- cenário e curiosos oficiais (creative-requests/deliveries/2026-10-15) ---------- */
@@ -949,8 +947,9 @@ export function openStreetDepo(host,id,opts={}){
     const S=476/1200,br=RM?0:Math.sin(t*2*Math.PI/4.4);
     c.save();c.translate(200-450*S,br*1.1);c.scale(S,S*(1+br*.0025));
     const f=Math.min(1,(now-fadeAt)/320);
-    if(prev&&f<1&&imgs[prev]){c.drawImage(imgs[prev],0,0,900,1200);c.globalAlpha=f}
-    if(!(hairOn()&&HAIR.draw(c,expr,RM?0:t,hairWind(t))))c.drawImage(imgs[expr],0,0,900,1200);c.globalAlpha=1;
+    const hon=hairOn();if(hon)HAIR.step(RM?0:t,hairWind(t));
+    if(prev&&f<1&&imgs[prev]){if(!(hon&&HAIR.draw(c,prev,RM?0:t)))c.drawImage(imgs[prev],0,0,900,1200);c.globalAlpha=f}
+    if(!(hon&&HAIR.draw(c,expr,RM?0:t)))c.drawImage(imgs[expr],0,0,900,1200);c.globalAlpha=1;
     drawMouth(c);drawLids(c,now);c.restore();
     c.globalCompositeOperation='source-atop';SC[cur].light(c,400,430,g,t);c.globalCompositeOperation='source-over';
     /* holofote no Jorge: soma a própria imagem dentro do círculo de luz (clareia sem lavar a cor), com borda dura */
