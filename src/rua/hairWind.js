@@ -4,10 +4,11 @@
    Nada é redesenhado: a imagem oficial se recompõe em repouso (base + mechas = retrato).
 
    Como a mecha dobra: cada mecha vira uma malha fina (grade de ~6 px da imagem original) presa pelo mapa de peso.
-   A deformação roda na placa de vídeo (WebGL), num canvas pequeno só do retrato: a cada quadro cada vértice anda
-   conforme o peso dele (raiz parada, ponta solta, curva mais forte perto da ponta), com ondas lentas que correm da raiz
-   para a ponta e, na rajada do helicóptero, um tremor por cima. É uma deformação contínua de verdade: sem fantasma,
-   sem emenda, e custa quase nada mesmo com a malha fina. O resultado entra no canvas do retrato com um drawImage.
+   A deformação roda na placa de vídeo (WebGL), num canvas pequeno só do retrato: cada ponto gira em volta da raiz
+   da mecha, tanto mais quanto mais perto da ponta (o peso), então a mecha DOBRA na direção do vento sem esticar,
+   como cabelo de verdade. Por cima, ondas que correm da raiz para a ponta; na rajada do helicóptero, turbulência
+   rápida. Com o helicóptero, o vento vem de onde ele está: de lado, o cabelo deita para o lado e cai sobre a testa
+   e a orelha; em cima, é achatado para baixo. O resultado entra no canvas do retrato com um drawImage.
    Sem WebGL, ou se o contexto cair, draw() devolve false e o jogo mostra o retrato oficial parado.
 
    Memória (iPhone): só a expressão em uso (e a anterior, durante a troca) fica carregada; cada mecha é guardada
@@ -16,12 +17,15 @@ const GRID=6;   // célula da malha, em px da imagem original
 const loadImg=src=>new Promise(r=>{const i=new Image();i.decoding='async';i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src});
 
 const VS=`attribute vec2 aPos;attribute vec2 aUV;attribute float aW;attribute float aR;
-uniform vec2 uRes;uniform float uLean,uFlut,uGust,uT,uPh;varying vec2 vUV;
+uniform vec2 uRes,uRoot;uniform float uBend,uWob,uLean,uGust,uT,uPh;varying vec2 vUV;
 void main(){
-  float wave=sin(uT*2.2-aR*2.4+uPh)*.68+sin(uT*3.9-aR*3.3+uPh*1.7)*.32+uGust*.55*sin(uT*8.2-aR*4.5+uPh*2.3);
-  float dx=(uLean+uFlut*wave)*aW;
-  float dy=-dx*.12+uFlut*.18*aW*sin(uT*2.9-aR*2.0+uPh);
-  vec2 p=(aPos+vec2(dx,dy))/uRes*2.0-1.0;
+  /* cada ponto gira em volta da raiz da mecha, mais quanto mais perto da ponta: a mecha dobra sem esticar */
+  float wave=sin(uT*2.2-aR*2.6+uPh)*.6+sin(uT*3.9-aR*3.4+uPh*1.7)*.4
+    +uGust*(sin(uT*9.1-aR*5.0+uPh*2.3)*.55+sin(uT*13.7-aR*6.2+uPh*3.1)*.3+sin(uT*5.3-aR*3.0+uPh*.7)*.4);
+  float phi=(uBend+uWob*wave)*aW;
+  vec2 r=aPos-uRoot;float c=cos(phi),s=sin(phi);
+  vec2 q=uRoot+vec2(r.x*c-r.y*s,r.x*s+r.y*c)+vec2(uLean*aW,0.0);
+  vec2 p=q/uRes*2.0-1.0;
   gl_Position=vec4(p.x,-p.y,0.0,1.0);vUV=aUV;}`;
 const FS=`precision mediump float;uniform sampler2D uTex;varying vec2 vUV;void main(){gl_FragColor=texture2D(uTex,vUV);}`;
 
@@ -45,8 +49,8 @@ export function createHair(o){
     if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){gl=null;lost=true;return false;}
     gl.useProgram(prog);
     L={aPos:gl.getAttribLocation(prog,'aPos'),aUV:gl.getAttribLocation(prog,'aUV'),aW:gl.getAttribLocation(prog,'aW'),aR:gl.getAttribLocation(prog,'aR'),
-      uRes:gl.getUniformLocation(prog,'uRes'),uLean:gl.getUniformLocation(prog,'uLean'),uFlut:gl.getUniformLocation(prog,'uFlut'),
-      uGust:gl.getUniformLocation(prog,'uGust'),uT:gl.getUniformLocation(prog,'uT'),uPh:gl.getUniformLocation(prog,'uPh'),uTex:gl.getUniformLocation(prog,'uTex')};
+      uRes:gl.getUniformLocation(prog,'uRes'),uRoot:gl.getUniformLocation(prog,'uRoot'),uBend:gl.getUniformLocation(prog,'uBend'),uWob:gl.getUniformLocation(prog,'uWob'),
+      uLean:gl.getUniformLocation(prog,'uLean'),uGust:gl.getUniformLocation(prog,'uGust'),uT:gl.getUniformLocation(prog,'uT'),uPh:gl.getUniformLocation(prog,'uPh'),uTex:gl.getUniformLocation(prog,'uTex')};
     gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
     gl.viewport(0,0,o.PW,o.PH);gl.uniform2f(L.uRes,o.PW,o.PH);gl.uniform1i(L.uTex,0);
@@ -60,7 +64,7 @@ export function createHair(o){
   /* sobe para a placa de vídeo o que a expressão precisa (uma vez) */
   function upload(v){if(v.gpu)return true;if(!glInit())return false;
     const quad=(x,y,w,h)=>({vb:buf(new Float32Array([x,y,0,0,0,0, x+w,y,1,0,0,0, x,y+h,0,1,0,0, x+w,y+h,1,1,0,0])),ib:buf(new Uint16Array([0,1,2,2,1,3]),true),n:6});
-    v.gpu={base:{t:tex(v.base),...quad(0,0,o.PW,o.PH)},strands:v.strands.map(s=>({t:tex(s.src),vb:buf(s.verts),ib:buf(s.idx,true),n:s.idx.length,stiff:s.stiff,ph:s.ph}))};
+    v.gpu={base:{t:tex(v.base),...quad(0,0,o.PW,o.PH)},strands:v.strands.map(s=>({t:tex(s.src),vb:buf(s.verts),ib:buf(s.idx,true),n:s.idx.length,stiff:s.stiff,ph:s.ph,root:s.root,dir:s.dir}))};
     return true;}
   function unload(v){if(!v.gpu||!gl){v.gpu=null;return;}for(const m of [v.gpu.base,...v.gpu.strands]){gl.deleteTexture(m.t);gl.deleteBuffer(m.vb);gl.deleteBuffer(m.ib);}v.gpu=null;}
   function mesh(m,u){gl.bindTexture(gl.TEXTURE_2D,m.t);gl.bindBuffer(gl.ARRAY_BUFFER,m.vb);
@@ -68,7 +72,7 @@ export function createHair(o){
     gl.enableVertexAttribArray(L.aUV);gl.vertexAttribPointer(L.aUV,2,gl.FLOAT,false,24,8);
     gl.enableVertexAttribArray(L.aW);gl.vertexAttribPointer(L.aW,1,gl.FLOAT,false,24,16);
     gl.enableVertexAttribArray(L.aR);gl.vertexAttribPointer(L.aR,1,gl.FLOAT,false,24,20);
-    gl.uniform1f(L.uLean,u.lean);gl.uniform1f(L.uFlut,u.flut);gl.uniform1f(L.uPh,u.ph);
+    gl.uniform2f(L.uRoot,u.root[0],u.root[1]);gl.uniform1f(L.uBend,u.bend);gl.uniform1f(L.uWob,u.wob);gl.uniform1f(L.uLean,u.lean);gl.uniform1f(L.uPh,u.ph);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,m.ib);gl.drawElements(gl.TRIANGLES,m.n,gl.UNSIGNED_SHORT,0);}
 
   async function build(e){
@@ -98,16 +102,18 @@ export function createHair(o){
       for(let pass=0;pass<6;pass++)for(let j=0;j<=rows;j++)for(let i=0;i<=cols;i++){const k=j*C+i;if(Wv[k]>=0)continue;let s2=0,n=0;
         for(const [di,dj] of [[1,0],[-1,0],[0,1],[0,-1]]){const ii=i+di,jj=j+dj;if(ii<0||jj<0||ii>cols||jj>rows)continue;const q=Wv[jj*C+ii];if(q>=0){s2+=q;n++;}}if(n)Wv[k]=s2/n;}
       for(let k=0;k<nv;k++)if(Wv[k]<0)Wv[k]=0;
-      const free=(1-(st.stiffness??.7)*.55);
+      const free=(1-(st.stiffness??.7)*.4);
       const verts=new Float32Array(nv*6);
       for(let j=0;j<=rows;j++)for(let i=0;i<=cols;i++){const k=j*C+i,ux=Math.min(w,i*G),vy=Math.min(h,j*G);
         // a ponta dobra mais que o meio; a rigidez da mecha entra no peso
-        verts.set([x0+ux,y0+vy,ux/w,vy/h,Math.pow(Wv[k],1.35)*free,Wv[k]],k*6);}
+        verts.set([x0+ux,y0+vy,ux/w,vy/h,Math.pow(Wv[k],1.15)*free,Wv[k]],k*6);}
       const idx=[];for(let j=0;j<rows;j++)for(let i=0;i<cols;i++){let any=false;
         for(let y=Math.max(0,Math.floor(j*G)-1);y<Math.min(h,Math.ceil((j+1)*G)+1)&&!any;y++)for(let x=Math.max(0,Math.floor(i*G)-1);x<Math.min(w,Math.ceil((i+1)*G)+1);x++)if(alpha(x,y)>1){any=true;break;}
         if(any){const a=j*C+i;idx.push(a,a+1,a+C+1,a,a+C+1,a+C);}}
       if(nv>65000||!idx.length)continue;
-      strands.push({src,verts,idx:new Uint16Array(idx),stiff:st.stiffness??.7,ph:(st.root?st.root[0]*.013+st.root[1]*.007:strands.length)});}
+      const rt=st.root?[st.root[0]*s,st.root[1]*s]:[x0+w/2,y0+h],tp=st.tip?[st.tip[0]*s,st.tip[1]*s]:[rt[0],rt[1]-10];
+      strands.push({src,verts,idx:new Uint16Array(idx),stiff:st.stiffness??.7,ph:(st.root?st.root[0]*.013+st.root[1]*.007:strands.length),
+        root:rt,dir:Math.atan2(tp[1]-rt[1],tp[0]-rt[0])});}
     tc.width=tc.height=0;
     return {base:bc,strands,s,gpu:null};
   }
@@ -115,14 +121,21 @@ export function createHair(o){
   /** mantém só as expressões pedidas carregadas */
   function keep(list){for(const e of [...cache.keys()])if(!list.includes(e)){const v=cache.get(e);unload(v);v.base.width=v.base.height=0;for(const s of v.strands)s.src.width=s.src.height=0;cache.delete(e);}for(const e of list)want(e);}
   /** desenha a expressão e com as mechas ao vento. c já está nas coordenadas do retrato original (900×1200).
-      d (px da imagem original): lean = quanto o vento empurra; flutter = amplitude do balanço; gust = 0..1 da rajada.
+      d: ang = para onde o vento sopra (radianos, tela, y para baixo); bend = 0..1, quanto cada mecha se deita na direção
+      do vento; wob = amplitude do balanço (radianos); gust = 0..1 da rajada (turbulência); lean = empurrão em px originais.
       Devolve false se a expressão ainda não carregou ou não há WebGL (aí vale o retrato oficial). */
   function draw(c,e,t,d){const v=cache.get(e);if(!v||lost)return false;if(!upload(v))return false;
-    const s=v.s,k=W0()/o.PW;
+    const s=v.s,k=W0()/o.PW,LIM=1.75;   // uma mecha deita no máximo ~100° em relação a como foi desenhada
     gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
     gl.uniform1f(L.uT,t%1000);gl.uniform1f(L.uGust,d.gust||0);
-    mesh(v.gpu.base,{lean:0,flut:0,ph:0});
-    for(const m of v.gpu.strands)mesh(m,{lean:d.lean*s,flut:d.flutter*s*(1.25-m.stiff*.5),ph:m.ph});
+    mesh(v.gpu.base,{root:[0,0],bend:0,wob:0,lean:0,ph:0});
+    for(const m of v.gpu.strands){
+      // quanto falta para a mecha apontar para onde o vento sopra; a que aponta contra o vento passa por cima da cabeça
+      let dl=d.ang-m.dir;while(dl>Math.PI)dl-=2*Math.PI;while(dl<-Math.PI)dl+=2*Math.PI;
+      if(Math.abs(dl)>2.6)dl=Math.sin(m.dir)<0?Math.sign(Math.cos(d.ang)||1)*Math.abs(dl):dl;
+      dl=Math.max(-LIM,Math.min(LIM,dl));
+      const soft=1-m.stiff*.35;
+      mesh(m,{root:m.root,bend:dl*d.bend*soft,wob:d.wob*(1.2-m.stiff*.5),lean:d.lean*s*soft,ph:m.ph});}
     c.drawImage(cv,0,0,o.PW*k,o.PH*k);
     return true;}
   return {ready,want,keep,draw,has:e=>cache.has(e),destroy(){dead=true;keep([]);if(gl){const x=gl.getExtension('WEBGL_lose_context');if(x)x.loseContext();}gl=null;}};
