@@ -95,11 +95,18 @@ export function openStreetDepo(host,id,opts={}){
   let HAIR=null;
   const hairOn=()=>!!HAIR&&FXON('depo.hair')&&!low()&&!RM&&DEG<2;   // aparelho que já precisou aliviar duas vezes: retrato parado
   function hairSync(){if(!HAIR)return;HAIR.keep(hairOn()?[...new Set([expr,prev].filter(Boolean))]:[])}
-  /* o vento do cabelo segue o da garoa, suavizado (o cabelo tem inércia): brisa ~7 px, rajada do helicóptero até 24 px */
-  const HW={lean:0,flutter:0,gust:0,t:0};
+  /* vento do cabelo, com inércia (o cabelo não reage num quadro só):
+     - brisa da garoa: sopra para a direita, um pouco para baixo; o cabelo se deita ~5° e balança devagar;
+     - helicóptero: o vento vem de onde ele está (de lado, deita o cabelo para o lado, sobre a testa e a orelha; em cima,
+       achata para baixo), com força quase total e turbulência rápida. */
+  const HW={ang:.17,cx:Math.cos(.17),cy:Math.sin(.17),bend:0,wob:0,gust:0,lean:0,t:0};
   function hairWind(t){const dt=Math.min(.1,Math.max(0,t-HW.t));HW.t=t;const w=windAt(t),g=Math.max(0,w-.05),hA=HS?HS.A:0;
-    const tl=Math.min(24,4+g*56),tf=Math.min(11,2.6+g*16+hA*4);
-    HW.lean+=(tl-HW.lean)*Math.min(1,dt*1.6);HW.flutter+=(tf-HW.flutter)*Math.min(1,dt*2.2);HW.gust+=(hA-HW.gust)*Math.min(1,dt*3);
+    let tx=Math.cos(.17),ty=Math.sin(.17);
+    if(HS&&hA>.01){const dx=(640-HS.sx)/260,a=Math.atan2(1,dx);tx=tx*(1-hA)+Math.cos(a)*hA;ty=ty*(1-hA)+Math.sin(a)*hA;}
+    const kd=Math.min(1,dt*3);HW.cx+=(tx-HW.cx)*kd;HW.cy+=(ty-HW.cy)*kd;HW.ang=Math.atan2(HW.cy,HW.cx);
+    const tb=Math.min(.82,.06+g*.35+hA*.72),tw=Math.min(.36,.06+g*.3+hA*.24);
+    HW.bend+=(tb-HW.bend)*Math.min(1,dt*(tb>HW.bend?2.6:1.2));HW.wob+=(tw-HW.wob)*Math.min(1,dt*2.4);
+    HW.gust+=(hA-HW.gust)*Math.min(1,dt*3);HW.lean=1.5+g*6+hA*4;
     return HW}
 
   /* ---------- cenário e curiosos oficiais (creative-requests/deliveries/2026-10-15) ---------- */
