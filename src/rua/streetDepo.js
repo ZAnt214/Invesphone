@@ -40,7 +40,7 @@ export function openStreetDepo(host,id,opts={}){
 
   const root=document.createElement('div');root.className='sd';root.setAttribute('role','dialog');root.setAttribute('aria-label',`Depoimento na rua: ${cfg.name}`);
   root.innerHTML=`<div class="sd-wrap"><div class="sd-stage" id="sd-stage">
-    <div class="scene"><div class="layer" id="sd-Lbg"><canvas id="sd-bg"></canvas><canvas id="sd-tape"></canvas></div><div class="dim"></div><div class="layer" id="sd-Lac"><canvas id="sd-ac"></canvas></div><div class="layer" id="sd-Lfg"><canvas id="sd-debM"></canvas><canvas id="sd-fg"></canvas><canvas id="sd-debN"></canvas></div></div>
+    <div class="scene"><div class="layer" id="sd-Lbg"><canvas id="sd-bg"></canvas><canvas id="sd-tape"></canvas></div><div class="dim"></div><div class="layer" id="sd-Lac"><canvas id="sd-hair" style="visibility:hidden"></canvas><canvas id="sd-ac"></canvas></div><div class="layer" id="sd-Lfg"><canvas id="sd-debM"></canvas><canvas id="sd-fg"></canvas><canvas id="sd-debN"></canvas></div></div>
     <div class="grade"></div><canvas id="sd-grain" width="422" height="195"></canvas><div class="vig"></div>
     <div class="rec"><i></i>REC <b id="sd-clock">00:00:00</b><span>NA CENA · RUA DAS ACÁCIAS</span></div>
     <div class="focus">FOCO · <b id="sd-focus">CADERNO</b></div>
@@ -86,7 +86,7 @@ export function openStreetDepo(host,id,opts={}){
     tmp.width=tmp.height=0;
     ready=true;
     /* cabelo ao vento (src/rua/hairWind.js): só se o personagem tem as camadas e o ajuste está ligado */
-    if(CH.hair)HAIR=createHair({url:CH.hair,PW,PH,mask});hairSync();
+    if(CH.hair){HAIR=createHair({url:CH.hair,PW,PH,mask,canvas:cvHair});HAIR.resize(400,430,ACR);}hairSync();
   });
   /* ---------- cabelo ao vento ----------
      Com o ajuste "Cabelo ao vento" (depo.hair), qualidade não baixa e sem movimento reduzido, o retrato da expressão em
@@ -374,14 +374,14 @@ export function openStreetDepo(host,id,opts={}){
   }
 
   /* ---------- tamanho: a tela do jogo deitada (844×390), encaixada no espaço que houver ---------- */
-  const wrap=$('.sd-wrap'),stage=$('#sd-stage'),cvBg=$('#sd-bg'),cvTape=$('#sd-tape'),TB={y:0,h:390},cvAc=$('#sd-ac'),cvFg=$('#sd-fg');
+  const wrap=$('.sd-wrap'),stage=$('#sd-stage'),cvBg=$('#sd-bg'),cvTape=$('#sd-tape'),TB={y:0,h:390},cvAc=$('#sd-ac'),cvHair=$('#sd-hair'),cvFg=$('#sd-fg');let hairShown=false,ACR=1;
   function setC(c,w,h,r){c.width=Math.max(1,Math.round(w*r));c.height=Math.max(1,Math.round(h*r));c._r=r}
   let K=1;
   function size(){
     const w=wrap.clientWidth,h=wrap.clientHeight;K=Math.min(w/W,h/H)||1;
     stage.style.transform=`translate(${(w-W*K)/2}px,${(h-H*K)/2}px) scale(${K})`;
     const D=Math.min(1.5,window.devicePixelRatio||1)*K*(low()?.7:1)*(DEG>0?.8:1);
-    setC(cvBg,W,H,D*.5);setC(cvTape,W,TB.h,Math.min(2,D*1.15));BGC.k='';setC(cvAc,400,430,D);setC(cvFg,W,H,D);setC($('#sd-debM'),W,H,D*.35);setC($('#sd-debN'),W,H,D*.18);if(typeof rainResize==='function'&&RAINREADY)rainResize();
+    setC(cvBg,W,H,D*.5);setC(cvTape,W,TB.h,Math.min(2,D*1.15));BGC.k='';setC(cvAc,400,430,D);ACR=D;if(HAIR)HAIR.resize(400,430,D);setC(cvFg,W,H,D);setC($('#sd-debM'),W,H,D*.35);setC($('#sd-debN'),W,H,D*.18);if(typeof rainResize==='function'&&RAINREADY)rainResize();
   }
   const ro=new ResizeObserver(()=>{if(alive)size()});ro.observe(wrap);
 
@@ -941,15 +941,26 @@ export function openStreetDepo(host,id,opts={}){
       c.restore();
     }
   }
+  let acDirty=true;
   function drawActor(now,t,g){
-    const c=cvAc.getContext('2d'),r=cvAc._r;c.setTransform(r,0,0,r,0,0);c.clearRect(0,0,400,430);
     if(!ready||!imgs[expr])return;
     const S=476/1200,br=RM?0:Math.sin(t*2*Math.PI/4.4);
-    c.save();c.translate(200-450*S,br*1.1);c.scale(S,S*(1+br*.0025));
     const f=Math.min(1,(now-fadeAt)/320);
     const hon=hairOn();if(hon)HAIR.step(RM?0:t,hairWind(t));
-    if(prev&&f<1&&imgs[prev]){if(!(hon&&HAIR.draw(c,prev,RM?0:t)))c.drawImage(imgs[prev],0,0,900,1200);c.globalAlpha=f}
-    if(!(hon&&HAIR.draw(c,expr,RM?0:t)))c.drawImage(imgs[expr],0,0,900,1200);c.globalAlpha=1;
+    const fading=!!(prev&&f<1&&imgs[prev]),gok=hon&&HAIR.ok(expr,fading?prev:null);
+    if(gok){const fx=PS?200+Math.max(-120,Math.min(120,(PS.x-620)*.25)):200;
+      HAIR.render(RM?0:t,fading?[{e:prev,alpha:1},{e:expr,alpha:f}]:[{e:expr,alpha:1}],{tx:200-450*S,ty:br*1.1,sx:S,sy:S*(1+br*.0025)},
+        {gr:g.r,gb:g.b,pI:PS?PS.I:0,px:fx,pr:PS?PS.r:0,pb:PS?PS.b:0});}
+    if(gok!==hairShown){hairShown=gok;cvHair.style.visibility=gok?'visible':'hidden';}
+    /* com a figura na placa de vídeo, este canvas só tem a boca e o piscar: parado (sem fala nem piscada), não é
+       redesenhado, e o navegador não reenvia a imagem dele a cada quadro */
+    if(gok&&mouthOn<.02&&blinkStart<0&&now<blinkNext){if(acDirty){const c=cvAc.getContext('2d');c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cvAc.width,cvAc.height);acDirty=false;}return;}
+    acDirty=true;
+    const c=cvAc.getContext('2d'),r=cvAc._r;c.setTransform(r,0,0,r,0,0);c.clearRect(0,0,400,430);
+    c.save();c.translate(200-450*S,br*1.1);c.scale(S,S*(1+br*.0025));
+    /* com o cabelo ao vento, a figura (base + mechas, já com a luz da cena) vai pela placa de vídeo no canvas de baixo
+       (#sd-hair) e este canvas fica só com a boca e o piscar; sem ele, o retrato oficial é desenhado aqui, como antes */
+    if(!gok){if(fading){c.drawImage(imgs[prev],0,0,900,1200);c.globalAlpha=f}c.drawImage(imgs[expr],0,0,900,1200);c.globalAlpha=1;}
     drawMouth(c);drawLids(c,now);c.restore();
     c.globalCompositeOperation='source-atop';SC[cur].light(c,400,430,g,t);c.globalCompositeOperation='source-over';
     /* holofote no Jorge: soma a própria imagem dentro do círculo de luz (clareia sem lavar a cor), com borda dura */
