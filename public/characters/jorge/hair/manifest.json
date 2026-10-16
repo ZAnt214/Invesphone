@@ -1,0 +1,1040 @@
+{
+  "version": 1,
+  "character": "jorge",
+  "resolution": {
+    "width": 900,
+    "height": 1200
+  },
+  "baseFormat": "png",
+  "weightChannel": "red",
+  "weightOutsideStrand": 0,
+  "zeroWindReconstruction": "exact decoded RGB with base.png; base.jpg is compatibility only",
+  "expressions": {
+    "neutral": {
+      "base": "neutral/base.png",
+      "compatibilityJpeg": "neutral/base.jpg",
+      "original": "../expressions/neutral.jpg",
+      "strands": [
+        {
+          "file": "neutral/strand-01-lateral-dir-baixa.png",
+          "weight": "neutral/strand-01-lateral-dir-baixa-weight.png",
+          "root": [
+            611,
+            328
+          ],
+          "tip": [
+            642,
+            295
+          ],
+          "stiffness": 0.92,
+          "zIndex": 1,
+          "pixels": 4614
+        },
+        {
+          "file": "neutral/strand-02-lateral-dir-alta.png",
+          "weight": "neutral/strand-02-lateral-dir-alta-weight.png",
+          "root": [
+            591,
+            249
+          ],
+          "tip": [
+            624,
+            226
+          ],
+          "stiffness": 0.85,
+          "zIndex": 2,
+          "pixels": 2445
+        },
+        {
+          "file": "neutral/strand-03-topo-dir.png",
+          "weight": "neutral/strand-03-topo-dir-weight.png",
+          "root": [
+            553,
+            188
+          ],
+          "tip": [
+            590,
+            179
+          ],
+          "stiffness": 0.7,
+          "zIndex": 3,
+          "pixels": 1711
+        },
+        {
+          "file": "neutral/strand-04-topo-centro-dir.png",
+          "weight": "neutral/strand-04-topo-centro-dir-weight.png",
+          "root": [
+            489,
+            161
+          ],
+          "tip": [
+            519,
+            120
+          ],
+          "stiffness": 0.55,
+          "zIndex": 4,
+          "pixels": 2266
+        },
+        {
+          "file": "neutral/strand-05-topo-centro-esq.png",
+          "weight": "neutral/strand-05-topo-centro-esq-weight.png",
+          "root": [
+            420,
+            158
+          ],
+          "tip": [
+            436,
+            116
+          ],
+          "stiffness": 0.55,
+          "zIndex": 5,
+          "pixels": 4362
+        },
+        {
+          "file": "neutral/strand-06-topo-esq.png",
+          "weight": "neutral/strand-06-topo-esq-weight.png",
+          "root": [
+            366,
+            180
+          ],
+          "tip": [
+            332,
+            147
+          ],
+          "stiffness": 0.6,
+          "zIndex": 6,
+          "pixels": 3998
+        },
+        {
+          "file": "neutral/strand-07-lateral-esq-alta.png",
+          "weight": "neutral/strand-07-lateral-esq-alta-weight.png",
+          "root": [
+            319,
+            232
+          ],
+          "tip": [
+            280,
+            220
+          ],
+          "stiffness": 0.8,
+          "zIndex": 7,
+          "pixels": 3788
+        },
+        {
+          "file": "neutral/strand-08-lateral-esq-baixa.png",
+          "weight": "neutral/strand-08-lateral-esq-baixa-weight.png",
+          "root": [
+            295,
+            325
+          ],
+          "tip": [
+            268,
+            291
+          ],
+          "stiffness": 0.92,
+          "zIndex": 8,
+          "pixels": 5163
+        }
+      ]
+    },
+    "tired": {
+      "base": "tired/base.png",
+      "compatibilityJpeg": "tired/base.jpg",
+      "original": "../expressions/tired.jpg",
+      "strands": [
+        {
+          "file": "tired/strand-01-lateral-dir-baixa.png",
+          "weight": "tired/strand-01-lateral-dir-baixa-weight.png",
+          "root": [
+            611,
+            328
+          ],
+          "tip": [
+            642,
+            295
+          ],
+          "stiffness": 0.92,
+          "zIndex": 1,
+          "pixels": 4608
+        },
+        {
+          "file": "tired/strand-02-lateral-dir-alta.png",
+          "weight": "tired/strand-02-lateral-dir-alta-weight.png",
+          "root": [
+            591,
+            249
+          ],
+          "tip": [
+            624,
+            226
+          ],
+          "stiffness": 0.85,
+          "zIndex": 2,
+          "pixels": 2439
+        },
+        {
+          "file": "tired/strand-03-topo-dir.png",
+          "weight": "tired/strand-03-topo-dir-weight.png",
+          "root": [
+            553,
+            188
+          ],
+          "tip": [
+            590,
+            179
+          ],
+          "stiffness": 0.7,
+          "zIndex": 3,
+          "pixels": 1704
+        },
+        {
+          "file": "tired/strand-04-topo-centro-dir.png",
+          "weight": "tired/strand-04-topo-centro-dir-weight.png",
+          "root": [
+            489,
+            161
+          ],
+          "tip": [
+            519,
+            120
+          ],
+          "stiffness": 0.55,
+          "zIndex": 4,
+          "pixels": 2253
+        },
+        {
+          "file": "tired/strand-05-topo-centro-esq.png",
+          "weight": "tired/strand-05-topo-centro-esq-weight.png",
+          "root": [
+            420,
+            158
+          ],
+          "tip": [
+            436,
+            116
+          ],
+          "stiffness": 0.55,
+          "zIndex": 5,
+          "pixels": 4353
+        },
+        {
+          "file": "tired/strand-06-topo-esq.png",
+          "weight": "tired/strand-06-topo-esq-weight.png",
+          "root": [
+            366,
+            180
+          ],
+          "tip": [
+            332,
+            147
+          ],
+          "stiffness": 0.6,
+          "zIndex": 6,
+          "pixels": 3991
+        },
+        {
+          "file": "tired/strand-07-lateral-esq-alta.png",
+          "weight": "tired/strand-07-lateral-esq-alta-weight.png",
+          "root": [
+            319,
+            232
+          ],
+          "tip": [
+            280,
+            220
+          ],
+          "stiffness": 0.8,
+          "zIndex": 7,
+          "pixels": 3779
+        },
+        {
+          "file": "tired/strand-08-lateral-esq-baixa.png",
+          "weight": "tired/strand-08-lateral-esq-baixa-weight.png",
+          "root": [
+            295,
+            325
+          ],
+          "tip": [
+            268,
+            291
+          ],
+          "stiffness": 0.92,
+          "zIndex": 8,
+          "pixels": 5157
+        }
+      ]
+    },
+    "uncomfortable": {
+      "base": "uncomfortable/base.png",
+      "compatibilityJpeg": "uncomfortable/base.jpg",
+      "original": "../expressions/uncomfortable.jpg",
+      "strands": [
+        {
+          "file": "uncomfortable/strand-01-lateral-dir-baixa.png",
+          "weight": "uncomfortable/strand-01-lateral-dir-baixa-weight.png",
+          "root": [
+            611,
+            328
+          ],
+          "tip": [
+            642,
+            295
+          ],
+          "stiffness": 0.92,
+          "zIndex": 1,
+          "pixels": 4636
+        },
+        {
+          "file": "uncomfortable/strand-02-lateral-dir-alta.png",
+          "weight": "uncomfortable/strand-02-lateral-dir-alta-weight.png",
+          "root": [
+            591,
+            249
+          ],
+          "tip": [
+            624,
+            226
+          ],
+          "stiffness": 0.85,
+          "zIndex": 2,
+          "pixels": 2444
+        },
+        {
+          "file": "uncomfortable/strand-03-topo-dir.png",
+          "weight": "uncomfortable/strand-03-topo-dir-weight.png",
+          "root": [
+            553,
+            188
+          ],
+          "tip": [
+            590,
+            179
+          ],
+          "stiffness": 0.7,
+          "zIndex": 3,
+          "pixels": 1704
+        },
+        {
+          "file": "uncomfortable/strand-04-topo-centro-dir.png",
+          "weight": "uncomfortable/strand-04-topo-centro-dir-weight.png",
+          "root": [
+            489,
+            161
+          ],
+          "tip": [
+            519,
+            120
+          ],
+          "stiffness": 0.55,
+          "zIndex": 4,
+          "pixels": 2253
+        },
+        {
+          "file": "uncomfortable/strand-05-topo-centro-esq.png",
+          "weight": "uncomfortable/strand-05-topo-centro-esq-weight.png",
+          "root": [
+            420,
+            158
+          ],
+          "tip": [
+            436,
+            116
+          ],
+          "stiffness": 0.55,
+          "zIndex": 5,
+          "pixels": 4353
+        },
+        {
+          "file": "uncomfortable/strand-06-topo-esq.png",
+          "weight": "uncomfortable/strand-06-topo-esq-weight.png",
+          "root": [
+            366,
+            180
+          ],
+          "tip": [
+            332,
+            147
+          ],
+          "stiffness": 0.6,
+          "zIndex": 6,
+          "pixels": 3990
+        },
+        {
+          "file": "uncomfortable/strand-07-lateral-esq-alta.png",
+          "weight": "uncomfortable/strand-07-lateral-esq-alta-weight.png",
+          "root": [
+            319,
+            232
+          ],
+          "tip": [
+            280,
+            220
+          ],
+          "stiffness": 0.8,
+          "zIndex": 7,
+          "pixels": 3773
+        },
+        {
+          "file": "uncomfortable/strand-08-lateral-esq-baixa.png",
+          "weight": "uncomfortable/strand-08-lateral-esq-baixa-weight.png",
+          "root": [
+            295,
+            325
+          ],
+          "tip": [
+            268,
+            291
+          ],
+          "stiffness": 0.92,
+          "zIndex": 8,
+          "pixels": 5146
+        }
+      ]
+    },
+    "defensive": {
+      "base": "defensive/base.png",
+      "compatibilityJpeg": "defensive/base.jpg",
+      "original": "../expressions/defensive.jpg",
+      "strands": [
+        {
+          "file": "defensive/strand-01-lateral-dir-baixa.png",
+          "weight": "defensive/strand-01-lateral-dir-baixa-weight.png",
+          "root": [
+            611,
+            328
+          ],
+          "tip": [
+            642,
+            295
+          ],
+          "stiffness": 0.92,
+          "zIndex": 1,
+          "pixels": 4611
+        },
+        {
+          "file": "defensive/strand-02-lateral-dir-alta.png",
+          "weight": "defensive/strand-02-lateral-dir-alta-weight.png",
+          "root": [
+            591,
+            249
+          ],
+          "tip": [
+            624,
+            226
+          ],
+          "stiffness": 0.85,
+          "zIndex": 2,
+          "pixels": 2439
+        },
+        {
+          "file": "defensive/strand-03-topo-dir.png",
+          "weight": "defensive/strand-03-topo-dir-weight.png",
+          "root": [
+            553,
+            188
+          ],
+          "tip": [
+            590,
+            179
+          ],
+          "stiffness": 0.7,
+          "zIndex": 3,
+          "pixels": 1704
+        },
+        {
+          "file": "defensive/strand-04-topo-centro-dir.png",
+          "weight": "defensive/strand-04-topo-centro-dir-weight.png",
+          "root": [
+            489,
+            161
+          ],
+          "tip": [
+            519,
+            120
+          ],
+          "stiffness": 0.55,
+          "zIndex": 4,
+          "pixels": 2253
+        },
+        {
+          "file": "defensive/strand-05-topo-centro-esq.png",
+          "weight": "defensive/strand-05-topo-centro-esq-weight.png",
+          "root": [
+            420,
+            158
+          ],
+          "tip": [
+            436,
+            116
+          ],
+          "stiffness": 0.55,
+          "zIndex": 5,
+          "pixels": 4353
+        },
+        {
+          "file": "defensive/strand-06-topo-esq.png",
+          "weight": "defensive/strand-06-topo-esq-weight.png",
+          "root": [
+            366,
+            180
+          ],
+          "tip": [
+            332,
+            147
+          ],
+          "stiffness": 0.6,
+          "zIndex": 6,
+          "pixels": 3991
+        },
+        {
+          "file": "defensive/strand-07-lateral-esq-alta.png",
+          "weight": "defensive/strand-07-lateral-esq-alta-weight.png",
+          "root": [
+            319,
+            232
+          ],
+          "tip": [
+            280,
+            220
+          ],
+          "stiffness": 0.8,
+          "zIndex": 7,
+          "pixels": 3779
+        },
+        {
+          "file": "defensive/strand-08-lateral-esq-baixa.png",
+          "weight": "defensive/strand-08-lateral-esq-baixa-weight.png",
+          "root": [
+            295,
+            325
+          ],
+          "tip": [
+            268,
+            291
+          ],
+          "stiffness": 0.92,
+          "zIndex": 8,
+          "pixels": 5156
+        }
+      ]
+    },
+    "nervous": {
+      "base": "nervous/base.png",
+      "compatibilityJpeg": "nervous/base.jpg",
+      "original": "../expressions/nervous.jpg",
+      "strands": [
+        {
+          "file": "nervous/strand-01-lateral-dir-baixa.png",
+          "weight": "nervous/strand-01-lateral-dir-baixa-weight.png",
+          "root": [
+            611,
+            328
+          ],
+          "tip": [
+            642,
+            295
+          ],
+          "stiffness": 0.92,
+          "zIndex": 1,
+          "pixels": 4610
+        },
+        {
+          "file": "nervous/strand-02-lateral-dir-alta.png",
+          "weight": "nervous/strand-02-lateral-dir-alta-weight.png",
+          "root": [
+            591,
+            249
+          ],
+          "tip": [
+            624,
+            226
+          ],
+          "stiffness": 0.85,
+          "zIndex": 2,
+          "pixels": 2439
+        },
+        {
+          "file": "nervous/strand-03-topo-dir.png",
+          "weight": "nervous/strand-03-topo-dir-weight.png",
+          "root": [
+            553,
+            188
+          ],
+          "tip": [
+            590,
+            179
+          ],
+          "stiffness": 0.7,
+          "zIndex": 3,
+          "pixels": 1704
+        },
+        {
+          "file": "nervous/strand-04-topo-centro-dir.png",
+          "weight": "nervous/strand-04-topo-centro-dir-weight.png",
+          "root": [
+            489,
+            161
+          ],
+          "tip": [
+            519,
+            120
+          ],
+          "stiffness": 0.55,
+          "zIndex": 4,
+          "pixels": 2253
+        },
+        {
+          "file": "nervous/strand-05-topo-centro-esq.png",
+          "weight": "nervous/strand-05-topo-centro-esq-weight.png",
+          "root": [
+            420,
+            158
+          ],
+          "tip": [
+            436,
+            116
+          ],
+          "stiffness": 0.55,
+          "zIndex": 5,
+          "pixels": 4353
+        },
+        {
+          "file": "nervous/strand-06-topo-esq.png",
+          "weight": "nervous/strand-06-topo-esq-weight.png",
+          "root": [
+            366,
+            180
+          ],
+          "tip": [
+            332,
+            147
+          ],
+          "stiffness": 0.6,
+          "zIndex": 6,
+          "pixels": 3991
+        },
+        {
+          "file": "nervous/strand-07-lateral-esq-alta.png",
+          "weight": "nervous/strand-07-lateral-esq-alta-weight.png",
+          "root": [
+            319,
+            232
+          ],
+          "tip": [
+            280,
+            220
+          ],
+          "stiffness": 0.8,
+          "zIndex": 7,
+          "pixels": 3779
+        },
+        {
+          "file": "nervous/strand-08-lateral-esq-baixa.png",
+          "weight": "nervous/strand-08-lateral-esq-baixa-weight.png",
+          "root": [
+            295,
+            325
+          ],
+          "tip": [
+            268,
+            291
+          ],
+          "stiffness": 0.92,
+          "zIndex": 8,
+          "pixels": 5157
+        }
+      ]
+    },
+    "shaken": {
+      "base": "shaken/base.png",
+      "compatibilityJpeg": "shaken/base.jpg",
+      "original": "../expressions/shaken.jpg",
+      "strands": [
+        {
+          "file": "shaken/strand-01-lateral-dir-baixa.png",
+          "weight": "shaken/strand-01-lateral-dir-baixa-weight.png",
+          "root": [
+            611,
+            328
+          ],
+          "tip": [
+            642,
+            295
+          ],
+          "stiffness": 0.92,
+          "zIndex": 1,
+          "pixels": 4610
+        },
+        {
+          "file": "shaken/strand-02-lateral-dir-alta.png",
+          "weight": "shaken/strand-02-lateral-dir-alta-weight.png",
+          "root": [
+            591,
+            249
+          ],
+          "tip": [
+            624,
+            226
+          ],
+          "stiffness": 0.85,
+          "zIndex": 2,
+          "pixels": 2439
+        },
+        {
+          "file": "shaken/strand-03-topo-dir.png",
+          "weight": "shaken/strand-03-topo-dir-weight.png",
+          "root": [
+            553,
+            188
+          ],
+          "tip": [
+            590,
+            179
+          ],
+          "stiffness": 0.7,
+          "zIndex": 3,
+          "pixels": 1704
+        },
+        {
+          "file": "shaken/strand-04-topo-centro-dir.png",
+          "weight": "shaken/strand-04-topo-centro-dir-weight.png",
+          "root": [
+            489,
+            161
+          ],
+          "tip": [
+            519,
+            120
+          ],
+          "stiffness": 0.55,
+          "zIndex": 4,
+          "pixels": 2253
+        },
+        {
+          "file": "shaken/strand-05-topo-centro-esq.png",
+          "weight": "shaken/strand-05-topo-centro-esq-weight.png",
+          "root": [
+            420,
+            158
+          ],
+          "tip": [
+            436,
+            116
+          ],
+          "stiffness": 0.55,
+          "zIndex": 5,
+          "pixels": 4353
+        },
+        {
+          "file": "shaken/strand-06-topo-esq.png",
+          "weight": "shaken/strand-06-topo-esq-weight.png",
+          "root": [
+            366,
+            180
+          ],
+          "tip": [
+            332,
+            147
+          ],
+          "stiffness": 0.6,
+          "zIndex": 6,
+          "pixels": 3991
+        },
+        {
+          "file": "shaken/strand-07-lateral-esq-alta.png",
+          "weight": "shaken/strand-07-lateral-esq-alta-weight.png",
+          "root": [
+            319,
+            232
+          ],
+          "tip": [
+            280,
+            220
+          ],
+          "stiffness": 0.8,
+          "zIndex": 7,
+          "pixels": 3779
+        },
+        {
+          "file": "shaken/strand-08-lateral-esq-baixa.png",
+          "weight": "shaken/strand-08-lateral-esq-baixa-weight.png",
+          "root": [
+            295,
+            325
+          ],
+          "tip": [
+            268,
+            291
+          ],
+          "stiffness": 0.92,
+          "zIndex": 8,
+          "pixels": 5156
+        }
+      ]
+    },
+    "lying": {
+      "base": "lying/base.png",
+      "compatibilityJpeg": "lying/base.jpg",
+      "original": "../expressions/lying.jpg",
+      "strands": [
+        {
+          "file": "lying/strand-01-lateral-dir-baixa.png",
+          "weight": "lying/strand-01-lateral-dir-baixa-weight.png",
+          "root": [
+            611,
+            328
+          ],
+          "tip": [
+            642,
+            295
+          ],
+          "stiffness": 0.92,
+          "zIndex": 1,
+          "pixels": 4586
+        },
+        {
+          "file": "lying/strand-02-lateral-dir-alta.png",
+          "weight": "lying/strand-02-lateral-dir-alta-weight.png",
+          "root": [
+            591,
+            249
+          ],
+          "tip": [
+            624,
+            226
+          ],
+          "stiffness": 0.85,
+          "zIndex": 2,
+          "pixels": 2436
+        },
+        {
+          "file": "lying/strand-03-topo-dir.png",
+          "weight": "lying/strand-03-topo-dir-weight.png",
+          "root": [
+            553,
+            188
+          ],
+          "tip": [
+            590,
+            179
+          ],
+          "stiffness": 0.7,
+          "zIndex": 3,
+          "pixels": 1700
+        },
+        {
+          "file": "lying/strand-04-topo-centro-dir.png",
+          "weight": "lying/strand-04-topo-centro-dir-weight.png",
+          "root": [
+            489,
+            161
+          ],
+          "tip": [
+            519,
+            120
+          ],
+          "stiffness": 0.55,
+          "zIndex": 4,
+          "pixels": 2253
+        },
+        {
+          "file": "lying/strand-05-topo-centro-esq.png",
+          "weight": "lying/strand-05-topo-centro-esq-weight.png",
+          "root": [
+            420,
+            158
+          ],
+          "tip": [
+            436,
+            116
+          ],
+          "stiffness": 0.55,
+          "zIndex": 5,
+          "pixels": 4353
+        },
+        {
+          "file": "lying/strand-06-topo-esq.png",
+          "weight": "lying/strand-06-topo-esq-weight.png",
+          "root": [
+            366,
+            180
+          ],
+          "tip": [
+            332,
+            147
+          ],
+          "stiffness": 0.6,
+          "zIndex": 6,
+          "pixels": 3992
+        },
+        {
+          "file": "lying/strand-07-lateral-esq-alta.png",
+          "weight": "lying/strand-07-lateral-esq-alta-weight.png",
+          "root": [
+            319,
+            232
+          ],
+          "tip": [
+            280,
+            220
+          ],
+          "stiffness": 0.8,
+          "zIndex": 7,
+          "pixels": 3786
+        },
+        {
+          "file": "lying/strand-08-lateral-esq-baixa.png",
+          "weight": "lying/strand-08-lateral-esq-baixa-weight.png",
+          "root": [
+            295,
+            325
+          ],
+          "tip": [
+            268,
+            291
+          ],
+          "stiffness": 0.92,
+          "zIndex": 8,
+          "pixels": 5164
+        }
+      ]
+    },
+    "teary": {
+      "base": "teary/base.png",
+      "compatibilityJpeg": "teary/base.jpg",
+      "original": "../expressions/teary.jpg",
+      "strands": [
+        {
+          "file": "teary/strand-01-lateral-dir-baixa.png",
+          "weight": "teary/strand-01-lateral-dir-baixa-weight.png",
+          "root": [
+            611,
+            328
+          ],
+          "tip": [
+            642,
+            295
+          ],
+          "stiffness": 0.92,
+          "zIndex": 1,
+          "pixels": 4610
+        },
+        {
+          "file": "teary/strand-02-lateral-dir-alta.png",
+          "weight": "teary/strand-02-lateral-dir-alta-weight.png",
+          "root": [
+            591,
+            249
+          ],
+          "tip": [
+            624,
+            226
+          ],
+          "stiffness": 0.85,
+          "zIndex": 2,
+          "pixels": 2439
+        },
+        {
+          "file": "teary/strand-03-topo-dir.png",
+          "weight": "teary/strand-03-topo-dir-weight.png",
+          "root": [
+            553,
+            188
+          ],
+          "tip": [
+            590,
+            179
+          ],
+          "stiffness": 0.7,
+          "zIndex": 3,
+          "pixels": 1704
+        },
+        {
+          "file": "teary/strand-04-topo-centro-dir.png",
+          "weight": "teary/strand-04-topo-centro-dir-weight.png",
+          "root": [
+            489,
+            161
+          ],
+          "tip": [
+            519,
+            120
+          ],
+          "stiffness": 0.55,
+          "zIndex": 4,
+          "pixels": 2253
+        },
+        {
+          "file": "teary/strand-05-topo-centro-esq.png",
+          "weight": "teary/strand-05-topo-centro-esq-weight.png",
+          "root": [
+            420,
+            158
+          ],
+          "tip": [
+            436,
+            116
+          ],
+          "stiffness": 0.55,
+          "zIndex": 5,
+          "pixels": 4353
+        },
+        {
+          "file": "teary/strand-06-topo-esq.png",
+          "weight": "teary/strand-06-topo-esq-weight.png",
+          "root": [
+            366,
+            180
+          ],
+          "tip": [
+            332,
+            147
+          ],
+          "stiffness": 0.6,
+          "zIndex": 6,
+          "pixels": 3991
+        },
+        {
+          "file": "teary/strand-07-lateral-esq-alta.png",
+          "weight": "teary/strand-07-lateral-esq-alta-weight.png",
+          "root": [
+            319,
+            232
+          ],
+          "tip": [
+            280,
+            220
+          ],
+          "stiffness": 0.8,
+          "zIndex": 7,
+          "pixels": 3779
+        },
+        {
+          "file": "teary/strand-08-lateral-esq-baixa.png",
+          "weight": "teary/strand-08-lateral-esq-baixa-weight.png",
+          "root": [
+            295,
+            325
+          ],
+          "tip": [
+            268,
+            291
+          ],
+          "stiffness": 0.92,
+          "zIndex": 8,
+          "pixels": 5156
+        }
+      ]
+    }
+  },
+  "motion": {
+    "units": "source pixels",
+    "recommendedTipDisplacement": {
+      "breeze": 1.5,
+      "helicopter": 4
+    },
+    "interpolation": "continuous",
+    "rootPinned": true,
+    "notes": "Use weight-driven deformation, not rigid rotation. Keep roots fixed. Render moving layers after figure mask; do not clip tips to the original silhouette."
+  }
+}
