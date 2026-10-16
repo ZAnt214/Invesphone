@@ -2,6 +2,7 @@
    (pixel art procedural, câmera oblíqua, luz multiplicada por sala, detalhe por zoom, tela deitada).
    Lemos anda, a equipe fala, a caderneta guarda o caso. O jogo começa aqui, no plantão de madrugada; a casa
    da Rua das Acácias (/casa) é a segunda parte, e depois dela a base amanhece. Não há aparelho nem chamada. */
+import '../world/frameCap';   // limite de 60 quadros por segundo (antes de qualquer cena pedir quadro)
 import { applyRequest, applyTopic, caseTeam, DEFAULT_DISCOVERED, requestOk, teamDialogues, teamMaterialRequests, teamNews, topicOk } from '../team/teamData';
 import { readCase, writeCase } from '../case/caseSave';
 import { depoPeople, summon } from '../case/depositions';
