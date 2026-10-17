@@ -15,7 +15,6 @@
 .sd .scene{position:absolute;inset:0}
 .sd .layer{position:absolute;inset:-2%;transform-origin:73% 34%;will-change:transform}
 .sd .layer canvas{position:absolute}
-.sd #sd-bg{left:2%;top:2%;width:844px;height:390px}
 .sd .dim{position:absolute;inset:0;pointer-events:none;background:#000;opacity:0;transition:opacity .9s ease}
 .sd .sd-stage.answering .dim{opacity:.12}
 .sd .sd-stage.noting .dim{opacity:.16}
@@ -109,4 +108,7 @@
 .sd .bars.on p{opacity:1;transition-delay:.25s}
 .sd .cut{position:absolute;inset:0;z-index:11;background:#000;opacity:0;pointer-events:none;transition:opacity .18s}
 .sd .cut.on{opacity:1}
-@media (prefers-reduced-motion:reduce){.sd #sd-bg,.sd .pad{transition:none}.sd .rec i{animation:none}.sd .asked path{stroke-dashoffset:0;animation:none}}
+@media (prefers-reduced-motion:reduce){.sd .pad{transition:none}.sd .rec i{animation:none}.sd .asked path{stroke-dashoffset:0;animation:none}}
+
+/* com o depoimento aberto, o que está por baixo (a cena da casa) não é composto */
+.sd-under>:not(.sd){visibility:hidden!important}
