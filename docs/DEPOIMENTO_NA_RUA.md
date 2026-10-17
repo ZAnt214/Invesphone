@@ -60,6 +60,13 @@ A foto oficial é mexida em código, sem redesenhar: a árvore, a copa atrás do
 - A garoa do fundo é refeita a cada dois quadros; a da frente, a cada quadro.
 - Brilhos (`glow`), gotas na lente e o volume do holofote usam sprites feitos uma vez, não gradientes por quadro. A luz fixa sobre o Jorge é uma imagem pronta; o giroflex nele é um gradiente só.
 - Os canvases das folhas do helicóptero só são tocados quando há folha voando.
+- **Camadas compostas (o maior custo no iPhone):** cada canvas de tela cheia é uma camada que o navegador mistura a cada quadro, em 3x. Por isso:
+  - a cena de baixo (a casa, com o canvas dela e o HUD) sai da composição depois que o depoimento entra (`.sd-under` no host, `visibility:hidden`), e volta ao fechar;
+  - o fundo não é mais um canvas na tela: é desenhado em meia resolução fora da tela e copiado, ampliado e macio, por baixo da fita, no mesmo canvas (`#sd-tape`);
+  - os canvases das folhas (`#sd-debM`, `#sd-debN`), o das partículas de pista (`#sd-fx`) e, com o cabelo na placa de vídeo, o da boca (`#sd-ac`) ficam escondidos enquanto estão vazios;
+  - o grão do filme fecha (o alfa soma até ficar opaco) em ~2 s; depois o canvas para de ser redesenhado, sem diferença na imagem.
+- Com o cabelo na placa de vídeo, a luz da cena sobre a boca e as pálpebras é pintada só no retângulo do rosto, e a base da figura vai numa malha só onde há figura (sem ler o fundo transparente).
+- O relógio do REC só é reescrito quando o segundo muda.
 
 ## Cabelo ao vento
 

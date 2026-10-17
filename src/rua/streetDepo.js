@@ -40,7 +40,7 @@ export function openStreetDepo(host,id,opts={}){
 
   const root=document.createElement('div');root.className='sd';root.setAttribute('role','dialog');root.setAttribute('aria-label',`Depoimento na rua: ${cfg.name}`);
   root.innerHTML=`<div class="sd-wrap"><div class="sd-stage" id="sd-stage">
-    <div class="scene"><div class="layer" id="sd-Lbg"><canvas id="sd-bg"></canvas><canvas id="sd-tape"></canvas></div><div class="dim"></div><div class="layer" id="sd-Lac"><canvas id="sd-hair" style="visibility:hidden"></canvas><canvas id="sd-ac"></canvas></div><div class="layer" id="sd-Lfg"><canvas id="sd-debM"></canvas><canvas id="sd-fg"></canvas><canvas id="sd-debN"></canvas></div></div>
+    <div class="scene"><div class="layer" id="sd-Lbg"><canvas id="sd-tape"></canvas></div><div class="dim"></div><div class="layer" id="sd-Lac"><canvas id="sd-hair" style="visibility:hidden"></canvas><canvas id="sd-ac"></canvas></div><div class="layer" id="sd-Lfg"><canvas id="sd-debM" style="visibility:hidden"></canvas><canvas id="sd-fg"></canvas><canvas id="sd-debN" style="visibility:hidden"></canvas></div></div>
     <div class="grade"></div><canvas id="sd-grain" width="422" height="195"></canvas><div class="vig"></div>
     <div class="rec"><i></i>REC <b id="sd-clock">00:00:00</b><span>NA CENA · RUA DAS ACÁCIAS</span></div>
     <div class="focus">FOCO · <b id="sd-focus">CADERNO</b></div>
@@ -48,11 +48,13 @@ export function openStreetDepo(host,id,opts={}){
     <div class="tag" aria-hidden="true"><b>${esc(cfg.name.toUpperCase())}</b><i></i><span>${esc((PERSON.role||'').toUpperCase())}</span></div>
     <div class="pad" id="sd-pad"></div>
     <div class="sub" id="sd-sub" aria-live="polite"></div>
-    <canvas id="sd-fx"></canvas>
+    <canvas id="sd-fx" style="visibility:hidden"></canvas>
     <div class="vh" role="status" id="sd-clueSr"></div>
     <div class="bars on" aria-hidden="true"><p>FRENTE DA CASA<span>Rua das Acácias${opts.clock?' · '+esc(opts.clock()):''}</span></p></div>
   </div></div>`;
   host.appendChild(root);
+  /* a cena de baixo (a casa) fica coberta: depois de entrar, sai da composição, para o navegador não desenhá-la à toa por baixo */
+  setTimeout(()=>host.classList.add('sd-under'),480);
   const $=s=>root.querySelector(s);
   const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
   const W=844,H=390;
@@ -319,9 +321,11 @@ export function openStreetDepo(host,id,opts={}){
      por cima do fundo e na mesma camada dele (andam juntas com a câmera). Recebem o giroflex e o holofote. */
   const LT={on:false,grad:null,ps:null,hs:null};
   function drawTapes(t,g){
-    const c=cvTape.getContext('2d'),r=cvTape._r||1;c.setTransform(r,0,0,r,0,-TB.y*r);c.clearRect(0,TB.y,W,TB.h);
+    /* o fundo (desenhado em meia resolução, fora da tela) entra aqui ampliado e macio, por baixo da fita: uma camada a menos
+       para o navegador compor a cada quadro (no iPhone, cada camada de tela cheia custa caro) */
+    const c=cvTape.getContext('2d'),r=cvTape._r||1;c.setTransform(1,0,0,1,0,0);c.globalCompositeOperation='copy';c.imageSmoothingEnabled=true;c.imageSmoothingQuality='low';
+    c.drawImage(cvBg,0,0,cvTape.width,cvTape.height);c.globalCompositeOperation='source-over';c.setTransform(r,0,0,r,0,-TB.y*r);
     if(!ART.bg)return;
-    c.imageSmoothingEnabled=true;c.imageSmoothingQuality='low';
     const gr=c.createLinearGradient(0,0,W,0);{const [gc,ga]=giroMix(g,.3);gr.addColorStop(0,`rgba(${gc},${ga.toFixed(3)})`);gr.addColorStop(.5,`rgba(${gc},0)`);gr.addColorStop(1,`rgba(${gc},0)`)}
     LT.grad=gr;LT.ps=PS&&PS.I>.02?[PS.x,.35*PS.I]:null;LT.hs=HS&&HS.S>.02?[HS.sx-HS.lean*120,.45*HS.S]:null;LT.on=true;
     tapeSpan(c,'gate',t);tapeSpan(c,'crowd',t);
@@ -374,7 +378,7 @@ export function openStreetDepo(host,id,opts={}){
   }
 
   /* ---------- tamanho: a tela do jogo deitada (844×390), encaixada no espaço que houver ---------- */
-  const wrap=$('.sd-wrap'),stage=$('#sd-stage'),cvBg=$('#sd-bg'),cvTape=$('#sd-tape'),TB={y:0,h:390},cvAc=$('#sd-ac'),cvHair=$('#sd-hair'),cvFg=$('#sd-fg');let hairShown=false,ACR=1;
+  const wrap=$('.sd-wrap'),stage=$('#sd-stage'),cvBg=document.createElement('canvas'),cvTape=$('#sd-tape'),TB={y:0,h:390},cvAc=$('#sd-ac'),cvHair=$('#sd-hair'),cvFg=$('#sd-fg');let hairShown=false,ACR=1;
   function setC(c,w,h,r){c.width=Math.max(1,Math.round(w*r));c.height=Math.max(1,Math.round(h*r));c._r=r}
   let K=1;
   function size(){
@@ -511,7 +515,10 @@ export function openStreetDepo(host,id,opts={}){
   const DM=$('#sd-debM'),DN=$('#sd-debN');
   function debris(_c,dt,t){
     /* só mexe nos dois canvases quando há folha voando (ou acabou de sair): canvas parado não é reenviado para a tela */
-    const any=!RM&&(DEB.some(d=>d.live)||(HS&&HS.A>.35));if(!any&&!DEB.dirty)return;DEB.dirty=any;
+    const any=!RM&&(DEB.some(d=>d.live)||(HS&&HS.A>.35));
+    /* parado e vazio, o canvas sai da composição (camada de tela cheia transparente também custa) */
+    if(!any&&!DEB.dirty){if(DM.style.visibility!=='hidden')DM.style.visibility=DN.style.visibility='hidden';return}
+    if(DM.style.visibility==='hidden')DM.style.visibility=DN.style.visibility='';DEB.dirty=any;
     const cm=DM.getContext('2d'),cn=DN.getContext('2d');cm.setTransform(DM._r,0,0,DM._r,0,0);cn.setTransform(DN._r,0,0,DN._r,0,0);cm.clearRect(0,0,W,H);cn.clearRect(0,0,W,H);
     if(RM)return;const A=HS?HS.A:0,dir=HELI?HELI.dir:1;
     for(const d of DEB){
@@ -963,15 +970,22 @@ export function openStreetDepo(host,id,opts={}){
     if(gok!==hairShown){hairShown=gok;cvHair.style.visibility=gok?'visible':'hidden';}
     /* com a figura na placa de vídeo, este canvas só tem a boca e o piscar: parado (sem fala nem piscada), não é
        redesenhado, e o navegador não reenvia a imagem dele a cada quadro */
-    if(gok&&mouthOn<.02&&blinkStart<0&&now<blinkNext){if(acDirty){const c=cvAc.getContext('2d');c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cvAc.width,cvAc.height);acDirty=false;}return;}
-    acDirty=true;
+    if(gok&&mouthOn<.02&&blinkStart<0&&now<blinkNext){if(acDirty){const c=cvAc.getContext('2d');c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cvAc.width,cvAc.height);acDirty=false;cvAc.style.visibility='hidden';}return;}
+    if(!acDirty)cvAc.style.visibility='';acDirty=true;
     const c=cvAc.getContext('2d'),r=cvAc._r;c.setTransform(r,0,0,r,0,0);c.clearRect(0,0,400,430);
     c.save();c.translate(200-450*S,br*1.1);c.scale(S,S*(1+br*.0025));
     /* com o cabelo ao vento, a figura (base + mechas, já com a luz da cena) vai pela placa de vídeo no canvas de baixo
        (#sd-hair) e este canvas fica só com a boca e o piscar; sem ele, o retrato oficial é desenhado aqui, como antes */
     if(!gok){if(fading){c.drawImage(imgs[prev],0,0,900,1200);c.globalAlpha=f}c.drawImage(imgs[expr],0,0,900,1200);c.globalAlpha=1;}
     drawMouth(c);drawLids(c,now);c.restore();
+    /* com a figura na placa de vídeo, aqui só há boca e pálpebras: a luz da cena (source-atop) é pintada só no retângulo do rosto,
+       não no canvas inteiro (o resultado é o mesmo; são vários preenchimentos de tela a menos enquanto ele fala) */
+    if(gok){const A=CH.assets[expr],B=prev&&fading&&CH.assets[prev]?[A,CH.assets[prev]]:[A];let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+      for(const a of B){const E=a.eyes,m=a.mouth;for(const e of [E.left,E.right]){x0=Math.min(x0,e.cx-e.rx);x1=Math.max(x1,e.cx+e.rx);y0=Math.min(y0,e.cy-e.ry)}
+        x0=Math.min(x0,m.cx-m.halfWidth*1.6);x1=Math.max(x1,m.cx+m.halfWidth*1.6);y1=Math.max(y1,m.rimY+m.halfWidth*1.6)}
+      const P=90,ox=200-450*S,oy=br*1.1;c.save();c.beginPath();c.rect(ox+(x0-P)*S,oy+(y0-P)*S,(x1-x0+2*P)*S,(y1-y0+2*P)*S);c.clip()}
     c.globalCompositeOperation='source-atop';SC[cur].light(c,400,430,g,t);c.globalCompositeOperation='source-over';
+    if(gok)c.restore();
     /* holofote no Jorge: soma a própria imagem dentro do círculo de luz (clareia sem lavar a cor), com borda dura */
     if(false&&cur==='mix'&&HS&&HS.S>.02&&imgs[expr]){const ax=HS.sx-HS.lean*420*.4-420,k=HS.S*Math.exp(-Math.pow((ax-200)/230,2));
       if(k>.02){const cy=430*.3;c.save();c.beginPath();c.ellipse(ax,cy,175,200,0,0,7);c.clip();
@@ -997,7 +1011,10 @@ export function openStreetDepo(host,id,opts={}){
   function spring(p,v,target,k,dt){const c=2*Math.sqrt(k)*.92;const a=k*(target-CAM[p])-c*CAM[v];CAM[v]+=a*dt;CAM[p]+=CAM[v]*dt}
   const GR=$('#sd-grain'),grx=GR.getContext('2d');let gfr=0;
   const GFR=Array.from({length:4},()=>{const c=document.createElement('canvas');c.width=211;c.height=98;const x=c.getContext('2d'),im=x.createImageData(211,98),d=im.data;for(let i=0;i<d.length;i+=4){d[i]=d[i+1]=d[i+2]=0;d[i+3]=Math.random()*255|0}x.putImageData(im,0,0);return c});
-  function grainStep(){if(root.classList.contains('nofilm'))return;if(RM){if(!gfr++)grx.drawImage(GFR[0],0,0,422,195);return}if(gfr++%3)return;grx.drawImage(GFR[(gfr/3|0)%4],0,0,422,195)}
+  /* as folhas de grão são desenhadas umas sobre as outras (sem limpar), e o alfa soma até fechar: em ~2 s o canvas fica
+     inteiro escuro (a 12% de opacidade) e novas folhas já não mudam nada na imagem. Daí para frente ele fica parado, e o
+     navegador não reenvia a camada a cada três quadros. */
+  function grainStep(){if(root.classList.contains('nofilm'))return;if(RM){if(!gfr++)grx.drawImage(GFR[0],0,0,422,195);return}if(gfr>=360)return;if(gfr++%3)return;grx.drawImage(GFR[(gfr/3|0)%4],0,0,422,195)}
   function camStep(now,t,dt){grainStep();
     const el=(now-CAM.since)/1000;let tz=1,tx=0,ty=0,k=26;
     if(CAM.mode==='pick'){tz=1.018;tx=-3;ty=-1;k=34}
@@ -1028,7 +1045,7 @@ export function openStreetDepo(host,id,opts={}){
   function fxSize(){const r=Math.min(1.5,window.devicePixelRatio||1)*K;fxc.width=Math.round(W*r);fxc.height=Math.round(H*r);fg2.setTransform(r,0,0,r,0,0)}
   function padd(p){FP.push(Object.assign({vx:0,vy:0,age:0,life:1,size:3,drag:.985,grav:0,col:'a'},p))}
   function burst(x,y,n,spd,col,life){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,v=spd*(.3+Math.random());padd({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:life*(.5+Math.random()*.7),size:1.5+Math.random()*2.5,drag:.93,col:col||(Math.random()<.5?'a':'w'),grav:.02})}}
-  function fxStart(){if(fraf||RM)return;fxSize();flast=performance.now();fraf=requestAnimationFrame(fxFrame)}
+  function fxStart(){if(fraf||RM)return;fxSize();fxc.style.visibility='';flast=performance.now();fraf=requestAnimationFrame(fxFrame)}
   function fxFrame(now){const dt=Math.min(.05,(now-flast)/1000);flast=now;fg2.clearRect(0,0,W,H);fg2.globalCompositeOperation='lighter';
     for(let i=FXL.length-1;i>=0;i--){const f=FXL[i];f.t+=dt;const k=Math.min(1,f.t/f.dur);
       if(f.k==='ring'){const e=1-Math.pow(1-k,3),r=f.r0+(f.r1-f.r0)*e;fg2.globalAlpha=(1-k)*.85;fg2.strokeStyle='#ffcf8a';fg2.lineWidth=f.w*(1-k)+.4;fg2.beginPath();fg2.arc(f.x,f.y,r,0,7);fg2.stroke()}
@@ -1041,7 +1058,7 @@ export function openStreetDepo(host,id,opts={}){
       p.vx*=p.drag;p.vy*=p.drag;p.vy+=p.grav;p.x+=p.vx*dt*60;p.y+=p.vy*dt*60;const t=p.age/p.life,a=t<.15?t/.15:1-(t-.15)/.85,s2=p.size*(1+.4*(1-t));
       fg2.globalAlpha=Math.max(0,a);fg2.drawImage(SP[p.col],p.x-s2*2,p.y-s2*2,s2*4,s2*4)}
     fg2.globalAlpha=1;fg2.globalCompositeOperation='source-over';
-    if(FP.length||FXL.length)fraf=requestAnimationFrame(fxFrame);else{fraf=0;fg2.clearRect(0,0,W,H)}}
+    if(FP.length||FXL.length)fraf=requestAnimationFrame(fxFrame);else{fraf=0;fg2.clearRect(0,0,W,H);fxc.style.visibility='hidden'}}
   /* posição dentro do palco (sem a escala do palco) */
   function spos(el){const r=el.getBoundingClientRect(),s0=stage.getBoundingClientRect();return{x:(r.left-s0.left)/K,y:(r.top-s0.top)/K,w:r.width/K,h:r.height/K}}
 
@@ -1214,10 +1231,11 @@ export function openStreetDepo(host,id,opts={}){
     mouthStep(now,dt);typeStep(now);drawActor(now,t,g);camStep(now,t,dt);
     const f=cvFg.getContext('2d');f.setTransform(cvFg._r,0,0,cvFg._r,0,0);f.clearRect(0,0,W,H);s.fg(f,t,g);
     const sec=Math.floor((now-t0)/1000),p=n=>String(n).padStart(2,'0');
-    clockEl.textContent=`${p(Math.floor(sec/3600))}:${p(Math.floor(sec/60)%60)}:${p(sec%60)}`;
+    /* o relógio só é reescrito quando muda (uma vez por segundo): texto novo a cada quadro obrigava o navegador a refazer o layout */
+    if(sec!==lastSec){lastSec=sec;clockEl.textContent=`${p(Math.floor(sec/3600))}:${p(Math.floor(sec/60)%60)}:${p(sec%60)}`}
     requestAnimationFrame(frame);
   }
-  const clockEl=$('#sd-clock');
+  const clockEl=$('#sd-clock');let lastSec=-1;
 
   /* ---------- conversa: mesmas perguntas e o mesmo progresso do depoimento da base ---------- */
   const IDLE=cfg.idleExpression&&CH.assets[cfg.idleExpression]?cfg.idleExpression:'neutral';
@@ -1321,7 +1339,7 @@ export function openStreetDepo(host,id,opts={}){
   const offFx=onFxChange(()=>{filmSync();hairSync();if(AMBOUT&&AC)AMBOUT.gain.setTargetAtTime(fxOn('sfx.depoAmb')?1.6:0,AC.currentTime,.2)});
   const onDown=()=>ensureAudio();root.addEventListener('pointerdown',onDown,true);
   function close(){
-    if(!alive)return;alive=false;
+    if(!alive)return;alive=false;host.classList.remove('sd-under');
     for(const t of TM)window.clearTimeout(t);for(const t of IV)window.clearInterval(t);
     try{ro.disconnect()}catch(_){}
     if(typeof offFx==='function')offFx();

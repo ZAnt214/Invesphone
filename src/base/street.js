@@ -121,6 +121,7 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
   const isNight=()=>!!(NI&&NI());
   const Q=()=>{const q=quality?quality():'high';return q==='low'?0:q==='medium'?1:2;};
   let fgRooms=[];
+  const SKY='#8fa9c4';
   let layer=buildStatic();
   let needBake=false;
   // o que o jogador deixou ligado em Ajustes (src/settings/gameSettings.ts); muda na hora, sem recarregar
@@ -135,6 +136,9 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     paintGround(g,STREET_W,art,STALLS);
     paintWear(g,BUILDINGS,STREET_W);
     fgRooms=paintForeground(g,STREET_W);
+    /* o céu de fundo entra na própria camada (atrás de tudo): a camada fica opaca e a tela não precisa ser pintada inteira
+       de azul antes, a cada quadro (uma passada de tela cheia a menos; no iPhone, em 3x, são 3 milhões de pixels) */
+    g.globalCompositeOperation='destination-over';g.fillStyle=SKY;g.fillRect(0,0,STREET_W,STREET_H);g.globalCompositeOperation='source-over';
     return cv;
   }
 
@@ -577,8 +581,11 @@ export function createStreet({lemosLook,onEnter,getZoom,personFrames,art:A,quali
     const q=Q(),NT=isNight();let SAV=null;if(NT){SAV={};for(const k of NIGHT_OFF){SAV[k]=F[k];F[k]=false;}}
     const V=view(cw,ch,rs),{s,left,top,vw}=V;
     ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';ctx.filter='none';
-    ctx.fillStyle='#8fa9c4';ctx.fillRect(0,0,cw,ch);ctx.imageSmoothingEnabled=false;
     const ox=Math.round(-left*s),oyr=Math.round(-top*s);
+    /* só o que a camada (opaca) não cobre recebe o céu: normalmente nada */
+    {ctx.fillStyle=SKY;const lx0=Math.max(0,ox),ly0=Math.max(0,oyr),lx1=Math.min(cw,ox+STREET_W*s),ly1=Math.min(ch,oyr+STREET_H*s);
+      if(lx0>=lx1||ly0>=ly1)ctx.fillRect(0,0,cw,ch);else{if(ly0>0)ctx.fillRect(0,0,cw,ly0);if(ly1<ch)ctx.fillRect(0,ly1,cw,ch-ly1);if(lx0>0)ctx.fillRect(0,ly0,lx0,ly1-ly0);if(lx1<cw)ctx.fillRect(lx1,ly0,cw-lx1,ly1-ly0);}}
+    ctx.imageSmoothingEnabled=false;
     ctx.setTransform(s,0,0,s,ox,oyr);
     ctx.drawImage(layer,0,0);
     if(Q()>=1&&F['edge.blur'])edgeBlur(ctx,cw,ch,s,ox,oyr);

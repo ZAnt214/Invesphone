@@ -110,7 +110,7 @@ export function createHair(o){
   function buf(data,isIdx){const b=gl.createBuffer();const T=isIdx?gl.ELEMENT_ARRAY_BUFFER:gl.ARRAY_BUFFER;gl.bindBuffer(T,b);gl.bufferData(T,data,gl.STATIC_DRAW);return b;}
   function upload(v){if(v.gpu)return true;if(!glInit())return false;
     const quad=(x,y,w,h)=>({vb:buf(new Float32Array([x,y,0,0,0,0, x+w,y,1,0,0,0, x,y+h,0,1,0,0, x+w,y+h,1,1,0,0])),ib:buf(new Uint16Array([0,1,2,2,1,3]),true),n:6});
-    v.gpu={base:{t:tex(v.base),f:null,...quad(0,0,o.PW,o.PH)},strands:v.strands.map(s=>({t:tex(s.src),f:tex(s.fea),vb:buf(s.verts),ib:buf(s.idx,true),n:s.idx.length,root:s.root}))};
+    v.gpu={base:{t:tex(v.base),f:null,...(v.baseMesh?{vb:buf(v.baseMesh.verts),ib:buf(v.baseMesh.idx,true),n:v.baseMesh.idx.length}:quad(0,0,o.PW,o.PH))},strands:v.strands.map(s=>({t:tex(s.src),f:tex(s.fea),vb:buf(s.verts),ib:buf(s.idx,true),n:s.idx.length,root:s.root}))};
     return true;}
   function unload(v){if(!v.gpu||!gl){v.gpu=null;return;}for(const m of [v.gpu.base,...v.gpu.strands]){gl.deleteTexture(m.t);if(m.f)gl.deleteTexture(m.f);gl.deleteBuffer(m.vb);gl.deleteBuffer(m.ib);}v.gpu=null;}
   function mesh(m,u){gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,m.f||ONE);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,m.t);
@@ -173,7 +173,13 @@ export function createHair(o){
       strands.push({src,fea,verts,idx:new Uint16Array(idx),stiff:st.stiffness??.7,ph:(st.root?st.root[0]*.013+st.root[1]*.007:strands.length),
         root:rt,dir:Math.atan2(tp[1]-rt[1],tp[0]-rt[0])});}
     tc.width=tc.height=0;
-    return {base:bc,strands,s,gpu:null};
+    /* a base vai numa malha só onde há figura (o quadro inteiro tem muito fundo transparente que o sombreador lia à toa) */
+    const BG=12,bc_=Math.ceil(o.PW/BG),br_=Math.ceil(o.PH/BG),BC=bc_+1,bv=new Float32Array(BC*(br_+1)*6),bi=[];
+    for(let j=0;j<=br_;j++)for(let i=0;i<=bc_;i++){const x=Math.min(o.PW,i*BG),y=Math.min(o.PH,j*BG);bv.set([x,y,x/o.PW,y/o.PH,0,0],(j*BC+i)*6);}
+    for(let j=0;j<br_;j++)for(let i=0;i<bc_;i++){let any=false;
+      for(let y=Math.max(0,j*BG-1);y<Math.min(o.PH,(j+1)*BG+1)&&!any;y++)for(let x=Math.max(0,i*BG-1);x<Math.min(o.PW,(i+1)*BG+1);x++)if(B[(y*o.PW+x)*4+3]>0){any=true;break;}
+      if(any){const a=j*BC+i;bi.push(a,a+1,a+BC+1,a,a+BC+1,a+BC);}}
+    return {base:bc,baseMesh:bi.length?{verts:bv,idx:new Uint16Array(bi)}:null,strands,s,gpu:null};
   }
   function want(e){if(cache.has(e)||wait.has(e))return;const p=ready.then(ok=>ok?build(e):null).then(v=>{wait.delete(e);if(v&&!dead){cache.set(e,v);upload(v);}return v;});wait.set(e,p);}
   /** mantém só as expressões pedidas carregadas (e já na placa de vídeo) */
