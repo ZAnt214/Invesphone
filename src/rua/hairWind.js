@@ -98,66 +98,34 @@ void main(){
         p+=(vec3(.6,.65,.75)*.45+L*2.2)*spec*k*(.7+.3*hs2);}}}
   gl_FragColor=vec4(p,t.a)*uAlpha;}`;
 
-/** o.url: manifest.json; o.PW,o.PH: tamanho em que o retrato é guardado (a escala do jogo); o.mask: máscara da figura (Image);
-    o.canvas: o canvas visível onde a figura é desenhada (fica por baixo do canvas 2D do retrato) */
-export function createHair(o){
-  let M=null,dead=false;const cache=new Map(),wait=new Map();
-  const base=o.url.replace(/manifest\.json$/,'');
-  const ready=fetch(o.url).then(r=>r.ok?r.json():null).then(j=>{M=j&&j.expressions?j:null;return !!M}).catch(()=>false);
-  const W0=()=>(M&&M.resolution&&M.resolution.width)||900;
-
-  /* ---------- WebGL no canvas visível ---------- */
-  const cv=o.canvas;let gl=null,prog=null,L=null,lost=false,VW=400,VH=430;
-  function glInit(){
-    if(gl||lost)return !!gl;
-    cv.addEventListener('webglcontextlost',ev=>{ev.preventDefault();lost=true;gl=null;},false);
-    try{gl=cv.getContext('webgl',{premultipliedAlpha:true,alpha:true,antialias:false,depth:false,stencil:false,preserveDrawingBuffer:false,powerPreference:'low-power'});}catch(_){gl=null;}
-    if(!gl){lost=true;return false;}
-    const sh=(t,s)=>{const x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);return x;};
-    prog=gl.createProgram();gl.attachShader(prog,sh(gl.VERTEX_SHADER,VS));gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(prog);
-    if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){try{console.warn('cabelo: sombreador',gl.getProgramInfoLog(prog),gl.getShaderInfoLog(gl.getAttachedShaders(prog)[1]));}catch(_){/* sem log */}gl=null;lost=true;return false;}
-    gl.useProgram(prog);L={};
-    for(const n of ['aPos','aUV','aW','aR'])L[n]=gl.getAttribLocation(prog,n);
-    for(const n of ['uWet','uRim','uTexel','uView','uViewF','uRoot','uShear','uMix','uXf','uK','uBend','uWob','uGust','uT','uPh','uTex','uFea','uFeaK','uAlpha','uGr','uGb','uPI','uPx','uPr','uPb'])L[n]=gl.getUniformLocation(prog,n);
-    gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
-    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
-    gl.uniform1i(L.uTex,0);gl.uniform1i(L.uFea,1);gl.uniform2f(L.uTexel,1/o.PW,1/o.PH);
-    for(const a of ['aPos','aUV','aW','aR'])gl.enableVertexAttribArray(L[a]);
-    // textura "sem esfumado" para a base
-    const one=document.createElement('canvas');one.width=one.height=1;const ox=one.getContext('2d');ox.fillStyle='#fff';ox.fillRect(0,0,1,1);ONE=tex(one);
-    return true;
-  }
-  let ONE=null;
-  function tex(img){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img);return t;}
-  function buf(data,isIdx){const b=gl.createBuffer();const T=isIdx?gl.ELEMENT_ARRAY_BUFFER:gl.ARRAY_BUFFER;gl.bindBuffer(T,b);gl.bufferData(T,data,gl.STATIC_DRAW);return b;}
-  function upload(v){if(v.gpu)return true;if(!glInit())return false;
-    const quad=(x,y,w,h)=>({vb:buf(new Float32Array([x,y,0,0,0,0, x+w,y,1,0,0,0, x,y+h,0,1,0,0, x+w,y+h,1,1,0,0])),ib:buf(new Uint16Array([0,1,2,2,1,3]),true),n:6});
-    v.gpu={base:{t:tex(v.base),f:null,...(v.baseMesh?{vb:buf(v.baseMesh.verts),ib:buf(v.baseMesh.idx,true),n:v.baseMesh.idx.length}:quad(0,0,o.PW,o.PH))},strands:v.strands.map(s=>({t:tex(s.src),f:tex(s.fea),vb:buf(s.verts),ib:buf(s.idx,true),n:s.idx.length,root:s.root}))};
-    return true;}
-  function unload(v){if(!v.gpu||!gl){v.gpu=null;return;}for(const m of [v.gpu.base,...v.gpu.strands]){gl.deleteTexture(m.t);if(m.f)gl.deleteTexture(m.f);gl.deleteBuffer(m.vb);gl.deleteBuffer(m.ib);}v.gpu=null;}
-  function mesh(m,u){gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,m.f||ONE);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,m.t);
-    /* (no Safari cada chamada vai por outro processo: só o que muda de uma mecha para outra é enviado) */
-    gl.bindBuffer(gl.ARRAY_BUFFER,m.vb);
-    gl.vertexAttribPointer(L.aPos,2,gl.FLOAT,false,24,0);gl.vertexAttribPointer(L.aUV,2,gl.FLOAT,false,24,8);
-    gl.vertexAttribPointer(L.aW,1,gl.FLOAT,false,24,16);gl.vertexAttribPointer(L.aR,1,gl.FLOAT,false,24,20);
-    gl.uniform1f(L.uRim,u.rim?1:0);gl.uniform2f(L.uRoot,u.root[0],u.root[1]);gl.uniform2f(L.uShear,u.sh[0],u.sh[1]);gl.uniform1f(L.uMix,u.mix);gl.uniform1f(L.uBend,u.bend);gl.uniform1f(L.uWob,u.wob);gl.uniform1f(L.uPh,u.ph);gl.uniform1f(L.uFeaK,u.fea);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,m.ib);gl.drawElements(gl.TRIANGLES,m.n,gl.UNSIGNED_SHORT,0);}
-
-  async function build(e){
+/* ---------- preparação das camadas (CPU), guardada para a página inteira ----------
+   Recortar cada mecha, achar as bordas de corte e montar a malha leva tempo (centenas de ms por expressão no iPhone).
+   Feito de uma vez na hora de abrir o depoimento, travava a tela por alguns segundos. Agora:
+   - é feito aos poucos, cedendo a vez entre uma mecha e outra (a cena continua andando);
+   - fica guardado para a página: prewarmHair() já prepara tudo enquanto o jogador ainda está na casa, e abrir (ou
+     reabrir) o depoimento só manda as texturas para a placa de vídeo. */
+const nap=()=>new Promise(r=>setTimeout(r,0));
+const MANI=new Map(),CPU=new Map();
+function manifest(url){let p=MANI.get(url);if(!p){p=fetch(url).then(r=>r.ok?r.json():null).then(j=>j&&j.expressions?j:null).catch(()=>null);MANI.set(url,p);}return p;}
+/* uma expressão de cada vez para a página inteira (duas preparações juntas só disputariam o mesmo tempo) */
+let chain=Promise.resolve();
+function cpuBuild(url,e,o){const k=url+'|'+e+'|'+o.PW+'x'+o.PH;let p=CPU.get(k);
+  if(!p){p=chain.then(()=>manifest(url)).then(M=>M&&M.expressions[e]?buildExpr(url.replace(/manifest\.json$/,''),M,e,o):null).catch(()=>null);chain=p.then(()=>{},()=>{});CPU.set(k,p);}
+  return p;}
+/** prepara as camadas antes de abrir o depoimento (o.url, o.PW, o.PH, o.mask, o.exprs) */
+export function prewarmHair(o){for(const e of o.exprs)cpuBuild(o.url,e,o);}
+async function buildExpr(base,M,e,o){const W0=()=>(M&&M.resolution&&M.resolution.width)||900;
     if(!M||!M.expressions[e])return null;const E=M.expressions[e],s=o.PW/W0();
     const [bimg,...rest]=await Promise.all([loadImg(base+E.base),...E.strands.flatMap(st=>[loadImg(base+st.file),loadImg(base+st.weight)])]);
-    if(dead||!bimg)return null;
+    if(!bimg)return null;await nap();
     // base sem as mechas, recortada pela máscara da figura (como o retrato oficial)
     const bc=document.createElement('canvas');bc.width=o.PW;bc.height=o.PH;const bx=bc.getContext('2d',{willReadFrequently:true});bx.drawImage(bimg,0,0,o.PW,o.PH);
     if(o.mask){bx.globalCompositeOperation='destination-in';bx.drawImage(o.mask,0,0,o.PW,o.PH);bx.globalCompositeOperation='source-over';}
-    const B=bx.getImageData(0,0,o.PW,o.PH).data;
+    const B=bx.getImageData(0,0,o.PW,o.PH).data;await nap();
     const strands=[];const tc=document.createElement('canvas');tc.width=o.PW;tc.height=o.PH;const tx=tc.getContext('2d',{willReadFrequently:true});
     const order=E.strands.map((st,i)=>({st,img:rest[i*2],wt:rest[i*2+1]})).sort((a,b)=>(a.st.zIndex||0)-(b.st.zIndex||0));
     const G=Math.max(2.5,GRID*s),FW=Math.max(3,FEATHER*s);
-    for(const {st,img,wt} of order){if(!img||!wt)continue;
+    for(const {st,img,wt} of order){if(!img||!wt)continue;await nap();
       tx.clearRect(0,0,o.PW,o.PH);tx.drawImage(img,0,0,o.PW,o.PH);const A=tx.getImageData(0,0,o.PW,o.PH).data;
       let x0=o.PW,y0=o.PH,x1=-1,y1=-1;for(let y=0;y<o.PH;y++)for(let x=0;x<o.PW;x++){if(A[(y*o.PW+x)*4+3]>2){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}}
       if(x1<0)continue;x0=Math.max(0,x0-2);y0=Math.max(0,y0-2);x1=Math.min(o.PW-1,x1+2);y1=Math.min(o.PH-1,y1+2);const w=x1-x0+1,h=y1-y0+1;
@@ -203,16 +171,69 @@ export function createHair(o){
     for(let j=0;j<br_;j++)for(let i=0;i<bc_;i++){let any=false;
       for(let y=Math.max(0,j*BG-1);y<Math.min(o.PH,(j+1)*BG+1)&&!any;y++)for(let x=Math.max(0,i*BG-1);x<Math.min(o.PW,(i+1)*BG+1);x++)if(B[(y*o.PW+x)*4+3]>0){any=true;break;}
       if(any){const a=j*BC+i;bi.push(a,a+1,a+BC+1,a,a+BC+1,a+BC);}}
-    return {base:bc,baseMesh:bi.length?{verts:bv,idx:new Uint16Array(bi)}:null,strands,s,gpu:null};
+    return {base:bc,baseMesh:bi.length?{verts:bv,idx:new Uint16Array(bi)}:null,strands,s};
+}
+
+/** o.url: manifest.json; o.PW,o.PH: tamanho em que o retrato é guardado (a escala do jogo); o.mask: máscara da figura (Image);
+    o.canvas: o canvas visível onde a figura é desenhada (fica por baixo do canvas 2D do retrato) */
+export function createHair(o){
+  let M=null,dead=false;const cache=new Map(),wait=new Map();
+  const base=o.url.replace(/manifest\.json$/,'');
+  const ready=manifest(o.url).then(j=>{M=j;return !!M});
+  const W0=()=>(M&&M.resolution&&M.resolution.width)||900;
+
+  /* ---------- WebGL no canvas visível ---------- */
+  const cv=o.canvas;let gl=null,prog=null,L=null,lost=false,VW=400,VH=430;
+  function glInit(){
+    if(gl||lost)return !!gl;
+    cv.addEventListener('webglcontextlost',ev=>{ev.preventDefault();lost=true;gl=null;},false);
+    try{gl=cv.getContext('webgl',{premultipliedAlpha:true,alpha:true,antialias:false,depth:false,stencil:false,preserveDrawingBuffer:false,powerPreference:'low-power'});}catch(_){gl=null;}
+    if(!gl){lost=true;return false;}
+    const sh=(t,s)=>{const x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);return x;};
+    prog=gl.createProgram();gl.attachShader(prog,sh(gl.VERTEX_SHADER,VS));gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(prog);
+    if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){try{console.warn('cabelo: sombreador',gl.getProgramInfoLog(prog),gl.getShaderInfoLog(gl.getAttachedShaders(prog)[1]));}catch(_){/* sem log */}gl=null;lost=true;return false;}
+    gl.useProgram(prog);L={};
+    for(const n of ['aPos','aUV','aW','aR'])L[n]=gl.getAttribLocation(prog,n);
+    for(const n of ['uWet','uRim','uTexel','uView','uViewF','uRoot','uShear','uMix','uXf','uK','uBend','uWob','uGust','uT','uPh','uTex','uFea','uFeaK','uAlpha','uGr','uGb','uPI','uPx','uPr','uPb'])L[n]=gl.getUniformLocation(prog,n);
+    gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
+    gl.uniform1i(L.uTex,0);gl.uniform1i(L.uFea,1);gl.uniform2f(L.uTexel,1/o.PW,1/o.PH);
+    for(const a of ['aPos','aUV','aW','aR'])gl.enableVertexAttribArray(L[a]);
+    // textura "sem esfumado" para a base
+    const one=document.createElement('canvas');one.width=one.height=1;const ox=one.getContext('2d');ox.fillStyle='#fff';ox.fillRect(0,0,1,1);ONE=tex(one);
+    return true;
   }
-  function want(e){if(cache.has(e)||wait.has(e))return;const p=ready.then(ok=>ok?build(e):null).then(v=>{wait.delete(e);if(v&&!dead){cache.set(e,v);upload(v);}return v;});wait.set(e,p);}
+  let ONE=null;
+  function tex(img){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img);return t;}
+  function buf(data,isIdx){const b=gl.createBuffer();const T=isIdx?gl.ELEMENT_ARRAY_BUFFER:gl.ARRAY_BUFFER;gl.bindBuffer(T,b);gl.bufferData(T,data,gl.STATIC_DRAW);return b;}
+  function upload(v){if(v.gpu)return true;if(!glInit())return false;
+    const quad=(x,y,w,h)=>({vb:buf(new Float32Array([x,y,0,0,0,0, x+w,y,1,0,0,0, x,y+h,0,1,0,0, x+w,y+h,1,1,0,0])),ib:buf(new Uint16Array([0,1,2,2,1,3]),true),n:6});
+    v.gpu={base:{t:tex(v.base),f:null,...(v.baseMesh?{vb:buf(v.baseMesh.verts),ib:buf(v.baseMesh.idx,true),n:v.baseMesh.idx.length}:quad(0,0,o.PW,o.PH))},strands:v.strands.map(s=>({t:tex(s.src),f:tex(s.fea),vb:buf(s.verts),ib:buf(s.idx,true),n:s.idx.length,root:s.root}))};
+    return true;}
+  function unload(v){if(!v.gpu||!gl){v.gpu=null;return;}for(const m of [v.gpu.base,...v.gpu.strands]){gl.deleteTexture(m.t);if(m.f)gl.deleteTexture(m.f);gl.deleteBuffer(m.vb);gl.deleteBuffer(m.ib);}v.gpu=null;}
+  function mesh(m,u){gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,m.f||ONE);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,m.t);
+    /* (no Safari cada chamada vai por outro processo: só o que muda de uma mecha para outra é enviado) */
+    gl.bindBuffer(gl.ARRAY_BUFFER,m.vb);
+    gl.vertexAttribPointer(L.aPos,2,gl.FLOAT,false,24,0);gl.vertexAttribPointer(L.aUV,2,gl.FLOAT,false,24,8);
+    gl.vertexAttribPointer(L.aW,1,gl.FLOAT,false,24,16);gl.vertexAttribPointer(L.aR,1,gl.FLOAT,false,24,20);
+    gl.uniform1f(L.uRim,u.rim?1:0);gl.uniform2f(L.uRoot,u.root[0],u.root[1]);gl.uniform2f(L.uShear,u.sh[0],u.sh[1]);gl.uniform1f(L.uMix,u.mix);gl.uniform1f(L.uBend,u.bend);gl.uniform1f(L.uWob,u.wob);gl.uniform1f(L.uPh,u.ph);gl.uniform1f(L.uFeaK,u.fea);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,m.ib);gl.drawElements(gl.TRIANGLES,m.n,gl.UNSIGNED_SHORT,0);}
+
+  /* a textura de cada expressão sobe para a placa de vídeo uma por quadro (pump, em step), ou na hora, se for pedida antes */
+  const pend=[];
+  function want(e){if(cache.has(e)||wait.has(e))return;const p=cpuBuild(o.url,e,o).then(c=>{wait.delete(e);if(c&&!dead){const v={...c,gpu:null};cache.set(e,v);pend.push(v);}return c;});wait.set(e,p);}
+  function pump(){while(pend.length){const v=pend.shift();if(!v.gpu&&[...cache.values()].includes(v)){upload(v);return;}}}
   /** mantém só as expressões pedidas carregadas (e já na placa de vídeo) */
-  function keep(list){for(const e of [...cache.keys()])if(!list.includes(e)){const v=cache.get(e);unload(v);v.base.width=v.base.height=0;for(const s of v.strands){s.src.width=s.src.height=0;s.fea.width=s.fea.height=0;}cache.delete(e);}for(const e of list)want(e);}
+  function keep(list){for(const e of [...cache.keys()])if(!list.includes(e)){unload(cache.get(e));cache.delete(e);}for(const e of list)want(e);}
 
   /* ---------- física: um pêndulo com mola por mecha ---------- */
   const PHY=[];let lastT=-1,D={wob:0,gust:0};
   /** uma vez por quadro. d: wx,wy = vetor do vento (tela, y para baixo; tamanho = força, até ~1); wob = balanço (rad); gust = 0..1 */
   function step(t,d){
+    if(gl||!lost)pump();
     const dt=lastT<0?0:Math.min(.05,Math.max(0,t-lastT));lastT=t;D=d;
     const v=[...cache.values()][0];if(!v)return;
     v.strands.forEach((st,i)=>{const ph=PHY[i]||(PHY[i]={a:0,w:0,x:0,y:0,vx:0,vy:0});
@@ -227,7 +248,7 @@ export function createHair(o){
       const amp=26*soft,tx=d.wx*amp+turb*6*soft,ty=d.wy*amp;
       if(dt>0){ph.vx+=(K*(tx-ph.x)-C*ph.vx)*dt;ph.x+=ph.vx*dt;ph.vy+=(K*(ty-ph.y)-C*ph.vy)*dt;ph.y+=ph.vy*dt;}});}
   /** a figura pronta para desenhar? (expressões carregadas e WebGL vivo) */
-  const ok=(...es)=>!lost&&es.every(e=>!e||(cache.get(e)&&cache.get(e).gpu));
+  const ok=(...es)=>!lost&&es.every(e=>{if(!e)return true;const v=cache.get(e);if(!v)return false;if(!v.gpu)upload(v);return !!v.gpu;});
   /** tamanho do canvas visível: css (VW×VH, o espaço do retrato) × resolução r */
   function resize(vw,vh,r){VW=vw;VH=vh;const W=Math.max(1,Math.round(vw*r)),H=Math.max(1,Math.round(vh*r));if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;}}
   /** desenha a figura no canvas visível. layers: [{e,alpha}] na ordem (a anterior inteira, a nova por cima no cruzamento);

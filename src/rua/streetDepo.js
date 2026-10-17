@@ -14,11 +14,56 @@ import { progressOf, withProgress } from '../case/depositions'
 import { DEFAULT_DISCOVERED } from '../team/teamData'
 import { fxOn, onFxChange } from '../settings/gameSettings'
 import { getQuality } from '../characters/quality'
-import { createHair } from './hairWind'
+import { createHair, prewarmHair } from './hairWind'
 import { createTapeGL } from './tapeGL'
 
 const LUPA='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>';
 const esc=s=>String(s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+
+/* ---------- preparar antes de abrir ----------
+   Abrir o depoimento pedia de uma vez: baixar e decodificar as imagens (retratos, cenário, curiosos), recortar os retratos
+   pela máscara e preparar as camadas do cabelo. Isso travava a tela por alguns segundos ao tocar em "Jorge".
+   prewarmStreetDepo(id) faz tudo isso antes, aos poucos, enquanto o jogador ainda está na casa (a casa chama quando a
+   testemunha aparece na barra). Imagens e retratos ficam guardados para a página; abrir só monta a cena. */
+const nap=()=>new Promise(r=>setTimeout(r,0));
+const IMG=new Map();
+/* imagem baixada e já decodificada (o decode fora da hora de desenhar evita o tranco do primeiro desenho) */
+function imgOnce(src){let p=IMG.get(src);if(!p){p=new Promise(r=>{const i=new Image();i.decoding='async';i.onload=()=>{const d=i.decode?i.decode().catch(()=>{}):Promise.resolve();d.then(()=>r(i))};i.onerror=()=>r(null);i.src=src});IMG.set(src,p)}return p}
+const ART_SRC=()=>{const B=import.meta.env.BASE_URL||'/';return{bg:B+'cenarios/rua-acacias/frente-noite.jpg',poste:B+'cenarios/rua-acacias/frente-noite-poste.png',crowd:[1,2,3,4,5,6,7,8].map(n=>`${B}characters/curiosos/fundo/curioso-0${n}.png`)}};
+const PW=540,PH=720;
+function exprsOf(cfg,CH){return [...new Set([cfg.idleExpression||'neutral','neutral','uncomfortable',...cfg.questions.map(q=>q.expression).filter(Boolean)])].filter(e=>CH.assets[e])}
+/* retratos oficiais recortados pela máscara, o tom da pele para o piscar e as bocas: feitos uma vez por personagem */
+const PORTRAITS=new Map();
+function portraitSet(CH,VD,EXPRS){const k=CH.figureMask+'|'+EXPRS.join(',');let p=PORTRAITS.get(k);if(p)return p;
+  p=Promise.all([imgOnce(CH.figureMask),VD?imgOnce(VD.src):null,...EXPRS.map(e=>imgOnce(CH.assets[e].src))]).then(async([mask,vis,...ims])=>{
+    const imgs={},skins={};
+    const tmp=document.createElement('canvas');tmp.width=300;tmp.height=400;const x=tmp.getContext('2d');
+    for(let i=0;i<EXPRS.length;i++){const e=EXPRS[i],im=ims[i];if(!im)continue;
+      const c=document.createElement('canvas');c.width=PW;c.height=PH;const cx2=c.getContext('2d');cx2.drawImage(im,0,0,PW,PH);
+      if(mask){cx2.globalCompositeOperation='destination-in';cx2.drawImage(mask,0,0,PW,PH);cx2.globalCompositeOperation='source-over'}
+      imgs[e]=c;x.clearRect(0,0,300,400);x.drawImage(im,0,0,300,400);
+      /* tom da pele (bochecha) para a pálpebra do piscar */
+      try{const a=CH.assets[e],L=a.eyes.left,R=a.eyes.right,dist=R.cx-L.cx,mx=(L.cx+R.cx)/2,my=(L.cy+R.cy)/2;
+        const d=x.getImageData(Math.round((mx-dist*.52)/3-2),Math.round((my+dist*.71)/3-2),5,5).data;let r=0,g=0,b=0,n=0;
+        for(let q=0;q<d.length;q+=4){r+=d[q];g+=d[q+1];b+=d[q+2];n++}skins[e]=`rgb(${r/n|0},${g/n|0},${b/n|0})`}catch(_){skins[e]='rgb(150,95,60)'}
+      await nap()}
+    /* bocas oficiais (folha de visemas) com a borda esfumada, para assentar sobre o retrato */
+    if(vis&&VD){const c=document.createElement('canvas');c.width=vis.width;c.height=vis.height;const x=c.getContext('2d');x.drawImage(vis,0,0);
+      const m=document.createElement('canvas');m.width=c.width;m.height=c.height;const mx=m.getContext('2d');
+      for(let i=0;i<VD.order.length;i++){const cx=i*VD.cellW+VD.center[0],cy=VD.center[1]+3,rx=VD.cellW*.24,ry=VD.cellH*.42;
+        mx.save();mx.translate(cx,cy);mx.scale(1,ry/rx);const g=mx.createRadialGradient(0,0,0,0,0,rx);g.addColorStop(0,'#000');g.addColorStop(.78,'#000');g.addColorStop(1,'rgba(0,0,0,0)');mx.fillStyle=g;mx.fillRect(-rx,-rx,rx*2,rx*2);mx.restore()}
+      x.globalCompositeOperation='destination-in';x.drawImage(m,0,0);m.width=m.height=0;imgs.visemes=c}
+    tmp.width=tmp.height=0;
+    return {imgs,skins,mask};
+  });
+  PORTRAITS.set(k,p);return p}
+/** prepara o depoimento de `id` sem abrir (imagens, retratos e cabelo), aos poucos */
+export function prewarmStreetDepo(id){
+  const cfg=interrogations[id];if(!cfg)return;const CH=characters[cfg.personId];if(!CH)return;
+  const A=ART_SRC();imgOnce(A.bg);imgOnce(A.poste);A.crowd.forEach(imgOnce);
+  const EXPRS=exprsOf(cfg,CH);
+  portraitSet(CH,CH.visemes||null,EXPRS).then(({mask})=>{if(CH.hair&&getQuality()!=='low')prewarmHair({url:CH.hair,PW,PH,mask,exprs:EXPRS})});
+}
 
 /** Abre o depoimento na rua de `id` (um depoimento de src/interrogation/registry.ts) por cima de `host`.
     opts: {onClose(), onClue(id), sound:boolean, clock():string}. Devolve {close}. */
@@ -65,28 +110,12 @@ export function openStreetDepo(host,id,opts={}){
   let busy=false,curQ=null,circled=false,seq=null,typing=null,clueCount=0;const NOTES2=[];
 
   /* ---------- retrato oficial: uma imagem por expressão, recortada pela máscara da figura ---------- */
-  const imgs={},skins={};let ready=false;const PW=540,PH=720;
-  const loadImg=src=>new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src});
-  const EXPRS=[...new Set([cfg.idleExpression||'neutral','neutral','uncomfortable',...cfg.questions.map(q=>q.expression).filter(Boolean)])].filter(e=>CH.assets[e]);
-  Promise.all([loadImg(CH.figureMask),VD?loadImg(VD.src):null,...EXPRS.map(e=>loadImg(CH.assets[e].src))]).then(([mask,vis,...ims])=>{
+  const imgs={},skins={};let ready=false;
+  const loadImg=imgOnce;
+  const EXPRS=exprsOf(cfg,CH);
+  portraitSet(CH,VD,EXPRS).then(({imgs:I,skins:K,mask})=>{
     if(!alive)return;
-    const tmp=document.createElement('canvas');tmp.width=300;tmp.height=400;const x=tmp.getContext('2d');
-    EXPRS.forEach((e,i)=>{const im=ims[i];if(!im)return;
-      const c=document.createElement('canvas');c.width=PW;c.height=PH;const cx2=c.getContext('2d');cx2.drawImage(im,0,0,PW,PH);
-      if(mask){cx2.globalCompositeOperation='destination-in';cx2.drawImage(mask,0,0,PW,PH);cx2.globalCompositeOperation='source-over'}
-      imgs[e]=c;x.clearRect(0,0,300,400);x.drawImage(im,0,0,300,400);
-      /* tom da pele (bochecha) para a pálpebra do piscar */
-      try{const a=CH.assets[e],L=a.eyes.left,R=a.eyes.right,dist=R.cx-L.cx,mx=(L.cx+R.cx)/2,my=(L.cy+R.cy)/2;
-        const d=x.getImageData(Math.round((mx-dist*.52)/3-2),Math.round((my+dist*.71)/3-2),5,5).data;let r=0,g=0,b=0,n=0;
-        for(let k=0;k<d.length;k+=4){r+=d[k];g+=d[k+1];b+=d[k+2];n++}skins[e]=`rgb(${r/n|0},${g/n|0},${b/n|0})`}catch(_){skins[e]='rgb(150,95,60)'}
-    });
-    /* bocas oficiais (folha de visemas) com a borda esfumada, para assentar sobre o retrato */
-    if(vis&&VD){const c=document.createElement('canvas');c.width=vis.width;c.height=vis.height;const x=c.getContext('2d');x.drawImage(vis,0,0);
-      const m=document.createElement('canvas');m.width=c.width;m.height=c.height;const mx=m.getContext('2d');
-      for(let i=0;i<VD.order.length;i++){const cx=i*VD.cellW+VD.center[0],cy=VD.center[1]+3,rx=VD.cellW*.24,ry=VD.cellH*.42;
-        mx.save();mx.translate(cx,cy);mx.scale(1,ry/rx);const g=mx.createRadialGradient(0,0,0,0,0,rx);g.addColorStop(0,'#000');g.addColorStop(.78,'#000');g.addColorStop(1,'rgba(0,0,0,0)');mx.fillStyle=g;mx.fillRect(-rx,-rx,rx*2,rx*2);mx.restore()}
-      x.globalCompositeOperation='destination-in';x.drawImage(m,0,0);m.width=m.height=0;imgs.visemes=c}
-    tmp.width=tmp.height=0;
+    Object.assign(imgs,I);Object.assign(skins,K);
     ready=true;
     /* cabelo ao vento (src/rua/hairWind.js): só se o personagem tem as camadas e o ajuste está ligado */
     if(CH.hair){HAIR=createHair({url:CH.hair,PW,PH,mask,canvas:cvHair});HAIR.resize(400,430,ACR);}hairSync();
@@ -115,10 +144,10 @@ export function openStreetDepo(host,id,opts={}){
 
   /* ---------- cenário e curiosos oficiais (creative-requests/deliveries/2026-10-15) ---------- */
   const ART={bg:null,poste:null,crowd:[],far:[]};
-  {const B=import.meta.env.BASE_URL||'/';
-    loadImg(B+'cenarios/rua-acacias/frente-noite.jpg').then(i=>{if(alive)ART.bg=i});
-    loadImg(B+'cenarios/rua-acacias/frente-noite-poste.png').then(i=>{if(alive)ART.poste=i});
-    Promise.all([1,2,3,4,5,6,7,8].map(n=>loadImg(`${B}characters/curiosos/fundo/curioso-0${n}.png`))).then(list=>{if(!alive)return;
+  {const A=ART_SRC();
+    loadImg(A.bg).then(i=>{if(alive)ART.bg=i});
+    loadImg(A.poste).then(i=>{if(alive)ART.poste=i});
+    Promise.all(A.crowd.map(loadImg)).then(list=>{if(!alive)return;
       /* de madrugada: cada figura escurecida e fria uma vez só; a fileira de trás ainda mais apagada pela garoa */
       list.forEach((im,i)=>{if(!im)return;for(const far of [0,1]){const c=document.createElement('canvas');c.width=150;c.height=300;const x=c.getContext('2d');x.drawImage(im,0,0,150,300);
         x.globalCompositeOperation='source-atop';x.fillStyle=far?'rgba(22,28,42,.62)':'rgba(8,12,26,.42)';x.fillRect(0,0,150,300);
