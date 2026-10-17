@@ -88,10 +88,7 @@ export function openStreetDepo(host,id,opts={}){
   root.innerHTML=`<div class="sd-wrap"><div class="sd-stage" id="sd-stage">
     <div class="scene"><div class="layer" id="sd-Lbg"><canvas id="sd-bg"></canvas><canvas id="sd-tapegl" style="visibility:hidden"></canvas><canvas id="sd-tape"></canvas></div><div class="dim"></div><div class="layer" id="sd-Lac"><canvas id="sd-hair" style="visibility:hidden"></canvas><canvas id="sd-ac"></canvas></div><div class="layer" id="sd-Lfg"><canvas id="sd-debM" style="visibility:hidden"></canvas><canvas id="sd-fg"></canvas><canvas id="sd-debN" style="visibility:hidden"></canvas></div></div>
     <div class="grade"></div><canvas id="sd-grain" width="422" height="195"></canvas><div class="vig"></div>
-    <div class="rec"><i></i>REC <b id="sd-clock">00:00:00</b><span>NA CENA · RUA DAS ACÁCIAS</span></div>
-    <div class="focus">FOCO · <b id="sd-focus">CADERNO</b></div>
-    <div class="mark" aria-hidden="true"><b>DHPP</b><i></i><span>HOMICÍDIOS</span></div>
-    <div class="tag" aria-hidden="true"><b>${esc(cfg.name.toUpperCase())}</b><i></i><span>${esc((PERSON.role||'').toUpperCase())}</span></div>
+    <!-- sem letreiros por cima da cena (REC, foco, marca e nome): só a rua, o Jorge e o caderno, pela imersão (17/10/2026) -->
     <div class="pad" id="sd-pad"></div>
     <div class="sub" id="sd-sub" aria-live="polite"></div>
     <canvas id="sd-fx" style="visibility:hidden"></canvas>
@@ -1165,7 +1162,7 @@ export function openStreetDepo(host,id,opts={}){
     finishTyping();const box=sub.querySelector('span');if(!box)return;box.classList.add('hlon');SFX.marker();
     const ks=[...box.querySelectorAll('.c.k')];
     setTimeout(()=>{
-      stage.classList.add('noting');camMode('note');$('#sd-focus').textContent='CADERNO';SFX.rustle();NOTES2.push({t:q.title,st:'pend'});renderPad();
+      stage.classList.add('noting');camMode('note');SFX.rustle();NOTES2.push({t:q.title,st:'pend'});renderPad();
       setTimeout(()=>{
         const r=ks.length?ks.map(spos):[spos(box)],x0=Math.min(...r.map(a=>a.x)),y0=Math.min(...r.map(a=>a.y));
         const fl=document.createElement('div');fl.className='flyer';fl.textContent=q.clue;fl.style.left=x0+'px';fl.style.top=(y0-1)+'px';stage.appendChild(fl);
@@ -1327,17 +1324,13 @@ export function openStreetDepo(host,id,opts={}){
     perf(dt);
     mouthStep(now,dt);typeStep(now);drawActor(now,t,g);camStep(now,t,dt);
     const f=cvFg.getContext('2d');f.setTransform(cvFg._r,0,0,cvFg._r,0,0);f.clearRect(0,0,W,H);s.fg(f,t,g);
-    const sec=Math.floor((now-t0)/1000),p=n=>String(n).padStart(2,'0');
-    /* o relógio só é reescrito quando muda (uma vez por segundo): texto novo a cada quadro obrigava o navegador a refazer o layout */
-    if(sec!==lastSec){lastSec=sec;clockEl.textContent=`${p(Math.floor(sec/3600))}:${p(Math.floor(sec/60)%60)}:${p(sec%60)}`}
     requestAnimationFrame(frame);
   }
-  const clockEl=$('#sd-clock');let lastSec=-1;
 
   /* ---------- conversa: mesmas perguntas e o mesmo progresso do depoimento da base ---------- */
   const IDLE=cfg.idleExpression&&CH.assets[cfg.idleExpression]?cfg.idleExpression:'neutral';
   expr=IDLE;
-  const pad=$('#sd-pad'),sub=$('#sd-sub'),focusEl=$('#sd-focus');
+  const pad=$('#sd-pad'),sub=$('#sd-sub'),focusEl={};   // (o letreiro de foco saiu da tela; o estado continua nas classes do palco)
   const clueTitle=cid=>CLUES.find(c=>c.id===cid)?.title||cid;
   let P=progressOf(readCase(),id);
   const qOf=x=>{const h=x.highlights?.[0];return{id:x.id,q:x.question,a:x.answer,e:x.expression&&CH.assets[x.expression]?x.expression:IDLE,

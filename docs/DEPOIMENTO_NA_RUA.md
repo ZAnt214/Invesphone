@@ -69,7 +69,7 @@ A foto oficial é mexida em código, sem redesenhar: a árvore, a copa atrás do
 - Os canvases das folhas (`#sd-debM`, `#sd-debN`), o das partículas de pista (`#sd-fx`) e, com o cabelo na placa de vídeo, o da boca (`#sd-ac`) ficam escondidos enquanto estão vazios. O grão do filme fecha (o alfa soma até ficar opaco) em ~2 s e depois para de ser redesenhado.
 - Com o cabelo na placa de vídeo, a luz da cena sobre a boca e as pálpebras é pintada só no retângulo do rosto; a base da figura vai numa malha só onde há figura; e só o que muda de uma mecha para outra é enviado à placa (no Safari cada chamada vai para outro processo).
 - A sombra e a luz da fita (no 2D de reserva) preenchem só a fita, não o retângulo em volta.
-- O relógio do REC só é reescrito quando o segundo muda.
+- Sem letreiros por cima da cena (17/10/2026, pela imersão): saíram o REC com o relógio, o "FOCO · CADERNO", a marca do DHPP e o nome e a função do Jorge. Na tela ficam só a rua, o Jorge, o caderno e a legenda; o nome do lugar aparece só nas faixas de cinema da entrada.
 
 ## Jorge molhado (`depo.wet`)
 
