@@ -3189,7 +3189,11 @@ HUD.setCount(CASE.clues.length,false);
 /* ---------- depoimento na rua (src/rua/streetDepo.js, docs/DEPOIMENTO_NA_RUA.md) ----------
    A PM separa o vigia na fita; o botão "Jorge" na barra de baixo abre a conversa ali mesmo, na frente da casa.
    O progresso é o mesmo do depoimento da base: o que for perguntado aqui já conta lá. */
-function syncWitness(){const b=$('#t-depo');if(!b)return;const g=readCase();b.hidden=!((g.discoveredPeople||[]).includes('jorge')&&!g.interviewed.includes('jorge'));}
+function syncWitness(){const b=$('#t-depo');if(!b)return;const g=readCase();b.hidden=!((g.discoveredPeople||[]).includes('jorge')&&!g.interviewed.includes('jorge'));if(!b.hidden)prewarmWitness();}
+/* com a testemunha disponível, o depoimento é preparado aos poucos, em segundo plano (imagens, retratos, cabelo):
+   tocar em "Jorge" abre na hora, sem a trava de alguns segundos que havia antes */
+let witnessWarm=false;
+function prewarmWitness(){if(witnessWarm)return;witnessWarm=true;setTimeout(()=>{import('../rua/streetDepo').then(m=>m.prewarmStreetDepo('jorge')).catch(()=>{witnessWarm=false;});},1200);}
 function revealWitness(id){CASE=writeCase(g=>{const k=g.discoveredPeople||[],s=g.summonedPeople||[];return {...g,discoveredPeople:k.includes(id)?k:[...k,id],summonedPeople:s.includes(id)?s:[...s,id]};});syncWitness();const b=$('#t-depo');if(b&&!b.hidden)b.classList.add('new');if(HUD)HUD.refresh();}
 function openWitness(){
   if(streetDepo)return;const b=$('#t-depo');if(b)b.classList.remove('new');
