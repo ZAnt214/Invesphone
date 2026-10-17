@@ -111,4 +111,4 @@
 @media (prefers-reduced-motion:reduce){.sd .pad{transition:none}.sd .rec i{animation:none}.sd .asked path{stroke-dashoffset:0;animation:none}}
 
 /* com o depoimento aberto, o que está por baixo (a cena da casa) não é composto */
-.sd-under>:not(.sd){visibility:hidden!important}
+.sd-under>:not(.sd):not(.fps-meter){visibility:hidden!important}
