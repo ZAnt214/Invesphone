@@ -22,7 +22,7 @@ const FEATHER=13;  // largura do esfumado nas bordas de corte, em px da imagem o
 const loadImg=src=>new Promise(r=>{const i=new Image();i.decoding='async';i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src});
 
 const VS=`attribute vec2 aPos;attribute vec2 aUV;attribute float aW;attribute float aR;
-uniform vec2 uView,uRoot,uShear;uniform vec4 uXf;uniform float uK,uBend,uWob,uGust,uT,uPh,uMix;varying vec2 vUV;varying vec2 vA;
+uniform vec2 uView,uRoot,uShear;uniform vec4 uXf;uniform float uK,uBend,uWob,uGust,uT,uPh,uMix;varying vec2 vUV;varying vec2 vA;varying vec2 vO;
 void main(){
   float wave=sin(uT*2.2-aR*2.6+uPh)*.6+sin(uT*3.9-aR*3.4+uPh*1.7)*.4
     +uGust*(sin(uT*9.1-aR*5.0+uPh*2.3)*.55+sin(uT*13.7-aR*6.2+uPh*3.1)*.3+sin(uT*5.3-aR*3.0+uPh*.7)*.4);
@@ -34,7 +34,7 @@ void main(){
   vec2 sh=aPos+uShear*aW*(1.0+.3*wave)+vec2(-uShear.y,uShear.x)*aW*.18*wave;
   vec2 q=mix(rot,sh,uMix)*uK;                             /* px da imagem original */
   vec2 a=q*uXf.zw+uXf.xy;                                 /* px do retrato na tela (400×430) */
-  vA=a;vec2 p=a/uView*2.0-1.0;
+  vA=a;vO=aPos;vec2 p=a/uView*2.0-1.0;
   gl_Position=vec4(p.x,-p.y,0.0,1.0);vUV=aUV;}`;
 /* luz: as mesmas camadas que o canvas 2D aplicava por cima do retrato (source-atop), na mesma ordem */
 const FS=`#ifdef GL_FRAGMENT_PRECISION_HIGH
@@ -42,14 +42,15 @@ precision highp float;
 #else
 precision mediump float;
 #endif
-uniform sampler2D uTex,uFea;uniform float uFeaK,uAlpha,uGr,uGb,uPI,uPx,uPr,uPb,uRim;uniform vec2 uViewF,uTexel;
-varying vec2 vUV;varying vec2 vA;
+uniform sampler2D uTex,uFea;uniform float uFeaK,uAlpha,uGr,uGb,uPI,uPx,uPr,uPb,uRim,uWet;uniform vec2 uViewF,uTexel;
+varying vec2 vUV;varying vec2 vA;varying vec2 vO;
 vec3 over(vec3 p,float pa,vec3 c,float a){return p*(1.0-a)+c*a*pa;}
 void main(){
   vec4 t=texture2D(uTex,vUV);
   float f=mix(1.0,texture2D(uFea,vUV).a,uFeaK);t*=f;
   if(t.a<.002)discard;
   float w=uViewF.x,h=uViewF.y,y=vA.y/h,x=vA.x/w;vec3 p=t.rgb;
+  vec3 base=t.rgb/max(t.a,.001);float bmx=max(base.r,max(base.g,base.b)),bsat=bmx-min(base.r,min(base.g,base.b));
   p=over(p,t.a,vec3(6.,10.,24.)/255.,.34);
   p=over(p,t.a,vec3(255.,178.,96.)/255.,.3*clamp(1.0-y/.5,0.0,1.0));
   p=over(p,t.a,vec3(4.,6.,14.)/255.,.5*clamp((y-.5)/.5,0.0,1.0));
@@ -67,11 +68,34 @@ void main(){
   if(uRim>.5){
     float rl=clamp(t.a-texture2D(uTex,vUV-vec2(uTexel.x*7.0,0.0)).a,0.0,1.0);
         p+=(RED*uGr+BLU*uGb)*rl*.85*t.a;}
+  float g1=0.0;
   if(uPI>.001){
-    float d1=distance(vA,vec2(uPx,h*.4));float g1=d1<20.0?.5:(d1<192.0?mix(.5,.22,(d1-20.0)/172.0):mix(.22,0.0,clamp((d1-192.0)/128.0,0.0,1.0)));
+    float d1=distance(vA,vec2(uPx,h*.4));g1=d1<20.0?.5:(d1<192.0?mix(.5,.22,(d1-20.0)/172.0):mix(.22,0.0,clamp((d1-192.0)/128.0,0.0,1.0)));
     p=over(p,t.a,vec3(255.,246.,228.)/255.,g1*uPI);
     if(uPr>.5)p=over(p,t.a,vec3(255.,48.,48.)/255.,.38*uPI*clamp(1.0-distance(vA,vec2(uPx-40.0,h*.39))/300.0,0.0,1.0));
     if(uPb>.5)p=over(p,t.a,vec3(70.,120.,255.)/255.,.36*uPI*clamp(1.0-distance(vA,vec2(uPx+40.0,h*.39))/300.0,0.0,1.0));}
+  /* garoa no Jorge (depo.wet): ele está na chuva fina há tempo.
+     - cabelo molhado: um pouco mais escuro, com brilho nas mechas claras onde a luz bate;
+     - pele úmida: as partes mais claras do rosto devolvem a luz que chega (giroflex da esquerda, farol, poste por cima);
+     - gotas presas no cabelo e nos ombros do casaco: pontinhos na própria imagem (andam com a mecha), cada um com a
+       sombra embaixo e um ponto de luz que acende quando o giroflex ou o farol passa. */
+  if(uWet>0.0){
+    vec3 L=(RED*uGr+BLU*uGb)*xr*xr+vec3(1.0,.96,.89)*uPI*g1*2.0+vec3(1.0,.72,.42)*.22*clamp(1.0-y/.55,0.0,1.0);
+    float skin=clamp((base.r-base.b-.1)*4.0,0.0,1.0)*clamp((bmx-.3)*3.0,0.0,1.0);
+    float hair=clamp(1.0-bsat*3.5,0.0,1.0)*clamp((bmx-.22)*3.5,0.0,1.0)*clamp(1.0-(y-.38)*6.0,0.0,1.0)*(1.0-skin);
+    float coat=clamp(1.0-bmx*3.2,0.0,1.0)*clamp((y-.6)*8.0,0.0,1.0);
+    p*=1.0-.1*hair*uWet;
+    p+=((L+vec3(.07,.08,.1))*hair*pow(bmx,2.0)*.7+(L*1.3+vec3(.05,.06,.08))*skin*pow(clamp((bmx-.5)*2.6,0.0,1.0),2.0))*uWet*t.a;
+    float ok=max(hair,coat);
+    if(ok>.05){
+      vec2 g=vO/9.0,id=floor(g),fr=(fract(g)-.5)*9.0;
+      float hs=fract(sin(dot(id,vec2(127.1,311.7)))*43758.5453),hs2=fract(sin(dot(id,vec2(269.5,183.3)))*43758.5453);
+      if(hs<.3){
+        vec2 c=fr-(vec2(hs2,fract(hs2*7.13))-.5)*4.0;float r=1.2+hs2*1.3,d=length(c);
+        float body=1.0-smoothstep(r*.55,r,d),spec=1.0-smoothstep(0.0,r*.5,length(c-vec2(-.3,-.35)*r));
+        float k=ok*uWet*t.a;
+        p*=1.0-body*.3*ok*uWet;
+        p+=(vec3(.6,.65,.75)*.45+L*2.2)*spec*k*(.7+.3*hs2);}}}
   gl_FragColor=vec4(p,t.a)*uAlpha;}`;
 
 /** o.url: manifest.json; o.PW,o.PH: tamanho em que o retrato é guardado (a escala do jogo); o.mask: máscara da figura (Image);
@@ -94,7 +118,7 @@ export function createHair(o){
     if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){try{console.warn('cabelo: sombreador',gl.getProgramInfoLog(prog),gl.getShaderInfoLog(gl.getAttachedShaders(prog)[1]));}catch(_){/* sem log */}gl=null;lost=true;return false;}
     gl.useProgram(prog);L={};
     for(const n of ['aPos','aUV','aW','aR'])L[n]=gl.getAttribLocation(prog,n);
-    for(const n of ['uRim','uTexel','uView','uViewF','uRoot','uShear','uMix','uXf','uK','uBend','uWob','uGust','uT','uPh','uTex','uFea','uFeaK','uAlpha','uGr','uGb','uPI','uPx','uPr','uPb'])L[n]=gl.getUniformLocation(prog,n);
+    for(const n of ['uWet','uRim','uTexel','uView','uViewF','uRoot','uShear','uMix','uXf','uK','uBend','uWob','uGust','uT','uPh','uTex','uFea','uFeaK','uAlpha','uGr','uGb','uPI','uPx','uPr','uPb'])L[n]=gl.getUniformLocation(prog,n);
     gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
     gl.uniform1i(L.uTex,0);gl.uniform1i(L.uFea,1);gl.uniform2f(L.uTexel,1/o.PW,1/o.PH);
@@ -211,7 +235,7 @@ export function createHair(o){
   function render(t,layers,xf,light){if(!glInit())return false;
     gl.viewport(0,0,cv.width,cv.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
     gl.uniform2f(L.uView,VW,VH);gl.uniform2f(L.uViewF,VW,VH);gl.uniform4f(L.uXf,xf.tx,xf.ty,xf.sx,xf.sy);gl.uniform1f(L.uT,t%1000);gl.uniform1f(L.uGust,D.gust||0);
-    gl.uniform1f(L.uGr,light.gr||0);gl.uniform1f(L.uGb,light.gb||0);gl.uniform1f(L.uPI,light.pI||0);gl.uniform1f(L.uPx,light.px||200);gl.uniform1f(L.uPr,light.pr||0);gl.uniform1f(L.uPb,light.pb||0);
+    gl.uniform1f(L.uGr,light.gr||0);gl.uniform1f(L.uGb,light.gb||0);gl.uniform1f(L.uPI,light.pI||0);gl.uniform1f(L.uPx,light.px||200);gl.uniform1f(L.uPr,light.pr||0);gl.uniform1f(L.uPb,light.pb||0);gl.uniform1f(L.uWet,light.wet||0);
     for(const ly of layers){const v=cache.get(ly.e);if(!v||!v.gpu)continue;const k=W0()/o.PW;
       gl.uniform1f(L.uK,k);gl.uniform1f(L.uAlpha,ly.alpha);
       mesh(v.gpu.base,{root:[0,0],sh:[0,0],mix:0,bend:0,wob:0,ph:0,fea:0,rim:1});

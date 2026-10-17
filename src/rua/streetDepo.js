@@ -96,7 +96,10 @@ export function openStreetDepo(host,id,opts={}){
      uso é recomposto a cada quadro: base sem as mechas + mechas dobradas pelo mesmo vento da garoa (windAt), mais forte
      quando o helicóptero passa. Desligado, volta o retrato oficial e as camadas saem da memória. */
   let HAIR=null;
-  const hairOn=()=>!!HAIR&&FXON('depo.hair')&&!low()&&!RM&&DEG<2;   // aparelho que já precisou aliviar duas vezes: retrato parado
+  /* a figura vai pela placa de vídeo quando o cabelo mexe ou quando o Jorge está molhado (depo.wet); com o cabelo parado,
+     o vento é zero e a imagem é a oficial, só com a garoa por cima */
+  const hairMove=()=>FXON('depo.hair')&&!RM;
+  const hairOn=()=>!!HAIR&&(hairMove()||FXON('depo.wet'))&&!low()&&DEG<2;   // aparelho que já precisou aliviar duas vezes: retrato parado
   function hairSync(){if(!HAIR)return;HAIR.keep(hairOn()?[...new Set([expr,...EXPRS])]:[])}   // todas as expressões do depoimento: trocar de rosto nunca volta ao retrato parado
   /* vento do cabelo, como vetor (nunca como ângulo, para não dar salto quando o vento gira), suavizado:
      - brisa da garoa: para a direita, um pouco para baixo, fraca;
@@ -1027,11 +1030,11 @@ export function openStreetDepo(host,id,opts={}){
     if(!ready||!imgs[expr])return;
     const S=476/1200,br=RM?0:Math.sin(t*2*Math.PI/4.4);
     const f=Math.min(1,(now-fadeAt)/320);
-    const hon=hairOn();if(hon)HAIR.step(RM?0:t,hairWind(t));
+    const hon=hairOn();if(hon)HAIR.step(RM?0:t,hairMove()?hairWind(t):{wx:0,wy:0,wob:0,gust:0});
     const fading=!!(prev&&f<1&&imgs[prev]),gok=hon&&HAIR.ok(expr,fading?prev:null);
     if(gok){const fx=PS?200+Math.max(-120,Math.min(120,(PS.x-620)*.25)):200;
       HAIR.render(RM?0:t,fading?[{e:prev,alpha:1},{e:expr,alpha:f}]:[{e:expr,alpha:1}],{tx:200-450*S,ty:br*1.1,sx:S,sy:S*(1+br*.0025)},
-        {gr:g.r,gb:g.b,pI:PS?PS.I:0,px:fx,pr:PS?PS.r:0,pb:PS?PS.b:0});}
+        {gr:g.r,gb:g.b,pI:PS?PS.I:0,px:fx,pr:PS?PS.r:0,pb:PS?PS.b:0,wet:FXON('depo.wet')?1:0});}
     if(gok!==hairShown){hairShown=gok;cvHair.style.visibility=gok?'visible':'hidden';}
     /* com a figura na placa de vídeo, este canvas só tem a boca e o piscar: parado (sem fala nem piscada), não é
        redesenhado, e o navegador não reenvia a imagem dele a cada quadro */

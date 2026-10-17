@@ -72,6 +72,7 @@ export const EFFECTS:Effect[] = [
   { id:'depo.tape', cat:'depo', label:'Fita ao vento', desc:'A fita de isolamento cede no meio, ondula e torce com o vento e o helicóptero.', def:true, where:'Casa' },
   { id:'depo.shade', cat:'depo', label:'Sombra nos curiosos', desc:'Os curiosos atrás da fita ficam na penumbra, com a sombra da árvore e o giroflex passando por eles.', def:true, where:'Casa' },
   { id:'depo.hair', cat:'depo', label:'Cabelo ao vento', desc:'O cabelo do Jorge balança com o vento da garoa e é empurrado quando o helicóptero passa. Desligado (ou na qualidade baixa), o retrato fica parado.', def:true, where:'Casa' },
+  { id:'depo.wet', cat:'depo', label:'Jorge molhado', desc:'A garoa no Jorge: gotas presas no cabelo e nos ombros, cabelo mais escuro e a pele úmida devolvendo a luz do giroflex e dos faróis. Desligado (ou na qualidade baixa), o retrato fica seco.', def:true, where:'Casa' },
   { id:'depo.film', cat:'depo', label:'Cor de cinema e granulação', desc:'Sombras azuladas, luzes âmbar e grão de filme.', def:true, where:'Casa' },
   { id:'depo.camera', cat:'depo', label:'Câmera na mão', desc:'O balanço leve da câmera, a aproximação na pista e a tremida do helicóptero.', def:true, where:'Casa' },
   // som
