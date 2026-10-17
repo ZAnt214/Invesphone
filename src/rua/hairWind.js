@@ -14,8 +14,8 @@
    - Desempenho: a figura inteira (base + mechas) é desenhada pela placa de vídeo num canvas próprio, que fica na tela
      por baixo do canvas do retrato (boca, piscar). Nada volta da placa de vídeo para o canvas 2D (isso custava metade do
      quadro). A luz da cena sobre o Jorge (escuro geral, âmbar do poste, giroflex, farol da viatura) é calculada no
-     próprio sombreador, então até a ponta que saiu da silhueta recebe a mesma luz; o giroflex soma luz vermelha (da
-     esquerda) e azul (da direita) sobre o rosto e o corpo, com contorno nas bordas viradas para ele.
+     próprio sombreador, então até a ponta que saiu da silhueta recebe a mesma luz; o giroflex soma luz vermelha e
+     azul, as duas da esquerda (a viatura), sobre o rosto e o corpo, com contorno nas bordas viradas para ela.
    Sem WebGL, ou se o contexto cair, ok() fica falso e o jogo volta ao retrato oficial parado. */
 const GRID=6;      // célula da malha, em px da imagem original
 const FEATHER=13;  // largura do esfumado nas bordas de corte, em px da imagem original
@@ -54,19 +54,19 @@ void main(){
   p=over(p,t.a,vec3(255.,178.,96.)/255.,.3*clamp(1.0-y/.5,0.0,1.0));
   p=over(p,t.a,vec3(4.,6.,14.)/255.,.5*clamp((y-.5)/.5,0.0,1.0));
   p=over(p,t.a,vec3(255.,48.,48.)/255.,.32*uGr*clamp(1.0-x/.24,0.0,1.0));
-  p=over(p,t.a,vec3(70.,120.,255.)/255.,.32*uGb*clamp((x-.76)/.24,0.0,1.0));
-  /* giroflex batendo no Jorge: a luz vermelha vem da esquerda e a azul da direita (onde a viatura brilha no cenário).
+  p=over(p,t.a,vec3(70.,120.,255.)/255.,.32*uGb*clamp(1.0-x/.24,0.0,1.0));
+  /* giroflex batendo no Jorge: vermelho e azul vêm da mesma viatura, à esquerda, fora do quadro
+     (o mesmo lado do cenário, do chão molhado, dos curiosos e do poste).
      Soma luz (não só tinge): mais forte no lado de onde vem, atravessando o rosto, e mais nas partes claras (pele,
      camisa) que nas escuras; nas bordas viradas para a luz, um contorno forte (a borda da silhueta, na base) */
   float lum=dot(p,vec3(.3,.55,.15))/max(t.a,.001);
-  float xr=clamp(1.0-x/.9,0.0,1.0),xb=clamp((x-.1)/.9,0.0,1.0);
+  float xr=clamp(1.0-x/.9,0.0,1.0);
   vec3 RED=vec3(1.0,.2,.18),BLU=vec3(.3,.5,1.0);
   p+=RED*uGr*(.5*xr*xr+.07)*t.a*(.45+.75*lum);
-  p+=BLU*uGb*(.5*xb*xb+.07)*t.a*(.45+.75*lum);
+  p+=BLU*uGb*(.5*xr*xr+.07)*t.a*(.45+.75*lum);
   if(uRim>.5){
     float rl=clamp(t.a-texture2D(uTex,vUV-vec2(uTexel.x*7.0,0.0)).a,0.0,1.0);
-    float rr=clamp(t.a-texture2D(uTex,vUV+vec2(uTexel.x*7.0,0.0)).a,0.0,1.0);
-    p+=RED*uGr*rl*.85*t.a+BLU*uGb*rr*.85*t.a;}
+        p+=(RED*uGr+BLU*uGb)*rl*.85*t.a;}
   if(uPI>.001){
     float d1=distance(vA,vec2(uPx,h*.4));float g1=d1<20.0?.5:(d1<192.0?mix(.5,.22,(d1-20.0)/172.0):mix(.22,0.0,clamp((d1-192.0)/128.0,0.0,1.0)));
     p=over(p,t.a,vec3(255.,246.,228.)/255.,g1*uPI);
