@@ -70,6 +70,15 @@ A foto oficial é mexida em código, sem redesenhar: a árvore, a copa atrás do
 - A sombra e a luz da fita (no 2D de reserva) preenchem só a fita, não o retângulo em volta.
 - O relógio do REC só é reescrito quando o segundo muda.
 
+## Jorge molhado (`depo.wet`)
+
+Ele está na garoa há tempo, e a imagem mostra: gotas presas no cabelo e nos ombros do casaco, o cabelo um pouco mais escuro e a pele úmida devolvendo a luz que chega (o giroflex pela esquerda, o farol do carro que passa, o poste por cima). Cada gota tem a sombra embaixo e um ponto de luz que acende quando o giroflex ou o farol bate; parada, ela quase some no casaco escuro, como gota de verdade.
+
+- É feito no mesmo sombreador do cabelo (`src/rua/hairWind.js`, uniforme `uWet`): as gotas ficam na posição da imagem original (`vO`), então andam junto com a mecha quando o vento a dobra. O que é cabelo, pele e casaco é reconhecido pela cor da própria arte oficial; nada é redesenhado.
+- Liga a figura pela placa de vídeo mesmo com "Cabelo ao vento" desligado (aí o vento é zero e o cabelo fica parado). Na qualidade baixa ou num aparelho que já precisou aliviar duas vezes, fica o retrato oficial seco.
+- Custo: algumas contas a mais por pixel na placa de vídeo; nada no canvas 2D.
+- Ajuste: Gráficos > Depoimento na rua > Jorge molhado.
+
 ## Cabelo ao vento
 
 O cabelo do Jorge balança com o mesmo vento da garoa (`windAt`) e é empurrado quando o helicóptero passa. As camadas são do ChatGPT (`public/characters/jorge/hair/`, pedido `creative-requests/completed/2026-10-15-jorge-cabelo-ao-vento.md`): por expressão, uma base sem as mechas soltas (`base.png`), oito mechas e o mapa de peso de cada uma (vermelho: 0 na raiz, 1 na ponta). O personagem declara as camadas em `src/characters/characters.ts` (`hair`) e o código fica em `src/rua/hairWind.js`.
