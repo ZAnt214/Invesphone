@@ -97,7 +97,8 @@ export function createHair(o){
     for(const n of ['uRim','uTexel','uView','uViewF','uRoot','uShear','uMix','uXf','uK','uBend','uWob','uGust','uT','uPh','uTex','uFea','uFeaK','uAlpha','uGr','uGb','uPI','uPx','uPr','uPb'])L[n]=gl.getUniformLocation(prog,n);
     gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
-    gl.uniform1i(L.uTex,0);gl.uniform1i(L.uFea,1);
+    gl.uniform1i(L.uTex,0);gl.uniform1i(L.uFea,1);gl.uniform2f(L.uTexel,1/o.PW,1/o.PH);
+    for(const a of ['aPos','aUV','aW','aR'])gl.enableVertexAttribArray(L[a]);
     // textura "sem esfumado" para a base
     const one=document.createElement('canvas');one.width=one.height=1;const ox=one.getContext('2d');ox.fillStyle='#fff';ox.fillRect(0,0,1,1);ONE=tex(one);
     return true;
@@ -114,12 +115,11 @@ export function createHair(o){
     return true;}
   function unload(v){if(!v.gpu||!gl){v.gpu=null;return;}for(const m of [v.gpu.base,...v.gpu.strands]){gl.deleteTexture(m.t);if(m.f)gl.deleteTexture(m.f);gl.deleteBuffer(m.vb);gl.deleteBuffer(m.ib);}v.gpu=null;}
   function mesh(m,u){gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,m.f||ONE);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,m.t);
+    /* (no Safari cada chamada vai por outro processo: só o que muda de uma mecha para outra é enviado) */
     gl.bindBuffer(gl.ARRAY_BUFFER,m.vb);
-    gl.enableVertexAttribArray(L.aPos);gl.vertexAttribPointer(L.aPos,2,gl.FLOAT,false,24,0);
-    gl.enableVertexAttribArray(L.aUV);gl.vertexAttribPointer(L.aUV,2,gl.FLOAT,false,24,8);
-    gl.enableVertexAttribArray(L.aW);gl.vertexAttribPointer(L.aW,1,gl.FLOAT,false,24,16);
-    gl.enableVertexAttribArray(L.aR);gl.vertexAttribPointer(L.aR,1,gl.FLOAT,false,24,20);
-    gl.uniform1f(L.uRim,u.rim?1:0);gl.uniform2f(L.uTexel,1/o.PW,1/o.PH);gl.uniform2f(L.uRoot,u.root[0],u.root[1]);gl.uniform2f(L.uShear,u.sh[0],u.sh[1]);gl.uniform1f(L.uMix,u.mix);gl.uniform1f(L.uBend,u.bend);gl.uniform1f(L.uWob,u.wob);gl.uniform1f(L.uPh,u.ph);gl.uniform1f(L.uFeaK,u.fea);
+    gl.vertexAttribPointer(L.aPos,2,gl.FLOAT,false,24,0);gl.vertexAttribPointer(L.aUV,2,gl.FLOAT,false,24,8);
+    gl.vertexAttribPointer(L.aW,1,gl.FLOAT,false,24,16);gl.vertexAttribPointer(L.aR,1,gl.FLOAT,false,24,20);
+    gl.uniform1f(L.uRim,u.rim?1:0);gl.uniform2f(L.uRoot,u.root[0],u.root[1]);gl.uniform2f(L.uShear,u.sh[0],u.sh[1]);gl.uniform1f(L.uMix,u.mix);gl.uniform1f(L.uBend,u.bend);gl.uniform1f(L.uWob,u.wob);gl.uniform1f(L.uPh,u.ph);gl.uniform1f(L.uFeaK,u.fea);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,m.ib);gl.drawElements(gl.TRIANGLES,m.n,gl.UNSIGNED_SHORT,0);}
 
   async function build(e){

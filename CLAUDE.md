@@ -257,7 +257,9 @@ Todo efeito visual ou sonoro (os que já existem e os que vierem) precisa estar 
 
 ## Limite de 60 quadros por segundo
 
-O jogo inteiro roda a no máximo 60 quadros por segundo, mesmo em tela de 120 Hz: `src/world/frameCap.js` embrulha `requestAnimationFrame` uma vez e é o primeiro import de `src/base/base.js` e `src/varredura/varredura.js`. Uma página nova do jogo também precisa importá-lo primeiro. As animações usam o tempo real entre quadros, então nada fica mais lento.
+O jogo inteiro roda a no máximo 60 quadros por segundo, mesmo em tela de 120 Hz: `src/world/frameCap.js` embrulha `requestAnimationFrame` uma vez e é o primeiro import de `src/base/base.js` e `src/varredura/varredura.js`. Uma página nova do jogo também precisa importá-lo primeiro. Ele mede a frequência da tela: até ~80 Hz (o iPhone no Safari) deixa todas as batidas passarem, para não criar tranco; acima disso, segura em 60. As animações usam o tempo real entre quadros, então nada fica mais lento.
+
+No iPhone, o canvas 2D é desenhado pela CPU e a composição das camadas pela GPU: o que pesa é a quantidade de desenho 2D por quadro (não o número de canvases). Partes que mexem devagar podem ser montadas em quadros alternados e copiadas; o que dá para fazer em WebGL (cabelo do Jorge, fita) vai para a placa de vídeo. Ver `docs/DEPOIMENTO_NA_RUA.md`, seção "Desempenho".
 
 ## Jornal Sereno
 
