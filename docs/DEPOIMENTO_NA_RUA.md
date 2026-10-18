@@ -109,7 +109,11 @@ A garoa tem direção: com o helicóptero perto, ela é empurrada para longe do 
 
 ## Curiosos atrás da fita
 
-A arte dos curiosos termina num corte reto na cintura. A base de cada um some num degradê (feito uma vez ao carregar), então os corpos se perdem no escuro atrás da fita em vez de parecerem cortados.
+A arte dos curiosos termina num corte reto na cintura. A fileira da frente é grande o bastante (pé abaixo de y 390) para o corte ficar fora da tela, e os corpos dela, lado a lado, cobrem o corte da fileira de trás. A barriga escurece na penumbra da calçada e só os últimos 10% da arte somem, então nada fica transparente no meio do corpo (com o degradê comprido de antes, o muro aparecia através das pessoas).
+
+## Boca e pálpebras com a mesma luz do rosto
+
+Com a figura na placa de vídeo, a boca (as folhas de bocas) e as pálpebras são pintadas num canvas pequeno, só do retângulo do rosto que elas ocupam, e entram como mais uma camada da figura no mesmo sombreador (`light.ov` em `hairWind.js`, `paintOv` em `streetDepo.js`). O farol da viatura, o giroflex e o holofote do helicóptero batem nelas exatamente como no resto do rosto. Antes elas eram desenhadas no canvas 2D por cima, com a luz aproximada do 2D, e apareciam como um retângulo escuro em volta da boca quando uma luz passava. Parada (sem fala nem piscada), a camada não é pintada nem enviada.
 
 ## Jorge molhado (`depo.wet`)
 

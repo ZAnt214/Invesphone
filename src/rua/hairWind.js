@@ -326,7 +326,20 @@ export function createHair(o){
         // o esfumado do corte entra conforme a mecha sai do lugar (parada, a imagem é a oficial)
         const fea=Math.min(1,(Math.abs(ph.a)*6)*(1-mix)+Math.hypot(ph.x,ph.y)*.12*mix+(D.wob||0)*(D.gust||0)*4+(D.wob||0)*1.5);
         mesh(m,{root:m.root,sh:[sx,sy],mix,bend:ph.a,wob:(D.wob||0)*(1.2-st.stiff*.5)*(st.g||1),ph:st.ph,fea});});}
+    /* boca e pálpebras (light.ov = {cv,x,y,w,h}, em px da imagem original): o canvas pintado pelo retrato vai como mais uma
+       camada, com o MESMO sombreador da figura. Assim o farol, o giroflex e o holofote batem na boca exatamente como no
+       resto do rosto; desenhadas no 2D por cima, elas ficavam com outra luz e apareciam como um retângulo no rosto. */
+    if(light.ov&&light.ov.cv.width>1){const O=light.ov,k=W0()/o.PW;
+      if(!OV){OV={t:gl.createTexture(),vb:gl.createBuffer(),ib:buf(new Uint16Array([0,1,2,2,1,3]),true),n:6,f:null};
+        gl.bindTexture(gl.TEXTURE_2D,OV.t);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);}
+      gl.bindTexture(gl.TEXTURE_2D,OV.t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,O.cv);
+      const x=O.x/k,y=O.y/k,w=O.w/k,h=O.h/k;
+      gl.bindBuffer(gl.ARRAY_BUFFER,OV.vb);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([x,y,0,0,0,0, x+w,y,1,0,0,0, x,y+h,0,1,0,0, x+w,y+h,1,1,0,0]),gl.DYNAMIC_DRAW);
+      gl.uniform1f(L.uK,k);gl.uniform1f(L.uAlpha,1);
+      mesh(OV,{root:[0,0],sh:[0,0],mix:0,bend:0,wob:0,ph:0,fea:0,rim:0,cloth:null});}
     return true;}
+  let OV=null;
   return {ready,want,keep,step,render,resize,ok,_phy:()=>PHY.map(p=>p.a),has:e=>cache.has(e),
-    destroy(){dead=true;keep([]);if(gl){const x=gl.getExtension('WEBGL_lose_context');if(x)x.loseContext();}gl=null;}};
+    destroy(){dead=true;keep([]);if(OV&&gl){gl.deleteTexture(OV.t);gl.deleteBuffer(OV.vb);gl.deleteBuffer(OV.ib);}OV=null;if(gl){const x=gl.getExtension('WEBGL_lose_context');if(x)x.loseContext();}gl=null;}};
 }
