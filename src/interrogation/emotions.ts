@@ -30,7 +30,13 @@ export const EXPRESSION_EMOTION:Record<Expression,EmotionVector> = {
   angry:          v(75,80,20),
   sad:            v(25,10,80),
   confident:      v(10,30,5),
-  scared:         v(90,25,60)
+  scared:         v(90,25,60),
+  /* repórter */
+  asking:         v(30,15,5),
+  insisting:      v(55,30,10),
+  surprised:      v(45,10,15),
+  satisfied:      v(10,15,5),
+  annoyed:        v(50,45,10)
 }
 
 export const emotionOf = (e:Expression):EmotionVector => EXPRESSION_EMOTION[e] ?? EXPRESSION_EMOTION.neutral

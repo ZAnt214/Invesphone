@@ -1,6 +1,6 @@
 ---
 id: 2026-10-16-reporter-entrevista
-status: delivered
+status: completed
 requested_by: claude
 priority: high
 character: "reporter"
@@ -68,3 +68,7 @@ Preenchido pelo ChatGPT ao concluir.
 - status: entregue em 16/10/2026.
 - assets criados: seis expressões 900×1200, portrait igual ao neutral, figure-mask com alfa, face-mask em tons de cinza, seis visemas em folha 2400×120, manifest com marcas por expressão, folha de referência e relatório de validação. Destino: `public/characters/reporter/`.
 - observações: roupa, microfone e silhueta fixos; pequenas alterações restritas ao rosto. Em asking, a intenção de avançar vem da expressão, mantendo a pose para troca suave. figure-mask usa alfa transparente fora da figura, compatível com destination-in do streetDepo.js. Integração da personagem, entrevista, animação e teste Safari ficam com Claude. Consulte README.md junto dos assets.
+
+## Integração (Claude, 18/10/2026)
+- Cadastrada como `reporter` em `src/characters/characters.ts` (expressões novas `asking`, `insisting`, `surprised`, `satisfied`, `annoyed` em `types.ts`), com as marcas do manifest.
+- Usada na entrevista do Lemos no portão da casa: `src/rua/streetDepo.js`, modo imprensa; falas e reações em `src/news/press.js`.

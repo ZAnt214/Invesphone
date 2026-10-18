@@ -80,7 +80,7 @@ A edição daquele momento publica a fala:
   - O apelo abre o quadro "DHPP pede ajuda".
   - Dizer o valor muda a manchete para "Onde estão os US$ 5 mil?".
 
-Hoje, na casa, o evento "Imprensa no portão" grava `e1`: "Lemos atende rápido" grava a fala cautelosa (`cedo`) e "Ninguém fala agora" grava `ausente`. A tela da entrevista, com a escolha da frase, é uma etapa futura: ela só precisa chamar `pressSay`.
+Na casa, o evento "Imprensa no portão" decide `e1`. "Lemos atende" abre a **entrevista** (a cena do depoimento na rua em modo imprensa, ver `docs/DEPOIMENTO_NA_RUA.md`, "Entrevista"): a repórter da TV Sereno pergunta, o jogador escolhe a frase do Lemos entre as de `PRESS.e1` (a que revela pista só aparece se ele já tem `porta_intacta`), ela reage e a frase é gravada com `pressSay`. "Ninguém fala agora" grava `ausente` sem abrir a cena. As entrevistas de `e2` e `e4`, na base, ainda não têm cena.
 
 ## Caderneta
 

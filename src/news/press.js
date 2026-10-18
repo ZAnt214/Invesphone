@@ -5,12 +5,14 @@ import { readCase, writeCase } from '../case/caseSave';
 
 /** Momentos em que a imprensa pergunta. A chave é a edição que publica a resposta. */
 export const PRESS={
-  e1:{where:'no portão da casa',q:'Doutor! Foi assalto? O que aconteceu lá dentro?',opts:[
-    {id:'cedo',tag:'Cauteloso',say:'Ainda é cedo. Ninguém vai especular agora.'},
-    {id:'aberto',tag:'Deixa a dúvida no ar',say:'Não descartamos nenhuma hipótese. Nem roubo, nem outra coisa.'},
-    {id:'apelo',tag:'Pede testemunhas',say:'Quem passou pela Rua das Acácias esta noite e viu alguma coisa, procure o DHPP.'},
-    {id:'vaza',tag:'Revela uma pista',leak:true,need:F=>F.arromb,say:'Não houve arrombamento. Quem entrou não precisou forçar nada.'},
-    {id:'ausente',tag:'Não atender',say:null}]},
+  /* e1 é a entrevista na frente da casa (src/rua/streetDepo.js, modo imprensa): a repórter da TV Sereno pergunta (qe é a
+     expressão dela), o jogador escolhe a frase do Lemos e ela reage (re: expressão e fala). As reações não trazem fato novo. */
+  e1:{where:'no portão da casa',q:'Doutor! Foi assalto? O que aconteceu lá dentro?',qe:'asking',opts:[
+    {id:'cedo',tag:'Cauteloso',say:'Ainda é cedo. Ninguém vai especular agora.',re:{e:'insisting',say:'A vizinhança está assustada, doutor. Vai ficar sem resposta?'}},
+    {id:'aberto',tag:'Deixa a dúvida no ar',say:'Não descartamos nenhuma hipótese. Nem roubo, nem outra coisa.',re:{e:'asking',say:'Outra coisa? Então pode não ter sido assalto?'}},
+    {id:'apelo',tag:'Pede testemunhas',say:'Quem passou pela Rua das Acácias esta noite e viu alguma coisa, procure o DHPP.',re:{e:'satisfied',say:'Obrigada, doutor. Vai ao ar no primeiro jornal da manhã.'}},
+    {id:'vaza',tag:'Revela uma pista',leak:true,need:F=>F.arromb,say:'Não houve arrombamento. Quem entrou não precisou forçar nada.',re:{e:'surprised',say:'Sem arrombamento? Então quem entrou tinha a chave…'}},
+    {id:'ausente',tag:'Não atender',say:null,re:{e:'annoyed',say:'Doutor! Só uma pergunta, doutor!'}}]},
   e2:{where:'na saída do DHPP',q:'A filha é suspeita? Ela vai ser ouvida de novo?',opts:[
     {id:'test',tag:'Protege a testemunha',say:'Ela é testemunha, como todo mundo que conhecia a família.'},
     {id:'ninguem',tag:'Põe pressão',say:'Ninguém está descartado. Ninguém.'},

@@ -34,4 +34,9 @@ export const EXPRESSIONS:Record<Expression,ExpressionParams> = {
   teary:         mk({ slump:1.5, blinkRate:1.7, tremor:.4 }),
   false_relief:  mk({ slump:1, blinkRate:1.2 }),
   slightly_tired: mk({ slump:1, blinkRate:.8 }),
+  asking:        mk({ slump:-.5, blinkRate:.9 }),
+  insisting:     mk({ slump:-1, blinkRate:.8 }),
+  surprised:     mk({ blinkRate:.5 }),
+  satisfied:     mk({ blinkRate:.9 }),
+  annoyed:       mk({ slump:-.5, blinkRate:1.2 }),
 }

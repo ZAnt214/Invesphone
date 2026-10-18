@@ -71,6 +71,17 @@ A foto oficial é mexida em código, sem redesenhar: a árvore, a copa atrás do
 - A sombra e a luz da fita (no 2D de reserva) preenchem só a fita, não o retângulo em volta.
 - Sem letreiros por cima da cena (17/10/2026, pela imersão): saíram o REC com o relógio, o "FOCO · CADERNO", a marca do DHPP e o nome e a função do Jorge. Na tela ficam só a rua, o Jorge, o caderno e a legenda; o nome do lugar aparece só nas faixas de cinema da entrada.
 
+## Entrevista (modo imprensa)
+
+A mesma cena serve para a entrevista do Lemos à repórter da TV Sereno, no portão da casa (`openStreetDepo(host,'reporter',{press:'e1',onPress})`). Direção aprovada em 16/10/2026: o jogo vê pelos olhos do Lemos, a repórter fica exatamente onde o Jorge fica, sem caderno.
+
+- A pergunta dela sai como legenda, com a boca no ritmo e a expressão de `PRESS.e1.qe` (`asking`).
+- As respostas possíveis aparecem à esquerda como legendas para tocar: a etiqueta (Cauteloso, Pede testemunhas…) e a frase entre aspas. "Revela uma pista" só aparece se o Lemos já tem a pista (`need`). "Não atender" vira "Seguir sem responder".
+- A frase escolhida sai na legenda do Lemos (itálico, com "LEMOS" em cima; ele está atrás da câmera, então não há boca). Depois ela reage com a expressão e a fala de `re` (surpresa com a revelação, satisfeita com o apelo, insistente com a resposta cautelosa, contrariada se ele não atende) e a cena fecha.
+- A frase vai para o save com `pressSay('e1', id)` e sai na primeira edição do Jornal Sereno. Na casa, responder acalma a imprensa; não atender a faz insistir mais.
+- A arte é a oficial da repórter (`public/characters/reporter/`, cadastrada em `characters.ts` com as marcas do `manifest.json`). Ela não tem camadas de cabelo, então não tem cabelo ao vento nem a garoa no rosto do Jorge. A casa prepara a cena quando a imprensa chega (`prewarmStreetDepo('reporter',{press:'e1'})`).
+- Toque na cena completa a legenda ou passa para a próxima, como no depoimento.
+
 ## Jorge molhado (`depo.wet`)
 
 Ele está na garoa há tempo, e a imagem mostra: gotas presas no cabelo e nos ombros do casaco, o cabelo um pouco mais escuro e a pele úmida devolvendo a luz que chega (o giroflex pela esquerda, o farol do carro que passa, o poste por cima). Cada gota tem a sombra embaixo e um ponto de luz que acende quando o giroflex ou o farol bate; parada, ela quase some no casaco escuro, como gota de verdade.

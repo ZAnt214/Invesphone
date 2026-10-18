@@ -1,6 +1,8 @@
 export type Expression =
   'neutral'|'tired'|'uncomfortable'|'defensive'|'nervous'|'shaken'|'angry'|'sad'|'confident'|'scared'|
-  'apprehensive'|'lying'|'teary'|'false_relief'|'slightly_tired'
+  'apprehensive'|'lying'|'teary'|'false_relief'|'slightly_tired'|
+  /* repórter (entrevista do Lemos à imprensa) */
+  'asking'|'insisting'|'surprised'|'satisfied'|'annoyed'
 
 /** Retângulo em pixels do arquivo de retrato. */
 export type Box = { x:number; y:number; w:number; h:number }
