@@ -1011,13 +1011,39 @@ export function openStreetDepo(host,id,opts={}){
   };
 
   let expr='neutral',prev=null,fadeAt=0;
-  /* troca de expressão: o Jorge muda devagar (cansado); a repórter, rápida e viva, muda num instante (só o rosto muda entre as imagens dela) */
-  const FADE_MS=CH.fadeMs||320;
+  /* duração do cruzamento de uma expressão para outra (escondido atrás de uma piscada): o Jorge um pouco mais lento (cansado), a repórter mais viva */
+  const FADE_MS=CH.fadeMs||230;
   let blinkNext=performance.now()+1500,blinkStart=-1;
   const vis={A:0,E:0,I:0,O:0,U:0,M:0},ORDER=['A','E','I','O','U','M'];
   let mouthOn=0,openV=0,speech=null;
   const gcv=document.createElement('canvas');gcv.width=400;gcv.height=120;const gx=gcv.getContext('2d');
-  function setExpr(e){if(e===expr)return;prev=expr;expr=e;fadeAt=performance.now();hairSync()}
+  /* Troca de expressão natural:
+     - vem com uma piscada: o cruzamento das imagens acontece com as pálpebras se fechando, e no meio dele elas estão
+       fechadas, então olhos e sobrancelhas mudam por trás delas (sem o "fantasma" de dois olhares);
+     - o cruzamento acelera e desacelera (smootherstep), em vez de andar reto;
+     - pálpebras, boca e o tom da pele acompanham a mistura das duas expressões, sem pular de lugar;
+     - a cabeça dá uma pequena "assentada" de reação (sobe e volta, ~0,4 s), maior na surpresa. */
+  const ease=t=>t<=0?0:t>=1?1:t*t*t*(t*(t*6-15)+10);
+  let kickAt=-1e9,kickAmp=0;
+  function setExpr(e){if(e===expr)return;
+    const now=performance.now(),f=prev?ease(Math.min(1,(now-fadeAt)/FADE_MS)):1;
+    /* trocando no meio de outra troca: parte de onde a mistura está mais perto */
+    if(prev&&f<.5&&prev!==e)expr=prev;prev=expr;expr=e;
+    if(RM){fadeAt=now-FADE_MS;hairSync();return}
+    if(blinkStart<0||now-blinkStart>120){blinkStart=now;blinkNext=Math.max(blinkNext,now+1400)}
+    fadeAt=blinkStart+85-FADE_MS/2;   // o meio do cruzamento cai com as pálpebras fechadas (85 ms da piscada)
+    kickAt=now;kickAmp=(e==='surprised'||e==='shaken')?2.4:(e==='nervous'||e==='insisting'||e==='annoyed'||e==='defensive')?1.4:1;
+    hairSync()}
+  /* mistura atual das duas expressões (0 = a anterior, 1 = a nova) */
+  const mixF=now=>prev?ease(Math.min(1,Math.max(0,(now-fadeAt)/FADE_MS))):1;
+  const lerp=(a,b,k)=>a+(b-a)*k;
+  function eyesAt(now){const A=CH.assets[expr].eyes,k=mixF(now),P=prev&&CH.assets[prev]?CH.assets[prev].eyes:A;if(k>=1||P===A)return A;
+    const m=(a,b)=>({cx:lerp(a.cx,b.cx,k),cy:lerp(a.cy,b.cy,k),rx:lerp(a.rx,b.rx,k),ry:lerp(a.ry,b.ry,k)});return {left:m(P.left,A.left),right:m(P.right,A.right)}}
+  function mouthAt(now){const A=CH.assets[expr].mouth,k=mixF(now),P=prev&&CH.assets[prev]?CH.assets[prev].mouth:A;if(k>=1||P===A)return A;
+    return {cx:lerp(P.cx,A.cx,k),rimY:lerp(P.rimY,A.rimY,k),halfWidth:lerp(P.halfWidth,A.halfWidth,k),bottom:lerp(P.bottom,A.bottom,k),arch:A.arch,maxOpen:A.maxOpen}}
+  function skinAt(now){const k=mixF(now);return k<.5&&prev&&skins[prev]?skins[prev]:(skins[expr]||'rgb(150,95,60)')}
+  /* a "assentada" da cabeça: sobe um pouco e volta, com mola amortecida */
+  function kick(now){const u=(now-kickAt)/420;if(u<0||u>1||RM)return 0;return -kickAmp*Math.sin(Math.PI*u)*(1-u*.35)}
   function track(text){
     const out=[];let ci=0;
     for(const ch of text.toLowerCase()){
@@ -1045,7 +1071,7 @@ export function openStreetDepo(host,id,opts={}){
     gx.clearRect(0,0,400,120);let acc=0;
     for(const x of ws){acc+=x.w;gx.globalAlpha=x.w/acc;gx.drawImage(imgs.visemes,VD.order.indexOf(x.v)*VD.cellW,0,VD.cellW,VD.cellH,0,0,400,120)}
     gx.globalAlpha=1;
-    const m=CH.assets[expr].mouth,cx=m.cx,rim=m.rimY,s=m.halfWidth*2/VD.lipWidth,sy=VD.squash===false?s:s*(vis.M+(1-vis.M)*(.62+.38*Math.min(1,openV)));
+    const m=mouthAt(performance.now()),cx=m.cx,rim=m.rimY,s=m.halfWidth*2/VD.lipWidth,sy=VD.squash===false?s:s*(vis.M+(1-vis.M)*(.62+.38*Math.min(1,openV)));
     c.save();c.globalAlpha=Math.min(1,mouthOn);c.translate(cx,rim);c.scale(s,sy);c.drawImage(gcv,-VD.center[0],-VD.center[1]);c.restore();
   }
   function drawLids(c,now){
@@ -1053,10 +1079,10 @@ export function openStreetDepo(host,id,opts={}){
     if(blinkStart<0)return;
     const p=(now-blinkStart)/170;if(p>1){blinkStart=-1;blinkNext=now+2300+Math.random()*2900;return}
     const amount=p<.5?p*2:(1-p)*2;if(amount<.03)return;
-    const E=CH.assets[expr].eyes;for(const {cx,cy,rx,ry} of [E.left,E.right]){
+    const E=eyesAt(now);for(const {cx,cy,rx,ry} of [E.left,E.right]){
       const top=cy-ry+3,edge=top+amount*(ry*2-4);
       c.save();c.beginPath();c.ellipse(cx,cy,rx-1,ry-1,0,0,Math.PI*2);c.clip();
-      c.fillStyle=skins[expr]||'rgb(150,95,60)';c.beginPath();c.moveTo(cx-rx-2,top-3);c.lineTo(cx+rx+2,top-3);c.lineTo(cx+rx+2,edge);
+      c.fillStyle=skinAt(now);c.beginPath();c.moveTo(cx-rx-2,top-3);c.lineTo(cx+rx+2,top-3);c.lineTo(cx+rx+2,edge);
       c.quadraticCurveTo(cx,edge+3*amount,cx-rx-2,edge);c.closePath();c.fill();
       if(amount>.2){c.strokeStyle='#2a1c16';c.lineWidth=2;c.beginPath();c.moveTo(cx-rx+6,edge);c.quadraticCurveTo(cx,edge+3*amount,cx+rx-6,edge);c.stroke()}
       c.restore();
@@ -1065,10 +1091,10 @@ export function openStreetDepo(host,id,opts={}){
   let acDirty=true;
   function drawActor(now,t,g){
     if(!ready||!imgs[expr])return;
-    const S=476/1200,br=RM?0:Math.sin(t*2*Math.PI/4.4);
-    const f=Math.min(1,(now-fadeAt)/FADE_MS);
+    const S=476/1200,br=(RM?0:Math.sin(t*2*Math.PI/4.4))+kick(now)/1.1;
+    const f=mixF(now);
     const hon=hairOn();if(hon)HAIR.step(RM?0:t,hairMove()?hairWind(t):{wx:0,wy:0,wob:0,gust:0});
-    const fading=!!(prev&&f<1&&imgs[prev]),gok=hon&&HAIR.ok(expr,fading?prev:null);
+    const fading=!!(prev&&f<1&&imgs[prev])||(prev&&now<fadeAt&&imgs[prev]),gok=hon&&HAIR.ok(expr,fading?prev:null);
     if(gok){const fx=PS?200+Math.max(-120,Math.min(120,(PS.x-620)*.25)):200;
       HAIR.render(RM?0:t,fading?[{e:prev,alpha:1},{e:expr,alpha:f}]:[{e:expr,alpha:1}],{tx:200-450*S,ty:br*1.1,sx:S,sy:S*(1+br*.0025)},
         {gr:g.r,gb:g.b,pI:PS?PS.I:0,px:fx,pr:PS?PS.r:0,pb:PS?PS.b:0,wet:FXON('depo.wet')?1:0});}

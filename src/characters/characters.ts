@@ -65,7 +65,7 @@ export const characters:Record<string,CharacterDef> = {
     figureMask:`${base}characters/reporter/figure-mask.png`,
     /* as bocas dela são recortes do próprio rosto em 1:1 (lábio de 108 px): desenhadas sem ampliar e sem achatar, para a pele em volta não escorregar */
     visemes:{ src:`${base}characters/reporter/visemes.png`, cellW:400, cellH:120, order:['A','E','I','O','U','M'], center:[200,60], lipWidth:108, reach:1, squash:false },
-    fadeMs:150,
+    fadeMs:170,
     /* cabelo ao vento: camadas pedidas ao ChatGPT (creative-requests 2026-10-18); enquanto o manifesto não existir, o retrato fica parado */
     hair:`${base}characters/reporter/hair/manifest.json`,
     face:{ cx:446.25, cy:405, size:420 }

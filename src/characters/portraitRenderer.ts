@@ -273,6 +273,9 @@ export class PortraitRenderer {
     if(from===next){ this.shown = next; this.trans = null; return }
     this.shown = from
     this.trans = { from, to:next, t:0 }
+    // a troca vem junto com uma piscada, com as pálpebras fechadas no meio dela (como a gente faz): olhos e sobrancelhas
+    // mudam por trás da pálpebra, sem o "fantasma" de dois olhares no meio do cruzamento
+    if(this.blink.start<0){ const now = performance.now(); this.blink.start = now + MORPH_SECONDS*500 - 68; this.blink.next = Math.max(this.blink.next, now + 1200) }
   }
 
   /** Fundo transparente (só com silhueta cadastrada e base fixa): o cenário por trás aparece. */
@@ -647,7 +650,7 @@ export class PortraitRenderer {
 
     if(this.shown){
       const tr = this.trans
-      const e = tr ? tr.t*tr.t*(3-2*tr.t) : 1
+      const e = tr ? tr.t*tr.t*tr.t*(tr.t*(tr.t*6-15)+10) : 1   // suave na saída e na chegada (smootherstep)
       if(this.stable && this.loaded.neutral){
         // cabelo, corpo e fundo vêm sempre da imagem neutra; só o interior do rosto troca de expressão
         ctx.drawImage(this.baseImg ?? this.loaded.neutral.img,0,0)

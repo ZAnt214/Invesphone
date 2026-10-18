@@ -71,6 +71,17 @@ A foto oficial é mexida em código, sem redesenhar: a árvore, a copa atrás do
 - A sombra e a luz da fita (no 2D de reserva) preenchem só a fita, não o retângulo em volta.
 - Sem letreiros por cima da cena (17/10/2026, pela imersão): saíram o REC com o relógio, o "FOCO · CADERNO", a marca do DHPP e o nome e a função do Jorge. Na tela ficam só a rua, o Jorge, o caderno e a legenda; o nome do lugar aparece só nas faixas de cinema da entrada.
 
+## Troca de expressão natural
+
+Vale para o Jorge, para a repórter e para os depoimentos da base (`src/characters/portraitRenderer.ts`):
+
+- A troca vem com uma piscada, e o meio do cruzamento das duas imagens cai com as pálpebras fechadas. Olhos e sobrancelhas mudam por trás delas, sem o "fantasma" de dois olhares sobrepostos no meio da troca.
+- O cruzamento acelera e desacelera (smootherstep) em vez de andar reto.
+- Na rua, as pálpebras, a boca e o tom da pele usados no piscar acompanham a mistura das duas expressões, em vez de pular para a posição da nova.
+- Na rua, a cabeça dá uma pequena "assentada" de reação (sobe ~1 a 2 px e volta em ~0,4 s), maior na surpresa e no susto.
+- Duração do cruzamento: 230 ms no Jorge (padrão), 170 ms na repórter (`fadeMs` no cadastro). Uma troca pedida no meio de outra parte do lado mais perto da mistura.
+- Com movimento reduzido, a troca é imediata e sem a assentada.
+
 ## Entrevista (modo imprensa)
 
 A mesma cena serve para a entrevista do Lemos à repórter da TV Sereno, no portão da casa (`openStreetDepo(host,'reporter',{press:'e1',onPress})`). Direção aprovada em 16/10/2026: o jogo vê pelos olhos do Lemos, a repórter fica exatamente onde o Jorge fica, sem caderno.
@@ -83,7 +94,7 @@ A mesma cena serve para a entrevista do Lemos à repórter da TV Sereno, no port
 - Toque na cena completa a legenda ou passa para a próxima, como no depoimento.
 - Posição (ajuste de 18/10/2026): a legenda da repórter e a do Lemos ficam centradas embaixo, e as respostas à esquerda com a pergunta dela em cima (a legenda some enquanto ele escolhe). Tudo respeita a área segura do iPhone (`--sl`, `--sb`, `--sr` da casa); o caderno do Jorge também.
 - Boca: as folhas de bocas dela são recortes do próprio rosto em 1:1, então a boca é desenhada sem ampliar e sem achatar (`squash:false`, lábio 108 px); assim a pele em volta não escorrega quando ela fala.
-- Expressões: a troca no rosto dela leva 150 ms (`fadeMs`), mais viva que a do Jorge (320 ms, cansado).
+- Expressões: ver "Troca de expressão natural" (170 ms nela, 230 ms no Jorge).
 - Cabelo: o cadastro já aponta para `public/characters/reporter/hair/manifest.json`; as camadas foram pedidas ao ChatGPT (`creative-requests/inbox/2026-10-18-reporter-cabelo-ao-vento.md`). Quando chegarem, ela ganha o cabelo ao vento e a garoa no rosto do Jorge; até lá, o retrato fica parado.
 
 ## Jorge molhado (`depo.wet`)
