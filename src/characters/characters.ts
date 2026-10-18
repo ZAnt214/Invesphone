@@ -54,16 +54,20 @@ export const characters:Record<string,CharacterDef> = {
     name:'Repórter · TV Sereno',
     portrait:{ width:900, height:1200, crop:{ x:80, y:10, w:740, h:800 }, eyeMid:[446.25,387] },
     assets:{
-      neutral:{ src:src('reporter','neutral'), align:{ eyeMid:[446.25,387], scale:1, neckY:730, shoulderY:650 }, eyes:{ left:eye(370.5,390,31.5,14), right:eye(522,384,33,15) }, mouth:mouth(447,535,60,561,2,30) },
-      asking:{ src:src('reporter','asking'), align:{ eyeMid:[446.25,387], scale:1, neckY:730, shoulderY:650 }, eyes:{ left:eye(371,388,32,14), right:eye(521.5,383,33.5,15) }, mouth:mouth(447,535,60,561,2,30) },
-      insisting:{ src:src('reporter','insisting'), align:{ eyeMid:[446.25,387], scale:1, neckY:730, shoulderY:650 }, eyes:{ left:eye(371.5,389.5,31.5,12.5), right:eye(521,386.5,34,12.5) }, mouth:mouth(447,535,60,561,2,30) },
-      surprised:{ src:src('reporter','surprised'), align:{ eyeMid:[446.25,387], scale:1, neckY:730, shoulderY:650 }, eyes:{ left:eye(371.5,385,31.5,18), right:eye(521,381,34,19) }, mouth:mouth(447,535,60,561,2,30) },
-      satisfied:{ src:src('reporter','satisfied'), align:{ eyeMid:[446.25,387], scale:1, neckY:730, shoulderY:650 }, eyes:{ left:eye(373,389.5,34,13.5), right:eye(521,384,34,14) }, mouth:mouth(447,535,60,561,2,30) },
-      annoyed:{ src:src('reporter','annoyed'), align:{ eyeMid:[446.25,387], scale:1, neckY:730, shoulderY:650 }, eyes:{ left:eye(372.5,392.5,33.5,10.5), right:eye(520.5,387.5,33.5,11.5) }, mouth:mouth(447,535,60,561,2,30) },
+      neutral:{ src:src('reporter','neutral'), align:{ eyeMid:[446.25,387], scale:1, neckY:730, shoulderY:650 }, eyes:{ left:eye(370.5,390,31.5,14), right:eye(522,384,33,15) }, mouth:mouth(447,535,54,561,2,30) },
+      asking:{ src:src('reporter','asking'), align:{ eyeMid:[446.25,387], scale:1, neckY:730, shoulderY:650 }, eyes:{ left:eye(371,388,32,14), right:eye(521.5,383,33.5,15) }, mouth:mouth(447,535,54,561,2,30) },
+      insisting:{ src:src('reporter','insisting'), align:{ eyeMid:[446.25,387], scale:1, neckY:730, shoulderY:650 }, eyes:{ left:eye(371.5,389.5,31.5,12.5), right:eye(521,386.5,34,12.5) }, mouth:mouth(447,535,54,561,2,30) },
+      surprised:{ src:src('reporter','surprised'), align:{ eyeMid:[446.25,387], scale:1, neckY:730, shoulderY:650 }, eyes:{ left:eye(371.5,385,31.5,18), right:eye(521,381,34,19) }, mouth:mouth(447,535,54,561,2,30) },
+      satisfied:{ src:src('reporter','satisfied'), align:{ eyeMid:[446.25,387], scale:1, neckY:730, shoulderY:650 }, eyes:{ left:eye(373,389.5,34,13.5), right:eye(521,384,34,14) }, mouth:mouth(447,535,54,561,2,30) },
+      annoyed:{ src:src('reporter','annoyed'), align:{ eyeMid:[446.25,387], scale:1, neckY:730, shoulderY:650 }, eyes:{ left:eye(372.5,392.5,33.5,10.5), right:eye(520.5,387.5,33.5,11.5) }, mouth:mouth(447,535,54,561,2,30) },
     },
     faceMask:`${base}characters/reporter/face-mask.png`,
     figureMask:`${base}characters/reporter/figure-mask.png`,
-    visemes:{ src:`${base}characters/reporter/visemes.png`, cellW:400, cellH:120, order:['A','E','I','O','U','M'], center:[200,60], lipWidth:108, reach:1 },
+    /* as bocas dela são recortes do próprio rosto em 1:1 (lábio de 108 px): desenhadas sem ampliar e sem achatar, para a pele em volta não escorregar */
+    visemes:{ src:`${base}characters/reporter/visemes.png`, cellW:400, cellH:120, order:['A','E','I','O','U','M'], center:[200,60], lipWidth:108, reach:1, squash:false },
+    fadeMs:150,
+    /* cabelo ao vento: camadas pedidas ao ChatGPT (creative-requests 2026-10-18); enquanto o manifesto não existir, o retrato fica parado */
+    hair:`${base}characters/reporter/hair/manifest.json`,
     face:{ cx:446.25, cy:405, size:420 }
   },
   livia:{
