@@ -140,3 +140,13 @@ O cabelo do Jorge balança com o mesmo vento da garoa (`windAt`) e é empurrado 
   - **Helicóptero:** o vento vem de onde ele está (`HS.sx`). De lado, o cabelo deita para o lado, e as mechas caem sobre a testa e a orelha. Em cima, é achatado para baixo. As mechas mais rígidas do manifesto (as laterais) mexem menos, e a turbulência fica forte enquanto ele está perto.
 - **Memória:** ficam carregadas só as expressões que o depoimento usa, com cada mecha recortada na sua caixa. Enquanto carregam, no começo, aparece o retrato oficial, que é igual em repouso.
 - **Ajuste:** Gráficos > Depoimento na rua > Cabelo ao vento (`depo.hair`). Desligado, na qualidade baixa, com movimento reduzido ou num aparelho que já precisou aliviar a cena duas vezes, fica o retrato oficial e as camadas saem da memória.
+
+## Piscada feita da própria arte
+
+A piscada não é mais uma pálpebra de cor lisa pintada por cima (`drawLids` em `streetDepo.js`). A pálpebra de cima é a própria pele do retrato, a faixa entre o olho e a sobrancelha, que desce sobre o olho coluna por coluna, esticando:
+
+- O traço dos cílios de cima é achado uma vez por expressão, na arte: é o primeiro pixel bem mais escuro que a pele, descendo, com até 4,5 px de espessura. Ele desce junto com a pálpebra, do arco de cima até o arco de baixo do olho. Fechado, o olho fica com o traço curvo para baixo, como na arte.
+- A pele esticada vem de uma cópia levemente borrada na horizontal, para não virar riscos verticais.
+- O ritmo é o de uma piscada de verdade: fecha em 75 ms, fica fechado um instante e abre em ~110 ms. A troca de expressão continua caindo com o olho fechado.
+- Com a figura na placa de vídeo, a pálpebra entra na mesma camada da boca (`light.ov`) e recebe a mesma luz e a mesma garoa do rosto. Vale para o Jorge e para a repórter.
+
