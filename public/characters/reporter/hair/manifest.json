@@ -1,0 +1,695 @@
+{
+  "version": 1,
+  "character": "reporter",
+  "resolution": {
+    "width": 900,
+    "height": 1200
+  },
+  "baseFormat": "png",
+  "weightChannel": "red",
+  "weightOutsideStrand": 0,
+  "zeroWindReconstruction": "exact decoded RGB with base.png; JPEG is compatibility only",
+  "expressions": {
+    "neutral": {
+      "base": "neutral/base.png",
+      "compatibilityJpeg": "neutral/base.jpg",
+      "original": "../expressions/neutral.jpg",
+      "strands": [
+        {
+          "file": "neutral/strand-01-lateral-esq.png",
+          "weight": "neutral/strand-01-lateral-esq-weight.png",
+          "root": [
+            287,
+            278
+          ],
+          "tip": [
+            235,
+            373
+          ],
+          "stiffness": 0.94,
+          "zIndex": 1,
+          "pixels": 5404
+        },
+        {
+          "file": "neutral/strand-02-lateral-dir.png",
+          "weight": "neutral/strand-02-lateral-dir-weight.png",
+          "root": [
+            608,
+            279
+          ],
+          "tip": [
+            656,
+            365
+          ],
+          "stiffness": 0.94,
+          "zIndex": 2,
+          "pixels": 4489
+        },
+        {
+          "file": "neutral/strand-03-topo-esq.png",
+          "weight": "neutral/strand-03-topo-esq-weight.png",
+          "root": [
+            371,
+            189
+          ],
+          "tip": [
+            283,
+            247
+          ],
+          "stiffness": 0.9,
+          "zIndex": 3,
+          "pixels": 9275
+        },
+        {
+          "file": "neutral/strand-04-topo-centro.png",
+          "weight": "neutral/strand-04-topo-centro-weight.png",
+          "root": [
+            447,
+            157
+          ],
+          "tip": [
+            446,
+            97
+          ],
+          "stiffness": 0.88,
+          "zIndex": 4,
+          "pixels": 8661
+        },
+        {
+          "file": "neutral/strand-05-topo-dir.png",
+          "weight": "neutral/strand-05-topo-dir-weight.png",
+          "root": [
+            535,
+            183
+          ],
+          "tip": [
+            596,
+            202
+          ],
+          "stiffness": 0.92,
+          "zIndex": 5,
+          "pixels": 8081
+        },
+        {
+          "file": "neutral/strand-06-fio-frontal-esq.png",
+          "weight": "neutral/strand-06-fio-frontal-esq-weight.png",
+          "root": [
+            323,
+            300
+          ],
+          "tip": [
+            283,
+            549
+          ],
+          "stiffness": 0.22,
+          "zIndex": 6,
+          "pixels": 2831
+        },
+        {
+          "file": "neutral/strand-07-fio-frontal-dir.png",
+          "weight": "neutral/strand-07-fio-frontal-dir-weight.png",
+          "root": [
+            572,
+            300
+          ],
+          "tip": [
+            601,
+            529
+          ],
+          "stiffness": 0.24,
+          "zIndex": 7,
+          "pixels": 2864
+        }
+      ]
+    },
+    "asking": {
+      "base": "asking/base.png",
+      "compatibilityJpeg": "asking/base.jpg",
+      "original": "../expressions/asking.jpg",
+      "strands": [
+        {
+          "file": "asking/strand-01-lateral-esq.png",
+          "weight": "asking/strand-01-lateral-esq-weight.png",
+          "root": [
+            287,
+            278
+          ],
+          "tip": [
+            235,
+            373
+          ],
+          "stiffness": 0.94,
+          "zIndex": 1,
+          "pixels": 5404
+        },
+        {
+          "file": "asking/strand-02-lateral-dir.png",
+          "weight": "asking/strand-02-lateral-dir-weight.png",
+          "root": [
+            608,
+            279
+          ],
+          "tip": [
+            656,
+            365
+          ],
+          "stiffness": 0.94,
+          "zIndex": 2,
+          "pixels": 4489
+        },
+        {
+          "file": "asking/strand-03-topo-esq.png",
+          "weight": "asking/strand-03-topo-esq-weight.png",
+          "root": [
+            371,
+            189
+          ],
+          "tip": [
+            283,
+            247
+          ],
+          "stiffness": 0.9,
+          "zIndex": 3,
+          "pixels": 9275
+        },
+        {
+          "file": "asking/strand-04-topo-centro.png",
+          "weight": "asking/strand-04-topo-centro-weight.png",
+          "root": [
+            447,
+            157
+          ],
+          "tip": [
+            446,
+            97
+          ],
+          "stiffness": 0.88,
+          "zIndex": 4,
+          "pixels": 8661
+        },
+        {
+          "file": "asking/strand-05-topo-dir.png",
+          "weight": "asking/strand-05-topo-dir-weight.png",
+          "root": [
+            535,
+            183
+          ],
+          "tip": [
+            596,
+            202
+          ],
+          "stiffness": 0.92,
+          "zIndex": 5,
+          "pixels": 8081
+        },
+        {
+          "file": "asking/strand-06-fio-frontal-esq.png",
+          "weight": "asking/strand-06-fio-frontal-esq-weight.png",
+          "root": [
+            323,
+            300
+          ],
+          "tip": [
+            283,
+            549
+          ],
+          "stiffness": 0.22,
+          "zIndex": 6,
+          "pixels": 2831
+        },
+        {
+          "file": "asking/strand-07-fio-frontal-dir.png",
+          "weight": "asking/strand-07-fio-frontal-dir-weight.png",
+          "root": [
+            572,
+            300
+          ],
+          "tip": [
+            601,
+            529
+          ],
+          "stiffness": 0.24,
+          "zIndex": 7,
+          "pixels": 2863
+        }
+      ]
+    },
+    "insisting": {
+      "base": "insisting/base.png",
+      "compatibilityJpeg": "insisting/base.jpg",
+      "original": "../expressions/insisting.jpg",
+      "strands": [
+        {
+          "file": "insisting/strand-01-lateral-esq.png",
+          "weight": "insisting/strand-01-lateral-esq-weight.png",
+          "root": [
+            287,
+            278
+          ],
+          "tip": [
+            235,
+            373
+          ],
+          "stiffness": 0.94,
+          "zIndex": 1,
+          "pixels": 5404
+        },
+        {
+          "file": "insisting/strand-02-lateral-dir.png",
+          "weight": "insisting/strand-02-lateral-dir-weight.png",
+          "root": [
+            608,
+            279
+          ],
+          "tip": [
+            656,
+            365
+          ],
+          "stiffness": 0.94,
+          "zIndex": 2,
+          "pixels": 4489
+        },
+        {
+          "file": "insisting/strand-03-topo-esq.png",
+          "weight": "insisting/strand-03-topo-esq-weight.png",
+          "root": [
+            371,
+            189
+          ],
+          "tip": [
+            283,
+            247
+          ],
+          "stiffness": 0.9,
+          "zIndex": 3,
+          "pixels": 9275
+        },
+        {
+          "file": "insisting/strand-04-topo-centro.png",
+          "weight": "insisting/strand-04-topo-centro-weight.png",
+          "root": [
+            447,
+            157
+          ],
+          "tip": [
+            446,
+            97
+          ],
+          "stiffness": 0.88,
+          "zIndex": 4,
+          "pixels": 8661
+        },
+        {
+          "file": "insisting/strand-05-topo-dir.png",
+          "weight": "insisting/strand-05-topo-dir-weight.png",
+          "root": [
+            535,
+            183
+          ],
+          "tip": [
+            596,
+            202
+          ],
+          "stiffness": 0.92,
+          "zIndex": 5,
+          "pixels": 8081
+        },
+        {
+          "file": "insisting/strand-06-fio-frontal-esq.png",
+          "weight": "insisting/strand-06-fio-frontal-esq-weight.png",
+          "root": [
+            323,
+            300
+          ],
+          "tip": [
+            283,
+            549
+          ],
+          "stiffness": 0.22,
+          "zIndex": 6,
+          "pixels": 2831
+        },
+        {
+          "file": "insisting/strand-07-fio-frontal-dir.png",
+          "weight": "insisting/strand-07-fio-frontal-dir-weight.png",
+          "root": [
+            572,
+            300
+          ],
+          "tip": [
+            601,
+            529
+          ],
+          "stiffness": 0.24,
+          "zIndex": 7,
+          "pixels": 2864
+        }
+      ]
+    },
+    "surprised": {
+      "base": "surprised/base.png",
+      "compatibilityJpeg": "surprised/base.jpg",
+      "original": "../expressions/surprised.jpg",
+      "strands": [
+        {
+          "file": "surprised/strand-01-lateral-esq.png",
+          "weight": "surprised/strand-01-lateral-esq-weight.png",
+          "root": [
+            287,
+            278
+          ],
+          "tip": [
+            235,
+            373
+          ],
+          "stiffness": 0.94,
+          "zIndex": 1,
+          "pixels": 5404
+        },
+        {
+          "file": "surprised/strand-02-lateral-dir.png",
+          "weight": "surprised/strand-02-lateral-dir-weight.png",
+          "root": [
+            608,
+            279
+          ],
+          "tip": [
+            656,
+            365
+          ],
+          "stiffness": 0.94,
+          "zIndex": 2,
+          "pixels": 4489
+        },
+        {
+          "file": "surprised/strand-03-topo-esq.png",
+          "weight": "surprised/strand-03-topo-esq-weight.png",
+          "root": [
+            371,
+            189
+          ],
+          "tip": [
+            283,
+            247
+          ],
+          "stiffness": 0.9,
+          "zIndex": 3,
+          "pixels": 9275
+        },
+        {
+          "file": "surprised/strand-04-topo-centro.png",
+          "weight": "surprised/strand-04-topo-centro-weight.png",
+          "root": [
+            447,
+            157
+          ],
+          "tip": [
+            446,
+            97
+          ],
+          "stiffness": 0.88,
+          "zIndex": 4,
+          "pixels": 8661
+        },
+        {
+          "file": "surprised/strand-05-topo-dir.png",
+          "weight": "surprised/strand-05-topo-dir-weight.png",
+          "root": [
+            535,
+            183
+          ],
+          "tip": [
+            596,
+            202
+          ],
+          "stiffness": 0.92,
+          "zIndex": 5,
+          "pixels": 8081
+        },
+        {
+          "file": "surprised/strand-06-fio-frontal-esq.png",
+          "weight": "surprised/strand-06-fio-frontal-esq-weight.png",
+          "root": [
+            323,
+            300
+          ],
+          "tip": [
+            283,
+            549
+          ],
+          "stiffness": 0.22,
+          "zIndex": 6,
+          "pixels": 2831
+        },
+        {
+          "file": "surprised/strand-07-fio-frontal-dir.png",
+          "weight": "surprised/strand-07-fio-frontal-dir-weight.png",
+          "root": [
+            572,
+            300
+          ],
+          "tip": [
+            601,
+            529
+          ],
+          "stiffness": 0.24,
+          "zIndex": 7,
+          "pixels": 2863
+        }
+      ]
+    },
+    "satisfied": {
+      "base": "satisfied/base.png",
+      "compatibilityJpeg": "satisfied/base.jpg",
+      "original": "../expressions/satisfied.jpg",
+      "strands": [
+        {
+          "file": "satisfied/strand-01-lateral-esq.png",
+          "weight": "satisfied/strand-01-lateral-esq-weight.png",
+          "root": [
+            287,
+            278
+          ],
+          "tip": [
+            235,
+            373
+          ],
+          "stiffness": 0.94,
+          "zIndex": 1,
+          "pixels": 5404
+        },
+        {
+          "file": "satisfied/strand-02-lateral-dir.png",
+          "weight": "satisfied/strand-02-lateral-dir-weight.png",
+          "root": [
+            608,
+            279
+          ],
+          "tip": [
+            656,
+            365
+          ],
+          "stiffness": 0.94,
+          "zIndex": 2,
+          "pixels": 4489
+        },
+        {
+          "file": "satisfied/strand-03-topo-esq.png",
+          "weight": "satisfied/strand-03-topo-esq-weight.png",
+          "root": [
+            371,
+            189
+          ],
+          "tip": [
+            283,
+            247
+          ],
+          "stiffness": 0.9,
+          "zIndex": 3,
+          "pixels": 9275
+        },
+        {
+          "file": "satisfied/strand-04-topo-centro.png",
+          "weight": "satisfied/strand-04-topo-centro-weight.png",
+          "root": [
+            447,
+            157
+          ],
+          "tip": [
+            446,
+            97
+          ],
+          "stiffness": 0.88,
+          "zIndex": 4,
+          "pixels": 8661
+        },
+        {
+          "file": "satisfied/strand-05-topo-dir.png",
+          "weight": "satisfied/strand-05-topo-dir-weight.png",
+          "root": [
+            535,
+            183
+          ],
+          "tip": [
+            596,
+            202
+          ],
+          "stiffness": 0.92,
+          "zIndex": 5,
+          "pixels": 8081
+        },
+        {
+          "file": "satisfied/strand-06-fio-frontal-esq.png",
+          "weight": "satisfied/strand-06-fio-frontal-esq-weight.png",
+          "root": [
+            323,
+            300
+          ],
+          "tip": [
+            283,
+            549
+          ],
+          "stiffness": 0.22,
+          "zIndex": 6,
+          "pixels": 2831
+        },
+        {
+          "file": "satisfied/strand-07-fio-frontal-dir.png",
+          "weight": "satisfied/strand-07-fio-frontal-dir-weight.png",
+          "root": [
+            572,
+            300
+          ],
+          "tip": [
+            601,
+            529
+          ],
+          "stiffness": 0.24,
+          "zIndex": 7,
+          "pixels": 2864
+        }
+      ]
+    },
+    "annoyed": {
+      "base": "annoyed/base.png",
+      "compatibilityJpeg": "annoyed/base.jpg",
+      "original": "../expressions/annoyed.jpg",
+      "strands": [
+        {
+          "file": "annoyed/strand-01-lateral-esq.png",
+          "weight": "annoyed/strand-01-lateral-esq-weight.png",
+          "root": [
+            287,
+            278
+          ],
+          "tip": [
+            235,
+            373
+          ],
+          "stiffness": 0.94,
+          "zIndex": 1,
+          "pixels": 5404
+        },
+        {
+          "file": "annoyed/strand-02-lateral-dir.png",
+          "weight": "annoyed/strand-02-lateral-dir-weight.png",
+          "root": [
+            608,
+            279
+          ],
+          "tip": [
+            656,
+            365
+          ],
+          "stiffness": 0.94,
+          "zIndex": 2,
+          "pixels": 4489
+        },
+        {
+          "file": "annoyed/strand-03-topo-esq.png",
+          "weight": "annoyed/strand-03-topo-esq-weight.png",
+          "root": [
+            371,
+            189
+          ],
+          "tip": [
+            283,
+            247
+          ],
+          "stiffness": 0.9,
+          "zIndex": 3,
+          "pixels": 9275
+        },
+        {
+          "file": "annoyed/strand-04-topo-centro.png",
+          "weight": "annoyed/strand-04-topo-centro-weight.png",
+          "root": [
+            447,
+            157
+          ],
+          "tip": [
+            446,
+            97
+          ],
+          "stiffness": 0.88,
+          "zIndex": 4,
+          "pixels": 8661
+        },
+        {
+          "file": "annoyed/strand-05-topo-dir.png",
+          "weight": "annoyed/strand-05-topo-dir-weight.png",
+          "root": [
+            535,
+            183
+          ],
+          "tip": [
+            596,
+            202
+          ],
+          "stiffness": 0.92,
+          "zIndex": 5,
+          "pixels": 8081
+        },
+        {
+          "file": "annoyed/strand-06-fio-frontal-esq.png",
+          "weight": "annoyed/strand-06-fio-frontal-esq-weight.png",
+          "root": [
+            323,
+            300
+          ],
+          "tip": [
+            283,
+            549
+          ],
+          "stiffness": 0.22,
+          "zIndex": 6,
+          "pixels": 2831
+        },
+        {
+          "file": "annoyed/strand-07-fio-frontal-dir.png",
+          "weight": "annoyed/strand-07-fio-frontal-dir-weight.png",
+          "root": [
+            572,
+            300
+          ],
+          "tip": [
+            601,
+            529
+          ],
+          "stiffness": 0.24,
+          "zIndex": 7,
+          "pixels": 2864
+        }
+      ]
+    }
+  },
+  "motion": {
+    "units": "source pixels",
+    "recommendedTipDisplacement": {
+      "breeze": 1.5,
+      "helicopter": 5
+    },
+    "rootPinned": true,
+    "notes": "Pinned bun; flexible temple locks. Calibrate amplitude in Safari."
+  }
+}
