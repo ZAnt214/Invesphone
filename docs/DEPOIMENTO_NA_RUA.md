@@ -81,6 +81,10 @@ A mesma cena serve para a entrevista do Lemos à repórter da TV Sereno, no port
 - A frase vai para o save com `pressSay('e1', id)` e sai na primeira edição do Jornal Sereno. Na casa, responder acalma a imprensa; não atender a faz insistir mais.
 - A arte é a oficial da repórter (`public/characters/reporter/`, cadastrada em `characters.ts` com as marcas do `manifest.json`). Ela não tem camadas de cabelo, então não tem cabelo ao vento nem a garoa no rosto do Jorge. A casa prepara a cena quando a imprensa chega (`prewarmStreetDepo('reporter',{press:'e1'})`).
 - Toque na cena completa a legenda ou passa para a próxima, como no depoimento.
+- Posição (ajuste de 18/10/2026): a legenda da repórter e a do Lemos ficam centradas embaixo, e as respostas à esquerda com a pergunta dela em cima (a legenda some enquanto ele escolhe). Tudo respeita a área segura do iPhone (`--sl`, `--sb`, `--sr` da casa); o caderno do Jorge também.
+- Boca: as folhas de bocas dela são recortes do próprio rosto em 1:1, então a boca é desenhada sem ampliar e sem achatar (`squash:false`, lábio 108 px); assim a pele em volta não escorrega quando ela fala.
+- Expressões: a troca no rosto dela leva 150 ms (`fadeMs`), mais viva que a do Jorge (320 ms, cansado).
+- Cabelo: o cadastro já aponta para `public/characters/reporter/hair/manifest.json`; as camadas foram pedidas ao ChatGPT (`creative-requests/inbox/2026-10-18-reporter-cabelo-ao-vento.md`). Quando chegarem, ela ganha o cabelo ao vento e a garoa no rosto do Jorge; até lá, o retrato fica parado.
 
 ## Jorge molhado (`depo.wet`)
 

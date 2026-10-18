@@ -53,6 +53,8 @@ export type VisemeAtlas = {
   lipWidth:number
   /** Alcance da borda suave da forma de boca, em múltiplos de `lipWidth` (padrão 1,15). Menor = menos halo ao redor da boca. */
   reach?:number
+  /** false: a boca não é achatada quando fecha (folhas com pele em volta, recortadas em 1:1). */
+  squash?:boolean
 }
 
 export type CharacterDef = {
@@ -73,6 +75,8 @@ export type CharacterDef = {
   alias?: Partial<Record<Expression,Expression>>
   /** Cabelo em camadas para balançar com o vento (manifest.json das mechas, por expressão). Ver src/rua/hairWind.js. */
   hair?:string
+  /** duração da troca de expressão no depoimento na rua, em ms (padrão 320). */
+  fadeMs?:number
   assets: { neutral:ExpressionAsset } & Partial<Record<Expression,ExpressionAsset>>
   /** Formas de boca para sincronizar a fala. Sem isso, a boca fala abrindo o lábio de baixo. */
   visemes?: VisemeAtlas

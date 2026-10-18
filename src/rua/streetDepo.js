@@ -1011,6 +1011,8 @@ export function openStreetDepo(host,id,opts={}){
   };
 
   let expr='neutral',prev=null,fadeAt=0;
+  /* troca de expressão: o Jorge muda devagar (cansado); a repórter, rápida e viva, muda num instante (só o rosto muda entre as imagens dela) */
+  const FADE_MS=CH.fadeMs||320;
   let blinkNext=performance.now()+1500,blinkStart=-1;
   const vis={A:0,E:0,I:0,O:0,U:0,M:0},ORDER=['A','E','I','O','U','M'];
   let mouthOn=0,openV=0,speech=null;
@@ -1043,7 +1045,7 @@ export function openStreetDepo(host,id,opts={}){
     gx.clearRect(0,0,400,120);let acc=0;
     for(const x of ws){acc+=x.w;gx.globalAlpha=x.w/acc;gx.drawImage(imgs.visemes,VD.order.indexOf(x.v)*VD.cellW,0,VD.cellW,VD.cellH,0,0,400,120)}
     gx.globalAlpha=1;
-    const m=CH.assets[expr].mouth,cx=m.cx,rim=m.rimY,s=m.halfWidth*2/VD.lipWidth,sy=s*(vis.M+(1-vis.M)*(.62+.38*Math.min(1,openV)));
+    const m=CH.assets[expr].mouth,cx=m.cx,rim=m.rimY,s=m.halfWidth*2/VD.lipWidth,sy=VD.squash===false?s:s*(vis.M+(1-vis.M)*(.62+.38*Math.min(1,openV)));
     c.save();c.globalAlpha=Math.min(1,mouthOn);c.translate(cx,rim);c.scale(s,sy);c.drawImage(gcv,-VD.center[0],-VD.center[1]);c.restore();
   }
   function drawLids(c,now){
@@ -1064,7 +1066,7 @@ export function openStreetDepo(host,id,opts={}){
   function drawActor(now,t,g){
     if(!ready||!imgs[expr])return;
     const S=476/1200,br=RM?0:Math.sin(t*2*Math.PI/4.4);
-    const f=Math.min(1,(now-fadeAt)/320);
+    const f=Math.min(1,(now-fadeAt)/FADE_MS);
     const hon=hairOn();if(hon)HAIR.step(RM?0:t,hairMove()?hairWind(t):{wx:0,wy:0,wob:0,gust:0});
     const fading=!!(prev&&f<1&&imgs[prev]),gok=hon&&HAIR.ok(expr,fading?prev:null);
     if(gok){const fx=PS?200+Math.max(-120,Math.min(120,(PS.x-620)*.25)):200;
@@ -1453,20 +1455,21 @@ export function openStreetDepo(host,id,opts={}){
   function lemosLine(text,done){
     camMode('pick');sub.classList.add('lem');startTyping(text);
     const step=()=>{if(!ps)return;clearTimeout(ps.t);ps=null;finishTyping();done&&done()};
-    ps={step,t:0};ps.t=setTimeout(step,typingMs(text)+Math.max(1600,text.length*45));
+    ps={step,t:0};ps.t=setTimeout(step,typingMs(text)+Math.max(1200,text.length*32));
   }
   const typingMs=text=>track(text).length*58*.88;
   function pressChoices(){
     const g=readCase(),F={arromb:(g.clues||[]).includes('porta_intacta')};
     const list=PM.opts.filter(o=>!o.need||o.need(F));
     const box=document.createElement('div');box.className='pch';box.setAttribute('role','group');box.setAttribute('aria-label','O que o Lemos responde');
-    box.innerHTML=list.map(o=>`<button data-o="${o.id}"${o.say?'':' class="mute"'}><small>${esc(o.tag)}</small>${o.say?`<span>“${esc(o.say)}”</span>`:'<span>Seguir sem responder</span>'}</button>`).join('');
+    root.classList.add('choosing');
+    box.innerHTML=`<p class="pq"><b>REPÓRTER</b>${esc(PM.q)}</p>`+list.map(o=>`<button data-o="${o.id}"${o.say?'':' class="mute"'}><small>${esc(o.tag)}</small>${o.say?`<span>“${esc(o.say)}”</span>`:'<span>Seguir sem responder</span>'}</button>`).join('');
     stage.appendChild(box);requestAnimationFrame(()=>box.classList.add('on'));camMode('note');
     box.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b||box.dataset.done)return;box.dataset.done='1';
-      const o=PM.opts.find(x=>x.id===b.dataset.o);SFX.click();box.classList.remove('on');setTimeout(()=>box.remove(),300);
+      const o=PM.opts.find(x=>x.id===b.dataset.o);SFX.click();box.classList.remove('on');setTimeout(()=>box.remove(),300);sub.innerHTML='';root.classList.remove('choosing');
       pressSay(opts.press,o.id,F);opts.onPress&&opts.onPress(o.id);
       const react=()=>{sub.innerHTML='';if(o.re)sayLine(o.re.say,o.re.e,()=>setTimeout(close,RM?300:1100));else setTimeout(close,600)};
-      if(o.say)setTimeout(()=>lemosLine(o.say,()=>{sub.innerHTML='';setTimeout(react,350)}),250);else setTimeout(react,200);
+      if(o.say)setTimeout(()=>lemosLine(o.say,()=>{sub.innerHTML='';setTimeout(react,180)}),200);else setTimeout(react,150);
     });
   }
   if(PM){root.classList.add('press');stage.addEventListener('click',e=>{if(e.target.closest('.pch')||!ps)return;if(typing)finishTyping();else ps.step()});
