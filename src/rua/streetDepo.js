@@ -70,7 +70,7 @@ export function prewarmStreetDepo(id,opts){
   const cfg=cfgOf(id,opts);if(!cfg)return;const CH=characters[cfg.personId];if(!CH)return;
   const A=ART_SRC();imgOnce(A.bg);imgOnce(A.poste);A.crowd.forEach(imgOnce);
   const EXPRS=exprsOf(cfg,CH);
-  portraitSet(CH,CH.visemes||null,EXPRS).then(({mask})=>{if(CH.hair&&getQuality()!=='low')prewarmHair({url:CH.hair,PW,PH,mask,exprs:EXPRS})});
+  portraitSet(CH,CH.visemes||null,EXPRS).then(({mask})=>{if(CH.hair&&getQuality()!=='low')prewarmHair({url:CH.hair,PW,PH,mask,exprs:EXPRS,maxTip:CH.hairMaxTip,refill:CH.hairRefill})});
 }
 
 /** Abre o depoimento na rua de `id` (um depoimento de src/interrogation/registry.ts) por cima de `host`.
@@ -124,7 +124,7 @@ export function openStreetDepo(host,id,opts={}){
     Object.assign(imgs,I);Object.assign(skins,K);
     ready=true;
     /* cabelo ao vento (src/rua/hairWind.js): só se o personagem tem as camadas e o ajuste está ligado */
-    if(CH.hair){HAIR=createHair({url:CH.hair,PW,PH,mask,canvas:cvHair});HAIR.resize(400,430,ACR);}hairSync();
+    if(CH.hair){HAIR=createHair({url:CH.hair,PW,PH,mask,canvas:cvHair,maxTip:CH.hairMaxTip,refill:CH.hairRefill});HAIR.resize(400,430,ACR);}hairSync();
   });
   /* ---------- cabelo ao vento ----------
      Com o ajuste "Cabelo ao vento" (depo.hair), qualidade não baixa e sem movimento reduzido, o retrato da expressão em

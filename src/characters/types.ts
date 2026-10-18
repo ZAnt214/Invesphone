@@ -75,6 +75,10 @@ export type CharacterDef = {
   alias?: Partial<Record<Expression,Expression>>
   /** Cabelo em camadas para balançar com o vento (manifest.json das mechas, por expressão). Ver src/rua/hairWind.js. */
   hair?:string
+  /** quanto a ponta de uma mecha pode andar, em px da imagem 900×1200 (sem isso, o movimento do Jorge). */
+  hairMaxTip?:number
+  /** refaz o fundo atrás das mechas a partir da própria imagem (src/rua/hairWind.js, refillBase). */
+  hairRefill?:boolean
   /** duração da troca de expressão no depoimento na rua, em ms (padrão 230). */
   fadeMs?:number
   assets: { neutral:ExpressionAsset } & Partial<Record<Expression,ExpressionAsset>>
