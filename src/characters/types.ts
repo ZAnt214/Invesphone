@@ -75,7 +75,7 @@ export type CharacterDef = {
   alias?: Partial<Record<Expression,Expression>>
   /** Cabelo em camadas para balançar com o vento (manifest.json das mechas, por expressão). Ver src/rua/hairWind.js. */
   hair?:string
-  /** duração da troca de expressão no depoimento na rua, em ms (padrão 320). */
+  /** duração da troca de expressão no depoimento na rua, em ms (padrão 230). */
   fadeMs?:number
   assets: { neutral:ExpressionAsset } & Partial<Record<Expression,ExpressionAsset>>
   /** Formas de boca para sincronizar a fala. Sem isso, a boca fala abrindo o lábio de baixo. */
