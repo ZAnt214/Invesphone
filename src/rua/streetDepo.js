@@ -70,7 +70,7 @@ export function prewarmStreetDepo(id,opts){
   const cfg=cfgOf(id,opts);if(!cfg)return;const CH=characters[cfg.personId];if(!CH)return;
   const A=ART_SRC();imgOnce(A.bg);imgOnce(A.poste);A.crowd.forEach(imgOnce);
   const EXPRS=exprsOf(cfg,CH);
-  portraitSet(CH,CH.visemes||null,EXPRS).then(({mask})=>{if(CH.hair&&getQuality()!=='low')prewarmHair({url:CH.hair,PW,PH,mask,exprs:EXPRS,maxTip:CH.hairMaxTip,refill:CH.hairRefill})});
+  portraitSet(CH,CH.visemes||null,EXPRS).then(({mask})=>{if(CH.hair&&getQuality()!=='low')prewarmHair({url:CH.hair,PW,PH,mask,exprs:EXPRS,maxTip:CH.hairMaxTip,refill:CH.hairRefill,cloth:!!CH.hairCloth})});
 }
 
 /** Abre o depoimento na rua de `id` (um depoimento de src/interrogation/registry.ts) por cima de `host`.
@@ -124,7 +124,7 @@ export function openStreetDepo(host,id,opts={}){
     Object.assign(imgs,I);Object.assign(skins,K);
     ready=true;
     /* cabelo ao vento (src/rua/hairWind.js): só se o personagem tem as camadas e o ajuste está ligado */
-    if(CH.hair){HAIR=createHair({url:CH.hair,PW,PH,mask,canvas:cvHair,maxTip:CH.hairMaxTip,refill:CH.hairRefill});HAIR.resize(400,430,ACR);}hairSync();
+    if(CH.hair){HAIR=createHair({url:CH.hair,PW,PH,mask,canvas:cvHair,maxTip:CH.hairMaxTip,refill:CH.hairRefill,cloth:!!CH.hairCloth});HAIR.resize(400,430,ACR);}hairSync();
   });
   /* ---------- cabelo ao vento ----------
      Com o ajuste "Cabelo ao vento" (depo.hair), qualidade não baixa e sem movimento reduzido, o retrato da expressão em
@@ -158,6 +158,9 @@ export function openStreetDepo(host,id,opts={}){
       list.forEach((im,i)=>{if(!im)return;for(const far of [0,1]){const c=document.createElement('canvas');c.width=150;c.height=300;const x=c.getContext('2d');x.drawImage(im,0,0,150,300);
         x.globalCompositeOperation='source-atop';x.fillStyle=far?'rgba(22,28,42,.62)':'rgba(8,12,26,.42)';x.fillRect(0,0,150,300);
         x.fillStyle=lin(x,0,0,0,300,[[0,'rgba(255,190,130,.10)'],[.35,'rgba(0,0,0,0)'],[1,'rgba(0,0,0,.35)']]);x.fillRect(0,0,150,300);
+        /* a arte dos curiosos vai até a cintura: a parte de baixo some aos poucos na escuridão da calçada, sem a linha reta
+           do corte (as pessoas parecem de pé no escuro, atrás da fita) */
+        x.globalCompositeOperation='destination-out';x.fillStyle=lin(x,0,0,0,300,[[.62,'rgba(0,0,0,0)'],[.8,'rgba(0,0,0,.55)'],[.95,'rgba(0,0,0,1)'],[1,'rgba(0,0,0,1)']]);x.fillRect(0,0,150,300);x.globalCompositeOperation='source-over';
         (far?ART.far:ART.crowd)[i]=c}});
     });}
   /* [figura, centro x, pé y, altura, fileira de trás]: a fileira da frente encosta na fita, a de trás fica menor */
@@ -438,12 +441,13 @@ export function openStreetDepo(host,id,opts={}){
   const MOTHS=Array.from({length:4},(_,i)=>({a:Math.random()*7,r:14+i*9,sp:1.4+Math.random()*1.6,ph:Math.random()*7}));
   function midLife(c,t,g){
     const now=performance.now(),dt=RM?0:Math.min(.05,(now-lastMid)/1000);lastMid=now;
-    const rain=FXON('depo.rain')&&DEG<2,life=lifeOn(),w=windAt(t);
+    const rain=FXON('depo.rain')&&DEG<2,life=lifeOn(),w=rainWind(t),fall=rainFall();
     if(rain){
       /* garoa do fundo */
       const BK=new Map(),n=low()||DEG>0?BD.length>>1:BD.length;
-      for(let i=0;i<n;i++){const d=BD[i];const vx=d.s*(w+.04*Math.sin(t*1.3+d.ph));d.y+=d.s*dt;d.x+=vx*dt;
-        if(d.y>H+10||d.x>W+60){BD[i]=newBD(false);continue}
+      for(let i=0;i<n;i++){const d=BD[i];const vx=d.s*(w+.04*Math.sin(t*1.3+d.ph));d.y+=d.s*dt*fall;d.x+=vx*dt;
+        if(d.x>W+60)d.x-=W+140;else if(d.x<-80)d.x+=W+140;   /* com o vento virando, a garoa dá a volta pelo lado e não falta */
+        if(d.y>H+10){BD[i]=newBD(false);continue}
         const len=Math.max(2.2,d.s*Math.max(SHUT,dt*1.2)),L=lightAt(d.x,d.y),al=.035+.05*d.z+L*(.2+.32*d.z)+(g.r+g.b)*(d.x<300)*.06;
         if(al<.04)continue;const q=Math.round(al*20)/20,lw=d.z>.6?.9:.6,col=L>.18?'255,220,184':'178,192,220',key=col+'|'+q+'|'+lw;
         let a=BK.get(key);if(!a)BK.set(key,a=[]);a.push(d.x-len*(w+.04),d.y-len,d.x,d.y)}
@@ -525,6 +529,11 @@ export function openStreetDepo(host,id,opts={}){
   var RAINREADY=false;
   const SHUT=1/48;
   function windAt(t){const h=(typeof HS!=='undefined'&&HS)?HS.A*(.22+.12*Math.sin(t*2.3)):0;return .1+.035*Math.sin(t*.21)+.02*Math.sin(t*.53+1.3)+h}
+  /* vento da garoa, com lado: o rotor empurra a chuva para longe de onde o helicóptero está (de um lado, ela deita para o
+     outro; bem em cima, cai reta e mais rápida). Sem helicóptero, a brisa de sempre, para a direita. */
+  function rainWind(t){const b=.1+.035*Math.sin(t*.21)+.02*Math.sin(t*.53+1.3);if(typeof HS==='undefined'||!HS)return b;
+    const sd=Math.tanh((640-HS.sx)/240);return b*(1-HS.A*.7)+HS.A*(.62+.18*Math.sin(t*2.3))*sd}
+  const rainFall=()=>1+((typeof HS!=='undefined'&&HS)?HS.A*.55*(1-Math.abs(Math.tanh((640-HS.sx)/240))*.5):0);
   function makePat(n,l0,l1,a,w){
     const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');x.lineCap='round';x.lineWidth=w;
     for(let i=0;i<n;i++){const px=Math.random()*256,py=Math.random()*256,l=l0+Math.random()*(l1-l0);
@@ -679,7 +688,7 @@ export function openStreetDepo(host,id,opts={}){
   /* no Jorge: luz de frente, no rosto, puxada para o lado do carro; o giroflex pisca vermelho e azul em cima dele */
   function passActor(c,w,h){
     if(!PS)return;const {x,I,r,b}=PS,fx=200+Math.max(-120,Math.min(120,(x-620)*.25));
-    const g1=c.createRadialGradient(fx,h*.36,20,fx,h*.42,320);g1.addColorStop(0,`rgba(255,246,228,${.5*I})`);g1.addColorStop(.6,`rgba(255,246,228,${.22*I})`);g1.addColorStop(1,'rgba(255,246,228,0)');c.fillStyle=g1;c.fillRect(0,0,w,h);
+    const g1=c.createRadialGradient(fx,h*.36,20,fx,h*.42,320);g1.addColorStop(0,`rgba(255,246,228,${.24*I})`);g1.addColorStop(.6,`rgba(255,246,228,${.1*I})`);g1.addColorStop(1,'rgba(255,246,228,0)');c.fillStyle=g1;c.fillRect(0,0,w,h);
     if(r){const g2=c.createRadialGradient(fx-40,h*.38,10,fx-40,h*.4,300);g2.addColorStop(0,`rgba(${RED},${.38*I})`);g2.addColorStop(1,`rgba(${RED},0)`);c.fillStyle=g2;c.fillRect(0,0,w,h)}
     if(b){const g3=c.createRadialGradient(fx+40,h*.38,10,fx+40,h*.4,300);g3.addColorStop(0,`rgba(${BLUE},${.36*I})`);g3.addColorStop(1,`rgba(${BLUE},0)`);c.fillStyle=g3;c.fillRect(0,0,w,h)}
   }
@@ -742,7 +751,7 @@ export function openStreetDepo(host,id,opts={}){
     const x=c.getContext('2d');x.globalCompositeOperation='source-over';x.clearRect(0,0,c.width,c.height);x.drawImage(mask,0,0);x.globalCompositeOperation='lighter';x.globalAlpha=PS.I;x.fillStyle=grad;x.fillRect(0,0,c.width,c.height);x.globalAlpha=1;return c}
   function layer(dst,mask,r,t,g,specs){
     const x=dst.getContext('2d');x.setTransform(1,0,0,1,0,0);x.globalCompositeOperation='source-over';x.globalAlpha=1;x.clearRect(0,0,dst.width,dst.height);
-    const w=windAt(t);
+    const w=rainWind(t);
     for(const L of specs){
       const p=PATS[L.k]||(PATS[L.k]=x.createPattern(RL[L.k],'repeat'));
       const off=(t*L.s/L.sc)%256;
@@ -785,13 +794,14 @@ export function openStreetDepo(host,id,opts={}){
   }
   function rainFront(c,t,g){
     if(!FXON('depo.rain'))return;
-    if(!RAINREADY)return;const dt=RM?0:RDT,tt=RM?0:t,w=windAt(tt);
+    if(!RAINREADY)return;const dt=RM?0:RDT,tt=RM?0:t,w=rainWind(tt),fall=rainFall();
     c.lineCap='round';
     /* as gotas vão agrupadas em poucos traços (por cor, força e espessura): um traço por grupo, não um por gota */
     const BK=new Map();const add=(key,x0,y0,x1,y1)=>{let a=BK.get(key);if(!a)BK.set(key,a=[]);a.push(x0,y0,x1,y1)};
     const nDrops=DEG>1?DROPS2.length>>1:DROPS2.length;
     for(let i=0;i<nDrops;i++){
-      const d=DROPS2[i];const vx=d.s*(w+d.j);d.y+=d.s*dt;d.x+=vx*dt;
+      const d=DROPS2[i];const vx=d.s*(w+d.j);d.y+=d.s*dt*fall;d.x+=vx*dt;
+      if(d.x>W+120)d.x-=W+280;else if(d.x<-160)d.x+=W+280;
       if(d.y>H+60){DROPS2[i]=newDrop2(false);continue}
       const len=d.s*Math.max(SHUT,dt*1.15),L=lightAt(d.x,d.y),ox=len*(w+d.j);
       if(d.z>.9){ /* fora de foco, bem perto da câmera */
@@ -1080,8 +1090,9 @@ export function openStreetDepo(host,id,opts={}){
     const p=(now-blinkStart)/170;if(p>1){blinkStart=-1;blinkNext=now+2300+Math.random()*2900;return}
     const amount=p<.5?p*2:(1-p)*2;if(amount<.03)return;
     const E=eyesAt(now);for(const {cx,cy,rx,ry} of [E.left,E.right]){
-      const top=cy-ry+3,edge=top+amount*(ry*2-4);
-      c.save();c.beginPath();c.ellipse(cx,cy,rx-1,ry-1,0,0,Math.PI*2);c.clip();
+      /* fechada, a pálpebra cobre o branco até a linha de baixo (sem sobrar um fio branco embaixo nem nos cantos) */
+      const top=cy-ry+3,edge=top+amount*(ry*2+1);
+      c.save();c.beginPath();c.ellipse(cx,cy,rx+2,ry+2.5,0,0,Math.PI*2);c.clip();
       c.fillStyle=skinAt(now);c.beginPath();c.moveTo(cx-rx-2,top-3);c.lineTo(cx+rx+2,top-3);c.lineTo(cx+rx+2,edge);
       c.quadraticCurveTo(cx,edge+3*amount,cx-rx-2,edge);c.closePath();c.fill();
       if(amount>.2){c.strokeStyle='#2a1c16';c.lineWidth=2;c.beginPath();c.moveTo(cx-rx+6,edge);c.quadraticCurveTo(cx,edge+3*amount,cx+rx-6,edge);c.stroke()}
@@ -1091,13 +1102,15 @@ export function openStreetDepo(host,id,opts={}){
   let acDirty=true;
   function drawActor(now,t,g){
     if(!ready||!imgs[expr])return;
-    const S=476/1200,br=(RM?0:Math.sin(t*2*Math.PI/4.4))+kick(now)/1.1;
+    /* respiração, a assentada da troca de expressão e, falando, um balanço mínimo da cabeça no ritmo das sílabas */
+    const S=476/1200,br=(RM?0:Math.sin(t*2*Math.PI/4.4)+Math.sin(now*.011)*.4*mouthOn)+kick(now)/1.1;
     const f=mixF(now);
     const hon=hairOn();if(hon)HAIR.step(RM?0:t,hairMove()?hairWind(t):{wx:0,wy:0,wob:0,gust:0});
     const fading=!!(prev&&f<1&&imgs[prev])||(prev&&now<fadeAt&&imgs[prev]),gok=hon&&HAIR.ok(expr,fading?prev:null);
     if(gok){const fx=PS?200+Math.max(-120,Math.min(120,(PS.x-620)*.25)):200;
       HAIR.render(RM?0:t,fading?[{e:prev,alpha:1},{e:expr,alpha:f}]:[{e:expr,alpha:1}],{tx:200-450*S,ty:br*1.1,sx:S,sy:S*(1+br*.0025)},
-        {gr:g.r,gb:g.b,pI:PS?PS.I:0,px:fx,pr:PS?PS.r:0,pb:PS?PS.b:0,wet:FXON('depo.wet')?1:0});}
+        {gr:g.r,gb:g.b,pI:PS?PS.I:0,px:fx,pr:PS?PS.r:0,pb:PS?PS.b:0,wet:FXON('depo.wet')?1:0,
+         cloth:CH.hairCloth&&hairMove()?[HW.wx,HW.wy,CH.hairCloth*(1+.25*mouthOn)]:null});}
     if(gok!==hairShown){hairShown=gok;cvHair.style.visibility=gok?'visible':'hidden';}
     /* com a figura na placa de vídeo, este canvas só tem a boca e o piscar: parado (sem fala nem piscada), não é
        redesenhado, e o navegador não reenvia a imagem dele a cada quadro */
@@ -1150,6 +1163,7 @@ export function openStreetDepo(host,id,opts={}){
     const el=(now-CAM.since)/1000;let tz=1,tx=0,ty=0,k=26;
     if(CAM.mode==='pick'){tz=1.018;tx=-3;ty=-1;k=34}
     else if(CAM.mode==='note'){tz=1.005;tx=8;ty=2;k=18}
+    else if(CAM.mode==='away'){tz=.99;tx=34;ty=4;k=9}   /* fim da entrevista: o Lemos vira para a casa */
     else if(CAM.mode==='answer'){const creep=Math.min(1,el/7);tz=1.04+creep*(CAM.heavy?.06:.035);tx=-10-creep*4;ty=-4-creep*3;k=14}
     if(PS){tx+=-(PS.x-430)/430*9*PS.I;tz+=.022*PS.I;ty+=-2*PS.I}
     if(RM){CAM.x=tx;CAM.y=ty;CAM.z=tz;CAM.r=0}
@@ -1281,7 +1295,7 @@ export function openStreetDepo(host,id,opts={}){
     /* carro passando devagar na água */
     const car=()=>{if(AMBON())carPass(out);setTimeout(car,16000+Math.random()*18000)};setTimeout(car,9000);
     moreAmbience(out);
-    const passLoop=()=>{if(FXON('depo.flyby')&&!busy&&!PASS&&!HELI)startPass();setTimeout(passLoop,40000+Math.random()*35000)};setTimeout(passLoop,9000);
+    const passLoop=()=>{if(FXON('depo.flyby')&&!busy&&!PM&&!PASS&&!HELI)startPass();setTimeout(passLoop,40000+Math.random()*35000)};setTimeout(passLoop,9000);
     const heliLoop=()=>{if(FXON('depo.flyby')&&!PASS&&!HELI)startHeli();setTimeout(heliLoop,80000+Math.random()*50000)};setTimeout(heliLoop,30000);
   }
   /* fonte contínua de ruído filtrado, com volume e lado próprios */
@@ -1354,6 +1368,7 @@ export function openStreetDepo(host,id,opts={}){
     PS=FXON('depo.flyby')?passState(t):null;HS=FXON('depo.flyby')?heliState(t):null;
     stage.classList.toggle('passing',!busy&&!!(PS&&PASS&&(performance.now()/1000-PASS.t0)/PASS.dur<.82));
     if(PS&&PS.I>.55&&!busy&&expr==='neutral'&&CH.assets.uncomfortable){setExpr('uncomfortable');glare=true}else if(glare&&(!PS||PS.I<.3)){glare=false;if(!busy)setExpr(IDLE)}
+    pressHeli();
     const gr=giro(t),s=SC[cur];GS.r+=(gr.r-GS.r)*Math.min(1,dt*9);GS.b+=(gr.b-GS.b)*Math.min(1,dt*9);const g=GS;
     /* fundo a cada quadro; num aparelho que já precisou aliviar (DEG>0), a cada dois */
     if(DEG===0||!(FN++&1)){const b=cvBg.getContext('2d');b.setTransform(cvBg._r,0,0,cvBg._r,0,0);s.bg(b,t,g)}
@@ -1467,10 +1482,16 @@ export function openStreetDepo(host,id,opts={}){
      O jogo vê pelos olhos do Lemos: ela fica onde o Jorge fica, a pergunta sai como legenda com a boca dela, as respostas
      possíveis aparecem como legendas para tocar (sem caderno) e a frase escolhida sai na legenda do Lemos. O que ele disse
      vai para o save (pressSay) e para a edição do Jornal Sereno daquele momento. */
-  let ps=null;
+  let ps=null,wantE='neutral',hsq=false;
+  /* a expressão que a conversa pede; com o rotor em cima ela aperta os olhos e volta para essa depois */
+  function pressExpr(e){if(!CH.assets[e])return;wantE=e;if(!hsq)setExpr(e)}
+  /* helicóptero na entrevista: o vento do rotor a obriga a apertar os olhos e franzir (a expressão insistente, que é a de
+     olhos semicerrados); quando ele se afasta, ela volta ao que estava sentindo */
+  function pressHeli(){if(!PM)return;const A=HS?HS.A:0;
+    if(!hsq&&A>.5&&CH.assets.insisting){hsq=true;setExpr('insisting')}else if(hsq&&A<.28){hsq=false;setExpr(wantE)}}
   /* uma fala da repórter, em legendas, com a boca no ritmo; tocar na cena completa o texto ou passa para a próxima */
   function sayLine(text,e,done){
-    if(CH.assets[e])setExpr(e);stage.classList.add('listen','answering');camMode('answer');
+    pressExpr(e);stage.classList.add('listen','answering');camMode('answer');
     const chunks=subtitleChunks(text);let i=-1;
     const step=()=>{if(!ps)return;clearTimeout(ps.t);i++;
       if(i>=chunks.length){ps=null;speech=null;finishTyping();done&&done();return}
@@ -1494,12 +1515,22 @@ export function openStreetDepo(host,id,opts={}){
     box.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b||box.dataset.done)return;box.dataset.done='1';
       const o=PM.opts.find(x=>x.id===b.dataset.o);SFX.click();box.classList.remove('on');setTimeout(()=>box.remove(),300);sub.innerHTML='';root.classList.remove('choosing');
       pressSay(opts.press,o.id,F);opts.onPress&&opts.onPress(o.id);
-      const react=()=>{sub.innerHTML='';if(o.re)sayLine(o.re.say,o.re.e,()=>setTimeout(close,RM?300:1100));else setTimeout(close,600)};
+      const react=()=>{sub.innerHTML='';if(o.re)sayLine(o.re.say,o.re.e,pressOutro);else pressOutro()};
       if(o.say)setTimeout(()=>lemosLine(o.say,()=>{sub.innerHTML='';setTimeout(react,180)}),200);else setTimeout(react,150);
     });
   }
+  /* encerramento: ela fica um instante com a última expressão, o Lemos vira para a casa (a câmera vai saindo dela), as faixas
+     de cinema voltam com o destino e a cena escurece antes de fechar. Tocar não pula: é o respiro do fim. */
+  function pressOutro(){
+    stage.classList.remove('listen','answering');
+    setTimeout(()=>{if(!hsq)setExpr(wantE==='annoyed'?'annoyed':IDLE);camMode('away');sub.innerHTML='';
+      const bars=$('.bars');if(bars){bars.innerHTML=`<p>DE VOLTA À PERÍCIA<span>Rua das Acácias${opts.clock?' · '+esc(opts.clock()):''}</span></p>`;bars.classList.add('on')}
+      root.classList.add('outro');setTimeout(close,RM?600:2300)},RM?200:900);
+  }
   if(PM){root.classList.add('press');stage.addEventListener('click',e=>{if(e.target.closest('.pch')||!ps)return;if(typing)finishTyping();else ps.step()});
-    setTimeout(()=>sayLine(PM.q,PM.qe||'asking',()=>{setExpr(IDLE);stage.classList.remove('listen','answering');setTimeout(pressChoices,300)}),RM?500:2500)}
+    /* o helicóptero da PM passa por cima durante a entrevista: vento forte no cabelo e na roupa dela, garoa deitando, o facho */
+    setTimeout(()=>{if(FXON('depo.flyby')&&!HELI&&!PASS)startHeli()},RM?0:1400);
+    setTimeout(()=>sayLine(PM.q,PM.qe||'asking',()=>{pressExpr(IDLE);stage.classList.remove('listen','answering');setTimeout(pressChoices,300)}),RM?500:2500)}
 
   /* ---------- abrir e fechar ---------- */
   const offFx=onFxChange(()=>{filmSync();hairSync();if(AMBOUT&&AC)AMBOUT.gain.setTargetAtTime(fxOn('sfx.depoAmb')?1.6:0,AC.currentTime,.2)});

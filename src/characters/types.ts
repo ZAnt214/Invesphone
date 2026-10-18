@@ -79,6 +79,8 @@ export type CharacterDef = {
   hairMaxTip?:number
   /** refaz o fundo atrás das mechas a partir da própria imagem (src/rua/hairWind.js, refillBase). */
   hairRefill?:boolean
+  /** as bordas do casaco tremulam com o vento (amplitude em px da imagem guardada); src/rua/hairWind.js */
+  hairCloth?:number
   /** duração da troca de expressão no depoimento na rua, em ms (padrão 230). */
   fadeMs?:number
   assets: { neutral:ExpressionAsset } & Partial<Record<Expression,ExpressionAsset>>

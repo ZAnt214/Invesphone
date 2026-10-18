@@ -68,8 +68,10 @@ export const characters:Record<string,CharacterDef> = {
     fadeMs:170,
     /* cabelo ao vento: camadas pedidas ao ChatGPT (creative-requests 2026-10-18); enquanto o manifesto não existir, o retrato fica parado */
     hair:`${base}characters/reporter/hair/manifest.json`,
-    /* cabelo preso: a ponta de uma mecha anda no máximo ~30 px da imagem (rajada do helicóptero); na brisa, ~5 px */
-    hairMaxTip:28,
+    /* cabelo preso: a ponta de uma mecha anda até ~90 px da imagem na rajada do helicóptero (bem visível); na brisa, ~12 px */
+    hairMaxTip:70,
+    /* a roupa tremula com o vento: as bordas do casaco andam até ~10 px (placa de vídeo, ver hairWind.js) */
+    hairCloth:10,
     /* o fundo atrás das mechas na base dela é refeito da própria imagem (a pintura que vinha tinha o contorno claro da mecha) */
     hairRefill:true,
     face:{ cx:446.25, cy:405, size:420 }

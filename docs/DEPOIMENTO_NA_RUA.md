@@ -88,17 +88,28 @@ A mesma cena serve para a entrevista do Lemos à repórter da TV Sereno, no port
 
 - A pergunta dela sai como legenda, com a boca no ritmo e a expressão de `PRESS.e1.qe` (`asking`).
 - As respostas possíveis aparecem à esquerda como legendas para tocar: a etiqueta (Cauteloso, Pede testemunhas…) e a frase entre aspas. "Revela uma pista" só aparece se o Lemos já tem a pista (`need`). "Não atender" vira "Seguir sem responder".
-- A frase escolhida sai na legenda do Lemos (itálico, com "LEMOS" em cima; ele está atrás da câmera, então não há boca). Depois ela reage com a expressão e a fala de `re` (surpresa com a revelação, satisfeita com o apelo, insistente com a resposta cautelosa, contrariada se ele não atende) e a cena fecha.
+- A frase escolhida sai na legenda do Lemos (itálico, com "LEMOS" em cima; ele está atrás da câmera, então não há boca). Depois ela reage com a expressão e a fala de `re` (surpresa com a revelação, satisfeita com o apelo, insistente com a resposta cautelosa, contrariada se ele não atende). A cena não fecha seca: ela segura a última expressão, a câmera se afasta (modo `away`), a imagem escurece, as faixas de cinema mostram "DE VOLTA À PERÍCIA" e só então a casa volta (`pressOutro`, ~2,3 s).
 - A frase vai para o save com `pressSay('e1', id)` e sai na primeira edição do Jornal Sereno. Na casa, responder acalma a imprensa; não atender a faz insistir mais.
-- A arte é a oficial da repórter (`public/characters/reporter/`, cadastrada em `characters.ts` com as marcas do `manifest.json`). Ela não tem camadas de cabelo, então não tem cabelo ao vento nem a garoa no rosto do Jorge. A casa prepara a cena quando a imprensa chega (`prewarmStreetDepo('reporter',{press:'e1'})`).
+- A arte é a oficial da repórter (`public/characters/reporter/`, cadastrada em `characters.ts` com as marcas do `manifest.json`). A casa prepara a cena quando a imprensa chega (`prewarmStreetDepo('reporter',{press:'e1'})`).
 - Toque na cena completa a legenda ou passa para a próxima, como no depoimento.
 - Posição (ajuste de 18/10/2026): a legenda da repórter e a do Lemos ficam centradas embaixo, e as respostas à esquerda com a pergunta dela em cima (a legenda some enquanto ele escolhe). Tudo respeita a área segura do iPhone (`--sl`, `--sb`, `--sr` da casa); o caderno do Jorge também.
 - Boca: as folhas de bocas dela são recortes do próprio rosto em 1:1, então a boca é desenhada sem ampliar e sem achatar (`squash:false`, lábio 108 px); assim a pele em volta não escorrega quando ela fala.
 - Expressões: ver "Troca de expressão natural" (170 ms nela, 230 ms no Jorge).
 - Cabelo (entregue em 18/10/2026, `public/characters/reporter/hair/`, sete mechas por expressão): ela usa o mesmo motor do Jorge, com duas diferenças no cadastro:
-  - `hairMaxTip: 28`: o quanto a ponta de uma mecha anda é limitado em px da imagem (~5 px na brisa, ~28 px na rajada do helicóptero), em vez do ângulo. Os fios longos na frente da orelha (~240 px) giram poucos graus e nunca cruzam o rosto; as laterais e o topo, presos no coque, quase não saem do lugar. Sem `hairMaxTip`, o Jorge continua como estava.
+  - `hairMaxTip: 70`: o quanto a ponta de uma mecha anda é limitado em px da imagem (ganho linear até o limite e um teto suave em `tanh`), em vez do ângulo. Na brisa os fios balançam de forma visível; na rajada do helicóptero os fios da frente chegam a deitar sobre a bochecha e a orelha, como vento forte de verdade, sem passar do limite. Era 28 e ficava quase imperceptível (ajuste de 18/10/2026). Sem `hairMaxTip`, o Jorge continua como estava.
   - `hairRefill: true`: o fundo pintado atrás dos fios soltos na base vinha com o contorno claro e serrilhado do fio. Ele é refeito ao preparar as camadas, em resolução cheia, puxando as cores da própria imagem em volta (push-pull com interpolação bilinear). Parada, a imagem é a oficial; com o fio se mexendo, aparece a continuação da pele, da orelha ou do cabelo.
   - Com as camadas, ela também ganha a garoa (gotas no casaco e no cabelo, pele úmida) do Jorge.
+  - `hairCloth: 10` (roupa): a borda do casaco tremula com o vento. Na malha da base, um peso marca os pixels escuros do casaco perto do contorno da figura (abaixo do pescoço, longe da borda de baixo); o sombreador desloca esses pontos com ondas que correm pelo tecido, na direção e na força do vento (`uCloth`). Falando, o tecido mexe 25% a mais (o corpo acompanha a fala); a cabeça também acompanha as sílabas com um balanço mínimo. Parada, a roupa é a oficial.
+- Helicóptero na entrevista: ele passa ~1,4 s depois de a cena abrir (a passagem da viatura fica de fora, para a luz dela não lavar o rosto da repórter no meio da pergunta). Enquanto o vento dele é forte, ela aperta os olhos e franze a testa (`insisting`) e volta para a expressão da fala quando ele se afasta (`pressHeli`).
+- Luz da viatura que passa (no depoimento do Jorge): no sombreador, a luz soma no rosto e no cabelo com força menor (e no 2D, gradientes mais fracos), em vez de clarear a imagem inteira.
+
+## Garoa e helicóptero
+
+A garoa tem direção: com o helicóptero perto, ela é empurrada para longe do lado onde ele está e cai mais rápido embaixo do rotor (`rainWind`, `rainFall`), nas três camadas (fundo, meio e frente); as gotas que saem por um lado voltam pelo outro. Assim o vento do helicóptero aparece no cabelo, na roupa e na chuva ao mesmo tempo.
+
+## Curiosos atrás da fita
+
+A arte dos curiosos termina num corte reto na cintura. A base de cada um some num degradê (feito uma vez ao carregar), então os corpos se perdem no escuro atrás da fita em vez de parecerem cortados.
 
 ## Jorge molhado (`depo.wet`)
 

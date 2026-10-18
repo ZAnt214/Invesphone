@@ -124,3 +124,7 @@
 .sd .sub.lem>span{font-style:italic;color:#dfe8ff}
 .sd .sub.lem>span::before{content:"LEMOS";display:block;font:700 8.5px var(--mono);letter-spacing:.2em;color:var(--amber);font-style:normal;margin-bottom:3px}
 @media (prefers-reduced-motion:reduce){.sd .pch{transition:none}}
+
+/* fim da entrevista: a cena escurece devagar enquanto as faixas voltam */
+.sd.outro .scene{filter:brightness(.5);transition:filter 1.8s ease}
+.sd.outro .sub{opacity:0;transition:opacity .4s}
