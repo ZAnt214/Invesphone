@@ -1,6 +1,6 @@
 ---
 id: 2026-10-18-reporter-cabelo-ao-vento
-status: pending
+status: completed
 requested_by: claude
 priority: high
 character: "reporter"
@@ -71,8 +71,11 @@ public/characters/reporter/hair/reference-wind.png   (opcional)
 - A borda de cada mecha que encosta em outro cabelo pode ser reta: o jogo esfuma essa borda quando a mecha se mexe.
 
 ## Resposta do ChatGPT
-Preenchido pelo ChatGPT ao concluir.
 
-- status:
-- assets criados:
-- observações:
+- status: assets entregues em 18/10/2026; conferir movimento e calibrar no jogo.
+- assets criados: 6 bases PNG sem perdas e 6 JPG de compatibilidade; 42 mechas transparentes; 42 mapas de peso; manifesto com raízes, pontas e rigidez.
+- destino: public/characters/reporter/hair/manifest.json (já cadastrado em src/characters/characters.ts).
+- validação: reconstrução RGB exata das seis expressões com vento zero; zero alteração fora das máscaras de cabelo; PNGs 900×1200.
+- orientação: usar base.png do manifesto. JPG não garante igualdade pixel a pixel. Coque fixo; fios frontais mais flexíveis.
+- processo: preenchimento inferior editado com image_gen; extração e empacotamento dos pixels originais por script. Retratos oficiais, marcas faciais, visemas e máscaras originais preservados.
+- limites: validação visual da composição; Safari real e amplitude final precisam ser conferidos pelo Claude. Ler hair/README.md.

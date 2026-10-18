@@ -1,0 +1,88 @@
+{
+  "expressions": {
+    "neutral": {
+      "zeroWindDifferingChannels": 0,
+      "changedChannelsOutsideHair": 0,
+      "strands": 7,
+      "layerPixels": [
+        5404,
+        4489,
+        9275,
+        8661,
+        8081,
+        2831,
+        2864
+      ]
+    },
+    "asking": {
+      "zeroWindDifferingChannels": 0,
+      "changedChannelsOutsideHair": 0,
+      "strands": 7,
+      "layerPixels": [
+        5404,
+        4489,
+        9275,
+        8661,
+        8081,
+        2831,
+        2863
+      ]
+    },
+    "insisting": {
+      "zeroWindDifferingChannels": 0,
+      "changedChannelsOutsideHair": 0,
+      "strands": 7,
+      "layerPixels": [
+        5404,
+        4489,
+        9275,
+        8661,
+        8081,
+        2831,
+        2864
+      ]
+    },
+    "surprised": {
+      "zeroWindDifferingChannels": 0,
+      "changedChannelsOutsideHair": 0,
+      "strands": 7,
+      "layerPixels": [
+        5404,
+        4489,
+        9275,
+        8661,
+        8081,
+        2831,
+        2863
+      ]
+    },
+    "satisfied": {
+      "zeroWindDifferingChannels": 0,
+      "changedChannelsOutsideHair": 0,
+      "strands": 7,
+      "layerPixels": [
+        5404,
+        4489,
+        9275,
+        8661,
+        8081,
+        2831,
+        2864
+      ]
+    },
+    "annoyed": {
+      "zeroWindDifferingChannels": 0,
+      "changedChannelsOutsideHair": 0,
+      "strands": 7,
+      "layerPixels": [
+        5404,
+        4489,
+        9275,
+        8661,
+        8081,
+        2831,
+        2864
+      ]
+    }
+  }
+}
