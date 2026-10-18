@@ -1088,29 +1088,63 @@ export function openStreetDepo(host,id,opts={}){
     const m=mouthAt(performance.now()),cx=m.cx,rim=m.rimY,s=m.halfWidth*2/VD.lipWidth,sy=VD.squash===false?s:s*(vis.M+(1-vis.M)*(.62+.38*Math.min(1,openV)));
     c.save();c.globalAlpha=Math.min(1,mouthOn);c.translate(cx,rim);c.scale(s,sy);c.drawImage(gcv,-VD.center[0],-VD.center[1]);c.restore();
   }
+  /* Piscada feita da própria arte: a pálpebra de cima (a pele entre o olho e a sobrancelha, com o traço dos cílios na
+     borda) desce sobre o olho, coluna por coluna, esticando a pele. A linha dos cílios vai do arco de cima até o arco de
+     baixo do olho, então o olho fechado fica com o traço curvo para baixo, como na arte. Nada é pintado com cor lisa: a
+     textura, o traço e a luz são os do rosto (com a figura na placa de vídeo, passa pelo mesmo sombreador).
+     Ritmo de piscada de verdade: fecha rápido (75 ms), fica fechado um instante e abre mais devagar. */
+  const BLINK_MS=210;
+  function lidAmount(now){const ms=now-blinkStart;
+    if(ms<75){const u=ms/75;return u*u*(3-2*u)}if(ms<100)return 1;const u=Math.min(1,(ms-100)/110);return 1-u*u*(3-2*u)}
+  /* onde fica o traço dos cílios de cima em cada coluna do olho, achado uma vez por expressão na própria arte: descendo
+     pela pele acima do olho, o primeiro pixel bem mais escuro que a pele é o começo do traço; a espessura dele (até 4,5 px; mais que isso já seria a íris)
+     vai junto com a pálpebra. Em px da arte 900×1200. */
+  const LASH={};
+  function lashOf(e){if(LASH[e])return LASH[e];const img=imgs[e];if(!img)return null;const k=img.width/900,E=CH.assets[e].eyes,out=[];
+    const x=img.getContext('2d');
+    for(const {cx,cy,rx:rx0,ry:ry0} of [E.left,E.right]){const rx=rx0+2,ry=ry0+2,H0=Math.max(8,ry*1.05),X0=Math.floor(cx-rx),X1=Math.ceil(cx+rx),T=Math.floor(cy-ry-H0);
+      const py0=Math.floor(T*k),ph=Math.ceil((cy+ry*.6)*k)-py0,px0=Math.floor(X0*k),pw=Math.ceil(X1*k)-px0+1;
+      let d=null;try{d=x.getImageData(px0,py0,pw,ph).data;}catch(_){/* sem leitura */}
+      const cols=[];
+      for(let X=X0;X<X1;X++){const u=(X+.5-cx)/rx;if(Math.abs(u)>=1){cols.push(null);continue}const h=ry*Math.sqrt(1-u*u),U=cy-h;
+        let Ls=U-1,t=2.5;
+        if(d){const c=Math.min(pw-1,Math.round(X*k)-px0),lum=r=>{const q=(r*pw+c)*4;return d[q]*.3+d[q+1]*.55+d[q+2]*.15};
+          const r0=Math.max(0,Math.round((U-H0)*k)-py0),r1=Math.min(ph-1,Math.round((U+h*.55)*k)-py0);
+          let ref=(lum(r0)+lum(Math.min(ph-1,r0+1))+lum(Math.min(ph-1,r0+2)))/3,r=r0+3;
+          while(r<=r1&&lum(r)>ref*.62)r++;
+          if(r<=r1){let n=0;while(r+n<=r1&&lum(r+n)<ref*.62&&n<4.5*k)n++;Ls=(r+py0)/k;t=Math.max(1.5,n/k);}}
+        cols.push({X,top:U-H0,Ls,t,Lo:cy+h+1});}
+      /* a pele esticada vem de uma cópia levemente borrada na horizontal: sem isso, cada coluna esticada vira um risco */
+      let sk=null;if(d){sk=document.createElement('canvas');sk.width=pw;sk.height=ph;const sx=sk.getContext('2d'),im=sx.createImageData(pw,ph),o=im.data,R=2;
+        for(let r=0;r<ph;r++)for(let c=0;c<pw;c++){let a0=0,a1=0,a2=0,a3=0,n=0;for(let dc=-R;dc<=R;dc++){const cc=Math.max(0,Math.min(pw-1,c+dc)),q=(r*pw+cc)*4;a0+=d[q];a1+=d[q+1];a2+=d[q+2];a3+=d[q+3];n++}
+          const q=(r*pw+c)*4;o[q]=a0/n;o[q+1]=a1/n;o[q+2]=a2/n;o[q+3]=a3/n;}
+        sx.putImageData(im,0,0);}
+      cols.sk={cv:sk,x:px0,y:py0};
+      out.push(cols);}
+    return LASH[e]=out;}
+  function lidPass(c,e,a){const img=imgs[e],L=lashOf(e);if(!img||!L)return;const k=img.width/900;
+    for(const cols of L)for(const q of cols){if(!q)continue;const {X,top,Ls,t,Lo}=q,Lb=Ls+t,y=Lb+a*Math.max(0,Lo-Lb),S=cols.sk;
+      if(y-Lb<.25)continue;
+      /* pele da pálpebra esticada até o novo traço, e o traço por baixo dela (colunas sobrepostas: sem frestas semitransparentes) */
+      if(S&&S.cv)c.drawImage(S.cv,X*k-S.x,top*k-S.y,k,(Ls-top)*k,X-.3,top,1.7,y-t-top+.4);else c.drawImage(img,X*k,top*k,k,(Ls-top)*k,X-.3,top,1.7,y-t-top+.4);
+      c.drawImage(img,X*k,Ls*k,k,t*k,X-.3,y-t,1.7,t);}}
   function drawLids(c,now){
     if(blinkStart<0&&now>=blinkNext)blinkStart=now;
     if(blinkStart<0)return;
-    const p=(now-blinkStart)/170;if(p>1){blinkStart=-1;blinkNext=now+2300+Math.random()*2900;return}
-    const amount=p<.5?p*2:(1-p)*2;if(amount<.03)return;
-    const E=eyesAt(now);for(const {cx,cy,rx,ry} of [E.left,E.right]){
-      /* fechada, a pálpebra cobre o branco até a linha de baixo (sem sobrar um fio branco embaixo nem nos cantos) */
-      const top=cy-ry+3,edge=top+amount*(ry*2+1);
-      c.save();c.beginPath();c.ellipse(cx,cy,rx+2,ry+2.5,0,0,Math.PI*2);c.clip();
-      c.fillStyle=skinAt(now);c.beginPath();c.moveTo(cx-rx-2,top-3);c.lineTo(cx+rx+2,top-3);c.lineTo(cx+rx+2,edge);
-      c.quadraticCurveTo(cx,edge+3*amount,cx-rx-2,edge);c.closePath();c.fill();
-      if(amount>.2){c.strokeStyle='#2a1c16';c.lineWidth=2;c.beginPath();c.moveTo(cx-rx+6,edge);c.quadraticCurveTo(cx,edge+3*amount,cx+rx-6,edge);c.stroke()}
-      c.restore();
-    }
+    if(now-blinkStart>BLINK_MS){blinkStart=-1;blinkNext=now+2300+Math.random()*2900;return}
+    const a=lidAmount(now);if(a<.02)return;
+    const f=mixF(now);
+    if(prev&&imgs[prev]&&f<1){lidPass(c,prev,a);c.save();c.globalAlpha=f;lidPass(c,expr,a);c.restore();}
+    else lidPass(c,expr,a);
   }
   let acDirty=true;
   /* a camada de boca e pálpebras para a placa de vídeo: só o retângulo do rosto que elas ocupam, em px da imagem original,
      na densidade da tela */
-  const OVC=document.createElement('canvas'),OVL={cv:OVC,x:0,y:0,w:0,h:0};
+  const OVC=document.createElement("canvas"),OVL={cv:OVC,x:0,y:0,w:0,h:0};
   function paintOv(now,S){
     const E=eyesAt(now),m=mouthAt(now),s=VD?m.halfWidth*2/VD.lipWidth:0;
     let x0=Math.min(E.left.cx-E.left.rx,E.right.cx-E.right.rx),x1=Math.max(E.left.cx+E.left.rx,E.right.cx+E.right.rx);
-    let y0=Math.min(E.left.cy-E.left.ry,E.right.cy-E.right.ry),y1=Math.max(E.left.cy+E.left.ry,E.right.cy+E.right.ry);
+    let y0=Math.min(E.left.cy-E.left.ry*2.2,E.right.cy-E.right.ry*2.2)-6,y1=Math.max(E.left.cy+E.left.ry,E.right.cy+E.right.ry);
     if(VD){x0=Math.min(x0,m.cx-VD.center[0]*s);x1=Math.max(x1,m.cx+(VD.cellW-VD.center[0])*s);y1=Math.max(y1,m.rimY+(VD.cellH-VD.center[1])*s);}
     x0=Math.floor(x0-10);y0=Math.floor(y0-10);x1=Math.ceil(x1+10);y1=Math.ceil(y1+10);
     const q=Math.min(1.25,S*ACR),W=Math.ceil((x1-x0)*q),H=Math.ceil((y1-y0)*q);
