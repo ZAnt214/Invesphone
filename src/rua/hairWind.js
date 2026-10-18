@@ -22,7 +22,7 @@ const FEATHER=13;  // largura do esfumado nas bordas de corte, em px da imagem o
 const loadImg=src=>new Promise(r=>{const i=new Image();i.decoding='async';i.onload=()=>r(i);i.onerror=()=>r(null);i.src=src});
 
 const VS=`attribute vec2 aPos;attribute vec2 aUV;attribute float aW;attribute float aR;
-uniform vec2 uView,uRoot,uShear;uniform vec4 uXf;uniform float uK,uBend,uWob,uGust,uT,uPh,uMix;varying vec2 vUV;varying vec2 vA;varying vec2 vO;
+uniform vec2 uView,uRoot,uShear;uniform vec4 uXf,uCloth;uniform float uK,uBend,uWob,uGust,uT,uPh,uMix;varying vec2 vUV;varying vec2 vA;varying vec2 vO;
 void main(){
   float wave=sin(uT*2.2-aR*2.6+uPh)*.6+sin(uT*3.9-aR*3.4+uPh*1.7)*.4
     +uGust*(sin(uT*9.1-aR*5.0+uPh*2.3)*.55+sin(uT*13.7-aR*6.2+uPh*3.1)*.3+sin(uT*5.3-aR*3.0+uPh*.7)*.4);
@@ -32,7 +32,13 @@ void main(){
   /* mechas curtas e coladas na cabeça (as laterais) não giram em volta de um ponto: o vento as empurra rente à
      cabeça (cisalhamento pelo peso), para fora do lado de onde ele vai e para dentro do lado de onde ele vem */
   vec2 sh=aPos+uShear*aW*(1.0+.3*wave)+vec2(-uShear.y,uShear.x)*aW*.18*wave;
-  vec2 q=mix(rot,sh,uMix)*uK;                             /* px da imagem original */
+  vec2 q=mix(rot,sh,uMix);
+  /* roupa (só na base, uCloth.w=1): as bordas do casaco tremulam com o vento (empurradas na direção dele, com ondas
+     que andam pela borda) e respiram de leve com a fala; aW aqui é o peso de pano da borda */
+  if(uCloth.w>.5){float ph=aPos.y*.045+aPos.x*.03;
+    vec2 fl=uCloth.xy*(.55+.45*sin(uT*2.7+ph))+vec2(sin(uT*4.3+ph*1.7),sin(uT*3.6+ph*1.3)*.6)*(.25+.75*uGust)*.5;
+    q+=fl*uCloth.z*aW;}
+  q*=uK;                                                  /* px da imagem original */
   vec2 a=q*uXf.zw+uXf.xy;                                 /* px do retrato na tela (400×430) */
   vA=a;vO=aPos;vec2 p=a/uView*2.0-1.0;
   gl_Position=vec4(p.x,-p.y,0.0,1.0);vUV=aUV;}`;
@@ -71,7 +77,8 @@ void main(){
   float g1=0.0;
   if(uPI>.001){
     float d1=distance(vA,vec2(uPx,h*.4));g1=d1<20.0?.5:(d1<192.0?mix(.5,.22,(d1-20.0)/172.0):mix(.22,0.0,clamp((d1-192.0)/128.0,0.0,1.0)));
-    p=over(p,t.a,vec3(255.,246.,228.)/255.,g1*uPI);
+    /* o farol da viatura que passa: luz somada, que clareia o rosto pelo lado claro, sem lavar a imagem de branco */
+    p+=vec3(1.0,.96,.89)*g1*uPI*.8*(.25+.75*lum)*t.a;
     if(uPr>.5)p=over(p,t.a,vec3(255.,48.,48.)/255.,.38*uPI*clamp(1.0-distance(vA,vec2(uPx-40.0,h*.39))/300.0,0.0,1.0));
     if(uPb>.5)p=over(p,t.a,vec3(70.,120.,255.)/255.,.36*uPI*clamp(1.0-distance(vA,vec2(uPx+40.0,h*.39))/300.0,0.0,1.0));}
   /* garoa no Jorge (depo.wet): ele está na chuva fina há tempo.
@@ -80,7 +87,7 @@ void main(){
      - gotas presas no cabelo e nos ombros do casaco: pontinhos na própria imagem (andam com a mecha), cada um com a
        sombra embaixo e um ponto de luz que acende quando o giroflex ou o farol passa. */
   if(uWet>0.0){
-    vec3 L=(RED*uGr+BLU*uGb)*xr*xr+vec3(1.0,.96,.89)*uPI*g1*2.0+vec3(1.0,.72,.42)*.22*clamp(1.0-y/.55,0.0,1.0);
+    vec3 L=(RED*uGr+BLU*uGb)*xr*xr+vec3(1.0,.96,.89)*uPI*g1*.9+vec3(1.0,.72,.42)*.22*clamp(1.0-y/.55,0.0,1.0);
     float skin=clamp((base.r-base.b-.1)*4.0,0.0,1.0)*clamp((bmx-.3)*3.0,0.0,1.0);
     float hair=clamp(1.0-bsat*3.5,0.0,1.0)*clamp((bmx-.22)*3.5,0.0,1.0)*clamp(1.0-(y-.38)*6.0,0.0,1.0)*(1.0-skin);
     float coat=clamp(1.0-bmx*3.2,0.0,1.0)*clamp((y-.6)*8.0,0.0,1.0);
@@ -109,7 +116,7 @@ const MANI=new Map(),CPU=new Map();
 function manifest(url){let p=MANI.get(url);if(!p){p=fetch(url).then(r=>r.ok?r.json():null).then(j=>j&&j.expressions?j:null).catch(()=>null);MANI.set(url,p);}return p;}
 /* uma expressão de cada vez para a página inteira (duas preparações juntas só disputariam o mesmo tempo) */
 let chain=Promise.resolve();
-function cpuBuild(url,e,o){const k=url+'|'+e+'|'+o.PW+'x'+o.PH+(o.refill?'|r':'');let p=CPU.get(k);
+function cpuBuild(url,e,o){const k=url+'|'+e+'|'+o.PW+'x'+o.PH+(o.refill?'|r':'')+(o.cloth?'|c':'');let p=CPU.get(k);
   if(!p){p=chain.then(()=>manifest(url)).then(M=>M&&M.expressions[e]?buildExpr(url.replace(/manifest\.json$/,''),M,e,o):null).catch(()=>null);chain=p.then(()=>{},()=>{});CPU.set(k,p);}
   return p;}
 /* Fundo das mechas soltas refeito a partir da própria imagem (o.refill): na resolução cheia da arte, onde as mechas soltas
@@ -170,7 +177,10 @@ async function buildExpr(base,M,e,o){const W0=()=>(M&&M.resolution&&M.resolution
       const alpha=(x,y)=>A[((y0+y)*o.PW+x0+x)*4+3];
       /* bordas de corte: pixel da mecha com vizinho fora dela que, na base, é cabelo (cinza, dentro da figura) */
       const dist=new Float32Array(w*h).fill(1e9),q=[];
-      for(let y=0;y<h;y++)for(let x=0;x<w;x++){if(alpha(x,y)<=40)continue;
+      /* fio solto com o fundo refeito (o.refill): ele pende livre, a borda inteira é natural. Sem esta exceção, o fundo
+         refeito (cabelo escuro em volta) faria o fio todo parecer corte, e o esfumado apagaria o fio fino, sobrando a ponta */
+      const natural=o.refill&&(st.stiffness??.7)<.5;
+      for(let y=0;y<h&&!natural;y++)for(let x=0;x<w;x++){if(alpha(x,y)<=40)continue;
         for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const X=x0+x+dx,Y=y0+y+dy;if(X<0||Y<0||X>=o.PW||Y>=o.PH)continue;
           const ai=(Y*o.PW+X)*4;if(A[ai+3]>40)continue;   // ainda é a mecha
           if(B[ai+3]<160)continue;                          // fundo: borda natural do cabelo
@@ -203,7 +213,15 @@ async function buildExpr(base,M,e,o){const W0=()=>(M&&M.resolution&&M.resolution
     tc.width=tc.height=0;
     /* a base vai numa malha só onde há figura (o quadro inteiro tem muito fundo transparente que o sombreador lia à toa) */
     const BG=12,bc_=Math.ceil(o.PW/BG),br_=Math.ceil(o.PH/BG),BC=bc_+1,bv=new Float32Array(BC*(br_+1)*6),bi=[];
-    for(let j=0;j<=br_;j++)for(let i=0;i<=bc_;i++){const x=Math.min(o.PW,i*BG),y=Math.min(o.PH,j*BG);bv.set([x,y,x/o.PW,y/o.PH,0,0],(j*BC+i)*6);}
+    /* peso de pano (o.cloth): perto da borda da figura, onde ela é casaco (escuro), do ombro para baixo e longe da borda de
+       baixo do quadro. Pele, cabelo, microfone (vermelho) e o meio do corpo não se mexem. */
+    const opq=(x,y)=>{x=Math.round(x);y=Math.round(y);return x>=0&&y>=0&&x<o.PW&&y<o.PH?B[(y*o.PW+x)*4+3]:0};
+    const coat=(x,y)=>{x=Math.round(x);y=Math.round(y);if(x<0||y<0||x>=o.PW||y>=o.PH)return false;const k=(y*o.PW+x)*4;return B[k+3]>200&&Math.max(B[k],B[k+1],B[k+2])<80&&B[k]-B[k+2]<25;};
+    const DIRS=[[1,0],[-1,0],[0,1],[0,-1],[.7,.7],[-.7,.7],[.7,-.7],[-.7,-.7]],DC=20*o.PW/540;
+    const clothW=(x,y)=>{if(!o.cloth||y<o.PH*.5||y>o.PH-14)return 0;let dEdge=opq(x,y)<100?0:DC,near=coat(x,y);
+      for(const r of [4,8,12,16,20].map(v=>v*o.PW/540))for(const [dx,dy] of DIRS){const X=x+dx*r,Y=y+dy*r;if(dEdge>r&&opq(X,Y)<60)dEdge=r;if(!near&&coat(X,Y))near=true;}
+      if(!near)return 0;const k=1-dEdge/DC;return k<=0?0:k*k*(3-2*k)*Math.min(1,(y-o.PH*.5)/(o.PH*.12));};
+    for(let j=0;j<=br_;j++)for(let i=0;i<=bc_;i++){const x=Math.min(o.PW,i*BG),y=Math.min(o.PH,j*BG);bv.set([x,y,x/o.PW,y/o.PH,clothW(x,y),0],(j*BC+i)*6);}
     for(let j=0;j<br_;j++)for(let i=0;i<bc_;i++){let any=false;
       for(let y=Math.max(0,j*BG-1);y<Math.min(o.PH,(j+1)*BG+1)&&!any;y++)for(let x=Math.max(0,i*BG-1);x<Math.min(o.PW,(i+1)*BG+1);x++)if(B[(y*o.PW+x)*4+3]>0){any=true;break;}
       if(any){const a=j*BC+i;bi.push(a,a+1,a+BC+1,a,a+BC+1,a+BC);}}
@@ -230,7 +248,7 @@ export function createHair(o){
     if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){try{console.warn('cabelo: sombreador',gl.getProgramInfoLog(prog),gl.getShaderInfoLog(gl.getAttachedShaders(prog)[1]));}catch(_){/* sem log */}gl=null;lost=true;return false;}
     gl.useProgram(prog);L={};
     for(const n of ['aPos','aUV','aW','aR'])L[n]=gl.getAttribLocation(prog,n);
-    for(const n of ['uWet','uRim','uTexel','uView','uViewF','uRoot','uShear','uMix','uXf','uK','uBend','uWob','uGust','uT','uPh','uTex','uFea','uFeaK','uAlpha','uGr','uGb','uPI','uPx','uPr','uPb'])L[n]=gl.getUniformLocation(prog,n);
+    for(const n of ['uCloth','uWet','uRim','uTexel','uView','uViewF','uRoot','uShear','uMix','uXf','uK','uBend','uWob','uGust','uT','uPh','uTex','uFea','uFeaK','uAlpha','uGr','uGb','uPI','uPx','uPr','uPb'])L[n]=gl.getUniformLocation(prog,n);
     gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,true);
     gl.uniform1i(L.uTex,0);gl.uniform1i(L.uFea,1);gl.uniform2f(L.uTexel,1/o.PW,1/o.PH);
@@ -255,7 +273,7 @@ export function createHair(o){
     gl.bindBuffer(gl.ARRAY_BUFFER,m.vb);
     gl.vertexAttribPointer(L.aPos,2,gl.FLOAT,false,24,0);gl.vertexAttribPointer(L.aUV,2,gl.FLOAT,false,24,8);
     gl.vertexAttribPointer(L.aW,1,gl.FLOAT,false,24,16);gl.vertexAttribPointer(L.aR,1,gl.FLOAT,false,24,20);
-    gl.uniform1f(L.uRim,u.rim?1:0);gl.uniform2f(L.uRoot,u.root[0],u.root[1]);gl.uniform2f(L.uShear,u.sh[0],u.sh[1]);gl.uniform1f(L.uMix,u.mix);gl.uniform1f(L.uBend,u.bend);gl.uniform1f(L.uWob,u.wob);gl.uniform1f(L.uPh,u.ph);gl.uniform1f(L.uFeaK,u.fea);
+    gl.uniform1f(L.uRim,u.rim?1:0);gl.uniform4f(L.uCloth,u.cloth?u.cloth[0]:0,u.cloth?u.cloth[1]:0,u.cloth?u.cloth[2]:0,u.cloth?1:0);gl.uniform2f(L.uRoot,u.root[0],u.root[1]);gl.uniform2f(L.uShear,u.sh[0],u.sh[1]);gl.uniform1f(L.uMix,u.mix);gl.uniform1f(L.uBend,u.bend);gl.uniform1f(L.uWob,u.wob);gl.uniform1f(L.uPh,u.ph);gl.uniform1f(L.uFeaK,u.fea);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,m.ib);gl.drawElements(gl.TRIANGLES,m.n,gl.UNSIGNED_SHORT,0);}
 
   /* a textura de cada expressão sobe para a placa de vídeo uma por quadro (pump, em step), ou na hora, se for pedida antes */
@@ -301,7 +319,7 @@ export function createHair(o){
     gl.uniform1f(L.uGr,light.gr||0);gl.uniform1f(L.uGb,light.gb||0);gl.uniform1f(L.uPI,light.pI||0);gl.uniform1f(L.uPx,light.px||200);gl.uniform1f(L.uPr,light.pr||0);gl.uniform1f(L.uPb,light.pb||0);gl.uniform1f(L.uWet,light.wet||0);
     for(const ly of layers){const v=cache.get(ly.e);if(!v||!v.gpu)continue;const k=W0()/o.PW;
       gl.uniform1f(L.uK,k);gl.uniform1f(L.uAlpha,ly.alpha);
-      mesh(v.gpu.base,{root:[0,0],sh:[0,0],mix:0,bend:0,wob:0,ph:0,fea:0,rim:1});
+      mesh(v.gpu.base,{root:[0,0],sh:[0,0],mix:0,bend:0,wob:0,ph:0,fea:0,rim:1,cloth:o.cloth&&light.cloth?light.cloth:null});
       v.gpu.strands.forEach((m,i)=>{const st=v.strands[i],ph=PHY[i]||{a:0,x:0,y:0};
         // rígidas (laterais) empurradas rente à cabeça; soltas (topo) dobram em volta da raiz
         const mix=Math.min(1,Math.max(0,(st.stiff-.68)/.16)),sx=ph.x*v.s,sy=ph.y*v.s;
