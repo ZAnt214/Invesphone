@@ -375,7 +375,7 @@ function stepWorld(){
   for(const f of S.flash)f.t--;S.flash=S.flash.filter(f=>f.t>0);
   if(S.contam>=25&&!S.flags.w1){S.flags.w1=1;msg('sonia','Tem gente demais na frente da casa. Isola a rua antes que alguém pise onde não deve.');}
   if(S.contam>=60&&!S.flags.w2){S.flags.w2=1;msg('lemos','Estão entrando no terreno. Cada pé a mais é vestígio a menos. Vou ter que trabalhar mais devagar.');}
-  if(minutes()>=5*60+15&&!S.flags.press){S.flags.press=1;msg('pm','Doutor, chegou imprensa. Câmera na mão e gente querendo foto do portão.');}
+  if(minutes()>=5*60+15&&!S.flags.press){S.flags.press=1;msg('pm','Doutor, chegou imprensa. Câmera na mão e gente querendo foto do portão.');prewarmPress();}
   if(minutes()>=5*60+50&&!S.flags.dawn){S.flags.dawn=1;sys('O dia está clareando sobre o Campo Belo.');}
   stepRadio();
 }
@@ -1403,7 +1403,7 @@ const EVENTS={
     {t:'Começa pelo quintal',sub:'O canil vai primeiro; a casa espera um pouco.',fn:()=>{S.flags.prioQ=1;for(let i=0;i<N;i++)if(hot[i]==='cao_canil'&&periciavel(i))S.desig[i]=1;msg('lemos','Canil primeiro, antes que a água leve alguma coisa. Depois eu entro.');}},
     {t:'Primeiro a casa',sub:'Lá fora, a perícia rende menos enquanto chover.',fn:()=>{S.flags.prioQ=0;msg('lemos','Casa primeiro. O quintal vai sofrer com essa garoa.');}}]},
   imprensa:{who:'pm',title:'Imprensa no portão',text:'Estão pedindo alguém para falar. Se ninguém atender, vão ficar forçando a frente da casa.',opts:[
-    {t:'Lemos atende rápido',sub:'Você para a perícia um tempo; a imprensa sossega.',fn:()=>{S.flags.pressCalm=1;pressSay('e1','cedo');const a=S.crew.find(k=>k.key==='lemos');if(a){endJob(a);const r=findPath(a,i=>i===idx(5,6));a.job={k:'talk',p:0};a.path=r?r.path:[];a.status='Indo falar com a imprensa';}for(const c of S.civs)if(c.press&&c.state==='gawk')c.wait=Math.min(c.wait,160);}},
+    {t:'Lemos atende',sub:'Ele vai até a fita falar com a repórter da TV Sereno. O que disser sai no jornal.',fn:()=>{setTimeout(openPress,350);}},
     {t:'Ninguém fala agora',sub:'A perícia segue; a imprensa insiste por mais tempo.',fn:()=>{S.flags.pressCalm=-1;pressSay('e1','ausente');for(const c of S.civs)if(c.press)c.wait=Math.round(c.wait*1.4);}}]}
 };
 const EVQ=[];let evOpen=null,evPrev=1;
@@ -3195,20 +3195,35 @@ function syncWitness(){const b=$('#t-depo');if(!b)return;const g=readCase();b.hi
 let witnessWarm=false;
 function prewarmWitness(){if(witnessWarm)return;witnessWarm=true;setTimeout(()=>{import('../rua/streetDepo').then(m=>m.prewarmStreetDepo('jorge')).catch(()=>{witnessWarm=false;});},1200);}
 function revealWitness(id){CASE=writeCase(g=>{const k=g.discoveredPeople||[],s=g.summonedPeople||[];return {...g,discoveredPeople:k.includes(id)?k:[...k,id],summonedPeople:s.includes(id)?s:[...s,id]};});syncWitness();const b=$('#t-depo');if(b&&!b.hidden)b.classList.add('new');if(HUD)HUD.refresh();}
-function openWitness(){
-  if(streetDepo)return;const b=$('#t-depo');if(b)b.classList.remove('new');
+function openWitness(){const b=$('#t-depo');if(b)b.classList.remove('new');openStreetScene('jorge',{});}
+/* a cena na frente da casa (src/rua/streetDepo.js): o depoimento do Jorge ou, com extra.press, a entrevista à imprensa.
+   A casa para de andar e de desenhar enquanto ela está aberta. after(): ao fechar. */
+function openStreetScene(id,extra,after){
+  if(streetDepo)return;
   const wasPaused=paused,sp=speed,snd=SND.on;setSpeed(0);if(snd)SND.set(false);streetDepo={pending:true};cv.width=cv.height=1;lc.width=lc.height=1;
-  import('../rua/streetDepo').then(m=>{streetDepo=m.openStreetDepo(appEl,'jorge',{sound:snd,clock:()=>clockStr(),
-    onClose:()=>{streetDepo=null;resize();if(snd)SND.set(true);if(!wasPaused)setSpeed(sp);CASE=readCase();HUD.setCount(CASE.clues.length,false);HUD.refresh();syncWitness();}});
-    if(!streetDepo){resize();if(snd)SND.set(true);if(!wasPaused)setSpeed(sp);}
-  }).catch(()=>{streetDepo=null;resize();if(snd)SND.set(true);if(!wasPaused)setSpeed(sp);});
+  const back=()=>{resize();if(snd)SND.set(true);if(!wasPaused)setSpeed(sp);};
+  import('../rua/streetDepo').then(m=>{streetDepo=m.openStreetDepo(appEl,id,{...extra,sound:snd,clock:()=>clockStr(),
+    onClose:()=>{streetDepo=null;back();CASE=readCase();HUD.setCount(CASE.clues.length,false);HUD.refresh();syncWitness();if(after)after();}});
+    if(!streetDepo)back();
+  }).catch(e=>{console.error('cena da rua:',e);streetDepo=null;back();});
 }
+/* entrevista do Lemos à repórter da TV Sereno, no portão (docs/DEPOIMENTO_NA_RUA.md, "Entrevista"). O que ele disser
+   vai para o save (press.e1) e para a primeira edição do Jornal Sereno. Atender ou não muda quanto a imprensa insiste. */
+function openPress(){
+  let said=null;
+  openStreetScene('reporter',{press:'e1',onPress:id=>{said=id;}},()=>{
+    if(said==='ausente'||!said){S.flags.pressCalm=-1;for(const c of S.civs)if(c.press)c.wait=Math.round(c.wait*1.4);}
+    else{S.flags.pressCalm=1;for(const c of S.civs)if(c.press&&c.state==='gawk')c.wait=Math.min(c.wait,160);}
+  });
+}
+let pressWarm=false;
+function prewarmPress(){if(pressWarm)return;pressWarm=true;setTimeout(()=>{import('../rua/streetDepo').then(m=>m.prewarmStreetDepo('reporter',{press:'e1'})).catch(()=>{pressWarm=false;});},800);}
 $('#t-depo').addEventListener('click',openWitness);
 syncWitness();
 addEventListener('storage',()=>{CASE=readCase();HUD.setCount(CASE.clues.length,false);});
 initArt();buildAmbient();buildSeg7();buildRail();buildCrew();applyLayout(true);
 setTimeout(()=>{for(const a of S.crew)framesHDFor(a);bedOverlay(BODIES,GORE,true);},400);
-window.__acacias={S:()=>S,cam,ez,VW,VH,get ROT(){return ROT;},T,TH,discover,say,IML,FX,setGore,get LODV(){return LODV;},FLY,startFlyby,spawnCar,spawnCiv,giveOrder,CARBLK,get cmd(){return cmd;},showCoach,LANDED,HUDPAD};
+window.__acacias={openPress:()=>openPress(),S:()=>S,cam,ez,VW,VH,get ROT(){return ROT;},T,TH,discover,say,IML,FX,setGore,get LODV(){return LODV;},FLY,startFlyby,spawnCar,spawnCiv,giveOrder,CARBLK,get cmd(){return cmd;},showCoach,LANDED,HUDPAD};
 setTool(null);setSpeed(0);updateUI();
 $('#b-start').addEventListener('click',()=>{SND.init();SND.resume();$('#intro').hidden=true;
   // enquanto o jogador revisa a casa, o material do resto do caso vai baixando aos poucos (src/preload)

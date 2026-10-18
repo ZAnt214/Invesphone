@@ -16,6 +16,7 @@ import { fxOn, onFxChange } from '../settings/gameSettings'
 import { getQuality } from '../characters/quality'
 import { createHair, prewarmHair } from './hairWind'
 import { createTapeGL } from './tapeGL'
+import { PRESS, pressSay } from '../news/press'
 
 const LUPA='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>';
 const esc=s=>String(s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
@@ -31,6 +32,13 @@ const IMG=new Map();
 function imgOnce(src){let p=IMG.get(src);if(!p){p=new Promise(r=>{const i=new Image();i.decoding='async';i.onload=()=>{const d=i.decode?i.decode().catch(()=>{}):Promise.resolve();d.then(()=>r(i))};i.onerror=()=>r(null);i.src=src});IMG.set(src,p)}return p}
 const ART_SRC=()=>{const B=import.meta.env.BASE_URL||'/';return{bg:B+'cenarios/rua-acacias/frente-noite.jpg',poste:B+'cenarios/rua-acacias/frente-noite-poste.png',crowd:[1,2,3,4,5,6,7,8].map(n=>`${B}characters/curiosos/fundo/curioso-0${n}.png`)}};
 const PW=540,PH=720;
+/* o depoimento de uma testemunha (registro de depoimentos) ou, no modo imprensa (opts.press), a entrevista do Lemos:
+   aí `id` é o personagem que pergunta (a repórter) e as expressões vêm da pergunta e das reações em PRESS */
+function cfgOf(id,opts){
+  const PM=opts&&opts.press?PRESS[opts.press]:null;if(!PM)return interrogations[id];
+  const ex=[PM.qe||'asking',...PM.opts.map(o=>o.re&&o.re.e).filter(Boolean)];
+  return {personId:id,name:'Repórter',idleExpression:'neutral',questions:ex.map(e=>({expression:e}))};
+}
 function exprsOf(cfg,CH){return [...new Set([cfg.idleExpression||'neutral','neutral','uncomfortable',...cfg.questions.map(q=>q.expression).filter(Boolean)])].filter(e=>CH.assets[e])}
 /* retratos oficiais recortados pela máscara, o tom da pele para o piscar e as bocas: feitos uma vez por personagem */
 const PORTRAITS=new Map();
@@ -58,8 +66,8 @@ function portraitSet(CH,VD,EXPRS){const k=CH.figureMask+'|'+EXPRS.join(',');let 
   });
   PORTRAITS.set(k,p);return p}
 /** prepara o depoimento de `id` sem abrir (imagens, retratos e cabelo), aos poucos */
-export function prewarmStreetDepo(id){
-  const cfg=interrogations[id];if(!cfg)return;const CH=characters[cfg.personId];if(!CH)return;
+export function prewarmStreetDepo(id,opts){
+  const cfg=cfgOf(id,opts);if(!cfg)return;const CH=characters[cfg.personId];if(!CH)return;
   const A=ART_SRC();imgOnce(A.bg);imgOnce(A.poste);A.crowd.forEach(imgOnce);
   const EXPRS=exprsOf(cfg,CH);
   portraitSet(CH,CH.visemes||null,EXPRS).then(({mask})=>{if(CH.hair&&getQuality()!=='low')prewarmHair({url:CH.hair,PW,PH,mask,exprs:EXPRS})});
@@ -68,7 +76,8 @@ export function prewarmStreetDepo(id){
 /** Abre o depoimento na rua de `id` (um depoimento de src/interrogation/registry.ts) por cima de `host`.
     opts: {onClose(), onClue(id), sound:boolean, clock():string}. Devolve {close}. */
 export function openStreetDepo(host,id,opts={}){
-  const cfg=interrogations[id];if(!cfg)return null;
+  const PM=opts.press?PRESS[opts.press]:null;
+  const cfg=cfgOf(id,opts);if(!cfg)return null;
   const CH=characters[cfg.personId];if(!CH)return null;
   const VD=CH.visemes||null;
   const PERSON=PEOPLE.find(p=>p.id===cfg.personId)||{name:cfg.name,role:''};
@@ -1316,7 +1325,7 @@ export function openStreetDepo(host,id,opts={}){
     const dt=Math.min(.05,(now-last)/1000);last=now;RDT=dt;const t=now/1000;
     PS=FXON('depo.flyby')?passState(t):null;HS=FXON('depo.flyby')?heliState(t):null;
     stage.classList.toggle('passing',!busy&&!!(PS&&PASS&&(performance.now()/1000-PASS.t0)/PASS.dur<.82));
-    if(PS&&PS.I>.55&&!busy&&expr==='neutral'){setExpr('uncomfortable');glare=true}else if(glare&&(!PS||PS.I<.3)){glare=false;if(!busy)setExpr(IDLE)}
+    if(PS&&PS.I>.55&&!busy&&expr==='neutral'&&CH.assets.uncomfortable){setExpr('uncomfortable');glare=true}else if(glare&&(!PS||PS.I<.3)){glare=false;if(!busy)setExpr(IDLE)}
     const gr=giro(t),s=SC[cur];GS.r+=(gr.r-GS.r)*Math.min(1,dt*9);GS.b+=(gr.b-GS.b)*Math.min(1,dt*9);const g=GS;
     /* fundo a cada quadro; num aparelho que já precisou aliviar (DEG>0), a cada dois */
     if(DEG===0||!(FN++&1)){const b=cvBg.getContext('2d');b.setTransform(cvBg._r,0,0,cvBg._r,0,0);s.bg(b,t,g)}
@@ -1332,13 +1341,14 @@ export function openStreetDepo(host,id,opts={}){
   expr=IDLE;
   const pad=$('#sd-pad'),sub=$('#sd-sub'),focusEl={};   // (o letreiro de foco saiu da tela; o estado continua nas classes do palco)
   const clueTitle=cid=>CLUES.find(c=>c.id===cid)?.title||cid;
-  let P=progressOf(readCase(),id);
+  let P=PM?null:progressOf(readCase(),id);   // a entrevista não tem progresso de depoimento
   const qOf=x=>{const h=x.highlights?.[0];return{id:x.id,q:x.question,a:x.answer,e:x.expression&&CH.assets[x.expression]?x.expression:IDLE,
     clue:h&&x.answer.includes(h.phrase)?h.phrase:null,clueIds:(x.highlights||[]).map(k=>k.clue),title:h?clueTitle(h.clue):''}};
   const pending=()=>{const g=readCase();return pendingQuestions(cfg,P,g.clues,g.requestedMaterials||[]).map(qOf)};
   /* o que já foi anotado (aqui ou na base) aparece no caderno */
-  {const g=readCase();for(const q of askedQuestions(cfg,P))for(const h of q.highlights||[])if(g.clues.includes(h.clue)&&!NOTES2.some(n=>n.id===h.clue)){NOTES2.push({id:h.clue,t:clueTitle(h.clue)});clueCount++}}
+  if(!PM){const g=readCase();for(const q of askedQuestions(cfg,P))for(const h of q.highlights||[])if(g.clues.includes(h.clue)&&!NOTES2.some(n=>n.id===h.clue)){NOTES2.push({id:h.clue,t:clueTitle(h.clue)});clueCount++}}
   function renderPad(){
+    if(PM)return;   // na entrevista não há caderno
     const done=askedQuestions(cfg,P).slice(-2).map(q=>`<li>${esc(q.question)}</li>`).join('');
     let body='';
     if(busy&&curQ){body=`<p class="asked${circled?' drawn':''}">${esc(curQ.q)}<svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><path d="M8 22 C 6 6, 70 2, 92 12 C 102 18, 96 34, 60 37 C 30 40, 2 34, 6 18 C 8 12, 18 8, 26 7"/></svg></p>`}
@@ -1424,6 +1434,43 @@ export function openStreetDepo(host,id,opts={}){
     if(q._shown)return;q._shown=true;$('#sd-clueSr').textContent='Pista registrada: '+q.title;
     clueA(q,done||(()=>{}));
   }
+
+  /* ---------- entrevista (modo imprensa): a repórter pergunta, o Lemos responde, ela reage ----------
+     O jogo vê pelos olhos do Lemos: ela fica onde o Jorge fica, a pergunta sai como legenda com a boca dela, as respostas
+     possíveis aparecem como legendas para tocar (sem caderno) e a frase escolhida sai na legenda do Lemos. O que ele disse
+     vai para o save (pressSay) e para a edição do Jornal Sereno daquele momento. */
+  let ps=null;
+  /* uma fala da repórter, em legendas, com a boca no ritmo; tocar na cena completa o texto ou passa para a próxima */
+  function sayLine(text,e,done){
+    if(CH.assets[e])setExpr(e);stage.classList.add('listen','answering');camMode('answer');
+    const chunks=subtitleChunks(text);let i=-1;
+    const step=()=>{if(!ps)return;clearTimeout(ps.t);i++;
+      if(i>=chunks.length){ps=null;speech=null;finishTyping();done&&done();return}
+      const ch=chunks[i];sub.classList.remove('lem');startTyping(ch);speak(ch);ps.t=setTimeout(step,track(ch).length*58+Math.max(1700,ch.length*48))};
+    ps={step,t:0};step();
+  }
+  /* a frase do Lemos: ele está atrás da câmera, então só a legenda, num tom próprio */
+  function lemosLine(text,done){
+    camMode('pick');sub.classList.add('lem');startTyping(text);
+    const step=()=>{if(!ps)return;clearTimeout(ps.t);ps=null;finishTyping();done&&done()};
+    ps={step,t:0};ps.t=setTimeout(step,typingMs(text)+Math.max(1600,text.length*45));
+  }
+  const typingMs=text=>track(text).length*58*.88;
+  function pressChoices(){
+    const g=readCase(),F={arromb:(g.clues||[]).includes('porta_intacta')};
+    const list=PM.opts.filter(o=>!o.need||o.need(F));
+    const box=document.createElement('div');box.className='pch';box.setAttribute('role','group');box.setAttribute('aria-label','O que o Lemos responde');
+    box.innerHTML=list.map(o=>`<button data-o="${o.id}"${o.say?'':' class="mute"'}><small>${esc(o.tag)}</small>${o.say?`<span>“${esc(o.say)}”</span>`:'<span>Seguir sem responder</span>'}</button>`).join('');
+    stage.appendChild(box);requestAnimationFrame(()=>box.classList.add('on'));camMode('note');
+    box.addEventListener('click',ev=>{const b=ev.target.closest('button');if(!b||box.dataset.done)return;box.dataset.done='1';
+      const o=PM.opts.find(x=>x.id===b.dataset.o);SFX.click();box.classList.remove('on');setTimeout(()=>box.remove(),300);
+      pressSay(opts.press,o.id,F);opts.onPress&&opts.onPress(o.id);
+      const react=()=>{sub.innerHTML='';if(o.re)sayLine(o.re.say,o.re.e,()=>setTimeout(close,RM?300:1100));else setTimeout(close,600)};
+      if(o.say)setTimeout(()=>lemosLine(o.say,()=>{sub.innerHTML='';setTimeout(react,350)}),250);else setTimeout(react,200);
+    });
+  }
+  if(PM){root.classList.add('press');stage.addEventListener('click',e=>{if(e.target.closest('.pch')||!ps)return;if(typing)finishTyping();else ps.step()});
+    setTimeout(()=>sayLine(PM.q,PM.qe||'asking',()=>{setExpr(IDLE);stage.classList.remove('listen','answering');setTimeout(pressChoices,300)}),RM?500:2500)}
 
   /* ---------- abrir e fechar ---------- */
   const offFx=onFxChange(()=>{filmSync();hairSync();if(AMBOUT&&AC)AMBOUT.gain.setTargetAtTime(fxOn('sfx.depoAmb')?1.6:0,AC.currentTime,.2)});
