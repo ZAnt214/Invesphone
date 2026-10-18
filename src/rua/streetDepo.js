@@ -158,13 +158,17 @@ export function openStreetDepo(host,id,opts={}){
       list.forEach((im,i)=>{if(!im)return;for(const far of [0,1]){const c=document.createElement('canvas');c.width=150;c.height=300;const x=c.getContext('2d');x.drawImage(im,0,0,150,300);
         x.globalCompositeOperation='source-atop';x.fillStyle=far?'rgba(22,28,42,.62)':'rgba(8,12,26,.42)';x.fillRect(0,0,150,300);
         x.fillStyle=lin(x,0,0,0,300,[[0,'rgba(255,190,130,.10)'],[.35,'rgba(0,0,0,0)'],[1,'rgba(0,0,0,.35)']]);x.fillRect(0,0,150,300);
-        /* a arte dos curiosos vai até a cintura: a parte de baixo some aos poucos na escuridão da calçada, sem a linha reta
-           do corte (as pessoas parecem de pé no escuro, atrás da fita) */
-        x.globalCompositeOperation='destination-out';x.fillStyle=lin(x,0,0,0,300,[[.62,'rgba(0,0,0,0)'],[.8,'rgba(0,0,0,.55)'],[.95,'rgba(0,0,0,1)'],[1,'rgba(0,0,0,1)']]);x.fillRect(0,0,150,300);x.globalCompositeOperation='source-over';
+        /* a arte dos curiosos vai até a cintura: a barriga escurece (penumbra da calçada) e só os últimos 10% somem; o corte
+           fica abaixo da borda da tela (ver CROWD_ART), então nada fica transparente no meio do corpo */
+        x.globalCompositeOperation='source-atop';x.fillStyle=lin(x,0,0,0,300,[[.6,'rgba(2,4,10,0)'],[1,'rgba(2,4,10,.7)']]);x.fillRect(0,0,150,300);
+        x.globalCompositeOperation='destination-out';x.fillStyle=lin(x,0,0,0,300,[[.9,'rgba(0,0,0,0)'],[1,'rgba(0,0,0,1)']]);x.fillRect(0,0,150,300);x.globalCompositeOperation='source-over';
         (far?ART.far:ART.crowd)[i]=c}});
     });}
   /* [figura, centro x, pé y, altura, fileira de trás]: a fileira da frente encosta na fita, a de trás fica menor */
-  const CROWD_ART=[[6,118,300,138,1],[4,212,302,146,1],[7,300,298,140,1],[0,60,336,180,0],[1,156,340,184,0],[3,246,334,178,0],[5,334,338,182,0],[2,410,340,184,0]];
+  /* [figura, centro x, pé y, altura, fileira de trás]: a fileira da frente encosta na fita, a de trás fica menor.
+     A arte vai só até a cintura: a fileira da frente é grande o bastante para o corte ficar abaixo da borda de baixo da
+     tela (pé y > 390), e os corpos dela, lado a lado, cobrem o corte da fileira de trás. Nenhum corte aparece. */
+  const CROWD_ART=[[6,118,334,172,1],[4,212,338,182,1],[7,300,333,175,1],[0,60,408,252,0],[1,156,414,258,0],[3,246,405,249,0],[5,334,411,255,0],[2,410,414,258,0]];
   let FLA=false;
   /* ===== fachada viva =====
      A foto oficial não pode parecer uma imagem parada. Sem redesenhar nada, a própria arte é mexida em código:
@@ -277,7 +281,7 @@ export function openStreetDepo(host,id,opts={}){
   /* Os curiosos ficam na penumbra: desenhados numa camada própria, escurecidos por cima (só onde há gente),
      com a sombra da copa da árvore balançando sobre os rostos e o giroflex passando por eles de vez em quando.
      O que os revela de verdade é luz de verdade: o flash do celular e o holofote do helicóptero. */
-  const CC=document.createElement('canvas'),CCX={x:-20,y:120,w:500,h:228};
+  const CC=document.createElement('canvas'),CCX={x:-20,y:120,w:500,h:310};
   const CCB=document.createElement('canvas');
   function crowdLayer(t,g){
     const r=cvBg._r||.5,cw=Math.ceil(CCX.w*r),ch=Math.ceil(CCX.h*r);let fresh=!CCB.ok;if(CC.width!==cw||CC.height!==ch){CC.width=cw;CC.height=ch;CCB.width=cw;CCB.height=ch;fresh=true}
@@ -297,7 +301,7 @@ export function openStreetDepo(host,id,opts={}){
     for(const [n,x0,yb,h,far] of CROWD_ART){const im=(far?ART.far:ART.crowd)[n];if(!im)continue;const P=crowdPos(n,x0,yb,h,t);x.drawImage(im,P.x-P.w/2,P.y,P.w,h)}
     x.globalCompositeOperation='source-atop';
     /* penumbra geral, mais funda nas pernas e no lado longe do poste: pintada uma vez, copiada por cima */
-    if(!CC.pen){const c=document.createElement('canvas');c.width=250;c.height=114;const y=c.getContext('2d');y.scale(.5,.5);y.translate(-CCX.x,-CCX.y);
+    if(!CC.pen){const c=document.createElement('canvas');c.width=250;c.height=155;const y=c.getContext('2d');y.scale(.5,.5);y.translate(-CCX.x,-CCX.y);
       y.fillStyle='rgba(3,6,14,.42)';y.fillRect(CCX.x,CCX.y,CCX.w,CCX.h);
       y.fillStyle=lin(y,0,CCX.y,0,CCX.y+CCX.h,[[0,'rgba(2,4,10,.05)'],[.45,'rgba(2,4,10,.18)'],[1,'rgba(2,4,10,.6)']]);y.fillRect(CCX.x,CCX.y,CCX.w,CCX.h);
       y.fillStyle=lin(y,CCX.x,0,CCX.x+CCX.w,0,[[0,'rgba(2,4,10,.32)'],[.7,'rgba(2,4,10,.06)'],[1,'rgba(2,4,10,0)']]);y.fillRect(CCX.x,CCX.y,CCX.w,CCX.h);CC.pen=c}
@@ -1100,6 +1104,20 @@ export function openStreetDepo(host,id,opts={}){
     }
   }
   let acDirty=true;
+  /* a camada de boca e pálpebras para a placa de vídeo: só o retângulo do rosto que elas ocupam, em px da imagem original,
+     na densidade da tela */
+  const OVC=document.createElement('canvas'),OVL={cv:OVC,x:0,y:0,w:0,h:0};
+  function paintOv(now,S){
+    const E=eyesAt(now),m=mouthAt(now),s=VD?m.halfWidth*2/VD.lipWidth:0;
+    let x0=Math.min(E.left.cx-E.left.rx,E.right.cx-E.right.rx),x1=Math.max(E.left.cx+E.left.rx,E.right.cx+E.right.rx);
+    let y0=Math.min(E.left.cy-E.left.ry,E.right.cy-E.right.ry),y1=Math.max(E.left.cy+E.left.ry,E.right.cy+E.right.ry);
+    if(VD){x0=Math.min(x0,m.cx-VD.center[0]*s);x1=Math.max(x1,m.cx+(VD.cellW-VD.center[0])*s);y1=Math.max(y1,m.rimY+(VD.cellH-VD.center[1])*s);}
+    x0=Math.floor(x0-10);y0=Math.floor(y0-10);x1=Math.ceil(x1+10);y1=Math.ceil(y1+10);
+    const q=Math.min(1.25,S*ACR),W=Math.ceil((x1-x0)*q),H=Math.ceil((y1-y0)*q);
+    if(OVC.width!==W||OVC.height!==H){OVC.width=W;OVC.height=H;}
+    const c=OVC.getContext('2d');c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,W,H);c.setTransform(q,0,0,q,-x0*q,-y0*q);
+    drawMouth(c);drawLids(c,now);
+    OVL.x=x0;OVL.y=y0;OVL.w=W/q;OVL.h=H/q;return OVL;}
   function drawActor(now,t,g){
     if(!ready||!imgs[expr])return;
     /* respiração, a assentada da troca de expressão e, falando, um balanço mínimo da cabeça no ritmo das sílabas */
@@ -1107,29 +1125,23 @@ export function openStreetDepo(host,id,opts={}){
     const f=mixF(now);
     const hon=hairOn();if(hon)HAIR.step(RM?0:t,hairMove()?hairWind(t):{wx:0,wy:0,wob:0,gust:0});
     const fading=!!(prev&&f<1&&imgs[prev])||(prev&&now<fadeAt&&imgs[prev]),gok=hon&&HAIR.ok(expr,fading?prev:null);
+    /* boca e pálpebras: com a figura na placa de vídeo, vão como mais uma camada dela (light.ov), com a mesma luz do rosto.
+       Parada (sem fala nem piscada), a camada não é pintada nem enviada. */
+    const idle=mouthOn<.02&&blinkStart<0&&now<blinkNext;
     if(gok){const fx=PS?200+Math.max(-120,Math.min(120,(PS.x-620)*.25)):200;
       HAIR.render(RM?0:t,fading?[{e:prev,alpha:1},{e:expr,alpha:f}]:[{e:expr,alpha:1}],{tx:200-450*S,ty:br*1.1,sx:S,sy:S*(1+br*.0025)},
         {gr:g.r,gb:g.b,pI:PS?PS.I:0,px:fx,pr:PS?PS.r:0,pb:PS?PS.b:0,wet:FXON('depo.wet')?1:0,
-         cloth:CH.hairCloth&&hairMove()?[HW.wx,HW.wy,CH.hairCloth*(1+.25*mouthOn)]:null});}
+         cloth:CH.hairCloth&&hairMove()?[HW.wx,HW.wy,CH.hairCloth*(1+.25*mouthOn)]:null,ov:idle?null:paintOv(now,S)});}
     if(gok!==hairShown){hairShown=gok;cvHair.style.visibility=gok?'visible':'hidden';}
-    /* com a figura na placa de vídeo, este canvas só tem a boca e o piscar: parado (sem fala nem piscada), não é
-       redesenhado, e o navegador não reenvia a imagem dele a cada quadro */
-    if(gok&&mouthOn<.02&&blinkStart<0&&now<blinkNext){if(acDirty){const c=cvAc.getContext('2d');c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cvAc.width,cvAc.height);acDirty=false;cvAc.style.visibility='hidden';}return;}
+    if(gok){if(acDirty){const c=cvAc.getContext('2d');c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cvAc.width,cvAc.height);acDirty=false;cvAc.style.visibility='hidden';}return;}
     if(!acDirty)cvAc.style.visibility='';acDirty=true;
     const c=cvAc.getContext('2d'),r=cvAc._r;c.setTransform(r,0,0,r,0,0);c.clearRect(0,0,400,430);
     c.save();c.translate(200-450*S,br*1.1);c.scale(S,S*(1+br*.0025));
     /* com o cabelo ao vento, a figura (base + mechas, já com a luz da cena) vai pela placa de vídeo no canvas de baixo
        (#sd-hair) e este canvas fica só com a boca e o piscar; sem ele, o retrato oficial é desenhado aqui, como antes */
-    if(!gok){if(fading){c.drawImage(imgs[prev],0,0,900,1200);c.globalAlpha=f}c.drawImage(imgs[expr],0,0,900,1200);c.globalAlpha=1;}
+    if(fading){c.drawImage(imgs[prev],0,0,900,1200);c.globalAlpha=f}c.drawImage(imgs[expr],0,0,900,1200);c.globalAlpha=1;
     drawMouth(c);drawLids(c,now);c.restore();
-    /* com a figura na placa de vídeo, aqui só há boca e pálpebras: a luz da cena (source-atop) é pintada só no retângulo do rosto,
-       não no canvas inteiro (o resultado é o mesmo; são vários preenchimentos de tela a menos enquanto ele fala) */
-    if(gok){const A=CH.assets[expr],B=prev&&fading&&CH.assets[prev]?[A,CH.assets[prev]]:[A];let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
-      for(const a of B){const E=a.eyes,m=a.mouth;for(const e of [E.left,E.right]){x0=Math.min(x0,e.cx-e.rx);x1=Math.max(x1,e.cx+e.rx);y0=Math.min(y0,e.cy-e.ry)}
-        x0=Math.min(x0,m.cx-m.halfWidth*1.6);x1=Math.max(x1,m.cx+m.halfWidth*1.6);y1=Math.max(y1,m.rimY+m.halfWidth*1.6)}
-      const P=90,ox=200-450*S,oy=br*1.1;c.save();c.beginPath();c.rect(ox+(x0-P)*S,oy+(y0-P)*S,(x1-x0+2*P)*S,(y1-y0+2*P)*S);c.clip()}
     c.globalCompositeOperation='source-atop';SC[cur].light(c,400,430,g,t);c.globalCompositeOperation='source-over';
-    if(gok)c.restore();
     /* holofote no Jorge: soma a própria imagem dentro do círculo de luz (clareia sem lavar a cor), com borda dura */
     if(false&&cur==='mix'&&HS&&HS.S>.02&&imgs[expr]){const ax=HS.sx-HS.lean*420*.4-420,k=HS.S*Math.exp(-Math.pow((ax-200)/230,2));
       if(k>.02){const cy=430*.3;c.save();c.beginPath();c.ellipse(ax,cy,175,200,0,0,7);c.clip();
