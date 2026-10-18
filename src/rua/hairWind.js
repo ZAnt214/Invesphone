@@ -109,9 +109,41 @@ const MANI=new Map(),CPU=new Map();
 function manifest(url){let p=MANI.get(url);if(!p){p=fetch(url).then(r=>r.ok?r.json():null).then(j=>j&&j.expressions?j:null).catch(()=>null);MANI.set(url,p);}return p;}
 /* uma expressão de cada vez para a página inteira (duas preparações juntas só disputariam o mesmo tempo) */
 let chain=Promise.resolve();
-function cpuBuild(url,e,o){const k=url+'|'+e+'|'+o.PW+'x'+o.PH;let p=CPU.get(k);
+function cpuBuild(url,e,o){const k=url+'|'+e+'|'+o.PW+'x'+o.PH+(o.refill?'|r':'');let p=CPU.get(k);
   if(!p){p=chain.then(()=>manifest(url)).then(M=>M&&M.expressions[e]?buildExpr(url.replace(/manifest\.json$/,''),M,e,o):null).catch(()=>null);chain=p.then(()=>{},()=>{});CPU.set(k,p);}
   return p;}
+/* Fundo das mechas soltas refeito a partir da própria imagem (o.refill): na resolução cheia da arte, onde as mechas soltas
+   cobrem a base, os pixels da base são recalculados puxando as cores de volta das bordas (preenchimento push-pull, de grosso
+   para fino, com interpolação bilinear na volta: liso, sem blocos). Parada, a mecha cobre exatamente essa área, e na borda
+   o fundo novo é a própria cor vizinha, então a imagem continua a oficial; quando a mecha se mexe, o que aparece atrás é a
+   continuação da pele, da orelha ou do cabelo em volta, sem o contorno claro e serrilhado da mecha que vinha na base. */
+async function refillBase(bimg,strands){
+  const W=bimg.naturalWidth||bimg.width,H=bimg.naturalHeight||bimg.height;
+  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d',{willReadFrequently:true});
+  const hole=new Uint8Array(W*H);let x0=W,y0=H,x1=-1,y1=-1;
+  for(const im of strands){x.clearRect(0,0,W,H);x.drawImage(im,0,0,W,H);const a=x.getImageData(0,0,W,H).data;
+    for(let i=0;i<W*H;i++)if(a[i*4+3]>8){hole[i]=1;const px=i%W,py=(i/W)|0;if(px<x0)x0=px;if(px>x1)x1=px;if(py<y0)y0=py;if(py>y1)y1=py;}
+    await nap();}
+  x.clearRect(0,0,W,H);x.drawImage(bimg,0,0,W,H);
+  if(x1<0)return c;
+  const Mg=16;x0=Math.max(0,x0-Mg);y0=Math.max(0,y0-Mg);x1=Math.min(W-1,x1+Mg);y1=Math.min(H-1,y1+Mg);
+  const w=x1-x0+1,h=y1-y0+1,img=x.getImageData(x0,y0,w,h),d=img.data;
+  const lv=[];{const R0=new Float32Array(w*h),G0=new Float32Array(w*h),B0=new Float32Array(w*h),K0=new Float32Array(w*h);
+    for(let yy=0;yy<h;yy++)for(let xx=0;xx<w;xx++){const j=yy*w+xx;if(!hole[(yy+y0)*W+xx+x0]){R0[j]=d[j*4];G0[j]=d[j*4+1];B0[j]=d[j*4+2];K0[j]=1;}}
+    lv.push({w,h,R:R0,G:G0,B:B0,K:K0});}
+  while(lv[lv.length-1].w>1||lv[lv.length-1].h>1){const P=lv[lv.length-1],cw=Math.max(1,Math.ceil(P.w/2)),ch=Math.max(1,Math.ceil(P.h/2));
+    const R1=new Float32Array(cw*ch),G1=new Float32Array(cw*ch),B1=new Float32Array(cw*ch),K1=new Float32Array(cw*ch);
+    for(let yy=0;yy<P.h;yy++)for(let xx=0;xx<P.w;xx++){const j=yy*P.w+xx,k=P.K[j];if(!k)continue;const q=(yy>>1)*cw+(xx>>1);R1[q]+=P.R[j]*k;G1[q]+=P.G[j]*k;B1[q]+=P.B[j]*k;K1[q]+=k;}
+    for(let q=0;q<cw*ch;q++){const k=K1[q];if(k>0){R1[q]/=k;G1[q]/=k;B1[q]/=k;K1[q]=Math.min(1,k);}}
+    lv.push({w:cw,h:ch,R:R1,G:G1,B:B1,K:K1});}
+  const bil=(U,A,fx,fy)=>{fx=Math.max(0,Math.min(U.w-1,fx));fy=Math.max(0,Math.min(U.h-1,fy));const ix=Math.floor(fx),iy=Math.floor(fy),ax=fx-ix,ay=fy-iy,jx=Math.min(U.w-1,ix+1),jy=Math.min(U.h-1,iy+1);
+    return (A[iy*U.w+ix]*(1-ax)+A[iy*U.w+jx]*ax)*(1-ay)+(A[jy*U.w+ix]*(1-ax)+A[jy*U.w+jx]*ax)*ay;};
+  for(let l=lv.length-2;l>=0;l--){const L=lv[l],U=lv[l+1];
+    for(let yy=0;yy<L.h;yy++)for(let xx=0;xx<L.w;xx++){const j=yy*L.w+xx,k=L.K[j];if(k>=1)continue;const fx=(xx+.5)/2-.5,fy=(yy+.5)/2-.5;
+      L.R[j]=L.R[j]*k+bil(U,U.R,fx,fy)*(1-k);L.G[j]=L.G[j]*k+bil(U,U.G,fx,fy)*(1-k);L.B[j]=L.B[j]*k+bil(U,U.B,fx,fy)*(1-k);L.K[j]=1;}}
+  const L=lv[0];for(let yy=0;yy<h;yy++)for(let xx=0;xx<w;xx++){if(!hole[(yy+y0)*W+xx+x0])continue;const j=yy*w+xx;d[j*4]=L.R[j];d[j*4+1]=L.G[j];d[j*4+2]=L.B[j];d[j*4+3]=255;}
+  x.putImageData(img,x0,y0);return c;
+}
 /** prepara as camadas antes de abrir o depoimento (o.url, o.PW, o.PH, o.mask, o.exprs) */
 export function prewarmHair(o){for(const e of o.exprs)cpuBuild(o.url,e,o);}
 async function buildExpr(base,M,e,o){const W0=()=>(M&&M.resolution&&M.resolution.width)||900;
@@ -119,7 +151,11 @@ async function buildExpr(base,M,e,o){const W0=()=>(M&&M.resolution&&M.resolution
     const [bimg,...rest]=await Promise.all([loadImg(base+E.base),...E.strands.flatMap(st=>[loadImg(base+st.file),loadImg(base+st.weight)])]);
     if(!bimg)return null;await nap();
     // base sem as mechas, recortada pela máscara da figura (como o retrato oficial)
-    const bc=document.createElement('canvas');bc.width=o.PW;bc.height=o.PH;const bx=bc.getContext('2d',{willReadFrequently:true});bx.drawImage(bimg,0,0,o.PW,o.PH);
+    /* o.refill: o fundo atrás das mechas soltas é refeito em resolução cheia, antes de reduzir (ver refillBase) */
+    let baseSrc=bimg;
+    if(o.refill){const soft=E.strands.map((st,i)=>({st,img:rest[i*2]})).filter(x=>x.img&&(x.st.stiffness??.7)<.5).map(x=>x.img);
+      if(soft.length){baseSrc=await refillBase(bimg,soft);await nap();}}
+    const bc=document.createElement('canvas');bc.width=o.PW;bc.height=o.PH;const bx=bc.getContext('2d',{willReadFrequently:true});bx.drawImage(baseSrc,0,0,o.PW,o.PH);
     if(o.mask){bx.globalCompositeOperation='destination-in';bx.drawImage(o.mask,0,0,o.PW,o.PH);bx.globalCompositeOperation='source-over';}
     const B=bx.getImageData(0,0,o.PW,o.PH).data;await nap();
     const strands=[];const tc=document.createElement('canvas');tc.width=o.PW;tc.height=o.PH;const tx=tc.getContext('2d',{willReadFrequently:true});
@@ -163,7 +199,7 @@ async function buildExpr(base,M,e,o){const W0=()=>(M&&M.resolution&&M.resolution
       if(nv>65000||!idx.length)continue;
       const rt=st.root?[st.root[0]*s,st.root[1]*s]:[x0+w/2,y0+h],tp=st.tip?[st.tip[0]*s,st.tip[1]*s]:[rt[0],rt[1]-10];
       strands.push({src,fea,verts,idx:new Uint16Array(idx),stiff:st.stiffness??.7,ph:(st.root?st.root[0]*.013+st.root[1]*.007:strands.length),
-        root:rt,dir:Math.atan2(tp[1]-rt[1],tp[0]-rt[0])});}
+        root:rt,dir:Math.atan2(tp[1]-rt[1],tp[0]-rt[0]),len:Math.max(8,Math.hypot(tp[0]-rt[0],tp[1]-rt[1]))});}
     tc.width=tc.height=0;
     /* a base vai numa malha só onde há figura (o quadro inteiro tem muito fundo transparente que o sombreador lia à toa) */
     const BG=12,bc_=Math.ceil(o.PW/BG),br_=Math.ceil(o.PH/BG),BC=bc_+1,bv=new Float32Array(BC*(br_+1)*6),bi=[];
@@ -240,12 +276,18 @@ export function createHair(o){
       const dx=Math.cos(st.dir),dy=Math.sin(st.dir),soft=1-st.stiff*.35;
       const cr=dx*d.wy-dy*d.wx,dot=dx*d.wx+dy*d.wy,over=Math.max(0,-dot)*.6*Math.max(0,-dy)*Math.max(-1,Math.min(1,d.wx*6));
       const turb=(d.gust||0)*(.35*Math.sin(t*3.1+st.ph*2.1)+.22*Math.sin(t*5.7+st.ph*3.3)+.13*Math.sin(t*8.9+st.ph));
-      const target=(cr+over)*1.35*soft+turb*soft;
+      /* amplitude por personagem (o.maxTip, em px da imagem 900×1200): com ele, o quanto a PONTA anda é que é limitado, não o
+         ângulo; um fio longo (os da frente da orelha da repórter, ~240 px) gira poucos graus e não cruza o rosto, e um curto
+         pode girar mais. Sem maxTip (o Jorge), como antes. O ganho é linear (a brisa continua pequena, a rajada maior) e
+         ainda passa por um teto macio, sem quina. */
+      const g=o.maxTip?Math.min(1,o.maxTip*v.s/(st.len*1.2)):1;st.g=g;
+      let target=((cr+over)*1.35*soft+turb*soft)*g;
+      if(o.maxTip){const A=o.maxTip*v.s*1.3/st.len;target=A*Math.tanh(target/A);}
       const K=26-st.stiff*8,C=2*Math.sqrt(K)*.6;
       if(dt>0){ph.w+=(K*(target-ph.a)-C*ph.w)*dt;ph.a+=ph.w*dt;}
       ph.a=Math.max(-1.8,Math.min(1.8,ph.a));
       // empurrão rente à cabeça (usado pelas mechas rígidas): segue o vento com a mesma mola, em px da imagem original
-      const amp=26*soft,tx=d.wx*amp+turb*6*soft,ty=d.wy*amp;
+      const amp=26*soft*(o.maxTip?Math.min(1,o.maxTip*.35/(26*soft)):1),tx=d.wx*amp+turb*6*soft*(o.maxTip?.35:1),ty=d.wy*amp;
       if(dt>0){ph.vx+=(K*(tx-ph.x)-C*ph.vx)*dt;ph.x+=ph.vx*dt;ph.vy+=(K*(ty-ph.y)-C*ph.vy)*dt;ph.y+=ph.vy*dt;}});}
   /** a figura pronta para desenhar? (expressões carregadas e WebGL vivo) */
   const ok=(...es)=>!lost&&es.every(e=>{if(!e)return true;const v=cache.get(e);if(!v)return false;if(!v.gpu)upload(v);return !!v.gpu;});
@@ -265,7 +307,7 @@ export function createHair(o){
         const mix=Math.min(1,Math.max(0,(st.stiff-.68)/.16)),sx=ph.x*v.s,sy=ph.y*v.s;
         // o esfumado do corte entra conforme a mecha sai do lugar (parada, a imagem é a oficial)
         const fea=Math.min(1,(Math.abs(ph.a)*6)*(1-mix)+Math.hypot(ph.x,ph.y)*.12*mix+(D.wob||0)*(D.gust||0)*4+(D.wob||0)*1.5);
-        mesh(m,{root:m.root,sh:[sx,sy],mix,bend:ph.a,wob:(D.wob||0)*(1.2-st.stiff*.5),ph:st.ph,fea});});}
+        mesh(m,{root:m.root,sh:[sx,sy],mix,bend:ph.a,wob:(D.wob||0)*(1.2-st.stiff*.5)*(st.g||1),ph:st.ph,fea});});}
     return true;}
   return {ready,want,keep,step,render,resize,ok,_phy:()=>PHY.map(p=>p.a),has:e=>cache.has(e),
     destroy(){dead=true;keep([]);if(gl){const x=gl.getExtension('WEBGL_lose_context');if(x)x.loseContext();}gl=null;}};

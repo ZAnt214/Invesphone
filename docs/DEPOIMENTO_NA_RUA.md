@@ -95,7 +95,10 @@ A mesma cena serve para a entrevista do Lemos à repórter da TV Sereno, no port
 - Posição (ajuste de 18/10/2026): a legenda da repórter e a do Lemos ficam centradas embaixo, e as respostas à esquerda com a pergunta dela em cima (a legenda some enquanto ele escolhe). Tudo respeita a área segura do iPhone (`--sl`, `--sb`, `--sr` da casa); o caderno do Jorge também.
 - Boca: as folhas de bocas dela são recortes do próprio rosto em 1:1, então a boca é desenhada sem ampliar e sem achatar (`squash:false`, lábio 108 px); assim a pele em volta não escorrega quando ela fala.
 - Expressões: ver "Troca de expressão natural" (170 ms nela, 230 ms no Jorge).
-- Cabelo: o cadastro já aponta para `public/characters/reporter/hair/manifest.json`; as camadas foram pedidas ao ChatGPT (`creative-requests/inbox/2026-10-18-reporter-cabelo-ao-vento.md`). Quando chegarem, ela ganha o cabelo ao vento e a garoa no rosto do Jorge; até lá, o retrato fica parado.
+- Cabelo (entregue em 18/10/2026, `public/characters/reporter/hair/`, sete mechas por expressão): ela usa o mesmo motor do Jorge, com duas diferenças no cadastro:
+  - `hairMaxTip: 28`: o quanto a ponta de uma mecha anda é limitado em px da imagem (~5 px na brisa, ~28 px na rajada do helicóptero), em vez do ângulo. Os fios longos na frente da orelha (~240 px) giram poucos graus e nunca cruzam o rosto; as laterais e o topo, presos no coque, quase não saem do lugar. Sem `hairMaxTip`, o Jorge continua como estava.
+  - `hairRefill: true`: o fundo pintado atrás dos fios soltos na base vinha com o contorno claro e serrilhado do fio. Ele é refeito ao preparar as camadas, em resolução cheia, puxando as cores da própria imagem em volta (push-pull com interpolação bilinear). Parada, a imagem é a oficial; com o fio se mexendo, aparece a continuação da pele, da orelha ou do cabelo.
+  - Com as camadas, ela também ganha a garoa (gotas no casaco e no cabelo, pele úmida) do Jorge.
 
 ## Jorge molhado (`depo.wet`)
 
