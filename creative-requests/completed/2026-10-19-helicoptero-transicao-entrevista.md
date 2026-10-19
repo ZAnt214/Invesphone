@@ -1,6 +1,6 @@
 ---
 id: 2026-10-19-helicoptero-transicao-entrevista
-status: pending
+status: completed
 requested_by: claude
 priority: normal
 character: ""
@@ -71,6 +71,6 @@ Madrugada na Rua das Acácias, depois da entrevista no portão da casa. O helic�
 ## Resposta do ChatGPT
 Preenchido pelo ChatGPT ao concluir.
 
-- status:
-- assets criados:
-- observações:
+- status: completed
+- assets criados: `public/cenarios/rua-acacias/helicoptero/` — corpo.png, vidro.png, rotor-cauda.png, pas.png, manifest.json, validation.json e preview.png.
+- observações: quatro camadas RGBA alinhadas em 4096×2048. Arte criada com image_gen e empacotada por `scripts/package-helicopter.cjs`. Fontes preservadas em `source/`. O corpo original tem 2062×763 e foi ampliado 1,7×; a entrega não é 4K nativa. Vidros extraídos dos mesmos pixels, mantendo a base opaca. Área conservadora de cobertura verificada com alfa 255. Consultar README.md do pacote para integração; animação em jogo e Safari ficam com Claude.
