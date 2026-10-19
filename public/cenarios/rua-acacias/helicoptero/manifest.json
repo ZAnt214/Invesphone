@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "units": "pixels",
+  "resolution": {
+    "width": 4096,
+    "height": 2048
+  },
+  "direction": "right",
+  "layers": [
+    "corpo.png",
+    "vidro.png",
+    "rotor-cauda.png",
+    "pas.png"
+  ],
+  "bodyRect": {
+    "x": 2170,
+    "y": 767,
+    "width": 1530,
+    "height": 604
+  },
+  "opaqueWipeRect": {
+    "x": 2425,
+    "y": 886,
+    "width": 765,
+    "height": 348
+  },
+  "nose": [
+    3729,
+    1183
+  ],
+  "tailRotorCenter": [
+    484,
+    962
+  ],
+  "searchlight": [
+    3590,
+    1312
+  ],
+  "antiCollisionLight": [
+    2808,
+    1375
+  ],
+  "whiteStrobe": [
+    428,
+    527
+  ],
+  "mainRotorAxis": [
+    2621,
+    500
+  ],
+  "drawOrder": [
+    "pas.png",
+    "corpo.png",
+    "vidro.png",
+    "rotor-cauda.png"
+  ],
+  "notes": [
+    "All layers use identical canvas and coordinates; rotate about declared pivots, never image center.",
+    "Glass duplicates original opaque window pixels; keep body intact beneath it to ensure a fully opaque wipe.",
+    "Main blade is one blade; repeat around mast with foreshortening for the rotor disk.",
+    "Lights are OFF in art; render lighting in code.",
+    "4096-wide delivery; body source is 2062x763, resampled 1.7x, not native 4K.",
+    "Opaque wipe uses conservative inner rectangle; scale >= max(viewWidth/rect.width,viewHeight/rect.height) and center this rectangle on viewport before switching scenes."
+  ]
+}

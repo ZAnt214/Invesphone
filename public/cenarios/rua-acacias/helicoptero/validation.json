@@ -1,0 +1,29 @@
+{
+  "canvas": [
+    4096,
+    2048
+  ],
+  "opaqueWipeMinAlpha": 255,
+  "layers": {
+    "corpo.png": {
+      "width": 4096,
+      "height": 2048,
+      "alpha": true
+    },
+    "vidro.png": {
+      "width": 4096,
+      "height": 2048,
+      "alpha": true
+    },
+    "rotor-cauda.png": {
+      "width": 4096,
+      "height": 2048,
+      "alpha": true
+    },
+    "pas.png": {
+      "width": 4096,
+      "height": 2048,
+      "alpha": true
+    }
+  }
+}
