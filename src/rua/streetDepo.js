@@ -59,8 +59,27 @@ function portraitSet(CH,VD,EXPRS){const k=CH.figureMask+'|'+EXPRS.join(',');let 
     if(vis&&VD){const c=document.createElement('canvas');c.width=vis.width;c.height=vis.height;const x=c.getContext('2d');x.drawImage(vis,0,0);
       const m=document.createElement('canvas');m.width=c.width;m.height=c.height;const mx=m.getContext('2d');
       for(let i=0;i<VD.order.length;i++){const cx=i*VD.cellW+VD.center[0],cy=VD.center[1]+3,rx=VD.cellW*.24,ry=VD.cellH*.42;
-        mx.save();mx.translate(cx,cy);mx.scale(1,ry/rx);const g=mx.createRadialGradient(0,0,0,0,0,rx);g.addColorStop(0,'#000');g.addColorStop(.78,'#000');g.addColorStop(1,'rgba(0,0,0,0)');mx.fillStyle=g;mx.fillRect(-rx,-rx,rx*2,rx*2);mx.restore()}
-      x.globalCompositeOperation='destination-in';x.drawImage(m,0,0);m.width=m.height=0;imgs.visemes=c}
+        mx.save();mx.translate(cx,cy);mx.scale(1,ry/rx);const g=mx.createRadialGradient(0,0,0,0,0,rx);g.addColorStop(0,'#000');g.addColorStop(.76,'#000');g.addColorStop(1,'rgba(0,0,0,0)');mx.fillStyle=g;mx.fillRect(-rx,-rx,rx*2,rx*2);mx.restore()}
+      x.globalCompositeOperation='destination-in';x.drawImage(m,0,0);m.width=m.height=0;imgs.visemes=c;
+      /* a folha de bocas foi recortada de um retrato só, e cada expressão tem o rosto num tom um pouco diferente (mais
+         clara, mais rosada): colada sem ajuste, a pele em volta dos lábios aparecia como uma mancha. Para cada expressão,
+         a folha ganha o tom dela: compara a pele em volta da boca (um anel dentro da borda esfumada) na expressão e na
+         boca fechada da folha, e corrige cada canal por essa razão. */
+      try{const vd=x.getImageData(0,0,c.width,c.height).data,mi=VD.order.indexOf('M')>=0?VD.order.indexOf('M'):0;imgs.visemesBy={};
+        const rx=VD.cellW*.24,ry=VD.cellH*.42,ring=[];
+        for(let v=0;v<VD.cellH;v+=3)for(let u=0;u<VD.cellW;u+=3){const q=Math.hypot((u-VD.center[0])/rx,(v-VD.center[1]-3)/ry);if(q>.5&&q<.82)ring.push([u,v]);}
+        for(let i=0;i<EXPRS.length;i++){const e=EXPRS[i],im=ims[i],A=CH.assets[e];if(!im||!A||!A.mouth)continue;
+          const sc=A.mouth.halfWidth*2/VD.lipWidth,ox=A.mouth.cx-VD.center[0]*sc,oy=A.mouth.rimY-VD.center[1]*sc,bw=Math.ceil(VD.cellW*sc),bh=Math.ceil(VD.cellH*sc);
+          const t2=document.createElement('canvas');t2.width=bw;t2.height=bh;const tx=t2.getContext('2d');tx.drawImage(im,ox,oy,bw,bh,0,0,bw,bh);const id=tx.getImageData(0,0,bw,bh).data;
+          let a=[0,0,0],b=[0,0,0],n=0;
+          for(const [u,v] of ring){const qv=(v*c.width+mi*VD.cellW+u)*4;if(vd[qv+3]<250)continue;const X=Math.min(bw-1,Math.round(u*sc)),Y=Math.min(bh-1,Math.round(v*sc)),qi=(Y*bw+X)*4;
+            const lv=vd[qv]*.3+vd[qv+1]*.55+vd[qv+2]*.15,li=id[qi]*.3+id[qi+1]*.55+id[qi+2]*.15;if(lv<45||li<45)continue;   // fundo/cabelo fora
+            for(let k=0;k<3;k++){a[k]+=id[qi+k];b[k]+=vd[qv+k];}n++;}
+          if(n<20)continue;const gk=a.map((v,k)=>Math.max(.75,Math.min(1.35,v/Math.max(1,b[k]))));
+          if(gk.every(g=>Math.abs(g-1)<.015)){imgs.visemesBy[e]=c;continue;}
+          const cc=document.createElement('canvas');cc.width=c.width;cc.height=c.height;const cx2=cc.getContext('2d'),od=cx2.createImageData(c.width,c.height),o=od.data;
+          for(let q=0;q<vd.length;q+=4){o[q]=vd[q]*gk[0];o[q+1]=vd[q+1]*gk[1];o[q+2]=vd[q+2]*gk[2];o[q+3]=vd[q+3];}
+          cx2.putImageData(od,0,0);imgs.visemesBy[e]=cc;t2.width=t2.height=0;await nap();}}catch(_){/* sem leitura: a folha como veio */}}
     tmp.width=tmp.height=0;
     return {imgs,skins,mask};
   });
@@ -1164,7 +1183,7 @@ export function openStreetDepo(host,id,opts={}){
     if(mouthOn<.02||!imgs.visemes||!VD)return;
     const ws=ORDER.map(v=>({v,w:vis[v]})).filter(x=>x.w>.01).sort((a,b)=>a.w-b.w);if(!ws.length)return;
     gx.clearRect(0,0,400,120);let acc=0;
-    for(const x of ws){acc+=x.w;gx.globalAlpha=x.w/acc;gx.drawImage(imgs.visemes,VD.order.indexOf(x.v)*VD.cellW,0,VD.cellW,VD.cellH,0,0,400,120)}
+    const VS=(imgs.visemesBy&&imgs.visemesBy[expr])||imgs.visemes;for(const x of ws){acc+=x.w;gx.globalAlpha=x.w/acc;gx.drawImage(VS,VD.order.indexOf(x.v)*VD.cellW,0,VD.cellW,VD.cellH,0,0,400,120)}
     gx.globalAlpha=1;
     const m=mouthAt(performance.now()),cx=m.cx,rim=m.rimY,s=m.halfWidth*2/VD.lipWidth,sy=VD.squash===false?s:s*(vis.M+(1-vis.M)*(.62+.38*Math.min(1,openV)));
     c.save();c.globalAlpha=Math.min(1,mouthOn);c.translate(cx,rim);c.scale(s,sy);c.drawImage(gcv,-VD.center[0],-VD.center[1]);c.restore();
