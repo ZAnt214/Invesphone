@@ -1088,17 +1088,18 @@ export function openStreetDepo(host,id,opts={}){
     const m=mouthAt(performance.now()),cx=m.cx,rim=m.rimY,s=m.halfWidth*2/VD.lipWidth,sy=VD.squash===false?s:s*(vis.M+(1-vis.M)*(.62+.38*Math.min(1,openV)));
     c.save();c.globalAlpha=Math.min(1,mouthOn);c.translate(cx,rim);c.scale(s,sy);c.drawImage(gcv,-VD.center[0],-VD.center[1]);c.restore();
   }
-  /* Piscada feita da própria arte: a pálpebra de cima (a pele entre o olho e a sobrancelha, com o traço dos cílios na
-     borda) desce sobre o olho, coluna por coluna, esticando a pele. A linha dos cílios vai do arco de cima até o arco de
-     baixo do olho, então o olho fechado fica com o traço curvo para baixo, como na arte. Nada é pintado com cor lisa: a
-     textura, o traço e a luz são os do rosto (com a figura na placa de vídeo, passa pelo mesmo sombreador).
+  /* Piscada no traço da arte (cel shading, tons chapados): a pálpebra é pintada coluna por coluna com o tom da própria
+     pálpebra daquela coluna (lido na arte logo acima do traço dos cílios e suavizado entre colunas), e o traço dos cílios
+     da arte desce junto com a borda dela, do arco de cima até o arco de baixo do olho. Fechado, o olho fica com o traço
+     curvo para baixo. Sem pele esticada (que borrava) nem cor lisa da bochecha (que parecia um adesivo); com a figura na
+     placa de vídeo, passa pelo mesmo sombreador do rosto.
      Ritmo de piscada de verdade: fecha rápido (75 ms), fica fechado um instante e abre mais devagar. */
   const BLINK_MS=210;
   function lidAmount(now){const ms=now-blinkStart;
     if(ms<75){const u=ms/75;return u*u*(3-2*u)}if(ms<100)return 1;const u=Math.min(1,(ms-100)/110);return 1-u*u*(3-2*u)}
-  /* onde fica o traço dos cílios de cima em cada coluna do olho, achado uma vez por expressão na própria arte: descendo
-     pela pele acima do olho, o primeiro pixel bem mais escuro que a pele é o começo do traço; a espessura dele (até 4,5 px; mais que isso já seria a íris)
-     vai junto com a pálpebra. Em px da arte 900×1200. */
+  /* traço dos cílios de cima e tom da pálpebra em cada coluna do olho, achados uma vez por expressão na própria arte:
+     descendo pela pele acima do olho, o primeiro pixel bem mais escuro que a pele é o começo do traço (espessura até
+     4,5 px; mais que isso já seria a íris). Em px da arte 900×1200. */
   const LASH={};
   function lashOf(e){if(LASH[e])return LASH[e];const img=imgs[e];if(!img)return null;const k=img.width/900,E=CH.assets[e].eyes,out=[];
     const x=img.getContext('2d');
@@ -1107,27 +1108,40 @@ export function openStreetDepo(host,id,opts={}){
       let d=null;try{d=x.getImageData(px0,py0,pw,ph).data;}catch(_){/* sem leitura */}
       const cols=[];
       for(let X=X0;X<X1;X++){const u=(X+.5-cx)/rx;if(Math.abs(u)>=1){cols.push(null);continue}const h=ry*Math.sqrt(1-u*u),U=cy-h;
-        let Ls=U-1,t=2.5;
-        if(d){const c=Math.min(pw-1,Math.round(X*k)-px0),lum=r=>{const q=(r*pw+c)*4;return d[q]*.3+d[q+1]*.55+d[q+2]*.15};
+        let Ls=U-1,t=2.5,col=null;
+        if(d){const c=Math.min(pw-1,Math.round(X*k)-px0),px=r=>(r*pw+c)*4,lum=r=>{const q=px(r);return d[q]*.3+d[q+1]*.55+d[q+2]*.15};
           const r0=Math.max(0,Math.round((U-H0)*k)-py0),r1=Math.min(ph-1,Math.round((U+h*.55)*k)-py0);
           let ref=(lum(r0)+lum(Math.min(ph-1,r0+1))+lum(Math.min(ph-1,r0+2)))/3,r=r0+3;
           while(r<=r1&&lum(r)>ref*.62)r++;
-          if(r<=r1){let n=0;while(r+n<=r1&&lum(r+n)<ref*.62&&n<4.5*k)n++;Ls=(r+py0)/k;t=Math.max(1.5,n/k);}}
-        cols.push({X,top:U-H0,Ls,t,Lo:cy+h+1});}
-      /* a pele esticada vem de uma cópia levemente borrada na horizontal: sem isso, cada coluna esticada vira um risco */
-      let sk=null;if(d){sk=document.createElement('canvas');sk.width=pw;sk.height=ph;const sx=sk.getContext('2d'),im=sx.createImageData(pw,ph),o=im.data,R=2;
-        for(let r=0;r<ph;r++)for(let c=0;c<pw;c++){let a0=0,a1=0,a2=0,a3=0,n=0;for(let dc=-R;dc<=R;dc++){const cc=Math.max(0,Math.min(pw-1,c+dc)),q=(r*pw+cc)*4;a0+=d[q];a1+=d[q+1];a2+=d[q+2];a3+=d[q+3];n++}
-          const q=(r*pw+c)*4;o[q]=a0/n;o[q+1]=a1/n;o[q+2]=a2/n;o[q+3]=a3/n;}
-        sx.putImageData(im,0,0);}
-      cols.sk={cv:sk,x:px0,y:py0};
+          if(r<=r1){let n=0;while(r+n<=r1&&lum(r+n)<ref*.62&&n<4.5*k)n++;Ls=(r+py0)/k;t=Math.max(1.5,n/k);}
+          /* amostras do tom da pálpebra: a faixa de pele acima do olho (até 2 px antes do traço) */
+          const a1=Math.max(r0,Math.min(r,Math.round((U-1)*k)-py0)-Math.max(1,Math.round(2*k)));col=[];
+          for(let rr=r0;rr<=a1;rr++){const q=px(rr);col.push([d[q],d[q+1],d[q+2]]);}}
+        cols.push({X,Ls,t,Lo:cy+h+1.5,col});}
+      /* um tom só por olho (cel shading: a pálpebra é chapada): o tom das colunas do meio, sem as mais escuras (onde pegou
+         ponta de cílio). Coluna a coluna, com o tom variando, a pálpebra ficava listrada. */
+      const lu=v=>v[0]*.3+v[1]*.55+v[2]*.15;
+      const vals=cols.filter((q,i)=>q&&q.col&&Math.abs(i-cols.length/2)<cols.length*.35).flatMap(q=>q.col).sort((p,q)=>lu(p)-lu(q));
+      /* o meio da distribuição: nem traço/cílio (escuro) nem branco do olho ou brilho (claro) */
+      const top=vals.slice(Math.floor(vals.length*.35),Math.max(Math.floor(vals.length*.35)+1,Math.ceil(vals.length*.7)));let R=0,G=0,B=0;for(const v of top){R+=v[0];G+=v[1];B+=v[2];}const m=top.length;
+      const fill=m?`rgb(${R/m|0},${G/m|0},${B/m|0})`:skinAt(performance.now()),shade=m?`rgb(${R/m*.8|0},${G/m*.78|0},${B/m*.78|0})`:fill;
+      cols.forEach(q=>{if(q){q.fill=fill;q.shade=shade;}});
       out.push(cols);}
     return LASH[e]=out;}
   function lidPass(c,e,a){const img=imgs[e],L=lashOf(e);if(!img||!L)return;const k=img.width/900;
-    for(const cols of L)for(const q of cols){if(!q)continue;const {X,top,Ls,t,Lo}=q,Lb=Ls+t,y=Lb+a*Math.max(0,Lo-Lb),S=cols.sk;
-      if(y-Lb<.25)continue;
-      /* pele da pálpebra esticada até o novo traço, e o traço por baixo dela (colunas sobrepostas: sem frestas semitransparentes) */
-      if(S&&S.cv)c.drawImage(S.cv,X*k-S.x,top*k-S.y,k,(Ls-top)*k,X-.3,top,1.7,y-t-top+.4);else c.drawImage(img,X*k,top*k,k,(Ls-top)*k,X-.3,top,1.7,y-t-top+.4);
-      c.drawImage(img,X*k,Ls*k,k,t*k,X-.3,y-t,1.7,t);}}
+    for(const cols of L){const P=[];let fill=null,shade=null;
+      for(const q of cols){if(!q)continue;const Lb=q.Ls+q.t,y=Lb+a*Math.max(0,q.Lo-Lb);P.push([q.X+.5,q.Ls-1.6,y-q.t+.3,q]);fill=q.fill;shade=q.shade;}
+      if(P.length<2||!fill)continue;
+      /* a pálpebra é um polígono só (borda de cima = começo do traço na arte, borda de baixo = o traço já descido), com
+         uma sombra leve junto aos cílios; depois, o traço da arte por coluna na borda de baixo */
+      const poly=(f)=>{c.beginPath();c.moveTo(P[0][0]-.8,P[0][1]);for(const p of P)c.lineTo(p[0],p[1]);c.lineTo(P[P.length-1][0]+.8,P[P.length-1][1]);
+        for(let n=P.length-1;n>=0;n--)c.lineTo(P[n][0]+(n===P.length-1?.8:n===0?-.8:0),f(P[n]));c.closePath();c.fill();};
+      c.fillStyle=fill;poly(p=>Math.max(p[1],p[2]));
+      c.save();c.globalAlpha*=.55;c.fillStyle=shade;
+      c.beginPath();c.moveTo(P[0][0]-.8,Math.max(P[0][1],P[0][2]-Math.min(3,(P[0][2]-P[0][1])*.35)));
+      for(const p of P)c.lineTo(p[0],Math.max(p[1],p[2]-Math.min(3,(p[2]-p[1])*.35)));
+      for(let n=P.length-1;n>=0;n--)c.lineTo(P[n][0],Math.max(P[n][1],P[n][2]));c.closePath();c.fill();c.restore();
+      for(const [,, ,q] of P){const Lb=q.Ls+q.t,y=Lb+a*Math.max(0,q.Lo-Lb);if(y-Lb<.25)continue;c.drawImage(img,q.X*k,q.Ls*k,k,q.t*k,q.X-.3,y-q.t,1.7,q.t);}}}
   function drawLids(c,now){
     if(blinkStart<0&&now>=blinkNext)blinkStart=now;
     if(blinkStart<0)return;
