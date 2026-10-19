@@ -3211,7 +3211,10 @@ function openStreetScene(id,extra,after){
    vai para o save (press.e1) e para a primeira edição do Jornal Sereno. Atender ou não muda quanto a imprensa insiste. */
 function openPress(){
   let said=null;
-  openStreetScene('reporter',{press:'e1',onPress:id=>{said=id;}},()=>{
+  /* a entrevista sai pelo helicóptero da PM passando rente (streetDepo, heliWipe): na casa, ele continua a passagem,
+     visto de cima, no mesmo sentido */
+  const heliOut=dir=>{setTimeout(()=>{if(FLY.on)return;startFlyby();FLY.ang=dir>0?0:Math.PI;FLY.off=-.08;},60);};
+  openStreetScene('reporter',{press:'e1',onPress:id=>{said=id;},onHeliOut:heliOut},()=>{
     if(said==='ausente'||!said){S.flags.pressCalm=-1;for(const c of S.civs)if(c.press)c.wait=Math.round(c.wait*1.4);}
     else{S.flags.pressCalm=1;for(const c of S.civs)if(c.press&&c.state==='gawk')c.wait=Math.min(c.wait,160);}
   });
