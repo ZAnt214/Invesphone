@@ -88,7 +88,6 @@ function portraitSet(CH,VD,EXPRS){const k=CH.figureMask+'|'+EXPRS.join(',');let 
 export function prewarmStreetDepo(id,opts){
   const cfg=cfgOf(id,opts);if(!cfg)return;const CH=characters[cfg.personId];if(!CH)return;
   const A=ART_SRC();imgOnce(A.bg);imgOnce(A.poste);A.crowd.forEach(imgOnce);
-  if(opts&&opts.press)heliArt();
   const EXPRS=exprsOf(cfg,CH);
   portraitSet(CH,CH.visemes||null,EXPRS).then(({mask})=>{if(CH.hair&&getQuality()!=='low')prewarmHair({url:CH.hair,PW,PH,mask,exprs:EXPRS,maxTip:CH.hairMaxTip,refill:CH.hairRefill,cloth:!!CH.hairCloth})});
 }
@@ -124,12 +123,13 @@ function heliArt(){
    noturna com contorno da luz da rua, vidro da cabine, porta, farol de busca embaixo do nariz, luz anticolisão vermelha
    e o pisca branco da cauda, rastro de movimento e a tremida do vento. O canvas fica no host, por cima da cena, e some
    sozinho no fim. */
-function heliWipe(host,dir,onCover,onDone){
+function heliWipe(host,dir,onCover,onDone,sprite){
   const cv=document.createElement('canvas');cv.className='sd-heliwipe';cv.setAttribute('aria-hidden','true');
   cv.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;z-index:61;pointer-events:none';
   host.appendChild(cv);
   const W=host.clientWidth||844,H=host.clientHeight||390,r=1;   // passa rápido e borrado: resolução de 1x basta (e pesa pouco no iPhone)
   cv.width=Math.round(W*r);cv.height=Math.round(H*r);const c=cv.getContext('2d');
+  if(sprite){heliWipeTop(c,cv,W,H,r,dir,sprite,onCover,onDone);return;}
   const ART=HELI_ART.v;if(ART){heliWipeArt(c,cv,W,H,r,dir,ART,onCover,onDone);return;}
   const L=1.75*W,B=1.15*W,travel=1.25*W+L+B+.35*W,D=2300,t0=performance.now();let covered=false;
   /* posição do nariz: anda sempre, um pouco mais devagar no meio (passa por cima, pesado) */
@@ -193,6 +193,44 @@ function heliWipe(host,dir,onCover,onDone){
     c.globalCompositeOperation='source-over';
     /* as pás do rotor principal, fora do quadro em cima, cortando a luz: a tela pisca escura no ritmo delas */
     if(near>.05){const ph=(el%95)/95;if(ph<.35){const a=.16*near*Math.sin(Math.PI*ph/.35);c.setTransform(r,0,0,r,0,0);const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,`rgba(0,0,0,${a})`);g.addColorStop(1,`rgba(0,0,0,${a*.35})`);c.fillStyle=g;c.fillRect(0,0,W,H);}}
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+/* a passagem vista de cima, como a do helicóptero que cruza a casa (varredura.js, drawFlyby, com o mesmo desenho
+   noturno: opts.heliSprite): ele passa entre a câmera e o chão, bem perto dela, maior que na casa. O disco borrado do
+   rotor e as duas pás varrem a tela, o rastro de movimento vai atrás, as luzes de navegação piscam. Quando o casco passa
+   pelo meio, a sombra do rotor escurece a tela inteira por um instante (~0,1 s): é aí que a cena troca. Depois ele
+   segue por cima da casa e sai pelo outro lado. */
+function heliWipeTop(c,cv,W,H,r,dir,img,onCover,onDone){
+  const D0=Math.max(W,H),sc=D0*1.0/img.width,dur=1900,t0=performance.now(),ang=(dir>0?0:Math.PI)+(Math.random()-.5)*.35,off=(Math.random()-.5)*.12;
+  const dx=Math.cos(ang),dy=Math.sin(ang);let covered=false;
+  const bail=()=>{cv.remove();if(!covered){covered=true;onCover&&onCover();}onDone&&onDone();};
+  function frame(now){try{draw(now)}catch(e){console.error('helicóptero:',e);bail();}}
+  function draw(now){
+    const el=now-t0,t=el/dur;if(t>=1||!cv.isConnected){bail();return}
+    const along=(t-.5)*D0*2.4,cx=W/2+dx*along-dy*off*D0,cy=H/2+dy*along+dx*off*D0,near=Math.max(0,1-Math.abs(t-.5)*2.4);
+    c.setTransform(r,0,0,r,0,0);c.clearRect(0,0,W,H);c.imageSmoothingEnabled=false;
+    const sh=6*near*near;c.translate((Math.random()-.5)*sh,(Math.random()-.5)*sh);
+    c.save();c.translate(cx,cy);c.rotate(ang);
+    const iw=img.width*sc,ih=img.height*sc;
+    for(let g=3;g>=1;g--){c.globalAlpha=.1*(4-g);c.drawImage(img,-iw/2-g*D0*.035,-ih/2,iw,ih);}
+    c.globalAlpha=1;c.drawImage(img,-iw/2,-ih/2,iw,ih);
+    /* rotor: disco borrado e duas pás varrendo a tela */
+    const hx=(72-61)*sc,R=D0*.62,blade=el*.042;c.translate(hx,0);
+    c.globalAlpha=.12;c.fillStyle='#9aa6c0';c.beginPath();c.arc(0,0,R,0,7);c.fill();c.lineCap='round';
+    for(let b=0;b<2;b++)for(let j=0;j<7;j++){const a=blade+b*Math.PI/2-j*.05;c.globalAlpha=.72*(1-j/7)*(j?.55:1);c.strokeStyle='#0a0c10';c.lineWidth=D0*.034;
+      c.beginPath();c.moveTo(-Math.cos(a)*R,-Math.sin(a)*R);c.lineTo(Math.cos(a)*R,Math.sin(a)*R);c.stroke();}
+    c.globalAlpha=1;c.fillStyle='#2b2d31';c.beginPath();c.arc(0,0,D0*.022,0,7);c.fill();c.translate(-hx,0);
+    /* luzes de navegação (vermelha à esquerda, verde à direita) e o pisca branco da cauda */
+    const blink=Math.floor(el/130)%2;c.fillStyle=blink?'#ff3b30':'#5a1410';c.fillRect(-4*sc,-ih*.42,sc*3,sc*3);c.fillStyle=blink?'#5aff7a':'#14401c';c.fillRect(-4*sc,ih*.36,sc*3,sc*3);
+    if(el%430<35){c.globalCompositeOperation='lighter';const g=c.createRadialGradient(-iw*.5,0,0,-iw*.5,0,D0*.12);g.addColorStop(0,'rgba(255,255,255,.9)');g.addColorStop(1,'rgba(255,255,255,0)');c.fillStyle=g;c.fillRect(-iw*.5-D0*.12,-D0*.12,D0*.24,D0*.24);c.globalCompositeOperation='source-over';}
+    c.restore();
+    /* sombra do rotor passando por cima da câmera: escurece tudo por um instante, e a cena troca no escuro */
+    const dk=Math.abs(t-.5)<.03?1:Math.max(0,1-(Math.abs(t-.5)-.03)/.09);
+    if(dk>0){c.setTransform(r,0,0,r,0,0);c.globalAlpha=dk;c.fillStyle='#030407';c.fillRect(0,0,W,H);c.globalAlpha=1;}
+    if(!covered&&dk>=1){covered=true;onCover&&onCover();}
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
@@ -1775,10 +1813,10 @@ export function openStreetDepo(host,id,opts={}){
         root.classList.add('outro');setTimeout(close,RM?600:2300);return}
       const dir=Math.random()<.5?1:-1;
       HELI={t0:performance.now()/1000,dur:2.8,dir};if(AC&&AMBON())heliSound(dir,3.4);
-      setTimeout(()=>{if(!alive)return;heliWipe(host,dir,()=>{outroHeli=true;close()},()=>{opts.onHeliOut&&opts.onHeliOut(dir)})},650);
+      setTimeout(()=>{if(!alive)return;heliWipe(host,dir,()=>{outroHeli=true;close()},()=>{opts.onHeliOut&&opts.onHeliOut(dir)},opts.heliSprite&&opts.heliSprite())},650);
     },RM?200:700);
   }
-  if(PM){heliArt();root.classList.add('press');stage.addEventListener('click',e=>{if(e.target.closest('.pch')||!ps)return;if(typing)finishTyping();else ps.step()});
+  if(PM){if(!opts.heliSprite)heliArt();root.classList.add('press');stage.addEventListener('click',e=>{if(e.target.closest('.pch')||!ps)return;if(typing)finishTyping();else ps.step()});
     /* o helicóptero da PM passa por cima durante a entrevista: vento forte no cabelo e na roupa dela, garoa deitando, o facho */
     setTimeout(()=>{if(FXON('depo.flyby')&&!HELI&&!PASS)startHeli()},RM?0:1400);
     setTimeout(()=>sayLine(PM.q,PM.qe||'asking',()=>{pressExpr(IDLE);stage.classList.remove('listen','answering');setTimeout(pressChoices,300)}),RM?500:2500)}
