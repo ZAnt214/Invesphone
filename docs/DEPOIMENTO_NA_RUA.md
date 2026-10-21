@@ -94,6 +94,10 @@ A mesma cena serve para a entrevista do Lemos à repórter da TV Sereno, no port
   - a casa já aparece por baixo, escurecida (`opts.onReveal`: a casa volta a desenhar antes de a cena fechar);
   - depois de um instante, a foto voa girando e encolhendo para o botão da caderneta (`#b-book`), que pulsa ao receber, e a cena fecha. O que o Lemos disse vira o registro que vai ao jornal.
 
+  Protótipos de outras saídas (21/10/2026), escolhidos pela URL da casa com `?saida=grua|gota|foco`. Sem o parâmetro, fica a foto. A casa expõe `opts.casa` (`canvas`, `land(zoom, ms)`: a câmera da casa começa perto do portão e abre até o enquadramento em que estava; `gate()`) e volta a desenhar com `opts.onReveal`.
+  - `grua`: a câmera sobe. A cena (viva) tomba para trás em perspectiva e desce para fora do quadro, a chuva perto da lente passa rápido, e a casa aparece de cima, perto do portão, abrindo.
+  - `gota`: uma gota bate na lente com a casa refratada dentro (invertida, pela placa de vídeo, a partir do canvas da casa). Ela escorre, cresce até cobrir a tela e, crescendo, a imagem desvira.
+  - `foco`: a câmera tira o foco. A cena vira pontos de luz borrados, achados nas partes claras da própria imagem, mais o giroflex. Os pontos flutuam até as luzes da casa, e o foco volta no mapa.
   O som baixa no congelamento e esmaece no fim. Ajuste: Gráficos > Depoimento na rua > Foto no fim da entrevista (`depo.outro`). Desligado, ou com movimento reduzido, ficam as faixas de cinema "DE VOLTA À PERÍCIA" e o escurecer. A arte do helicóptero entregue pelo ChatGPT (`public/cenarios/rua-acacias/helicoptero/`) fica no repositório, sem uso por enquanto.
 - Na entrevista não há curiosos atrás dela (pedido de 19/10/2026): só a casa, a fita e a rua. No depoimento do Jorge eles continuam.
 - A frase vai para o save com `pressSay('e1', id)` e sai na primeira edição do Jornal Sereno. Na casa, responder acalma a imprensa; não atender a faz insistir mais.
