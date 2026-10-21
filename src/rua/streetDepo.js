@@ -94,238 +94,6 @@ export function prewarmStreetDepo(id,opts){
 
 /** Abre o depoimento na rua de `id` (um depoimento de src/interrogation/registry.ts) por cima de `host`.
     opts: {onClose(), onClue(id), sound:boolean, clock():string}. Devolve {close}. */
-/* Arte oficial do helicóptero (ChatGPT, public/cenarios/rua-acacias/helicoptero/, pedido de 19/10/2026): quatro PNGs
-   4096×2048 alinhados e o manifest com os pontos (nariz, farol, luzes, eixos) e o retângulo do casco que é todo opaco.
-   Decodificada inteira, cada camada ocuparia 32 MB; aqui cada uma é recortada no que tem desenho e guardada a 60% (o
-   corpo foi gerado a ~2000 px e ampliado, então nada se perde), e a imagem grande é largada. Até carregar, ou se faltar,
-   a transição usa a silhueta desenhada em código. */
-const HELI_ART={p:null,v:null};
-function heliArt(){
-  if(HELI_ART.p)return HELI_ART.p;const B=(import.meta.env.BASE_URL||'/')+'cenarios/rua-acacias/helicoptero/',S=.6;
-  const load=src=>new Promise(r=>{const i=new Image();i.decoding='async';i.onload=()=>{(i.decode?i.decode().catch(()=>{}):Promise.resolve()).then(()=>r(i))};i.onerror=()=>r(null);i.src=src});
-  const cut=im=>{if(!im)return null;const w=im.naturalWidth,h=im.naturalHeight,sw=256,sh=Math.round(256*h/w),t=document.createElement('canvas');t.width=sw;t.height=sh;
-    const tx=t.getContext('2d');tx.drawImage(im,0,0,sw,sh);const d=tx.getImageData(0,0,sw,sh).data;let x0=sw,y0=sh,x1=-1,y1=-1;
-    for(let y=0;y<sh;y++)for(let x=0;x<sw;x++)if(d[(y*sw+x)*4+3]>0){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}
-    if(x1<0)return null;const f=w/sw,bx=Math.max(0,Math.floor((x0-1)*f)),by=Math.max(0,Math.floor((y0-1)*f)),bw=Math.min(w,Math.ceil((x1+2)*f))-bx,bh=Math.min(h,Math.ceil((y1+2)*f))-by;
-    const c=document.createElement('canvas');c.width=Math.ceil(bw*S);c.height=Math.ceil(bh*S);c.getContext('2d').drawImage(im,bx,by,bw,bh,0,0,c.width,c.height);t.width=t.height=0;
-    return {c,x:bx,y:by,w:bw,h:bh};};
-  HELI_ART.p=fetch(B+'manifest.json').then(r=>r.ok?r.json():null).catch(()=>null).then(async M=>{
-    if(!M||!M.opaqueWipeRect)return null;const out={M};
-    for(const [k,f] of [['corpo','corpo.png'],['vidro','vidro.png'],['rot','rotor-cauda.png']]){out[k]=cut(await load(B+f));await new Promise(r=>setTimeout(r,0));}
-    if(!out.corpo)return null;HELI_ART.v=out;return out;});
-  return HELI_ART.p;
-}
-
-/* ---------- transição pelo helicóptero (fim da entrevista) ----------
-   O helicóptero da PM passa rente, por cima da câmera, de um lado ao outro. De tão perto, o casco escuro cobre a tela
-   inteira por um instante (onCover: a cena troca escondida atrás dele); depois passam o cone de cauda, a deriva e o rotor
-   de cauda, e o que aparece já é a cena seguinte. Desenhado em código (não há arte oficial de helicóptero): silhueta
-   noturna com contorno da luz da rua, vidro da cabine, porta, farol de busca embaixo do nariz, luz anticolisão vermelha
-   e o pisca branco da cauda, rastro de movimento e a tremida do vento. O canvas fica no host, por cima da cena, e some
-   sozinho no fim. */
-function heliWipe(host,dir,onCover,onDone,sprite){
-  const cv=document.createElement('canvas');cv.className='sd-heliwipe';cv.setAttribute('aria-hidden','true');
-  cv.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;z-index:61;pointer-events:none';
-  host.appendChild(cv);
-  const W=host.clientWidth||844,H=host.clientHeight||390,r=1;   // passa rápido e borrado: resolução de 1x basta (e pesa pouco no iPhone)
-  cv.width=Math.round(W*r);cv.height=Math.round(H*r);const c=cv.getContext('2d');
-  if(sprite){heliWipeTop(c,cv,W,H,r,dir,sprite,onCover,onDone);return;}
-  const ART=HELI_ART.v;if(ART){heliWipeArt(c,cv,W,H,r,dir,ART,onCover,onDone);return;}
-  const L=1.75*W,B=1.15*W,travel=1.25*W+L+B+.35*W,D=2300,t0=performance.now();let covered=false;
-  /* posição do nariz: anda sempre, um pouco mais devagar no meio (passa por cima, pesado) */
-  const noseAt=p=>-.02*W+(p+.045*Math.sin(2*Math.PI*p))*travel;
-  function hull(N){c.beginPath();
-    c.moveTo(N-L,-.32*H);c.lineTo(N-.34*W,-.32*H);
-    c.bezierCurveTo(N-.06*W,-.32*H,N+.015*W,.15*H,N,.5*H);                      // nariz, em cima
-    c.bezierCurveTo(N-.015*W,.86*H,N-.16*W,1.16*H,N-.42*W,1.22*H);             // queixo
-    c.lineTo(N-L+.06*W,1.22*H);
-    c.bezierCurveTo(N-L-.06*W,1.0*H,N-L-.1*W,.55*H,N-L-.16*W,.42*H);            // fim do casco, descendo para o cone
-    c.lineTo(N-L-B,.33*H);c.lineTo(N-L-B,.2*H);                                   // cone de cauda, afinando
-    c.lineTo(N-L-.16*W,.1*H);
-    c.bezierCurveTo(N-L-.08*W,.02*H,N-L-.02*W,-.2*H,N-L,-.32*H);c.closePath();}
-  function fin(N){const x=N-L-B;c.beginPath();c.moveTo(x+.02*W,.22*H);c.lineTo(x-.05*W,-.12*H);c.lineTo(x+.06*W,-.12*H);c.lineTo(x+.16*W,.2*H);c.closePath();}
-  const glow=(x,y,R,rgb,a)=>{const g=c.createRadialGradient(x,y,0,x,y,R);g.addColorStop(0,`rgba(${rgb},${a})`);g.addColorStop(.25,`rgba(${rgb},${a*.45})`);g.addColorStop(1,`rgba(${rgb},0)`);c.fillStyle=g;c.fillRect(x-R,y-R,R*2,R*2);};
-  function frame(now){
-    const el=now-t0,p=el/D;
-    if(p>=1||!cv.isConnected){cv.remove();if(!covered){covered=true;onCover&&onCover();}onDone&&onDone();return}
-    const N=noseAt(p),near=Math.max(0,1-Math.abs(N-.6*L)/(1.3*W));
-    if(!covered&&N>=1.5*W){covered=true;onCover&&onCover();}
-    c.setTransform(r,0,0,r,0,0);c.clearRect(0,0,W,H);
-    /* tremida do vento e do rotor */
-    const sh=5*near*near;c.translate((Math.random()-.5)*sh,(Math.random()-.5)*sh);
-    if(dir<0){c.translate(W,0);c.scale(-1,1);}
-    /* borrão de movimento: cópias da silhueta para trás e um pouco para a frente (a borda que chega também borra) */
-    const bl=.035*W*(.5+near);
-    for(const g of [-4,-3,-2,-1,1,2]){c.save();c.translate(g*bl*.5,0);c.globalAlpha=g<0?.13+.03*(4+g):.1;c.fillStyle='#06080d';hull(N);c.fill();fin(N);c.fill();c.restore();}
-    c.globalAlpha=1;
-    /* casco */
-    const gr=c.createLinearGradient(0,-.3*H,0,1.2*H);gr.addColorStop(0,'#1a2233');gr.addColorStop(.45,'#0d121c');gr.addColorStop(1,'#04060a');
-    c.fillStyle=gr;hull(N);c.fill();fin(N);c.fill();
-    c.save();hull(N);c.clip();
-    /* emendas, porta e degrau */
-    c.strokeStyle='rgba(150,170,205,.07)';c.lineWidth=2;
-    for(const k of [.62,1.05,1.48]){c.beginPath();c.moveTo(N-k*W,-.3*H);c.lineTo(N-k*W-.02*W,1.2*H);c.stroke();}
-    c.strokeStyle='rgba(150,170,205,.1)';c.beginPath();c.roundRect?c.roundRect(N-1.0*W,.12*H,.36*W,.8*H,14):c.rect(N-1.0*W,.12*H,.36*W,.8*H);c.stroke();
-    c.fillStyle='rgba(160,180,215,.12)';c.fillRect(N-.7*W,.5*H,.03*W,.02*H);
-    /* para-brisa da cabine (vidro escuro, com a coluna no meio e o reflexo da rua escorrendo) */
-    c.save();c.beginPath();c.moveTo(N-.36*W,-.32*H);c.lineTo(N-.07*W,-.32*H);c.bezierCurveTo(N-.01*W,-.1*H,N-.01*W,.12*H,N-.04*W,.3*H);c.lineTo(N-.3*W,.24*H);c.closePath();
-    c.fillStyle='rgba(16,24,38,.96)';c.fill();c.clip();
-    const rf=c.createLinearGradient(N-.36*W,-.3*H,N-.02*W,.3*H);rf.addColorStop(0,'rgba(255,255,255,0)');rf.addColorStop(.48,'rgba(190,210,245,.10)');rf.addColorStop(.55,'rgba(255,190,120,.08)');rf.addColorStop(1,'rgba(255,255,255,0)');
-    c.fillStyle=rf;c.fillRect(N-.4*W,-.35*H,.42*W,.7*H);
-    c.strokeStyle='rgba(4,6,10,.9)';c.lineWidth=.012*W;c.beginPath();c.moveTo(N-.2*W,-.32*H);c.lineTo(N-.17*W,.27*H);c.stroke();
-    /* água escorrendo no vidro, puxada pelo vento */
-    c.strokeStyle='rgba(200,215,240,.12)';c.lineWidth=1.5;for(let i=0;i<9;i++){const y=-.2*H+((i*53+el*.35)%(.48*H)),x=N-.33*W+i*.03*W;c.beginPath();c.moveTo(x,y);c.lineTo(x-.05*W,y+.012*H);c.stroke();}
-    c.restore();
-    /* barriga acesa de leve pelo próprio farol */
-    const bg=c.createLinearGradient(0,.75*H,0,1.22*H);bg.addColorStop(0,"rgba(200,215,240,0)");bg.addColorStop(1,"rgba(200,215,240,.07)");c.fillStyle=bg;c.fillRect(N-L,.7*H,L,.6*H);
-    c.restore();
-    /* contorno da luz da rua (âmbar por baixo) e do céu (azulado por cima) no nariz */
-    c.lineWidth=3;c.strokeStyle='rgba(255,172,96,.5)';c.beginPath();c.moveTo(N,.5*H);c.bezierCurveTo(N-.015*W,.86*H,N-.16*W,1.16*H,N-.42*W,1.22*H);c.stroke();
-    c.lineWidth=2;c.strokeStyle='rgba(150,180,235,.35)';c.beginPath();c.moveTo(N-.34*W,-.32*H);c.bezierCurveTo(N-.06*W,-.32*H,N+.015*W,.15*H,N,.5*H);c.stroke();
-    /* rotor de cauda: disco borrado */
-    const tx=N-L-B+.07*W,ty=.04*H;c.save();c.translate(tx,ty);c.scale(1,1);c.fillStyle='rgba(120,135,160,.10)';c.beginPath();c.arc(0,0,.24*H,0,7);c.fill();
-    c.rotate(el*.09);c.strokeStyle='rgba(140,155,180,.28)';c.lineWidth=5;c.beginPath();c.moveTo(-.23*H,0);c.lineTo(.23*H,0);c.stroke();c.restore();
-    /* luzes: farol de busca embaixo do nariz, anticolisão vermelha na barriga, pisca branco na deriva */
-    c.globalCompositeOperation='lighter';
-    glow(N-.36*W,1.04*H,.55*H,'235,242,255',.55);glow(N-.36*W,1.04*H,.08*H,'255,255,255',.9);
-    if((el%900)<120)glow(N-.95*W,1.06*H,.42*H,'255,40,30',.75);
-    if((el%1300)<60||((el+130)%1300)<60)glow(N-L-B,-.1*H,.35*H,'255,255,255',.85);
-    c.globalCompositeOperation='source-over';
-    /* as pás do rotor principal, fora do quadro em cima, cortando a luz: a tela pisca escura no ritmo delas */
-    if(near>.05){const ph=(el%95)/95;if(ph<.35){const a=.16*near*Math.sin(Math.PI*ph/.35);c.setTransform(r,0,0,r,0,0);const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,`rgba(0,0,0,${a})`);g.addColorStop(1,`rgba(0,0,0,${a*.35})`);c.fillStyle=g;c.fillRect(0,0,W,H);}}
-    requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-}
-
-/* a passagem vista de cima, como a do helicóptero que cruza a casa (varredura.js, drawFlyby, com o mesmo desenho
-   noturno: opts.heliSprite): ele passa entre a câmera e o chão, rápido e bem perto dela, maior que na casa.
-   - O disco borrado do rotor e as duas pás varrem a tela, com rastro de movimento e as luzes de navegação.
-   - Vento do rotor: a garoa vira riscos empurrados para fora do eixo e no sentido do voo, uma névoa de água rodando
-     em volta, folhas e papéis arrancados e jogados para fora, e a câmera chacoalha com a rajada.
-   - Quando o casco passa pelo meio, a sombra do rotor escurece a tela inteira por um instante (~80 ms): a cena troca
-     nesse escuro. Depois ele segue por cima da casa e sai pelo outro lado, com o vento ainda passando. */
-function heliWipeTop(c,cv,W,H,r,dir,img,onCover,onDone){
-  const D0=Math.max(W,H),sc=D0*1.05/img.width,dur=1150,t0=performance.now(),ang=(dir>0?0:Math.PI)+(Math.random()-.5)*.3,off=(Math.random()-.5)*.1;
-  const dx=Math.cos(ang),dy=Math.sin(ang);let covered=false,last=t0;
-  const RAIN=Array.from({length:150},()=>({x:Math.random()*W,y:Math.random()*H,l:.4+Math.random()*.8,a:.2+Math.random()*.5}));
-  const MIST=Array.from({length:9},(_,i)=>({a:i/9*Math.PI*2,r:.15+Math.random()*.3,s:.6+Math.random()*.8,z:.7+Math.random()*.6}));
-  const DEB=Array.from({length:26},(_,i)=>({live:false,x:0,y:0,vx:0,vy:0,rot:Math.random()*7,vr:0,s:5+Math.random()*7,c:['#2f3a22','#4a5a2c','#6b5a2e','#c9c2b0','#3b3020'][i%5]}));
-  const bail=()=>{cv.remove();if(!covered){covered=true;onCover&&onCover();}onDone&&onDone();};
-  function frame(now){try{draw(now)}catch(e){console.error('helicóptero:',e);bail();}}
-  function draw(now){
-    const el=now-t0,t=el/dur,dt=Math.min(.05,(now-last)/1000);last=now;if(t>=1.18||!cv.isConnected){bail();return}
-    /* anda rápido; um pouco menos no meio (o peso dele em cima da câmera) */
-    const u=t+.05*Math.sin(2*Math.PI*Math.min(1,t)),along=(u-.5)*D0*2.5,cx=W/2+dx*along-dy*off*D0,cy=H/2+dy*along+dx*off*D0;
-    const near=Math.max(0,1-Math.abs(t-.5)*2.1),gust=Math.max(0,1-Math.abs(t-.5)*1.5);   // o vento chega antes e vai depois
-    const hx=(72-61)*sc,hubX=cx+dx*hx,hubY=cy+dy*hx;
-    c.setTransform(r,0,0,r,0,0);c.clearRect(0,0,W,H);c.imageSmoothingEnabled=false;
-    /* a rajada chacoalha a câmera (mais forte com ele em cima) */
-    const sh=11*near*near+2*gust;c.translate((Math.random()-.5)*sh,(Math.random()-.5)*sh);
-    /* névoa de água levantada, rodando para fora do eixo */
-    if(gust>.02){c.globalCompositeOperation='lighter';for(const m of MIST){const a=m.a+el*.0035*m.s,rr=(m.r+((el*.0006*m.s)%1)*.5)*D0,x=hubX+Math.cos(a)*rr,y=hubY+Math.sin(a)*rr*.75,R0=D0*.22*m.z;
-      const g=c.createRadialGradient(x,y,0,x,y,R0);g.addColorStop(0,`rgba(185,200,225,${.09*gust})`);g.addColorStop(1,'rgba(185,200,225,0)');c.fillStyle=g;c.fillRect(x-R0,y-R0,R0*2,R0*2);}
-      c.globalCompositeOperation='source-over';}
-    /* garoa empurrada: cada risco vai para fora do eixo do rotor e no sentido do voo, mais comprido perto dele */
-    if(gust>.02){c.lineCap='round';c.lineWidth=1.3;
-      for(const d of RAIN){let vx=d.x-hubX,vy=d.y-hubY;const dist=Math.hypot(vx,vy)||1;vx/=dist;vy/=dist;const f=Math.max(.15,1-dist/(D0*1.1))*gust;
-        const wx=(vx*1.1+dx*.9)*f,wy=(vy*1.1+dy*.9+.35)*f,sp=1500*dt;d.x+=wx*sp;d.y+=wy*sp;
-        if(d.x<-30||d.x>W+30||d.y<-30||d.y>H+30){d.x=Math.random()*W;d.y=Math.random()*H;}
-        const L=(14+60*f)*d.l;c.strokeStyle=`rgba(205,218,240,${d.a*f*.8})`;c.beginPath();c.moveTo(d.x,d.y);c.lineTo(d.x-wx*L,d.y-wy*L);c.stroke();}}
-    /* folhas e papéis arrancados do chão e jogados para fora */
-    for(const d of DEB){
-      if(!d.live){if(gust>.3&&Math.random()<dt*20){d.live=true;const a=Math.random()*7,rr=D0*(.15+Math.random()*.35);d.x=hubX+Math.cos(a)*rr;d.y=hubY+Math.sin(a)*rr;
-        d.vx=Math.cos(a)*(500+Math.random()*700)+dx*500;d.vy=Math.sin(a)*(400+Math.random()*500)+dy*500;d.vr=(Math.random()-.5)*30;}continue}
-      d.x+=d.vx*dt;d.y+=d.vy*dt;d.vy+=200*dt;d.rot+=d.vr*dt;if(d.x<-60||d.x>W+60||d.y<-60||d.y>H+60){d.live=false;continue}
-      for(let k=2;k>=0;k--){c.save();c.translate(d.x-d.vx*k*.012,d.y-d.vy*k*.012);c.rotate(d.rot-k*.2);c.scale(1,Math.abs(Math.cos(d.rot*1.7))+.2);
-        c.globalAlpha=k?.25:.9;c.fillStyle=d.c;c.fillRect(-d.s,-d.s*.5,d.s*2,d.s);c.restore();}}
-    c.globalAlpha=1;
-    /* o helicóptero */
-    c.save();c.translate(cx,cy);c.rotate(ang+Math.sin(el*.004)*.03);
-    const iw=img.width*sc,ih=img.height*sc;
-    for(let g=4;g>=1;g--){c.globalAlpha=.09*(5-g);c.drawImage(img,-iw/2-g*D0*.05,-ih/2,iw,ih);}
-    c.globalAlpha=1;c.drawImage(img,-iw/2,-ih/2,iw,ih);
-    /* rotor: disco borrado e duas pás varrendo a tela */
-    const R=D0*.64,blade=el*.05;c.translate(hx,0);
-    c.globalAlpha=.13;c.fillStyle='#9aa6c0';c.beginPath();c.arc(0,0,R,0,7);c.fill();c.lineCap='round';
-    for(let b=0;b<2;b++)for(let j=0;j<8;j++){const a=blade+b*Math.PI/2-j*.06;c.globalAlpha=.75*(1-j/8)*(j?.5:1);c.strokeStyle='#0a0c10';c.lineWidth=D0*.036;
-      c.beginPath();c.moveTo(-Math.cos(a)*R,-Math.sin(a)*R);c.lineTo(Math.cos(a)*R,Math.sin(a)*R);c.stroke();}
-    c.globalAlpha=1;c.fillStyle='#2b2d31';c.beginPath();c.arc(0,0,D0*.022,0,7);c.fill();c.translate(-hx,0);
-    /* luzes de navegação (vermelha à esquerda, verde à direita) e o pisca branco da cauda */
-    const blink=Math.floor(el/110)%2;c.fillStyle=blink?'#ff3b30':'#5a1410';c.fillRect(-4*sc,-ih*.42,sc*3,sc*3);c.fillStyle=blink?'#5aff7a':'#14401c';c.fillRect(-4*sc,ih*.36,sc*3,sc*3);
-    if(el%380<35){c.globalCompositeOperation='lighter';const g=c.createRadialGradient(-iw*.5,0,0,-iw*.5,0,D0*.13);g.addColorStop(0,'rgba(255,255,255,.9)');g.addColorStop(1,'rgba(255,255,255,0)');c.fillStyle=g;c.fillRect(-iw*.5-D0*.13,-D0*.13,D0*.26,D0*.26);c.globalCompositeOperation='source-over';}
-    c.restore();
-    /* sombra das pás passando pela câmera (escurece em pulsos) e a sombra do casco por cima: escuro total por um instante */
-    c.setTransform(r,0,0,r,0,0);
-    if(near>.05){const ph=(el%70)/70;if(ph<.4){c.globalAlpha=.22*near*Math.sin(Math.PI*ph/.4);c.fillStyle='#000';c.fillRect(0,0,W,H);c.globalAlpha=1;}}
-    const dk=Math.abs(t-.5)<.035?1:Math.max(0,1-(Math.abs(t-.5)-.035)/.07);
-    if(dk>0){c.globalAlpha=dk;c.fillStyle='#030407';c.fillRect(0,0,W,H);c.globalAlpha=1;}
-    if(!covered&&dk>=1){covered=true;onCover&&onCover();}
-    /* bordas escurecidas pela rajada (a câmera "fecha" com o vento) */
-    if(gust>.05){const g=c.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,D0*.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,0,0,${.45*gust})`);c.fillStyle=g;c.fillRect(0,0,W,H);}
-    requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-}
-
-/* a passagem com a arte oficial: o retângulo opaco do casco (opaqueWipeRect) é ampliado até sobrar ~20% além da tela e
-   passa pelo meio dela devagar (curvas de Hermite: entra rápido, quase para em cima da câmera, sai rápido). Enquanto ele
-   cobre a tela inteira, a cena troca. Leve nariz para baixo (voo para a frente), borrão de movimento com cópias do casco,
-   o vidro com o reflexo da rua e água escorrendo (o vidro.png é a máscara), o rotor de cauda girando no eixo do manifest,
-   o farol de busca, a anticolisão vermelha e o pisca branco acesos em código, e as pás (fora do quadro, em cima) piscando a
-   luz. O rotor principal fica acima da tela nesse enquadramento, então pas.png não aparece. */
-function heliWipeArt(c,cv,W,H,r,dir,A,onCover,onDone){
-  const M=A.M,R0=M.opaqueWipeRect,R={x:R0.x,y:R0.y,w:R0.w??R0.width,h:R0.h??R0.height},k=Math.max(W/R.w,H/R.h)*1.2,rcx=R.x+R.w/2,rcy=R.y+R.h/2;
-  const right=A.corpo.x+A.corpo.w,left=Math.min(A.corpo.x,A.rot?A.rot.x:A.corpo.x);
-  const X0=-10-right*k,Xc=W/2-rcx*k,X1=W+10-left*k,d1=Xc-X0,d2=X1-Xc,D=2000,T1=D*d1/(d1+d2),T2=D-T1,va=(d1+d2)/D,a0=1.2*va,vc=.55*va;
-  const herm=(s,d,a,b,T)=>(s*s*s-2*s*s+s)*a*T+(-2*s*s*s+3*s*s)*d+(s*s*s-s*s)*b*T;
-  const Xat=el=>el<T1?X0+herm(el/T1,d1,a0,vc,T1):Xc+herm(Math.min(1,(el-T1)/T2),d2,vc,a0,T2);
-  const t0=performance.now();let covered=false;
-  const G=document.createElement('canvas');const gx=G.getContext('2d');if(A.vidro){G.width=A.vidro.c.width;G.height=A.vidro.c.height;}
-  const glow=(x,y,R0,rgb,a)=>{const g=c.createRadialGradient(x,y,0,x,y,R0);g.addColorStop(0,`rgba(${rgb},${a})`);g.addColorStop(.25,`rgba(${rgb},${a*.45})`);g.addColorStop(1,`rgba(${rgb},0)`);c.fillStyle=g;c.fillRect(x-R0,y-R0,R0*2,R0*2);};
-  const put=(L,X,Y)=>c.drawImage(L.c,X+L.x*k,Y+(L.y-rcy)*k,L.w*k,L.h*k);
-  /* qualquer erro no desenho não pode deixar a entrevista presa atrás do canvas: fecha a cena e some */
-  const bail=()=>{cv.remove();if(!covered){covered=true;onCover&&onCover();}onDone&&onDone();};
-  function frame(now){try{draw(now)}catch(e){console.error('helicóptero:',e);bail();}}
-  function draw(now){
-    const el=now-t0;
-    if(el>=D||!cv.isConnected){bail();return}
-    const X=Xat(el),sx=X+rcx*k,near=Math.max(0,1-Math.abs(sx-W/2)/(W*2.2));
-    if(!covered&&X+R.x*k<=-8&&X+(R.x+R.w)*k>=W+8){covered=true;onCover&&onCover();}
-    c.setTransform(r,0,0,r,0,0);c.clearRect(0,0,W,H);
-    const sh=5*near*near;c.translate((Math.random()-.5)*sh,(Math.random()-.5)*sh);
-    if(dir<0){c.translate(W,0);c.scale(-1,1);}
-    c.translate(sx,H/2);c.rotate(.04);c.translate(-sx,0);   // nariz um pouco para baixo; Y=0 é o centro do retângulo opaco
-    const P=(ax,ay)=>[X+ax*k,(ay-rcy)*k];
-    /* borrão de movimento: cópias do casco para trás (e uma para a frente) */
-    const bl=.03*W*(.4+near);
-    for(const g of [-3,-2,-1,1]){c.globalAlpha=g<0?.1+.03*(3+g):.08;put(A.corpo,X+g*bl,0);}
-    c.globalAlpha=1;put(A.corpo,X,0);
-    /* vidro: reflexo da rua correndo e água escorrendo, só dentro das janelas */
-    if(A.vidro){const V=A.vidro,w=G.width,h=G.height;gx.globalCompositeOperation='source-over';gx.clearRect(0,0,w,h);gx.drawImage(V.c,0,0);gx.globalCompositeOperation='source-atop';
-      const o=((el*.0007)%1)*w*2-w*.5,g=gx.createLinearGradient(o,0,o+w*.5,h);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.45,'rgba(205,220,250,.20)');g.addColorStop(.55,'rgba(255,186,118,.12)');g.addColorStop(1,'rgba(255,255,255,0)');
-      gx.fillStyle=g;gx.fillRect(0,0,w,h);gx.strokeStyle='rgba(215,228,250,.22)';gx.lineWidth=1.2;
-      for(let i=0;i<14;i++){const y=((i*37+el*.12)%(h+20))-10,x=(i*61)%w;gx.beginPath();gx.moveTo(x,y);gx.lineTo(x-w*.06,y+h*.04);gx.stroke();}
-      put({c:G,x:V.x,y:V.y,w:V.w,h:V.h},X,0);}
-    /* rotor de cauda girando no eixo (cópias para o borrão) */
-    if(A.rot&&M.tailRotorCenter){const [tx,ty]=P(M.tailRotorCenter[0],M.tailRotorCenter[1]),Rt=A.rot;
-      /* girando rápido, as pás viram um disco borrado: seis cópias espalhadas em meia volta, fracas */
-      c.save();c.translate(tx,ty);for(let b=0;b<6;b++){c.save();c.rotate(el*.013+b*Math.PI/6);c.globalAlpha=.16;
-        c.drawImage(Rt.c,(Rt.x-M.tailRotorCenter[0])*k,(Rt.y-M.tailRotorCenter[1])*k,Rt.w*k,Rt.h*k);c.restore();}
-      c.globalAlpha=.08;c.fillStyle='#8a97b0';c.beginPath();c.arc(0,0,Math.max(Rt.w,Rt.h)*k*.42,0,7);c.fill();c.restore();c.globalAlpha=1;}
-    /* luzes */
-    c.globalCompositeOperation='lighter';
-    if(M.searchlight){const [x,y]=P(...M.searchlight);glow(x,y,.6*H,'235,242,255',.55);glow(x,y,.07*H,'255,255,255',.95);}
-    if(M.antiCollisionLight&&(el%900)<120){const [x,y]=P(...M.antiCollisionLight);glow(x,y,.45*H,'255,40,30',.8);}
-    if(M.whiteStrobe&&((el%1300)<60||((el+130)%1300)<60)){const [x,y]=P(...M.whiteStrobe);glow(x,y,.4*H,'255,255,255',.9);}
-    c.globalCompositeOperation='source-over';
-    /* as pás do rotor principal, fora do quadro em cima, cortando a luz no ritmo delas */
-    if(near>.05){const ph=(el%95)/95;if(ph<.35){const a=.16*near*Math.sin(Math.PI*ph/.35);c.setTransform(r,0,0,r,0,0);const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,`rgba(0,0,0,${a})`);g.addColorStop(1,`rgba(0,0,0,${a*.35})`);c.fillStyle=g;c.fillRect(0,0,W,H);}}
-    requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-}
-
 export function openStreetDepo(host,id,opts={}){
   const PM=opts.press?PRESS[opts.press]:null;
   const cfg=cfgOf(id,opts);if(!cfg)return null;
@@ -1675,7 +1443,7 @@ export function openStreetDepo(host,id,opts={}){
     if(avg>1/40){DEG++;root.classList.add('nofilm');size()}}
   const filmSync=()=>root.classList.toggle('nofilm',!FXON('depo.film')||DEG>0);filmSync();
   function frame(now){
-    if(!alive)return;
+    if(!alive||FROZEN)return;   // congelada no flash: a última imagem fica parada (é a foto)
     const dt=Math.min(.05,(now-last)/1000);last=now;RDT=dt;const t=now/1000;
     PS=FXON('depo.flyby')?passState(t):null;HS=FXON('depo.flyby')?heliState(t):null;
     stage.classList.toggle('passing',!busy&&!!(PS&&PASS&&(performance.now()/1000-PASS.t0)/PASS.dur<.82));
@@ -1831,24 +1599,42 @@ export function openStreetDepo(host,id,opts={}){
       if(o.say)setTimeout(()=>lemosLine(o.say,()=>{sub.innerHTML='';setTimeout(react,180)}),200);else setTimeout(react,150);
     });
   }
-  /* encerramento: ela fica um instante com a última expressão, o Lemos vira para a casa (a câmera vai saindo dela) e o
-     helicóptero da PM passa rente, por cima da câmera, cobrindo a tela inteira: é a transição. Com a tela coberta pelo
-     casco, a cena fecha; quando a cauda sai, já é a casa vista de cima, e o mesmo helicóptero segue a passagem por
-     cima dela (opts.onHeliOut, no fim da transição, para nunca aparecerem dois ao mesmo tempo). Vento, garoa e holofote da cena sobem junto; ela aperta os olhos com o rotor.
-     Sem o efeito (Ajustes) ou com movimento reduzido: as faixas de cinema e o escurecer de antes. Tocar não pula. */
-  let outroHeli=false;
+  /* encerramento: o cinegrafista da TV Sereno dispara o flash. A cena congela no clarão e vira a fotografia da matéria
+     (moldura de papel, legenda à mão com o lugar e a hora, cor de foto impressa), que se solta da tela e voa para a
+     caderneta do Lemos (o botão #b-book da casa), girando e encolhendo como um papel jogado; a caderneta pulsa ao
+     receber, e embaixo já é a casa. O que ele disse vira o registro que vai ao jornal. Sem o efeito (Ajustes) ou com
+     movimento reduzido: as faixas de cinema e o escurecer de antes. Tocar não pula. */
+  let outroPhoto=false,FROZEN=false;
+  /* posição de um elemento dentro do host em px do host (vale também com o jogo girado no celular em pé) */
+  function offsetIn(el){let x=0,y=0,e=el;while(e&&e!==host){x+=e.offsetLeft;y+=e.offsetTop;e=e.offsetParent;}return e===host?{x,y,w:el.offsetWidth,h:el.offsetHeight}:null;}
+  function pressPhoto(){
+    const HW=host.clientWidth||W,HH=host.clientHeight||H;
+    const fl=document.createElement('div');fl.className='sd-flash';root.appendChild(fl);SFX.shutter(0);
+    setTimeout(()=>{if(!alive)return;
+      FROZEN=true;if(AC&&MASTER){try{MASTER.gain.setTargetAtTime(.25,AC.currentTime,.12)}catch(_){}}
+      const cap=document.createElement('div');cap.className='sd-cap';cap.textContent=`TV Sereno · Rua das Acácias${opts.clock?' · '+opts.clock():''}`;root.appendChild(cap);
+      const dim=document.createElement('div');dim.className='sd-dim';host.insertBefore(dim,root);
+      opts.onReveal&&opts.onReveal();host.classList.remove('sd-under');root.classList.add('photo');
+      root.style.transform='scale(.6) rotate(-2.5deg)';
+      setTimeout(()=>{if(!alive)return;
+        const tg=host.querySelector('#b-book'),T=tg&&tg.offsetParent?offsetIn(tg):null;
+        const tx=T?T.x+T.w/2-HW/2:HW*.1,ty=T?T.y+T.h/2-HH/2:HH*1.1,sc=T?Math.max(.035,T.w*1.4/HW):.45;
+        root.classList.add('fly');root.style.transform=`translate(${tx}px,${ty}px) scale(${sc}) rotate(${T?14:20}deg)`;dim.classList.add('off');
+        setTimeout(()=>{dim.remove();if(tg&&tg.animate)try{tg.animate([{transform:'scale(1)'},{transform:'scale(1.3)'},{transform:'scale(1)'}],{duration:420,easing:'ease-out'})}catch(_){}
+          outroPhoto=true;close();},640);
+      },1050);
+    },80);
+  }
   function pressOutro(){
     stage.classList.remove('listen','answering');
-    const wipe=!RM&&FXON('depo.heliwipe');
-    setTimeout(()=>{if(!hsq)setExpr(wantE==='annoyed'?'annoyed':IDLE);camMode('away');sub.innerHTML='';
-      if(!wipe){const bars=$('.bars');if(bars){bars.innerHTML=`<p>DE VOLTA À PERÍCIA<span>Rua das Acácias${opts.clock?' · '+esc(opts.clock()):''}</span></p>`;bars.classList.add('on')}
+    const photo=!RM&&FXON('depo.outro');
+    setTimeout(()=>{if(!hsq)setExpr(wantE==='annoyed'?'annoyed':IDLE);sub.innerHTML='';
+      if(!photo){camMode('away');const bars=$('.bars');if(bars){bars.innerHTML=`<p>DE VOLTA À PERÍCIA<span>Rua das Acácias${opts.clock?' · '+esc(opts.clock()):''}</span></p>`;bars.classList.add('on')}
         root.classList.add('outro');setTimeout(close,RM?600:2300);return}
-      const dir=Math.random()<.5?1:-1;
-      HELI={t0:performance.now()/1000,dur:2.1,dir};if(AC&&AMBON())heliSound(dir,2.5);
-      setTimeout(()=>{if(!alive)return;heliWipe(host,dir,()=>{outroHeli=true;close()},()=>{opts.onHeliOut&&opts.onHeliOut(dir)},opts.heliSprite&&opts.heliSprite())},560);
+      root.classList.add('pre-photo');setTimeout(()=>{if(alive)pressPhoto()},650);
     },RM?200:700);
   }
-  if(PM){if(!opts.heliSprite)heliArt();root.classList.add('press');stage.addEventListener('click',e=>{if(e.target.closest('.pch')||!ps)return;if(typing)finishTyping();else ps.step()});
+  if(PM){root.classList.add('press');stage.addEventListener('click',e=>{if(e.target.closest('.pch')||!ps)return;if(typing)finishTyping();else ps.step()});
     /* o helicóptero da PM passa por cima durante a entrevista: vento forte no cabelo e na roupa dela, garoa deitando, o facho */
     setTimeout(()=>{if(FXON('depo.flyby')&&!HELI&&!PASS)startHeli()},RM?0:1400);
     setTimeout(()=>sayLine(PM.q,PM.qe||'asking',()=>{pressExpr(IDLE);stage.classList.remove('listen','answering');setTimeout(pressChoices,300)}),RM?500:2500)}
@@ -1862,11 +1648,11 @@ export function openStreetDepo(host,id,opts={}){
     try{ro.disconnect()}catch(_){}
     if(typeof offFx==='function')offFx();
     if(HAIR)HAIR.destroy();if(TG)TG.destroy();
-    /* saindo pelo helicóptero, o som dele não corta no meio da passagem: esmaece e só então fecha */
-    if(outroHeli&&AC&&MASTER){const a=AC;try{MASTER.gain.setTargetAtTime(0,a.currentTime+.5,.35)}catch(_){}setTimeout(()=>{try{a.close()}catch(_){}},2200)}
+    /* saindo pela foto, o som esmaece em vez de cortar */
+    if(outroPhoto&&AC&&MASTER){const a=AC;try{MASTER.gain.setTargetAtTime(0,a.currentTime,.25)}catch(_){}setTimeout(()=>{try{a.close()}catch(_){}},1200)}
     else try{if(AC)AC.close()}catch(_){}
-    /* pelo helicóptero, a troca acontece com a tela coberta pelo casco: sai na hora, sem esmaecer por baixo da cauda */
-    if(outroHeli)root.remove();else{root.classList.add('out');window.setTimeout(()=>root.remove(),350);}
+    /* pela foto, ela já saiu de cena voando para a caderneta: some na hora */
+    if(outroPhoto)root.remove();else{root.classList.add('out');window.setTimeout(()=>root.remove(),350);}
     opts.onClose&&opts.onClose();
   }
   size();renderPad();

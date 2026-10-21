@@ -3105,7 +3105,7 @@ CLOC.imprensa=()=>[6,6];
 let last=performance.now(),acc=0;
 function loop(now){
   // com o depoimento na rua aberto por cima, a casa não desenha (as telas dela ficam mínimas para sobrar memória no iPhone)
-  if(streetDepo){last=now;requestAnimationFrame(loop);return;}
+  if(streetDepo&&!streetReveal){last=now;requestAnimationFrame(loop);return;}   // com a cena da rua aberta a casa não desenha (até ela começar a sair revelando a casa)
   const dt=Math.min(0.1,(now-last)/1000);last=now;updFly(dt);
   if(!paused){acc+=dt*20*speed;let n=0;while(acc>=1&&n<100){stepWorld();acc-=1;n++;}if(n>=100)acc=0;}
   updWeather();updParticles();{const dt=paused?0:speed;updCars(dt);updLife(dt);}
@@ -3166,7 +3166,7 @@ addEventListener('resize',()=>applyLayout(false));
 newGame();
 /* ---------- HUD do Lemos na casa (docs/HUD_LEMOS.md): retrato, faixas de cinema, caderneta e pistas no save do caso ---------- */
 let CASE=readCase();
-let streetDepo=null;
+let streetDepo=null,streetReveal=false;
 const casePhoto=id=>id==='livia'?'/characters/livia/expressions/neutral.jpg':`/characters/${id}/portrait.jpg`;
 // o achado da perícia entra no save do caso na hora: a base já o tem quando Lemos voltar
 function caseClue(id){if(!CLUE_LIST.some(c=>c.id===id))return;CASE=writeCase(g=>g.clues.includes(id)?g:{...g,clues:[...g.clues,id]});if(HUD){HUD.setCount(CASE.clues.length,true);HUD.refresh();}}
@@ -3201,9 +3201,10 @@ function openWitness(){const b=$('#t-depo');if(b)b.classList.remove('new');openS
 function openStreetScene(id,extra,after){
   if(streetDepo)return;
   const wasPaused=paused,sp=speed,snd=SND.on;setSpeed(0);if(snd)SND.set(false);streetDepo={pending:true};cv.width=cv.height=1;lc.width=lc.height=1;
-  const back=()=>{resize();if(snd)SND.set(true);if(!wasPaused)setSpeed(sp);};
-  import('../rua/streetDepo').then(m=>{streetDepo=m.openStreetDepo(appEl,id,{...extra,sound:snd,clock:()=>clockStr(),
-    onClose:()=>{streetDepo=null;back();CASE=readCase();HUD.setCount(CASE.clues.length,false);HUD.refresh();syncWitness();if(after)after();}});
+  let backed=false;const back=()=>{if(backed)return;backed=true;resize();if(snd)SND.set(true);if(!wasPaused)setSpeed(sp);};
+  /* onReveal: a cena vai sair revelando a casa por baixo (a foto do fim da entrevista): a casa volta a desenhar antes */
+  import('../rua/streetDepo').then(m=>{streetDepo=m.openStreetDepo(appEl,id,{...extra,sound:snd,clock:()=>clockStr(),onReveal:()=>{back();streetReveal=true;},
+    onClose:()=>{streetDepo=null;streetReveal=false;back();CASE=readCase();HUD.setCount(CASE.clues.length,false);HUD.refresh();syncWitness();if(after)after();}});
     if(!streetDepo)back();
   }).catch(e=>{console.error('cena da rua:',e);streetDepo=null;back();});
 }
@@ -3211,10 +3212,7 @@ function openStreetScene(id,extra,after){
    vai para o save (press.e1) e para a primeira edição do Jornal Sereno. Atender ou não muda quanto a imprensa insiste. */
 function openPress(){
   let said=null;
-  /* a entrevista sai pelo helicóptero passando rente à câmera, visto de cima, com o mesmo desenho noturno do que cruza a
-     casa (streetDepo, heliWipeTop): ele cobre a tela, a cena troca e ele segue por cima da casa até sair */
-  const pressHeli=()=>{if(!HBIG){HBIG=heliBig(false);HBIGN=heliBig(true);}return HBIGN;};
-  openStreetScene('reporter',{press:'e1',onPress:id=>{said=id;},heliSprite:pressHeli},()=>{
+  openStreetScene('reporter',{press:'e1',onPress:id=>{said=id;}},()=>{
     if(said==='ausente'||!said){S.flags.pressCalm=-1;for(const c of S.civs)if(c.press)c.wait=Math.round(c.wait*1.4);}
     else{S.flags.pressCalm=1;for(const c of S.civs)if(c.press&&c.state==='gawk')c.wait=Math.min(c.wait,160);}
   });
