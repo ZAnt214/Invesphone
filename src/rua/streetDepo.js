@@ -199,38 +199,70 @@ function heliWipe(host,dir,onCover,onDone,sprite){
 }
 
 /* a passagem vista de cima, como a do helicóptero que cruza a casa (varredura.js, drawFlyby, com o mesmo desenho
-   noturno: opts.heliSprite): ele passa entre a câmera e o chão, bem perto dela, maior que na casa. O disco borrado do
-   rotor e as duas pás varrem a tela, o rastro de movimento vai atrás, as luzes de navegação piscam. Quando o casco passa
-   pelo meio, a sombra do rotor escurece a tela inteira por um instante (~0,1 s): é aí que a cena troca. Depois ele
-   segue por cima da casa e sai pelo outro lado. */
+   noturno: opts.heliSprite): ele passa entre a câmera e o chão, rápido e bem perto dela, maior que na casa.
+   - O disco borrado do rotor e as duas pás varrem a tela, com rastro de movimento e as luzes de navegação.
+   - Vento do rotor: a garoa vira riscos empurrados para fora do eixo e no sentido do voo, uma névoa de água rodando
+     em volta, folhas e papéis arrancados e jogados para fora, e a câmera chacoalha com a rajada.
+   - Quando o casco passa pelo meio, a sombra do rotor escurece a tela inteira por um instante (~80 ms): a cena troca
+     nesse escuro. Depois ele segue por cima da casa e sai pelo outro lado, com o vento ainda passando. */
 function heliWipeTop(c,cv,W,H,r,dir,img,onCover,onDone){
-  const D0=Math.max(W,H),sc=D0*1.0/img.width,dur=1900,t0=performance.now(),ang=(dir>0?0:Math.PI)+(Math.random()-.5)*.35,off=(Math.random()-.5)*.12;
-  const dx=Math.cos(ang),dy=Math.sin(ang);let covered=false;
+  const D0=Math.max(W,H),sc=D0*1.05/img.width,dur=1150,t0=performance.now(),ang=(dir>0?0:Math.PI)+(Math.random()-.5)*.3,off=(Math.random()-.5)*.1;
+  const dx=Math.cos(ang),dy=Math.sin(ang);let covered=false,last=t0;
+  const RAIN=Array.from({length:150},()=>({x:Math.random()*W,y:Math.random()*H,l:.4+Math.random()*.8,a:.2+Math.random()*.5}));
+  const MIST=Array.from({length:9},(_,i)=>({a:i/9*Math.PI*2,r:.15+Math.random()*.3,s:.6+Math.random()*.8,z:.7+Math.random()*.6}));
+  const DEB=Array.from({length:26},(_,i)=>({live:false,x:0,y:0,vx:0,vy:0,rot:Math.random()*7,vr:0,s:5+Math.random()*7,c:['#2f3a22','#4a5a2c','#6b5a2e','#c9c2b0','#3b3020'][i%5]}));
   const bail=()=>{cv.remove();if(!covered){covered=true;onCover&&onCover();}onDone&&onDone();};
   function frame(now){try{draw(now)}catch(e){console.error('helicóptero:',e);bail();}}
   function draw(now){
-    const el=now-t0,t=el/dur;if(t>=1||!cv.isConnected){bail();return}
-    const along=(t-.5)*D0*2.4,cx=W/2+dx*along-dy*off*D0,cy=H/2+dy*along+dx*off*D0,near=Math.max(0,1-Math.abs(t-.5)*2.4);
+    const el=now-t0,t=el/dur,dt=Math.min(.05,(now-last)/1000);last=now;if(t>=1.18||!cv.isConnected){bail();return}
+    /* anda rápido; um pouco menos no meio (o peso dele em cima da câmera) */
+    const u=t+.05*Math.sin(2*Math.PI*Math.min(1,t)),along=(u-.5)*D0*2.5,cx=W/2+dx*along-dy*off*D0,cy=H/2+dy*along+dx*off*D0;
+    const near=Math.max(0,1-Math.abs(t-.5)*2.1),gust=Math.max(0,1-Math.abs(t-.5)*1.5);   // o vento chega antes e vai depois
+    const hx=(72-61)*sc,hubX=cx+dx*hx,hubY=cy+dy*hx;
     c.setTransform(r,0,0,r,0,0);c.clearRect(0,0,W,H);c.imageSmoothingEnabled=false;
-    const sh=6*near*near;c.translate((Math.random()-.5)*sh,(Math.random()-.5)*sh);
-    c.save();c.translate(cx,cy);c.rotate(ang);
+    /* a rajada chacoalha a câmera (mais forte com ele em cima) */
+    const sh=11*near*near+2*gust;c.translate((Math.random()-.5)*sh,(Math.random()-.5)*sh);
+    /* névoa de água levantada, rodando para fora do eixo */
+    if(gust>.02){c.globalCompositeOperation='lighter';for(const m of MIST){const a=m.a+el*.0035*m.s,rr=(m.r+((el*.0006*m.s)%1)*.5)*D0,x=hubX+Math.cos(a)*rr,y=hubY+Math.sin(a)*rr*.75,R0=D0*.22*m.z;
+      const g=c.createRadialGradient(x,y,0,x,y,R0);g.addColorStop(0,`rgba(185,200,225,${.09*gust})`);g.addColorStop(1,'rgba(185,200,225,0)');c.fillStyle=g;c.fillRect(x-R0,y-R0,R0*2,R0*2);}
+      c.globalCompositeOperation='source-over';}
+    /* garoa empurrada: cada risco vai para fora do eixo do rotor e no sentido do voo, mais comprido perto dele */
+    if(gust>.02){c.lineCap='round';c.lineWidth=1.3;
+      for(const d of RAIN){let vx=d.x-hubX,vy=d.y-hubY;const dist=Math.hypot(vx,vy)||1;vx/=dist;vy/=dist;const f=Math.max(.15,1-dist/(D0*1.1))*gust;
+        const wx=(vx*1.1+dx*.9)*f,wy=(vy*1.1+dy*.9+.35)*f,sp=1500*dt;d.x+=wx*sp;d.y+=wy*sp;
+        if(d.x<-30||d.x>W+30||d.y<-30||d.y>H+30){d.x=Math.random()*W;d.y=Math.random()*H;}
+        const L=(14+60*f)*d.l;c.strokeStyle=`rgba(205,218,240,${d.a*f*.8})`;c.beginPath();c.moveTo(d.x,d.y);c.lineTo(d.x-wx*L,d.y-wy*L);c.stroke();}}
+    /* folhas e papéis arrancados do chão e jogados para fora */
+    for(const d of DEB){
+      if(!d.live){if(gust>.3&&Math.random()<dt*20){d.live=true;const a=Math.random()*7,rr=D0*(.15+Math.random()*.35);d.x=hubX+Math.cos(a)*rr;d.y=hubY+Math.sin(a)*rr;
+        d.vx=Math.cos(a)*(500+Math.random()*700)+dx*500;d.vy=Math.sin(a)*(400+Math.random()*500)+dy*500;d.vr=(Math.random()-.5)*30;}continue}
+      d.x+=d.vx*dt;d.y+=d.vy*dt;d.vy+=200*dt;d.rot+=d.vr*dt;if(d.x<-60||d.x>W+60||d.y<-60||d.y>H+60){d.live=false;continue}
+      for(let k=2;k>=0;k--){c.save();c.translate(d.x-d.vx*k*.012,d.y-d.vy*k*.012);c.rotate(d.rot-k*.2);c.scale(1,Math.abs(Math.cos(d.rot*1.7))+.2);
+        c.globalAlpha=k?.25:.9;c.fillStyle=d.c;c.fillRect(-d.s,-d.s*.5,d.s*2,d.s);c.restore();}}
+    c.globalAlpha=1;
+    /* o helicóptero */
+    c.save();c.translate(cx,cy);c.rotate(ang+Math.sin(el*.004)*.03);
     const iw=img.width*sc,ih=img.height*sc;
-    for(let g=3;g>=1;g--){c.globalAlpha=.1*(4-g);c.drawImage(img,-iw/2-g*D0*.035,-ih/2,iw,ih);}
+    for(let g=4;g>=1;g--){c.globalAlpha=.09*(5-g);c.drawImage(img,-iw/2-g*D0*.05,-ih/2,iw,ih);}
     c.globalAlpha=1;c.drawImage(img,-iw/2,-ih/2,iw,ih);
     /* rotor: disco borrado e duas pás varrendo a tela */
-    const hx=(72-61)*sc,R=D0*.62,blade=el*.042;c.translate(hx,0);
-    c.globalAlpha=.12;c.fillStyle='#9aa6c0';c.beginPath();c.arc(0,0,R,0,7);c.fill();c.lineCap='round';
-    for(let b=0;b<2;b++)for(let j=0;j<7;j++){const a=blade+b*Math.PI/2-j*.05;c.globalAlpha=.72*(1-j/7)*(j?.55:1);c.strokeStyle='#0a0c10';c.lineWidth=D0*.034;
+    const R=D0*.64,blade=el*.05;c.translate(hx,0);
+    c.globalAlpha=.13;c.fillStyle='#9aa6c0';c.beginPath();c.arc(0,0,R,0,7);c.fill();c.lineCap='round';
+    for(let b=0;b<2;b++)for(let j=0;j<8;j++){const a=blade+b*Math.PI/2-j*.06;c.globalAlpha=.75*(1-j/8)*(j?.5:1);c.strokeStyle='#0a0c10';c.lineWidth=D0*.036;
       c.beginPath();c.moveTo(-Math.cos(a)*R,-Math.sin(a)*R);c.lineTo(Math.cos(a)*R,Math.sin(a)*R);c.stroke();}
     c.globalAlpha=1;c.fillStyle='#2b2d31';c.beginPath();c.arc(0,0,D0*.022,0,7);c.fill();c.translate(-hx,0);
     /* luzes de navegação (vermelha à esquerda, verde à direita) e o pisca branco da cauda */
-    const blink=Math.floor(el/130)%2;c.fillStyle=blink?'#ff3b30':'#5a1410';c.fillRect(-4*sc,-ih*.42,sc*3,sc*3);c.fillStyle=blink?'#5aff7a':'#14401c';c.fillRect(-4*sc,ih*.36,sc*3,sc*3);
-    if(el%430<35){c.globalCompositeOperation='lighter';const g=c.createRadialGradient(-iw*.5,0,0,-iw*.5,0,D0*.12);g.addColorStop(0,'rgba(255,255,255,.9)');g.addColorStop(1,'rgba(255,255,255,0)');c.fillStyle=g;c.fillRect(-iw*.5-D0*.12,-D0*.12,D0*.24,D0*.24);c.globalCompositeOperation='source-over';}
+    const blink=Math.floor(el/110)%2;c.fillStyle=blink?'#ff3b30':'#5a1410';c.fillRect(-4*sc,-ih*.42,sc*3,sc*3);c.fillStyle=blink?'#5aff7a':'#14401c';c.fillRect(-4*sc,ih*.36,sc*3,sc*3);
+    if(el%380<35){c.globalCompositeOperation='lighter';const g=c.createRadialGradient(-iw*.5,0,0,-iw*.5,0,D0*.13);g.addColorStop(0,'rgba(255,255,255,.9)');g.addColorStop(1,'rgba(255,255,255,0)');c.fillStyle=g;c.fillRect(-iw*.5-D0*.13,-D0*.13,D0*.26,D0*.26);c.globalCompositeOperation='source-over';}
     c.restore();
-    /* sombra do rotor passando por cima da câmera: escurece tudo por um instante, e a cena troca no escuro */
-    const dk=Math.abs(t-.5)<.03?1:Math.max(0,1-(Math.abs(t-.5)-.03)/.09);
-    if(dk>0){c.setTransform(r,0,0,r,0,0);c.globalAlpha=dk;c.fillStyle='#030407';c.fillRect(0,0,W,H);c.globalAlpha=1;}
+    /* sombra das pás passando pela câmera (escurece em pulsos) e a sombra do casco por cima: escuro total por um instante */
+    c.setTransform(r,0,0,r,0,0);
+    if(near>.05){const ph=(el%70)/70;if(ph<.4){c.globalAlpha=.22*near*Math.sin(Math.PI*ph/.4);c.fillStyle='#000';c.fillRect(0,0,W,H);c.globalAlpha=1;}}
+    const dk=Math.abs(t-.5)<.035?1:Math.max(0,1-(Math.abs(t-.5)-.035)/.07);
+    if(dk>0){c.globalAlpha=dk;c.fillStyle='#030407';c.fillRect(0,0,W,H);c.globalAlpha=1;}
     if(!covered&&dk>=1){covered=true;onCover&&onCover();}
+    /* bordas escurecidas pela rajada (a câmera "fecha" com o vento) */
+    if(gust>.05){const g=c.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,D0*.75);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,0,0,${.45*gust})`);c.fillStyle=g;c.fillRect(0,0,W,H);}
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
@@ -1812,8 +1844,8 @@ export function openStreetDepo(host,id,opts={}){
       if(!wipe){const bars=$('.bars');if(bars){bars.innerHTML=`<p>DE VOLTA À PERÍCIA<span>Rua das Acácias${opts.clock?' · '+esc(opts.clock()):''}</span></p>`;bars.classList.add('on')}
         root.classList.add('outro');setTimeout(close,RM?600:2300);return}
       const dir=Math.random()<.5?1:-1;
-      HELI={t0:performance.now()/1000,dur:2.8,dir};if(AC&&AMBON())heliSound(dir,3.4);
-      setTimeout(()=>{if(!alive)return;heliWipe(host,dir,()=>{outroHeli=true;close()},()=>{opts.onHeliOut&&opts.onHeliOut(dir)},opts.heliSprite&&opts.heliSprite())},650);
+      HELI={t0:performance.now()/1000,dur:2.1,dir};if(AC&&AMBON())heliSound(dir,2.5);
+      setTimeout(()=>{if(!alive)return;heliWipe(host,dir,()=>{outroHeli=true;close()},()=>{opts.onHeliOut&&opts.onHeliOut(dir)},opts.heliSprite&&opts.heliSprite())},560);
     },RM?200:700);
   }
   if(PM){if(!opts.heliSprite)heliArt();root.classList.add('press');stage.addEventListener('click',e=>{if(e.target.closest('.pch')||!ps)return;if(typing)finishTyping();else ps.step()});
