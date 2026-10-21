@@ -1858,6 +1858,16 @@ function stepZoom(){
   cam.x=ZA.w.x-(ZA.sx-VW()/2)/cam.z;cam.y=ZA.w.ys-(ZA.sy-VH()/2)/cam.z;clampCam();
   if(k>=1){cam.z=ZA.z1;ZA=null;}
 }
+/* pouso da câmera (fim da entrevista, streetDepo): a casa aparece já bem de perto no portão, onde a entrevista
+   aconteceu, e a câmera abre até o enquadramento em que estava. Interpolação do zoom em escala logarítmica. */
+let LAND=null;
+const GATE={x:6.5*T,ys:7*TH};
+function landFrom(zMul,dur){const z1=cam.z,x1=cam.x,y1=cam.y;LAND={x0:GATE.x,y0:GATE.ys,z0:clamp(z1*zMul,zMin(),ZMAX*1.6),x1,y1,z1,t0:performance.now(),dur:dur||1600};ZA=null;CAMCTRL.beginManual();follow=false;stepLand();}
+function stepLand(){if(!LAND)return;const k=clamp((performance.now()-LAND.t0)/LAND.dur,0,1),u=1-Math.pow(1-k,3);
+  cam.z=Math.exp(Math.log(LAND.z0)+(Math.log(LAND.z1)-Math.log(LAND.z0))*u);cam.x=LAND.x0+(LAND.x1-LAND.x0)*u;cam.y=LAND.y0+(LAND.y1-LAND.y0)*u;
+  if(k>=1){cam.z=LAND.z1;cam.x=LAND.x1;cam.y=LAND.y1;LAND=null;}}
+/* onde o portão está na tela agora (px do #app) */
+function gateScreen(){return {x:(GATE.x-cam.x)*cam.z+VW()/2,y:(GATE.ys-cam.y)*cam.z+VH()/2};}
 const LOD_NAME=['Planta','Normal','Perto','Máximo'];
 function lodNotice(){
   if(lastLodShown<0){lastLodShown=LODV;return;}
@@ -3109,7 +3119,7 @@ function loop(now){
   const dt=Math.min(0.1,(now-last)/1000);last=now;updFly(dt);
   if(!paused){acc+=dt*20*speed;let n=0;while(acc>=1&&n<100){stepWorld();acc-=1;n++;}if(n>=100)acc=0;}
   updWeather();updParticles();{const dt=paused?0:speed;updCars(dt);updLife(dt);}
-  cmdEdgePan();stepPan();stepZoom();frame++;lerpOn();followCam(dt);render();
+  cmdEdgePan();stepPan();stepZoom();stepLand();frame++;lerpOn();followCam(dt);render();
   if(CAMERA_DEBUG&&CAMDBG)drawCameraDebug(ctx,{width:cv.width,height:cv.height,dpr,deadZone:{x:VW()/2-CAMDBG.zoneX,y:VH()/2-CAMDBG.zoneY,w:CAMDBG.zoneX*2,h:CAMDBG.zoneY*2},target:CAMDBG.target,lines:[`CASA · ${CAMDBG.room}`,`modo ${CAMDBG.mode} · prioridade ${CAMDBG.priority}`,`cam ${cam.x.toFixed(1)}, ${cam.y.toFixed(1)} · zoom ${cam.z.toFixed(2)}`]});
   placeBub();lerpOff();if(frame%6===0){updateUI();pumpEvents();lodNotice();}if(frame%3===0)SND.tick();
   requestAnimationFrame(loop);
@@ -3167,6 +3177,8 @@ newGame();
 /* ---------- HUD do Lemos na casa (docs/HUD_LEMOS.md): retrato, faixas de cinema, caderneta e pistas no save do caso ---------- */
 let CASE=readCase();
 let streetDepo=null,streetReveal=false;
+/* ?saida=grua|gota|foco|foto: escolhe a transição do fim da entrevista (protótipos de 21/10/2026) */
+const SAIDA=(location.search.match(/[?&]saida=(\w+)/)||[])[1]||'';
 const casePhoto=id=>id==='livia'?'/characters/livia/expressions/neutral.jpg':`/characters/${id}/portrait.jpg`;
 // o achado da perícia entra no save do caso na hora: a base já o tem quando Lemos voltar
 function caseClue(id){if(!CLUE_LIST.some(c=>c.id===id))return;CASE=writeCase(g=>g.clues.includes(id)?g:{...g,clues:[...g.clues,id]});if(HUD){HUD.setCount(CASE.clues.length,true);HUD.refresh();}}
@@ -3203,7 +3215,7 @@ function openStreetScene(id,extra,after){
   const wasPaused=paused,sp=speed,snd=SND.on;setSpeed(0);if(snd)SND.set(false);streetDepo={pending:true};cv.width=cv.height=1;lc.width=lc.height=1;
   let backed=false;const back=()=>{if(backed)return;backed=true;resize();if(snd)SND.set(true);if(!wasPaused)setSpeed(sp);};
   /* onReveal: a cena vai sair revelando a casa por baixo (a foto do fim da entrevista): a casa volta a desenhar antes */
-  import('../rua/streetDepo').then(m=>{streetDepo=m.openStreetDepo(appEl,id,{...extra,sound:snd,clock:()=>clockStr(),onReveal:()=>{back();streetReveal=true;},
+  import('../rua/streetDepo').then(m=>{streetDepo=m.openStreetDepo(appEl,id,{...extra,sound:snd,clock:()=>clockStr(),onReveal:()=>{back();streetReveal=true;},casa:{canvas:()=>cv,land:(m,d)=>landFrom(m,d),gate:()=>gateScreen()},outroStyle:SAIDA,
     onClose:()=>{streetDepo=null;streetReveal=false;back();CASE=readCase();HUD.setCount(CASE.clues.length,false);HUD.refresh();syncWitness();if(after)after();}});
     if(!streetDepo)back();
   }).catch(e=>{console.error('cena da rua:',e);streetDepo=null;back();});

@@ -1625,13 +1625,113 @@ export function openStreetDepo(host,id,opts={}){
       },1050);
     },80);
   }
+
+  /* ---------- protótipos de saída (21/10/2026, ?saida=grua|gota|foco) ---------- */
+  const HWf=()=>host.clientWidth||W,HHf=()=>host.clientHeight||H;
+  function reveal(){opts.onReveal&&opts.onReveal();host.classList.remove('sd-under');}
+  function finishOut(extra){outroPhoto=true;close();extra&&extra();}
+  function overlay(cls){const c=document.createElement('canvas');c.className='sd-out '+cls;c.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;z-index:61;pointer-events:none';host.appendChild(c);return c;}
+
+  /* 1. GRUA: a câmera sobe e inclina para olhar para baixo. A cena (viva, a garoa continua) tomba para trás em
+     perspectiva, como a fachada vista de uma câmera subindo, e desce para fora do quadro; a chuva perto da lente passa
+     rápido; embaixo, a casa aparece já de cima, bem perto do portão, e a câmera abre até o enquadramento normal. */
+  function outroGrua(){
+    const HW=HWf(),HH=HHf();reveal();opts.casa&&opts.casa.land(3.4,1900);
+    const per=host.style.perspective,po=host.style.perspectiveOrigin;host.style.perspective='820px';host.style.perspectiveOrigin='50% 20%';
+    root.style.animation='none';root.style.transformOrigin='50% 100%';root.style.willChange='transform,opacity';
+    /* gotas e riscos de chuva perto da lente, passando para baixo (a câmera sobe) */
+    const ov=overlay('sd-out-fx'),c=ov.getContext('2d'),r=Math.min(2,window.devicePixelRatio||1);ov.width=HW*r;ov.height=HH*r;
+    const D=Array.from({length:70},()=>({x:Math.random()*HW,y:Math.random()*HH,l:20+Math.random()*90,w:.8+Math.random()*1.6,a:.15+Math.random()*.35})),B=Array.from({length:7},()=>({x:Math.random()*HW,y:-Math.random()*HH,R:20+Math.random()*50}));
+    const t0=performance.now();
+    (function f(now){if(!ov.isConnected)return;const k=Math.min(1,(now-t0)/1900),sp=Math.sin(Math.PI*Math.min(1,k*1.15));c.setTransform(r,0,0,r,0,0);c.clearRect(0,0,HW,HH);
+      /* a cena tomba para trás (a câmera sobe e olha para baixo) e desce para fora do quadro */
+      if(alive){const e=k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;root.style.transform=`translateY(${HH*.62*Math.pow(k,1.8)}px) rotateX(${72*e}deg) scale(${1-.12*e})`;root.style.opacity=String(k<.5?1:Math.max(0,1-(k-.5)/.35));}
+      c.lineCap='round';for(const d of D){d.y+=26*sp+4;if(d.y>HH+100){d.y=-100;d.x=Math.random()*HW;}c.strokeStyle=`rgba(210,222,245,${d.a*sp})`;c.lineWidth=d.w;c.beginPath();c.moveTo(d.x,d.y);c.lineTo(d.x,d.y-d.l*(.4+sp));c.stroke();}
+      for(const b of B){b.y+=34*sp+2;const g=c.createRadialGradient(b.x,b.y,0,b.x,b.y,b.R);g.addColorStop(0,`rgba(200,215,240,${.10*sp})`);g.addColorStop(.7,`rgba(200,215,240,${.05*sp})`);g.addColorStop(1,'rgba(200,215,240,0)');c.fillStyle=g;c.fillRect(b.x-b.R,b.y-b.R,b.R*2,b.R*2);}
+      if(k<1)requestAnimationFrame(f);})(t0);
+    setTimeout(()=>finishOut(()=>{ov.remove();host.style.perspective=per;host.style.perspectiveOrigin=po;}),1950);
+  }
+
+  /* 2. GOTA: uma gota de chuva bate na lente. Dentro dela, invertida e encolhida como numa gota de verdade, já está a
+     casa vista de cima (o canvas da casa refratado pela placa de vídeo). A gota escorre um pouco, cresce até tomar a
+     tela e, crescendo, a lente achata: a imagem desvira e fica nítida. Quando ela cobre tudo, já é a casa. */
+  function outroGota(){
+    const HW=HWf(),HH=HHf(),C=opts.casa,src=C&&C.canvas&&C.canvas();if(!src){pressPhoto();return}
+    reveal();
+    const ov=overlay('sd-out-gl'),r=Math.min(2,window.devicePixelRatio||1);ov.width=HW*r;ov.height=HH*r;
+    const gl=ov.getContext('webgl',{premultipliedAlpha:true,alpha:true,antialias:true});if(!gl){ov.remove();pressPhoto();return}
+    const VS='attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+    const FS=`precision mediump float;uniform sampler2D T;uniform vec2 res,c;uniform float R,k,r;
+void main(){vec2 p=gl_FragCoord.xy/r;p.y=res.y-p.y;vec2 d=(p-c)/R;float q=length(d);if(q>1.0)discard;
+  float z=sqrt(max(0.0,1.0-q*q));vec2 inv=c-d*R*(2.4+2.2*(1.0-z));vec2 s=mix(p,inv,k);
+  vec2 uv=clamp(s/res,0.001,0.999);vec3 col=texture2D(T,uv).rgb;
+  col*=1.0-.6*smoothstep(.62,1.0,q)*k;                                            /* borda escura da gota */
+  col+=vec3(.75,.85,1.)*smoothstep(.86,1.0,q)*.22*k;                              /* aro de luz */
+  col+=vec3(1.)*pow(max(0.,1.-length(d-vec2(-.36,-.44))/.2),2.)*.85*k;            /* brilho */
+  col+=vec3(1.,.8,.55)*pow(max(0.,1.-length(d-vec2(.3,.5))/.14),2.)*.25*k;        /* reflexo do poste embaixo */
+  float a=1.0-smoothstep(1.0-1.8/R,1.0,q);gl_FragColor=vec4(col*a,a);}`;
+    const sh=(t,x)=>{const o=gl.createShader(t);gl.shaderSource(o,x);gl.compileShader(o);return o;};const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,VS));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,FS));gl.linkProgram(pr);
+    if(!gl.getProgramParameter(pr,gl.LINK_STATUS)){ov.remove();pressPhoto();return}
+    gl.useProgram(pr);const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+    const ap=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(ap);gl.vertexAttribPointer(ap,2,gl.FLOAT,false,0,0);
+    const U=n=>gl.getUniformLocation(pr,n),tx=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,tx);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.uniform1i(U('T'),0);gl.uniform2f(U('res'),HW,HH);gl.uniform1f(U('r'),r);gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+    const P0={x:HW*.36,y:HH*.36},diag=Math.hypot(HW,HH),t0=performance.now();let landed=false;
+    SFX.drip&&SFX.drip();
+    (function f(now){if(!ov.isConnected)return;const el=now-t0;let R,cx=P0.x,cy=P0.y,k=1;
+      if(el<260){const u=el/260;R=4+34*(1-Math.pow(1-u,3))*(1+.25*Math.sin(u*Math.PI*3)*(1-u));}                      // bate e assenta
+      else if(el<1000){const u=(el-260)/740;R=38+6*u;cy+=34*u*u;cx+=4*Math.sin(u*5);}                                   // escorre um pouco
+      else{if(!landed){landed=true;C.land&&C.land(3.0,1700);}const u=Math.min(1,(el-1000)/1150),e=u*u*u;R=44+(diag*1.15)*e;cx=P0.x+(HW/2-P0.x)*e;cy=P0.y+34+(HH/2-P0.y-34)*e;k=1-Math.pow(u,.7);}
+      gl.viewport(0,0,ov.width,ov.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+      try{gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,src);}catch(_){}
+      gl.uniform2f(U('c'),cx,cy);gl.uniform1f(U('R'),R);gl.uniform1f(U('k'),k);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+      /* coberta a tela, a cena fecha; a camada da gota (que já é só a casa) esmaece, e o HUD da casa aparece por baixo */
+      if(el>=2150&&alive)finishOut();if(el>=2150)ov.style.opacity=String(Math.max(0,1-(el-2150)/300));
+      if(el<2450)requestAnimationFrame(f);else{const x=gl.getExtension('WEBGL_lose_context');ov.remove();if(x)x.loseContext();}})(t0);
+  }
+
+  /* 3. FOCO: a câmera tira o foco da repórter e foca nas gotas da lente. A cena derrete em pontos de luz borrados
+     (a janela acesa, o poste, o giroflex), que flutuam e vão se encaixar nas luzes da casa vista de cima; o foco volta
+     já no mapa. Os pontos saem das partes mais claras da própria imagem, de um lado e do outro. */
+  function brightSpots(srcs,w,h,n){const t=document.createElement('canvas');t.width=96;t.height=Math.round(96*h/w);const x=t.getContext('2d');
+    for(const s of srcs){try{x.drawImage(s,0,0,t.width,t.height)}catch(_){}}
+    let d;try{d=x.getImageData(0,0,t.width,t.height).data}catch(_){return[]}
+    const P=[];for(let y=0;y<t.height;y++)for(let i=0;i<t.width;i++){const q=(y*t.width+i)*4,l=d[q]*.3+d[q+1]*.55+d[q+2]*.15;P.push({x:(i+.5)/t.width*w,y:(y+.5)/t.height*h,l,c:[d[q],d[q+1],d[q+2]]});}
+    P.sort((a,b)=>b.l-a.l);const out=[];for(const p of P){if(out.length>=n)break;if(p.l<40)break;if(out.every(o=>Math.hypot(o.x-p.x,o.y-p.y)>w*.07))out.push(p);}return out;}
+  function outroFoco(){
+    const HW=HWf(),HH=HHf(),C=opts.casa,scene=root.querySelector('.scene');
+    const ov=overlay('sd-out-fx'),c=ov.getContext('2d'),r=Math.min(2,window.devicePixelRatio||1);ov.width=HW*r;ov.height=HH*r;
+    const srcs=[...root.querySelectorAll('#sd-bg,#sd-hair,#sd-ac,#sd-tape')].filter(e=>e.width>2&&e.style.visibility!=='hidden');
+    let B=brightSpots(srcs,HW,HH,14).map(p=>({...p,tx:p.x,ty:p.y,R:0}));
+    B.push({x:HW*.03,y:HH*.42,c:[255,50,50],tx:HW*.03,ty:HH*.42,R:0,gir:'r'},{x:HW*.05,y:HH*.58,c:[70,120,255],tx:HW*.05,ty:HH*.58,R:0,gir:'b'});
+
+    const cv0=C&&C.canvas&&C.canvas(),t0=performance.now();let rev=false,tgt=0;
+    (function f(now){if(!ov.isConnected)return;const el=now-t0;
+      /* foco: a cena borra (0–0,7 s); a casa aparece borrada por baixo enquanto a cena some (0,75–1,3 s) e volta ao foco (1,3–2,0 s) */
+      const bz=1-Math.pow(1-Math.min(1,el/700),3);if(alive)scene.style.filter=`blur(${(16*bz).toFixed(1)}px) brightness(${(1-.15*bz).toFixed(3)})`;
+      if(!rev&&el>750){rev=true;reveal();C&&C.land&&C.land(2.2,1700);root.style.animation='none';}
+      if(rev){if(alive)root.style.opacity=String(Math.max(0,1-(el-750)/550));
+        if(cv0){const u=Math.min(1,Math.max(0,(el-1300)/700)),e=u*u*(3-2*u);cv0.style.filter=`blur(${(16*(1-e)).toFixed(1)}px) brightness(${(.75+.25*e).toFixed(3)})`;}}
+      if(rev&&cv0&&now-tgt>140){tgt=now;const T=brightSpots([cv0],HW,HH,B.length).sort((a,b)=>a.x-b.x);const S=[...B].sort((a,b)=>a.x-b.x);S.forEach((b,i)=>{const t=T[Math.min(T.length-1,Math.round(i*(T.length-1)/Math.max(1,S.length-1)))];if(t){b.tx=t.x;b.ty=t.y;b.tc=t.c;}});}
+      const grow=Math.min(1,el/650),shrink=el>1500?Math.min(1,(el-1500)/650):0;
+      c.setTransform(r,0,0,r,0,0);c.clearRect(0,0,HW,HH);c.globalCompositeOperation='lighter';
+      for(const b of B){if(rev){b.x+=(b.tx-b.x)*.08;b.y+=(b.ty-b.y)*.08;if(b.tc)b.c=b.c.map((v,i)=>v+(b.tc[i]-v)*.05);}
+        const R=(10+Math.min(30,b.l?b.l/6:22))*grow*(1-shrink*.85)+1,a=(.55*grow)*(1-shrink)*(b.gir?(.6+.4*Math.sin(el*.012+(b.gir==='r'?0:Math.PI))):1);
+        const [cr,cg,cb]=b.c.map(v=>Math.min(255,Math.round(v*1.15+20)));
+        const g=c.createRadialGradient(b.x,b.y,R*.55,b.x,b.y,R);g.addColorStop(0,`rgba(${cr},${cg},${cb},${a*.55})`);g.addColorStop(.85,`rgba(${cr},${cg},${cb},${a*.8})`);g.addColorStop(1,`rgba(${cr},${cg},${cb},0)`);
+        c.fillStyle=g;c.beginPath();c.arc(b.x,b.y,R,0,7);c.fill();}
+      c.globalCompositeOperation='source-over';
+      if(el<2250)requestAnimationFrame(f);else finishOut(()=>{ov.remove();if(cv0){cv0.style.transition='';cv0.style.filter='';}});})(t0);
+  }
   function pressOutro(){
     stage.classList.remove('listen','answering');
     const photo=!RM&&FXON('depo.outro');
     setTimeout(()=>{if(!hsq)setExpr(wantE==='annoyed'?'annoyed':IDLE);sub.innerHTML='';
       if(!photo){camMode('away');const bars=$('.bars');if(bars){bars.innerHTML=`<p>DE VOLTA À PERÍCIA<span>Rua das Acácias${opts.clock?' · '+esc(opts.clock()):''}</span></p>`;bars.classList.add('on')}
         root.classList.add('outro');setTimeout(close,RM?600:2300);return}
-      root.classList.add('pre-photo');setTimeout(()=>{if(alive)pressPhoto()},650);
+      const st=opts.outroStyle||'foto',go={grua:outroGrua,gota:outroGota,foco:outroFoco}[st]||pressPhoto;
+      if(go===pressPhoto)root.classList.add('pre-photo');setTimeout(()=>{if(alive)go()},go===pressPhoto?650:350);
     },RM?200:700);
   }
   if(PM){root.classList.add('press');stage.addEventListener('click',e=>{if(e.target.closest('.pch')||!ps)return;if(typing)finishTyping();else ps.step()});

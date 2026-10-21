@@ -100,7 +100,7 @@
 @media (prefers-reduced-motion:reduce){.sd .pad{transition:none}.sd .asked path{stroke-dashoffset:0;animation:none}}
 
 /* com o depoimento aberto, o que está por baixo (a cena da casa) não é composto */
-.sd-under>:not(.sd):not(.fps-meter){visibility:hidden!important}
+.sd-under>:not(.sd):not(.fps-meter):not(.sd-out){visibility:hidden!important}
 
 /* entrevista (modo imprensa): sem caderno.
    - a fala da repórter (e a do Lemos) em legenda de cinema, centrada embaixo, dentro da área segura da tela;
@@ -141,3 +141,4 @@
 .sd.photo.fly{transition:transform .64s cubic-bezier(.55,0,.75,.25),opacity .64s ease-in,filter .64s;opacity:.9}
 .sd-dim{position:absolute;inset:0;z-index:59;pointer-events:none;background:rgba(2,4,10,.55);transition:opacity .6s ease}
 .sd-dim.off{opacity:0}
+/* protótipos de saída da entrevista (?saida=grua|gota|foco) */
