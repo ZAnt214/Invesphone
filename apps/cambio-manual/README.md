@@ -1,9 +1,5 @@
 # Câmbio Manual — simulador de treino para iPhone
 
-No site: **/cambio** (ex.: `https://invesphone-sigma.vercel.app/cambio`). É uma página à parte do jogo,
-servida de `public/cambio/index.html` (arquivo único, React embutido). Para atualizar a página depois de
-mexer no código: `npm install` aqui dentro e `npm run site` (gera e copia para `public/cambio/`).
-
 Simulador de carro com câmbio manual (padrão 1-3-5 / 2-4-R, neutro no centro) para treinar
 alavanca, embreagem e acelerador no celular, em pé (vertical), no Safari.
 
@@ -26,6 +22,10 @@ src/
                       com o quadro visto pelo aro, alavancas arrastáveis, chave giratória, multimídia,
                       pisca-alerta, botões giratórios do ar, câmbio no console, freio de mão, pedais;
                       close-ups para botões pequenos; "Onde fica?" e ajustes no menu discreto
+  ui/cockpit/art.ts   modo foto: carrega o pacote de arte fotorrealista de public/cambio/art/ (camadas
+                      PNG + manifest.json com tamanhos e pivôs) e troca o desenho pelas fotos; sem o
+                      pacote, fica o desenho vetorial. Contrato no pedido
+                      creative-requests/inbox/2026-10-28-cambio-cockpit-fotorrealista.md
   ui/panel/           peças compartilhadas: luzes-espia, para-brisa, ajuste "Meu carro", exercício
   core/sim.ts         loop único: física a 240 Hz, áudio, treino, interface
   ui/                 painel, alavanca, pedais, instrutor, progresso
@@ -41,6 +41,7 @@ npm test           # física e alavanca
 npm run typecheck
 npm run e2e        # Chromium emulando iPhone
 node e2e/cockpit.mjs # cockpit horizontal em tela cheia (50 verificações, várias proporções)
+node e2e/cockpit-art.mjs # modo foto com um pacote de arte de teste (e2e/make-test-art.py)
 ```
 
 O registro npm não estava acessível no ambiente de desenvolvimento, então o build usa esbuild
