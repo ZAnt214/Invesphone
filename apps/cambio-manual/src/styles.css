@@ -619,3 +619,7 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--amber)
 .scene-svg .gate-l.r { fill: #c98b8b; }
 .scene-svg .gate-l.r.cur { fill: #ff7568; }
 .scene-svg .gate-n { font-size: 7px; font-weight: 700; fill: #5a6570; }
+
+/* modo foto: sapata do pedal com a imagem da arte */
+.ck-pedal.photo .pedal .pad { background: var(--pedal-img) center / 100% 100% no-repeat; border: 0; border-radius: 0; box-shadow: 0 8px 12px rgba(0,0,0,.6); }
+.ck-pedal.photo .pedal.active .pad { box-shadow: 0 4px 6px rgba(0,0,0,.6); filter: brightness(1.1); }

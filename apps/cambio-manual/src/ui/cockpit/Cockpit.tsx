@@ -1,7 +1,8 @@
 import React from 'react';
 import { sim } from '../../core/sim';
 import { useFrame } from '../hooks';
-import { Scene, type ZoomId, type Lay } from './Scene';
+import { Scene, useArtReady, type ZoomId, type Lay } from './Scene';
+import { loadArt, art } from './art';
 import { Zoom } from './Zoom';
 import { Windshield } from '../panel/Windshield';
 import { Pedal } from '../Pedal';
@@ -71,7 +72,13 @@ export function Cockpit() {
   const shake = React.useRef<HTMLDivElement | null>(null);
   const ws = React.useRef<HTMLDivElement | null>(null);
   const fit = useFit(outer, probe);
-  const { SW, L, C, Rt } = fit.lay;
+  React.useEffect(() => { loadArt(); }, []);
+  const photo = useArtReady();
+  // no modo foto o painel é uma imagem só: o console fica preso ao lado do motorista
+  const lay: Lay = photo ? { ...fit.lay, C: fit.lay.L } : fit.lay;
+  const { SW, L, C, Rt } = lay;
+  const pedalStyle = (id: 'pedalClutch' | 'pedalBrake' | 'pedalGas') => (photo && art.has(id) ? { ['--pedal-img' as string]: `url("${art.url(id)}")` } : {});
+  const pedalCls = (id: 'pedalClutch' | 'pedalBrake' | 'pedalGas') => (photo && art.has(id) ? ' photo' : '');
   const [zoom, setZoom] = React.useState<ZoomId | null>(null);
   const [menu, setMenu] = React.useState(false);
   const [setup, setSetup] = React.useState(false);
@@ -103,15 +110,15 @@ export function Cockpit() {
       : r && !r.done ? r.instruction : null;
 
   return (
-    <div className="ck-root" ref={outer} data-testid="cockpit" style={{ ['--trim' as string]: carSetup.get().trim }}>
+    <div className={`ck-root${photo ? ' photo' : ''}`} ref={outer} data-testid="cockpit" style={{ ['--trim' as string]: carSetup.get().trim }}>
       <div className="ck-probe" ref={probe} />
       <div className="scene" style={{ width: SW, transform: `translate(0px, ${fit.y}px) scale(${fit.s})` }}>
         <div className="scene-shake" ref={shake}>
           <div className="ws-layer" ref={ws} style={{ width: SW }}><Windshield vx={(L + 300) / SW} /></div>
-          <Scene onZoom={(z) => setZoom(z)} reveal={reveal} lay={fit.lay} />
-          <div className="ck-pedal clutch" style={{ left: L + 6 }}><Pedal kind="clutch" compact /></div>
-          <div className="ck-pedal brake" style={{ left: Rt + 726 }}><Pedal kind="brake" compact /></div>
-          <div className="ck-pedal gas" style={{ left: Rt + 814 }}><Pedal kind="throttle" compact /></div>
+          <Scene onZoom={(z) => setZoom(z)} reveal={reveal} lay={lay} />
+          <div className={`ck-pedal clutch${pedalCls('pedalClutch')}`} style={{ left: L + 6, ...pedalStyle('pedalClutch') }}><Pedal kind="clutch" compact /></div>
+          <div className={`ck-pedal brake${pedalCls('pedalBrake')}`} style={{ left: Rt + 726, ...pedalStyle('pedalBrake') }}><Pedal kind="brake" compact /></div>
+          <div className={`ck-pedal gas${pedalCls('pedalGas')}`} style={{ left: Rt + 814, ...pedalStyle('pedalGas') }}><Pedal kind="throttle" compact /></div>
         </div>
         {(msg || fresh) && (
           <div className="hud" data-testid="hud" style={{ left: SW / 2 }}>

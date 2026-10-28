@@ -5,6 +5,21 @@ import { ClusterSvg } from './ClusterSvg';
 import { carSetup, quizActive, type SlotFn } from '../panel/layout';
 import { quizAnswer } from '../panel/Kit';
 import { STATIONS, SOURCES, type WiperMode } from '../../sim/vehicle';
+import { art, placeAt, type ArtId } from './art';
+
+/** Modo foto: liga quando o pacote de arte (public/cambio/art) termina de carregar. */
+export function useArtReady() {
+  const [, set] = React.useState(0);
+  React.useEffect(() => art.subscribe(() => set((x: number) => x + 1)), []);
+  return art.ready;
+}
+/** Imagem de uma camada com o pivô no ponto (px, py) da cena. */
+function ArtImg({ id, px, py, scale = 1, testId }: { id: ArtId; px: number; py: number; scale?: number; testId?: string }) {
+  const b = placeAt(id, px, py);
+  const w = b.w * scale, h = b.h * scale;
+  const x = px - (px - b.x) * scale, y = py - (py - b.y) * scale;
+  return <image href={art.url(id)} x={x} y={y} width={w} height={h} preserveAspectRatio="none" pointerEvents="none" data-art={id} data-testid={testId} />;
+}
 
 export type ZoomId = 'spokeL' | 'spokeR' | 'stalkL' | 'stalkR' | 'leftBank' | 'door' | 'climate' | 'media' | 'cluster';
 /** Largura da cena (unidades) e deslocamentos dos grupos: lado do motorista, console central, lado do passageiro. */
@@ -63,7 +78,7 @@ function Vent({ x, y, w, h, trim }: { x: number; y: number; w: number; h: number
 const WIPER_POS: Record<WiperMode, number> = { MIST: 0, OFF: 0, INT: -1, LO: -2, HI: -3 };
 const POS_WIPER: Record<number, WiperMode> = { 1: 'MIST', 0: 'OFF', [-1]: 'INT', [-2]: 'LO', [-3]: 'HI' };
 
-function StalkInScene({ side, onZoom }: { side: 'L' | 'R'; onZoom: (z: ZoomId) => void }) {
+function StalkInScene({ side, onZoom, photo }: { side: 'L' | 'R'; onZoom: (z: ZoomId) => void; photo: boolean }) {
   const v = sim.veh;
   const STEP = 16;
   const left = side === 'L';
@@ -124,14 +139,19 @@ function StalkInScene({ side, onZoom }: { side: 'L' | 'R'; onZoom: (z: ZoomId) =
     <g data-testid={`stalk-${side}`} aria-valuenow={value} className={held ? 'held' : ''}>
       {/* sombra projetada no painel */}
       <path d={`M${px} ${py + 8} L${px + dir * (L - 40)} ${py + 14} L${px + dir * (L - 40)} ${py + 22} L${px} ${py + 14} Z`} fill="#000" opacity="0.35" transform={`rotate(${ang} ${px} ${py})`} />
-      <g transform={`rotate(${ang} ${px} ${py})`} style={{ transition: live === null ? 'transform .12s' : 'none' }}>
+      {photo && art.has(left ? 'stalkL' : 'stalkR') && (
+        <g transform={`rotate(${ang} ${px} ${py})`} style={{ transition: live === null ? 'transform .12s' : 'none' }} className="stalk-ring">
+          <ArtImg id={left ? 'stalkL' : 'stalkR'} px={px} py={py} testId={`art-stalk-${side}`} />
+        </g>
+      )}
+      {!(photo && art.has(left ? 'stalkL' : 'stalkR')) && <g transform={`rotate(${ang} ${px} ${py})`} style={{ transition: live === null ? 'transform .12s' : 'none' }}>
         <path d={`M${px} ${py - 5} L${px + dir * (L - 46)} ${py - 6.5} L${px + dir * (L - 46)} ${py + 6.5} L${px} ${py + 5} Z`} fill="url(#stalkArm)" />
         <path d={`M${px} ${py - 3.6} L${px + dir * (L - 46)} ${py - 4.6}`} stroke="#ffffff" strokeOpacity="0.16" strokeWidth="0.8" />
         <rect x={ringX} y={py - 9.5} width="46" height="19" rx="7.5" fill="url(#stalkRing)" stroke="#4a535b" strokeWidth="0.7" className="stalk-ring" />
         {[7, 12, 17, 22, 27, 32, 37].map((o) => <line key={o} x1={left ? tipX + o : tipX - o} x2={left ? tipX + o : tipX - o} y1={py - 7.5} y2={py + 7.5} stroke="#0b0d10" strokeWidth="1" />)}
         <line x1={ringX + 3} x2={ringX + 43} y1={py - 7.6} y2={py - 7.6} stroke="#ffffff" strokeOpacity="0.2" strokeWidth="0.7" />
         <rect x={left ? tipX - 5 : tipX - 1} y={py - 7.5} width="6" height="15" rx="3" fill="url(#stalkRing)" stroke="#4a535b" strokeWidth="0.6" />
-      </g>
+      </g>}
       <rect x={left ? 8 : 446} y={250} width="86" height="66" fill="transparent" style={{ touchAction: 'none' }}
         onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} data-testid={`stalk-${side}-hit`} />
     </g>
@@ -165,7 +185,7 @@ function useWheelDrag(L: number) {
   return { down, move, up };
 }
 
-function Wheel({ legend, onZoom }: { legend: string; onZoom: (z: ZoomId) => void }) {
+function Wheel({ legend, onZoom, photo }: { legend: string; onZoom: (z: ZoomId) => void; photo: boolean }) {
   const setup = carSetup.get();
   const rot = React.useRef<SVGGElement | null>(null);
   useFrame(() => { if (rot.current) rot.current.setAttribute('transform', `rotate(${sim.steer.toFixed(2)} 270 293)`); });
@@ -173,13 +193,17 @@ function Wheel({ legend, onZoom }: { legend: string; onZoom: (z: ZoomId) => void
   return (
     <>
       {/* sombra do volante no painel */}
-      <circle cx="274" cy="300" r="172" fill="none" stroke="#000" strokeOpacity="0.45" strokeWidth="24" pointerEvents="none" />
+      <circle cx="274" cy="300" r="172" fill="none" stroke="#000" strokeOpacity={photo ? 0.3 : 0.45} strokeWidth="24" pointerEvents="none" />
+      {!photo && <>
       {/* aro: forma e luz fixas (o aro é redondo), costura gira junto */}
       <circle cx="270" cy="293" r="171" fill="none" stroke="url(#rim)" strokeWidth="21" pointerEvents="none" />
       <circle cx="270" cy="293" r="181" fill="none" stroke="#454d55" strokeWidth="0.8" opacity="0.7" pointerEvents="none" />
       <circle cx="270" cy="293" r="161" fill="none" stroke="#000" strokeOpacity="0.6" strokeWidth="1.2" pointerEvents="none" />
       <path d="M128 186 A171 171 0 0 1 300 123" fill="none" stroke="#ffffff" strokeOpacity="0.13" strokeWidth="4" strokeLinecap="round" pointerEvents="none" />
+      </>}
       <g ref={rot}>
+        {photo && <ArtImg id="wheel" px={270} py={293} testId="art-wheel" />}
+        {!photo && <>
         <circle cx="270" cy="293" r="171" fill="none" stroke="#c43c33" strokeWidth="0.8" strokeDasharray="2 3" opacity="0.6" pointerEvents="none" />
         <rect x="266" y="113" width="8" height="21" rx="2" fill="#2a3036" opacity="0.9" pointerEvents="none" />
         <g pointerEvents="none">
@@ -199,6 +223,7 @@ function Wheel({ legend, onZoom }: { legend: string; onZoom: (z: ZoomId) => void
           <path d="M232 287 Q270 266 308 287" fill="none" stroke="#ffffff" strokeOpacity="0.12" strokeWidth="1.4" />
           <text x="270" y="336" className="sc-tiny" textAnchor="middle" opacity="0.55">AIRBAG</text>
         </g>
+        </>}
         <rect x="136" y="292" width="70" height="34" rx="6" fill="transparent" data-testid="zoom-spokeL" style={{ touchAction: 'none' }}
           onPointerDown={(e: React.PointerEvent) => { e.preventDefault(); pressFx(e); onZoom('spokeL'); }} />
         <rect x="334" y="292" width="70" height="34" rx="6" fill="transparent" data-testid="zoom-spokeR" style={{ touchAction: 'none' }}
@@ -223,7 +248,7 @@ function WheelGrip(p: { down: (e: React.PointerEvent) => void; move: (e: React.P
 const KEY_ANG = { LOCK: -60, ACC: -20, ON: 25, START: 70 } as const;
 type KeyPos = keyof typeof KEY_ANG;
 
-function Ignition() {
+function Ignition({ photo }: { photo: boolean }) {
   const v = sim.veh;
   const setup = carSetup.get();
   const cx = 480, cy = 352;
@@ -275,21 +300,26 @@ function Ignition() {
       <circle cx={cx} cy={cy} r="18.5" fill="url(#chrome)" />
       <circle cx={cx} cy={cy} r="14" fill="url(#lockFace)" />
       <rect x={cx - 1.4} y={cy - 9} width="2.8" height="18" rx="1" fill="#050607" transform={`rotate(${angle} ${cx} ${cy})`} />
+      {photo && art.has('key') && (
+        <g transform={`rotate(${angle} ${cx} ${cy})`} style={{ transition: live === null ? 'transform .15s' : 'none' }} className="key-head">
+          <ArtImg id="key" px={cx} py={cy} testId="art-key" />
+        </g>
+      )}
       {/* chave: cabeça plástica com sombra, gira junto com o dedo */}
-      <g transform={`rotate(${angle} ${cx} ${cy})`} style={{ transition: live === null ? 'transform .15s' : 'none' }}>
+      {!(photo && art.has('key')) && <g transform={`rotate(${angle} ${cx} ${cy})`} style={{ transition: live === null ? 'transform .15s' : 'none' }}>
         <path d={`M${cx - 10} ${cy + 12} h20 l3 20 a13 13 0 0 1 -26 0 Z`} fill="#000" opacity="0.45" transform="translate(2 3)" />
         <rect x={cx - 2.6} y={cy - 6} width="5.2" height="20" rx="1.5" fill="url(#chrome)" />
         <path d={`M${cx - 10} ${cy + 12} h20 l3 20 a13 13 0 0 1 -26 0 Z`} fill="url(#keyHead)" stroke="#4a535b" strokeWidth="0.7" className="key-head" />
         <path d={`M${cx - 8} ${cy + 14} h16`} stroke="#ffffff" strokeOpacity="0.2" strokeWidth="0.8" />
         <circle cx={cx} cy={cy + 27} r="3" fill="#0a0b0d" />
-      </g>
+      </g>}
       <circle cx={cx} cy={cy + 6} r="34" fill="transparent" data-testid="key-knob" style={{ touchAction: 'none' }} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} />
     </g>
   );
 }
 
 // ------------------------------------------------------------------ botões giratórios do ar
-function KnobInScene({ fn, cx, cy, r }: { fn: SlotFn; cx: number; cy: number; r: number }) {
+function KnobInScene({ fn, cx, cy, r, photo }: { fn: SlotFn; cx: number; cy: number; r: number; photo: boolean }) {
   const v = sim.veh;
   const [held, setHeld] = React.useState(false);
   const spec = fn === 'fan' ? { max: 4, val: v.fan, set: (x: number) => { v.fan = x; if (!x) v.ac = false; } }
@@ -323,6 +353,8 @@ function KnobInScene({ fn, cx, cy, r }: { fn: SlotFn; cx: number; cy: number; r:
   return (
     <g data-testid={`knob-${fn}`} className={held ? 'held' : ''}>
       {marks}
+      {photo && art.has('knob') && <g transform={`rotate(${a} ${cx} ${cy})`} className="knob-face"><ArtImg id="knob" px={cx} py={cy} scale={(r * 2.3) / (art.layer('knob')!.w / 4)} /></g>}
+      {!(photo && art.has('knob')) && <>
       {/* poço, sombra, lateral recartilhada e face */}
       <circle cx={cx} cy={cy + 1} r={r + 2.5} fill="#050607" />
       <ellipse cx={cx + 2.5} cy={cy + 6} rx={r * 1.02} ry={r * 0.78} fill="url(#castShadow)" />
@@ -335,13 +367,14 @@ function KnobInScene({ fn, cx, cy, r }: { fn: SlotFn; cx: number; cy: number; r:
         <rect x={cx - 1.6} y={cy - r + 2.5} width="3.2" height={r * 0.7} rx="1.6" fill="#e9edf0" transform={`rotate(${a} ${cx} ${cy})`} />
         <circle cx={cx + (r - 3) * Math.sin(rad)} cy={cy - (r - 3) * Math.cos(rad)} r="0" />
       </g>
+      </>}
       <circle cx={cx} cy={cy} r={r + 10} fill="transparent" style={{ touchAction: 'none' }} data-testid={`knob-${fn}-hit`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} />
     </g>
   );
 }
 
 // ------------------------------------------------------------------ câmbio no console
-function GearInScene() {
+function GearInScene({ photo }: { photo: boolean }) {
   const knob = React.useRef<SVGGElement | null>(null);
   const shaft = React.useRef<SVGPathElement | null>(null);
   const boot = React.useRef<SVGPathElement | null>(null);
@@ -412,7 +445,8 @@ function GearInScene() {
       <g ref={knob} transform={`translate(${BX} ${BY - 30})`}>
         <ellipse cx="3" cy="9" rx="19" ry="11" fill="url(#castShadow)" />
         <ellipse cx="0" cy="3" rx="17" ry="13" fill="#0a0b0d" />
-        <g className="knob-face">
+        {photo && art.has('gearKnob') && <g className="knob-face"><ArtImg id="gearKnob" px={0} py={0} testId="art-gear" /></g>}
+        <g className="knob-face" style={photo && art.has('gearKnob') ? { display: 'none' } : undefined}>
           <ellipse cx="0" cy="0" rx="17" ry="13" fill="url(#gearKnob)" stroke="#4a535b" strokeWidth="0.7" />
           <ellipse cx="-5" cy="-5" rx="7" ry="3.5" fill="#ffffff" opacity="0.16" />
           <ellipse ref={ring} cx="0" cy="0" rx="20" ry="16" fill="none" stroke="#ffb02e" strokeWidth="2" style={{ opacity: 0 }} />
@@ -474,6 +508,8 @@ export function Scene({ onZoom, reveal, lay }: { onZoom: (z: ZoomId) => void; re
   const grain = useGrain();
   const { SW, L, C, Rt } = lay;
   const wheelDrag = useWheelDrag(L);
+  const photo = useArtReady();
+  const led = (x: number, y: number, on: boolean | undefined) => on !== undefined && on ? <rect x={x} y={y} width="6" height="1.6" rx="0.8" fill="#ffb02e" className="led-on" pointerEvents="none" /> : null;
   const back = v.position && v.powerOn;
   const legend = back ? '#ffcf8a' : '#a3adb6';
   const hzOn = v.hazard && v.blinkOn;
@@ -525,6 +561,8 @@ export function Scene({ onZoom, reveal, lay }: { onZoom: (z: ZoomId) => void; re
         {grain && <pattern id="grain" width="96" height="96" patternUnits="userSpaceOnUse"><image href={grain} width="96" height="96" /></pattern>}
       </defs>
 
+      {photo && <image href={art.url('base')} x={L} y={0} width={art.layer('base')!.w / 4} height={420} preserveAspectRatio="none" pointerEvents="none" data-art="base" data-testid="art-base" />}
+      {!photo && <>
       {/* colunas A */}
       <path d="M0 0 H38 L10 128 H0 Z" fill="#0a0b0c" />
       <path d="M34 0 L38 0 L10 128 L7 128 Z" fill="#1c1f22" />
@@ -541,8 +579,6 @@ export function Scene({ onZoom, reveal, lay }: { onZoom: (z: ZoomId) => void; re
       <path d={`M0 241.6 Q${(L + 300) * 0.6} 229.6 ${C + 522} 235.6`} fill="none" stroke="#2b3035" strokeWidth="0.6" />
       <path d={`M${C + 714} 234 Q${(C + 714 + SW) / 2} 228 ${SW} 236`} fill="none" stroke="#08090a" strokeWidth="2" />
       <path d={`M${C + 714} 235.6 Q${(C + 714 + SW) / 2} 229.6 ${SW} 237.6`} fill="none" stroke="#2b3035" strokeWidth="0.6" />
-      {v.night && <path d={`M0 122 Q${mid} 92 ${SW} 122 V420 H0 Z`} fill="#000" opacity="0.45" pointerEvents="none" />}
-
       {/* ===================== lado do passageiro ===================== */}
       <g transform={`translate(${Rt} 0)`}>
         <Vent x={818} y={152} w={62} h={34} trim />
@@ -550,13 +586,20 @@ export function Scene({ onZoom, reveal, lay }: { onZoom: (z: ZoomId) => void; re
         <path d="M716 256 L900 250 L900 420 L716 420 Z" fill="url(#footwell)" />
         <path d="M716 256 L900 250" stroke="#000" strokeOpacity="0.6" strokeWidth="2" />
       </g>
+      </>}
+      {v.night && <path d={`M0 ${photo ? 100 : 122} Q${mid} ${photo ? 80 : 92} ${SW} ${photo ? 100 : 122} V420 H0 Z`} fill="#000" opacity="0.45" pointerEvents="none" />}
+      {photo && (
+        <g transform={`translate(${Rt} 0)`}>
+          <path d="M716 256 L900 250 L900 420 L716 420 Z" fill="#000" opacity="0.35" pointerEvents="none" />
+        </g>
+      )}
 
       {/* ===================== lado do motorista ===================== */}
       <g transform={`translate(${L} 0)`}>
+        {!photo && <>
         {/* porta */}
         <path d="M-60 150 L18 154 L18 268 L-60 276 Z" fill="#0f1113" stroke="#22272b" />
         <rect x="3" y="194" width="11" height="14" rx="2.5" fill="url(#keyFace)" stroke="#3a4148" strokeWidth="0.5" />
-        {zoomRect('door', -4, 150, 26, 120, 'zoom-door')}
         {/* poço da embreagem */}
         <path d="M-60 316 L104 312 L112 420 L-60 420 Z" fill="url(#footwell)" />
         <Vent x={24} y={152} w={60} h={34} trim />
@@ -565,31 +608,40 @@ export function Scene({ onZoom, reveal, lay }: { onZoom: (z: ZoomId) => void; re
         <g className="press" onPointerDown={(e: React.PointerEvent) => pressFx(e)}>
           {setup.leftBank.map((fn, i) => fn !== 'none' && <Key3D key={i} x={29} y={200 + i * 15} w={52} label={slotLabel(fn)} led={slotLed(fn)} legend={legend} />)}
         </g>
+        </>}
+        {photo && setup.leftBank.map((fn, i) => fn !== 'none' && <React.Fragment key={i}>{led(52, 201.4 + i * 15, slotLed(fn))}</React.Fragment>)}
+        {zoomRect('door', -4, 150, 26, 120, 'zoom-door')}
         {zoomRect('leftBank', 22, 194, 66, 54, 'zoom-leftBank')}
 
         {/* capô e quadro */}
+        {!photo && <>
         <rect x="164" y="152" width="212" height="114" rx="24" fill="#040506" />
         <path d="M148 180 Q146 128 270 124 Q394 128 392 180 Q388 148 270 144 Q152 148 148 180 Z" fill="url(#hood)" />
         <path d="M152 176 Q152 132 270 128 Q388 132 388 176" fill="none" stroke="#ffffff" strokeOpacity="0.08" strokeWidth="1" />
+        </>}
         <ClusterSvg x={172} y={160} width={196} height={98} id="scene" />
         <rect x="172" y="160" width="196" height="98" rx="18" fill="url(#glare)" pointerEvents="none" />
         {zoomRect('cluster', 190, 186, 160, 70, 'zoom-cluster')}
 
         {/* capa da coluna de direção (aparece quando o volante gira) */}
+        {!photo && <>
         <path d="M196 262 Q270 246 344 262 L352 360 Q270 376 188 360 Z" fill="url(#hood)" stroke="#2a3036" />
         <path d="M200 266 Q270 251 340 266" fill="none" stroke="#ffffff" strokeOpacity="0.08" />
+        </>}
         <WheelGrip {...wheelDrag} />
-        <StalkInScene side="L" onZoom={onZoom} />
-        <StalkInScene side="R" onZoom={onZoom} />
-        <Wheel legend={legend} onZoom={onZoom} />
-        <Ignition />
+        <StalkInScene side="L" onZoom={onZoom} photo={photo} />
+        <StalkInScene side="R" onZoom={onZoom} photo={photo} />
+        <Wheel legend={legend} onZoom={onZoom} photo={photo} />
+        <Ignition photo={photo} />
       </g>
 
       {/* ===================== console central ===================== */}
       <g transform={`translate(${C} 0)`}>
         {/* central multimídia flutuante */}
+        {!photo && <>
         <rect x="527" y="99" width="186" height="96" rx="8" fill="#000" opacity="0.55" />
         <rect x="532" y="90" width="176" height="92" rx="7" fill="url(#hood)" stroke="#3a4148" strokeWidth="1" />
+        </>}
         <rect x="539" y="96" width="162" height="80" rx="3" fill={screenOn ? 'url(#screenG)' : '#020303'} />
         {screenOn && (
           <g data-testid="screen">
@@ -606,18 +658,28 @@ export function Scene({ onZoom, reveal, lay }: { onZoom: (z: ZoomId) => void; re
           </g>
         )}
         <rect x="539" y="96" width="162" height="80" rx="3" fill="url(#glare)" pointerEvents="none" />
+        {!photo && <>
         <line x1="536" x2="704" y1="91" y2="91" stroke="#ffffff" strokeOpacity="0.15" strokeWidth="0.8" />
         <rect x="550" y="185" width="140" height="15" rx="4" fill="url(#recess)" stroke="#22272b" />
         <g className="press" onPointerDown={(e: React.PointerEvent) => pressFx(e)}>
           {['⏻', '◀◀', '▶▶', 'MAP', 'HOME'].map((t, i) => <Key3D key={t} x={553 + i * 27} y={187} w={24} h={9.5} r={2} label={t} legend={legend} />)}
         </g>
+        </>}
         {zoomRect('media', 532, 90, 176, 112, 'zoom-media')}
 
         {/* saídas centrais e pisca-alerta */}
+        {!photo && <>
         <Vent x={540} y={204} w={68} h={34} />
         <Vent x={642} y={204} w={68} h={34} />
+        </>}
         <g data-testid="hazard" className="press" style={{ touchAction: 'none' }}
           onPointerDown={(e: React.PointerEvent) => { e.preventDefault(); pressFx(e, 180); if (!q('hazard')) { v.toggleHazard(); notify(); } }}>
+          {photo && art.has('hazardOff') ? (
+            <g className="keycap">
+              <image href={art.url(hzOn && art.has('hazardOn') ? 'hazardOn' : 'hazardOff')} x="609" y="205" width="32" height="32" preserveAspectRatio="none" data-art="hazard" />
+              {hzOn && !art.has('hazardOn') && <path d="M625 212.5 L633.5 228 H616.5 Z" fill="#ff5a4c" opacity="0.5" className="hz-glow" />}
+            </g>
+          ) : <>
           <rect x="611" y="207" width="28" height="29" rx="5" fill="#030404" />
           <rect x="612.5" y="210.5" width="25" height="25" rx="4.5" fill="#0b0d0f" />
           <g className="keycap">
@@ -626,29 +688,38 @@ export function Scene({ onZoom, reveal, lay }: { onZoom: (z: ZoomId) => void; re
             {hzOn && <path d="M625 212.5 L633.5 228 H616.5 Z" fill="#ff5a4c" opacity="0.5" className="hz-glow" />}
             <path d="M625 212.5 L633.5 228 H616.5 Z M625 217.4 L629.8 225.6 H620.2 Z" fill="none" stroke={hzOn ? '#ff7568' : '#c2463d'} strokeWidth="1.9" strokeLinejoin="round" />
           </g>
+          </>}
           <rect x="604" y="200" width="42" height="42" fill="transparent" />
         </g>
 
         {/* ar-condicionado (painel rebaixado) */}
+        {!photo && <>
         <rect x="546" y="246" width="158" height="76" rx="11" fill="url(#recess)" stroke="#262b30" />
         <rect x="547" y="247" width="156" height="74" rx="10" fill="none" stroke="#000" strokeOpacity="0.5" strokeWidth="1.5" />
-        {setup.knobs.map((fn, i) => <KnobInScene key={i} fn={fn} cx={[584, 625, 666][i]} cy={272} r={i === 1 ? 17 : 15} />)}
-        <g className="press" onPointerDown={(e: React.PointerEvent) => pressFx(e)}>
+        </>}
+        {setup.knobs.map((fn, i) => <KnobInScene key={i} fn={fn} cx={[584, 625, 666][i]} cy={272} r={i === 1 ? 17 : 15} photo={photo} />)}
+        {!photo && <g className="press" onPointerDown={(e: React.PointerEvent) => pressFx(e)}>
           {setup.climateBtns.map((fn, i) => fn !== 'none' && <Key3D key={i} x={558 + i * 34} y={301} w={30} h={11} label={slotLabel(fn)} led={slotLed(fn)} legend={legend} />)}
-        </g>
+        </g>}
+        {photo && setup.climateBtns.map((fn, i) => fn !== 'none' && <React.Fragment key={i}>{led(570 + i * 34, 302.4, slotLed(fn))}</React.Fragment>)}
         <rect x="548" y="297" width="154" height="22" fill="transparent" data-testid="zoom-climate" style={{ touchAction: 'none' }}
           onPointerDown={(e: React.PointerEvent) => { e.preventDefault(); onZoom('climate'); }} />
 
         {/* console: nicho com tomadas, câmbio, freio de mão */}
+        {!photo && <>
         <rect x="572" y="325" width="106" height="20" rx="5" fill="url(#recess)" stroke="#22272b" />
         <rect x="589" y="331" width="13" height="5.5" rx="1" fill="#050607" stroke="#2a3036" strokeWidth="0.5" /><text x="595.5" y="343" className="sc-tiny" textAnchor="middle">USB</text>
         <circle cx="656" cy="334.5" r="4.8" fill="#050607" stroke="#2a3036" strokeWidth="0.6" /><text x="656" y="343" className="sc-tiny" textAnchor="middle">12V</text>
-        <GearInScene />
+        </>}
+        <GearInScene photo={photo} />
         <g data-testid="handbrake" className="press" style={{ touchAction: 'none' }}
           onPointerDown={(e: React.PointerEvent) => { e.preventDefault(); pressFx(e, 200); if (!q('handbrake')) sim.toggleHandbrake(); }}>
+          {photo && art.has('handbrakeDown') && <image href={art.url(c.inputs.handbrake && art.has('handbrakeUp') ? 'handbrakeUp' : 'handbrakeDown')} x="672" y="334" width="60" height="90" preserveAspectRatio="none" data-art="handbrake" />}
+          {!(photo && art.has('handbrakeDown')) && <>
           <path d={c.inputs.handbrake ? 'M690 424 L699 372 Q703 360 714 363 L719 424 Z' : 'M690 424 L696 398 Q700 388 711 391 L719 424 Z'} fill="#000" opacity="0.4" transform="translate(3 3)" />
           <path d={c.inputs.handbrake ? 'M690 424 L699 372 Q703 360 714 363 L719 424 Z' : 'M690 424 L696 398 Q700 388 711 391 L719 424 Z'} fill="url(#stalkArm)" stroke="#3a4148" strokeWidth="0.7" />
           <path d={c.inputs.handbrake ? 'M701 370 Q704 363 712 364' : 'M698 396 Q701 390 709 391'} stroke="#ffffff" strokeOpacity="0.25" strokeWidth="1" fill="none" />
+          </>}
           <rect x="684" y="352" width="40" height="68" fill="transparent" />
         </g>
       </g>
