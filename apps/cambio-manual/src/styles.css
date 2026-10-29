@@ -557,7 +557,7 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--amber)
 .ck-pedal.gas .pedal .pad { left: 14%; right: 14%; border-radius: 8px; }
 .ck-pedal .pedal.active .pad { border-color: #6b747c; box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 3px 0 #0c0e10, 0 5px 8px rgba(0,0,0,.7); }
 
-.hud { position: absolute; left: 50%; top: 8px; transform: translateX(-50%); width: 560px; display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none; }
+.hud { position: absolute; left: 50%; top: 56px; transform: translateX(-50%); width: 560px; display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none; }
 .hud-msg { pointer-events: auto; background: rgba(8,9,10,.82); border: 1px solid rgba(243,164,59,.6); color: #fff; border-radius: 8px; padding: 5px 10px; font-size: 13px; font-weight: 600; text-align: center; display: flex; gap: 10px; align-items: center; }
 .hud-x { border: 1px solid #3a434b; background: #1a1e22; color: #fff; border-radius: 6px; padding: 2px 8px; font-size: 12px; }
 .hud-fb { background: rgba(8,9,10,.78); border-radius: 8px; padding: 4px 10px; font-size: 12px; color: #e9edf0; max-width: 560px; text-align: center; }
@@ -623,3 +623,32 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--amber)
 /* modo foto: sapata do pedal com a imagem da arte */
 .ck-pedal.photo .pedal .pad { background: var(--pedal-img) center / 100% 100% no-repeat; border: 0; border-radius: 0; box-shadow: 0 8px 12px rgba(0,0,0,.6); }
 .ck-pedal.photo .pedal.active .pad { box-shadow: 0 4px 6px rgba(0,0,0,.6); filter: brightness(1.1); }
+
+/* ---------- retrovisores ---------- */
+.mirror { position: absolute; touch-action: none; filter: drop-shadow(0 3px 3px rgba(0,0,0,.55)); }
+.mirror canvas { display: block; width: 100%; height: 100%; }
+.mirror.int { filter: drop-shadow(0 2px 2px rgba(0,0,0,.6)); }
+.mirror-tab { position: absolute; border: 0; background: transparent; padding: 0; touch-action: none; }
+.zoom-panel.z-door { max-width: 640px; padding: 14px 16px; }
+.m-row { display: flex; align-items: center; gap: 14px; justify-content: center; }
+.m-prev { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; color: var(--ink-dim); }
+.m-prev .m-cv { width: 168px; height: 104px; border-radius: 16px; display: block; background: #0b0d0f; box-shadow: 0 0 0 3px #08090a, 0 0 0 4px #2c3237, 0 8px 18px rgba(0,0,0,.55); }
+.m-prev.sel .m-cv { box-shadow: 0 0 0 3px #08090a, 0 0 0 5px rgba(243,164,59,.85), 0 8px 18px rgba(0,0,0,.55); }
+.m-prev.ok span { color: #4cc38a; }
+.m-switch { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.m-switch .pseg button { min-height: 38px; min-width: 40px; font-size: 15px; font-weight: 700; }
+.m-pad { position: relative; width: 132px; height: 132px; border-radius: 50%; background: radial-gradient(circle at 40% 32%, #2a3035, #101214 70%); box-shadow: inset 0 2px 0 rgba(255,255,255,.08), inset 0 -3px 6px rgba(0,0,0,.6), 0 6px 14px rgba(0,0,0,.55); }
+.m-pad .m-hub { position: absolute; left: 50%; top: 50%; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #3a4249, #15181b); box-shadow: 0 2px 4px rgba(0,0,0,.6); }
+.m-pad .m-arrow { position: absolute; width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: 12px; display: grid; place-items: center; color: #6c7780; }
+.m-pad.live .m-arrow { color: var(--amber); }
+.m-pad .m-arrow.m-up { left: 44px; top: 2px; }
+.m-pad .m-arrow.m-dn { left: 44px; bottom: 2px; }
+.m-pad .m-arrow.m-dn svg { transform: rotate(180deg); }
+.m-pad .m-arrow.m-lf { left: 2px; top: 44px; }
+.m-pad .m-arrow.m-lf svg { transform: rotate(-90deg); }
+.m-pad .m-arrow.m-rt { right: 2px; top: 44px; }
+.m-pad .m-arrow.m-rt svg { transform: rotate(90deg); }
+.m-hint { text-align: center; min-height: 18px; }
+.m-hint.ok { color: #4cc38a; }
+.m-big { display: flex; justify-content: center; }
+.m-big .m-cv { width: 470px; height: 150px; display: block; border-radius: 40px; box-shadow: 0 0 0 4px #08090a, 0 0 0 5px #2c3237, 0 10px 22px rgba(0,0,0,.6); }

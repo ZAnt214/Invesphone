@@ -334,6 +334,24 @@ export class CarAudio {
     this.tone({ f0: 180, f1: 90, dur: 0.08, gain: 0.15 });
   }
 
+  private motorNodes: { stop: () => void } | null = null;
+  /** Motorzinho do retrovisor elétrico (zumbido baixo enquanto gira). */
+  mirrorMotor(on: boolean) {
+    if (!this.ready) return;
+    if (!on) { this.motorNodes?.stop(); this.motorNodes = null; return; }
+    if (this.motorNodes) return;
+    const ctx = this.ctx!;
+    const t = ctx.currentTime;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.07, t + 0.04);
+    const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1400; bp.Q.value = 1.2;
+    const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(150, t); o.frequency.linearRampToValueAtTime(185, t + 0.12);
+    const o2 = ctx.createOscillator(); o2.type = 'square'; o2.frequency.value = 2 * 185 + 7;
+    const g2 = ctx.createGain(); g2.gain.value = 0.25;
+    o.connect(bp); o2.connect(g2).connect(bp); bp.connect(g).connect(this.master);
+    o.start(t); o2.start(t);
+    this.motorNodes = { stop: () => { const n = ctx.currentTime; g.gain.setTargetAtTime(0, n, 0.015); o.stop(n + 0.1); o2.stop(n + 0.1); } };
+  }
+
   /** Chamado a cada quadro com o estado da simulação. */
   update(s: AudioState, dt: number) {
     const ctx = this.ctx;

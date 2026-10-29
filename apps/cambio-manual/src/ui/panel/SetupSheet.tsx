@@ -52,6 +52,13 @@ export function SetupSheet({ onClose }: { onClose: () => void }) {
           ))}
         </div>
 
+        <h4 className="sh">Cor do carro (aparece nos retrovisores)</h4>
+        <div className="trims">
+          {[['#e6e8e9', 'Branco'], ['#b8bdc2', 'Prata'], ['#6b7076', 'Cinza'], ['#17191b', 'Preto'], ['#9b1d20', 'Vermelho'], ['#23406c', 'Azul']].map(([c, n]) => (
+            <button key={c} type="button" className={`trim ${s.paint === c ? 'sel' : ''}`} style={{ background: c }} aria-label={n} data-testid={`paint-${n}`} onClick={() => carSetup.set({ paint: c })} />
+          ))}
+        </div>
+
         <h4 className="sh">Botões à esquerda do volante (de cima para baixo)</h4>
         <div className="picks">{s.leftBank.map((f, i) => <Pick key={i} id={`bank-${i}`} value={f} fns={BANK_FNS} onChange={(x) => setArr('leftBank', i, x)} />)}</div>
 

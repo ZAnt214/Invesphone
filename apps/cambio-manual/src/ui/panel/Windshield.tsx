@@ -35,7 +35,8 @@ export function Windshield({ vx = 0.5 }: { vx?: number }) {
     s.pan = (s.pan + s.bend * Math.abs(c.v) * dt * 4) % 10000;
     const X0 = vxRef.current * w;
     const hy = h * 0.42;
-    const cx = (z: number) => X0 - s.bend * w * 0.42 * (1 - z) * (1 - z);
+    // o carro anda no meio da faixa da direita: a faixa central fica à esquerda do motorista
+    const cx = (z: number) => X0 - s.bend * w * 0.42 * (1 - z) * (1 - z) - 0.4 * hw(z);
     const hw = (z: number) => w * (0.012 + 0.36 * z);
     const yz = (z: number) => hy + (h - hy) * z;
 

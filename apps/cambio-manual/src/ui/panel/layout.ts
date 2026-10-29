@@ -1,7 +1,7 @@
 // Disposição dos comandos (mesmas posições do painel do carro do aluno), ajustes por
 // versão e exercício "Onde fica?". Salvo no aparelho.
 
-export type ZoneId = 'cluster' | 'stalkL' | 'wheel' | 'stalkR' | 'leftBank' | 'door' | 'media' | 'hazard' | 'climate' | 'start' | 'console';
+export type ZoneId = 'cluster' | 'stalkL' | 'wheel' | 'stalkR' | 'leftBank' | 'door' | 'media' | 'hazard' | 'climate' | 'start' | 'console' | 'rearMirror';
 
 export const ZONES: Record<ZoneId, { name: string; where: string }> = {
   cluster: { name: 'Quadro de instrumentos', where: 'atrás do volante' },
@@ -15,6 +15,7 @@ export const ZONES: Record<ZoneId, { name: string; where: string }> = {
   climate: { name: 'Ar-condicionado', where: 'no centro, abaixo das saídas de ar' },
   start: { name: 'Ignição', where: 'à direita da coluna de direção' },
   console: { name: 'Console central', where: 'entre os bancos' },
+  rearMirror: { name: 'Retrovisor interno', where: 'no alto do para-brisa' },
 };
 
 /** Funções que podem ser trocadas de lugar no modo "Ajustar ao meu carro". */
@@ -34,6 +35,7 @@ export interface CarSetup {
   climateBtns: SlotFn[]; // 4 botões abaixo dos giratórios
   doorBtns: SlotFn[]; // 1 posição na porta
   trim: string; // cor da moldura das saídas de ar
+  paint: string; // cor do carro (capa dos retrovisores e lateral vista neles)
 }
 
 export const VERSIONS: Record<CarSetup['version'], { name: string; pushStart: boolean; cruise: boolean; autoLights: boolean }> = {
@@ -50,6 +52,7 @@ const DEFAULT: CarSetup = {
   climateBtns: ['ac', 'recirc', 'rearDefrost', 'none'],
   doorBtns: ['lock'],
   trim: '#d4513a',
+  paint: '#e6e8e9',
 };
 
 const KEY = 'cambio-manual.setup.v1';
@@ -103,6 +106,8 @@ export const QUIZ: QuizItem[] = [
   { id: 'fn:level', ask: 'a regulagem de altura dos faróis', hint: 'Botões à esquerda do volante.' },
   { id: 'fn:espOff', ask: 'o botão ESP OFF', hint: 'Botões à esquerda do volante.' },
   { id: 'fn:lock', ask: 'a trava das portas', hint: 'Painel da porta do motorista.' },
+  { id: 'mirrorSwitch', ask: 'o ajuste dos retrovisores externos', hint: 'Painel da porta do motorista: escolha E ou D no seletor e use as setas.' },
+  { id: 'mirrorI', ask: 'o retrovisor interno', hint: 'No alto do para-brisa, no centro. Ajusta com a mão.' },
 ];
 
 /** Em qual zona fica cada item, segundo o ajuste atual. */
@@ -110,7 +115,7 @@ export function zoneOf(id: string, s: CarSetup): ZoneId {
   const fixed: Record<string, ZoneId> = {
     hazard: 'hazard', turnL: 'stalkL', turnR: 'stalkL', lights: 'stalkL', high: 'stalkL', flash: 'stalkL', fog: 'stalkL',
     wiper: 'stalkR', washer: 'stalkR', rearWiper: 'stalkR', horn: 'wheel', volume: 'wheel', trip: 'wheel', cruise: 'wheel',
-    handbrake: 'console', ignition: 'start',
+    handbrake: 'console', ignition: 'start', mirrorSwitch: 'door', mirrorI: 'rearMirror',
   };
   if (fixed[id]) return fixed[id];
   const fn = id.replace('fn:', '') as SlotFn;

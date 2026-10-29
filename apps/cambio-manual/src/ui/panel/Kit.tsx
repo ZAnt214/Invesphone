@@ -13,6 +13,7 @@ export function quizStart() {
   const pool = QUIZ.filter((q) => !q.needs || q.needs(s)).sort(() => Math.random() - 0.5).slice(0, 12);
   Object.assign(quiz, { firstTry: 0, active: true, list: pool, idx: 0, t0: performance.now(), startAt: performance.now(), correct: 0, wrong: 0, times: [], done: false, wrongHere: 0 });
   progress.startDrill('where');
+  sim.mirrors.stopDrill();
   sim.feedback = [];
   done();
 }
