@@ -22,6 +22,10 @@ src/
                       com o quadro visto pelo aro, alavancas arrastáveis, chave giratória, multimídia,
                       pisca-alerta, botões giratórios do ar, câmbio no console, freio de mão, pedais;
                       close-ups para botões pequenos; "Onde fica?" e ajustes no menu discreto
+  ui/cockpit/Cabin.tsx  moldura da cabine e corpo do painel: teto, serigrafia do para-brisa, colunas A
+                      com tweeter, para-sóis que abaixam ao toque, topo do painel iluminado, grade do
+                      desembaçador, friso, assoalho com carpete
+  ui/cockpit/ClusterSvg.tsx  quadro: conta-giros e velocímetro com aros cromados e tela central
   ui/cockpit/art.ts   modo foto: carrega o pacote de arte fotorrealista de public/cambio/art/ (camadas
                       PNG + manifest.json com tamanhos e pivôs) e troca o desenho pelas fotos; sem o
                       pacote, fica o desenho vetorial. Contrato no pedido
@@ -46,7 +50,7 @@ npm run build      # dist/index.html (React via CDN) e dist/test.html (React emb
 npm test           # física e alavanca
 npm run typecheck
 npm run e2e        # Chromium emulando iPhone
-node e2e/cockpit.mjs # cockpit horizontal em tela cheia (50 verificações, várias proporções)
+node e2e/cockpit.mjs # cockpit horizontal em tela cheia (54 verificações)
 node e2e/mirrors.mjs # retrovisores: comando elétrico, interno com o dedo, treino e aviso ao sair
 node e2e/cockpit-art.mjs # modo foto com um pacote de arte de teste (e2e/make-test-art.py)
 ```

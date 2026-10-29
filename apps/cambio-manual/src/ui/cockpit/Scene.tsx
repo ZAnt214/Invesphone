@@ -7,6 +7,7 @@ import { quizAnswer } from '../panel/Kit';
 import { STATIONS, SOURCES, type WiperMode } from '../../sim/vehicle';
 import { art, placeAt, type ArtId } from './art';
 import { mirrorBoxes } from './Mirrors';
+import { CabinDefs, CabinFrame, DashBody, SunVisors } from './Cabin';
 
 /** Modo foto: liga quando o pacote de arte (public/cambio/art) termina de carregar. */
 export function useArtReady() {
@@ -41,7 +42,7 @@ function pressFx(e: { currentTarget: unknown }, ms = 150) {
 }
 
 /** Tecla física pequena com laterais, sombra e brilho na borda. */
-function Key3D({ x, y, w, h = 12, label, led, legend, r = 2.5 }: { x: number; y: number; w: number; h?: number; label: string; led?: boolean; legend: string; r?: number }) {
+function Key3D({ x, y, w, h = 12, label, led, legend, r = 2.5, icon }: { x: number; y: number; w: number; h?: number; label: string; led?: boolean; legend: string; r?: number; icon?: (cx: number, cy: number, col: string) => React.ReactNode }) {
   return (
     <g className="key3d">
       <rect x={x - 0.6} y={y - 0.6} width={w + 1.2} height={h + 2.4} rx={r + 0.6} fill="#050607" />
@@ -49,7 +50,7 @@ function Key3D({ x, y, w, h = 12, label, led, legend, r = 2.5 }: { x: number; y:
       <g className="keycap">
         <rect x={x} y={y} width={w} height={h} rx={r} fill="url(#keyFace)" stroke="#3a4148" strokeWidth="0.5" />
         <line x1={x + r} x2={x + w - r} y1={y + 0.6} y2={y + 0.6} stroke="#ffffff" strokeOpacity="0.14" strokeWidth="0.6" />
-        <text x={x + w / 2} y={y + h / 2 + 2.6} className="sc-btn" textAnchor="middle" style={{ fill: legend }}>{label}</text>
+        {icon ? icon(x + w / 2, y + h / 2, legend) : <text x={x + w / 2} y={y + h / 2 + 2.6} className="sc-btn" textAnchor="middle" style={{ fill: legend }}>{label}</text>}
         {led !== undefined && <rect x={x + w / 2 - 3} y={y + 1.4} width="6" height="1.3" rx="0.6" fill={led ? '#ffb02e' : '#2f363c'} className={led ? 'led-on' : ''} />}
       </g>
     </g>
@@ -62,6 +63,7 @@ function Vent({ x, y, w, h, trim }: { x: number; y: number; w: number; h: number
     <g>
       <rect x={x - 1} y={y + 2} width={w + 2} height={h} rx={trim ? 10 : 7} fill="#030304" opacity="0.8" />
       {trim ? <rect x={x} y={y} width={w} height={h} rx="9" fill="none" stroke="var(--trim)" strokeWidth="3.6" /> : <rect x={x} y={y} width={w} height={h} rx="6" fill="#0c0e10" stroke="#2a3036" />}
+      {!trim && <rect x={x} y={y} width={w} height={h} rx="6" fill="url(#gloss)" />}
       {trim && <rect x={x + 0.8} y={y + 0.6} width={w - 1.6} height={h - 1.2} rx="8.5" fill="none" stroke="#ffffff" strokeOpacity="0.18" strokeWidth="0.7" />}
       <rect x={x + 4} y={y + 4} width={w - 8} height={h - 8} rx="5" fill="url(#ventDepth)" />
       {Array.from({ length: Math.floor((h - 10) / 4.5) }, (_, i) => (
@@ -186,43 +188,88 @@ function useWheelDrag(L: number) {
   return { down, move, up };
 }
 
+/** Arco de circunferência (graus, 0 = direita, 90 = embaixo). */
+function arc(cx: number, cy: number, r: number, a0: number, a1: number) {
+  const p = (a: number) => [cx + r * Math.cos((a * Math.PI) / 180), cy + r * Math.sin((a * Math.PI) / 180)];
+  const [x0, y0] = p(a0), [x1, y1] = p(a1);
+  return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+}
+const speaker = (x: number, y: number, col: string) => <path d={`M${x - 2.6} ${y - 1.3} h1.5 l2.1 -1.9 v6.4 l-2.1 -1.9 h-1.5 Z`} fill={col} />;
+const iconVol = (sign: string) => (cx: number, cy: number, col: string) => (
+  <g>{speaker(cx - 3.5, cy, col)}<path d={sign === '+' ? `M${cx + 1.5} ${cy} h4 M${cx + 3.5} ${cy - 2} v4` : `M${cx + 1.5} ${cy} h4`} stroke={col} strokeWidth="0.9" /></g>
+);
+const iconMute = (cx: number, cy: number, col: string) => (
+  <g>{speaker(cx - 3.5, cy, col)}<path d={`M${cx + 1.6} ${cy - 1.8} l3.4 3.6 M${cx + 5} ${cy - 1.8} l-3.4 3.6`} stroke={col} strokeWidth="0.9" /></g>
+);
+
 function Wheel({ legend, onZoom, photo }: { legend: string; onZoom: (z: ZoomId) => void; photo: boolean }) {
   const setup = carSetup.get();
   const rot = React.useRef<SVGGElement | null>(null);
   useFrame(() => { if (rot.current) rot.current.setAttribute('transform', `rotate(${sim.steer.toFixed(2)} 270 293)`); });
   const k3 = (x: number, y: number, w: number, label: string) => <Key3D x={x} y={y} w={w} h={9} r={2} label={label} legend={legend} />;
+  const k3i = (x: number, y: number, w: number, label: string, icon: (cx: number, cy: number, col: string) => React.ReactNode) => <Key3D x={x} y={y} w={w} h={9} r={2} label={label} legend={legend} icon={icon} />;
   return (
     <>
       {/* sombra do volante no painel */}
       <circle cx="274" cy="300" r="172" fill="none" stroke="#000" strokeOpacity={photo ? 0.3 : 0.45} strokeWidth="24" pointerEvents="none" />
       {!photo && <>
-      {/* aro: forma e luz fixas (o aro é redondo), costura gira junto */}
-      <circle cx="270" cy="293" r="171" fill="none" stroke="url(#rim)" strokeWidth="21" pointerEvents="none" />
-      <circle cx="270" cy="293" r="181" fill="none" stroke="#454d55" strokeWidth="0.8" opacity="0.7" pointerEvents="none" />
-      <circle cx="270" cy="293" r="161" fill="none" stroke="#000" strokeOpacity="0.6" strokeWidth="1.2" pointerEvents="none" />
-      <path d="M128 186 A171 171 0 0 1 300 123" fill="none" stroke="#ffffff" strokeOpacity="0.13" strokeWidth="4" strokeLinecap="round" pointerEvents="none" />
+      {/* aro: tubo de couro com luz de cima (forma e luz fixas; o que tem marca gira junto) */}
+      <circle cx="270" cy="293" r="171" fill="none" stroke="url(#rimTube)" strokeWidth="22" pointerEvents="none" />
+      <circle cx="270" cy="293" r="171" fill="none" stroke="url(#grain)" strokeWidth="21" pointerEvents="none" />
+      <circle cx="270" cy="293" r="171" fill="none" stroke="url(#rimLight)" strokeWidth="22" pointerEvents="none" />
+      <circle cx="270" cy="293" r="182" fill="none" stroke="#3c444b" strokeWidth="0.7" opacity="0.55" pointerEvents="none" />
+      <circle cx="270" cy="293" r="160" fill="none" stroke="#000" strokeOpacity="0.65" strokeWidth="1.2" pointerEvents="none" />
+      <path d={arc(270, 293, 175.5, 196, 286)} fill="none" stroke="#ffffff" strokeOpacity="0.16" strokeWidth="3" strokeLinecap="round" pointerEvents="none" />
+      <path d={arc(270, 293, 176.5, 214, 262)} fill="none" stroke="#ffffff" strokeOpacity="0.2" strokeWidth="1.1" strokeLinecap="round" pointerEvents="none" />
       </>}
       <g ref={rot}>
         {photo && <ArtImg id="wheel" px={270} py={293} testId="art-wheel" />}
         {!photo && <>
-        <circle cx="270" cy="293" r="171" fill="none" stroke="#c43c33" strokeWidth="0.8" strokeDasharray="2 3" opacity="0.6" pointerEvents="none" />
-        <rect x="266" y="113" width="8" height="21" rx="2" fill="#2a3036" opacity="0.9" pointerEvents="none" />
+        {/* pegas de polegar e costura (giram com o volante) */}
         <g pointerEvents="none">
+          {[[158, 202], [-22, 22]].map(([a0, a1]) => (
+            <g key={a0}>
+              <path d={arc(270, 293, 161.5, a0, a1)} fill="none" stroke="url(#gripTube)" strokeWidth="8" strokeLinecap="round" />
+              <path d={arc(270, 293, 158.6, a0 + 3, a1 - 3)} fill="none" stroke="#000" strokeOpacity="0.5" strokeWidth="1" />
+            </g>
+          ))}
+          <circle cx="270" cy="293" r="164.2" fill="none" stroke="#a8362e" strokeWidth="0.75" strokeDasharray="1.7 1.3" opacity="0.8" />
+          <circle cx="270" cy="293" r="177.8" fill="none" stroke="#000" strokeOpacity="0.35" strokeWidth="0.6" strokeDasharray="1.7 1.3" />
+        </g>
+        <g pointerEvents="none">
+          {/* raios: base, chanfro (luz em cima, sombra embaixo) */}
           <path d="M104 296 Q150 284 226 290 L232 326 Q160 330 108 336 Z" fill="url(#spoke)" stroke="#2f353a" strokeWidth="0.8" />
           <path d="M436 296 Q390 284 314 290 L308 326 Q380 330 432 336 Z" fill="url(#spoke)" stroke="#2f353a" strokeWidth="0.8" />
           <path d="M244 330 L296 330 L310 470 L230 470 Z" fill="url(#spoke)" stroke="#2f353a" strokeWidth="0.8" />
-          <path d="M108 297 Q160 286 226 291" stroke="#ffffff" strokeOpacity="0.1" strokeWidth="1" fill="none" />
-          <path d="M432 297 Q380 286 314 291" stroke="#ffffff" strokeOpacity="0.1" strokeWidth="1" fill="none" />
-          <rect x="138" y="294" width="66" height="30" rx="7" fill="#08090b" stroke="#2a3036" />
-          {k3(142, 298, 28, 'VOL+')}{k3(172, 298, 28, 'MODE')}{k3(142, 311, 28, 'VOL−')}{k3(172, 311, 28, 'MUTE')}
-          <rect x="336" y="294" width="66" height="30" rx="7" fill="#08090b" stroke="#2a3036" />
+          <path d="M106 297.5 Q160 286 226 291.5" stroke="#ffffff" strokeOpacity="0.16" strokeWidth="1.2" fill="none" />
+          <path d="M434 297.5 Q380 286 314 291.5" stroke="#ffffff" strokeOpacity="0.16" strokeWidth="1.2" fill="none" />
+          <path d="M109 335 Q160 329 231 325" stroke="#000" strokeOpacity="0.55" strokeWidth="2" fill="none" />
+          <path d="M431 335 Q380 329 309 325" stroke="#000" strokeOpacity="0.55" strokeWidth="2" fill="none" />
+          {/* raio de baixo vazado, com friso prata */}
+          <path d="M255 362 L285 362 L293 430 L247 430 Z" fill="#040506" />
+          <path d="M255 362 L285 362" stroke="#000" strokeWidth="2.4" opacity="0.8" />
+          <path d="M247.5 428 L255.5 363" stroke="#ffffff" strokeOpacity="0.08" strokeWidth="0.8" />
+          <path d="M246 350 L294 350 L295.4 355 L244.6 355 Z" fill="url(#chromeRing)" opacity="0.85" />
+          {/* painéis de botões em preto brilhante, contorno prata */}
+          <rect x="136.5" y="292.5" width="69" height="33" rx="7.5" fill="none" stroke="url(#chromeRing)" strokeWidth="1.1" opacity="0.5" />
+          <rect x="138" y="294" width="66" height="30" rx="7" fill="#07080a" stroke="#000" />
+          <rect x="138" y="294" width="66" height="30" rx="7" fill="url(#gloss)" />
+          {k3i(142, 298, 28, 'VOL+', iconVol('+'))}{k3(172, 298, 28, 'MODE')}{k3i(142, 311, 28, 'VOL−', iconVol('−'))}{k3i(172, 311, 28, 'MUTE', iconMute)}
+          <rect x="334.5" y="292.5" width="69" height="33" rx="7.5" fill="none" stroke="url(#chromeRing)" strokeWidth="1.1" opacity="0.5" />
+          <rect x="336" y="294" width="66" height="30" rx="7" fill="#07080a" stroke="#000" />
+          <rect x="336" y="294" width="66" height="30" rx="7" fill="url(#gloss)" />
           {setup.cruise
             ? <>{k3(340, 298, 28, 'RES+')}{k3(370, 298, 28, 'CRUISE')}{k3(340, 311, 28, 'SET−')}{k3(370, 311, 28, 'TRIP')}</>
             : <>{k3(346, 298, 46, '▲ TRIP')}{k3(346, 311, 46, '▼ OK')}</>}
+          {/* bolsa do airbag: almofada com chanfro e sombra nos raios */}
+          <ellipse cx="272" cy="312" rx="50" ry="40" fill="#000" opacity="0.5" />
           <circle cx="270" cy="309" r="46" fill="#040506" />
           <path d="M226 286 Q270 260 314 286 L318 324 Q270 350 222 324 Z" fill="url(#hub)" stroke="#353c42" strokeWidth="0.9" />
-          <path d="M232 287 Q270 266 308 287" fill="none" stroke="#ffffff" strokeOpacity="0.12" strokeWidth="1.4" />
-          <text x="270" y="336" className="sc-tiny" textAnchor="middle" opacity="0.55">AIRBAG</text>
+          <path d="M231 289 Q270 266 309 289 L312.5 321 Q270 343 227.5 321 Z" fill="none" stroke="#000" strokeOpacity="0.35" strokeWidth="1.2" />
+          <path d="M232 287 Q270 266 308 287" fill="none" stroke="#ffffff" strokeOpacity="0.16" strokeWidth="1.4" />
+          <path d="M224 322 Q270 347 316 322" fill="none" stroke="#000" strokeOpacity="0.5" strokeWidth="1.6" />
+          <ellipse cx="262" cy="284" rx="26" ry="6" fill="#ffffff" opacity="0.04" />
+          <text x="270" y="336" className="sc-tiny" textAnchor="middle" opacity="0.5">AIRBAG</text>
         </g>
         </>}
         <rect x="136" y="292" width="70" height="34" rx="6" fill="transparent" data-testid="zoom-spokeL" style={{ touchAction: 'none' }}
@@ -358,6 +405,7 @@ function KnobInScene({ fn, cx, cy, r, photo }: { fn: SlotFn; cx: number; cy: num
       {!(photo && art.has('knob')) && <>
       {/* poço, sombra, lateral recartilhada e face */}
       <circle cx={cx} cy={cy + 1} r={r + 2.5} fill="#050607" />
+      <circle cx={cx} cy={cy + 0.6} r={r + 2.2} fill="none" stroke="url(#chromeRing)" strokeWidth="1.3" opacity="0.85" />
       <ellipse cx={cx + 2.5} cy={cy + 6} rx={r * 1.02} ry={r * 0.78} fill="url(#castShadow)" />
       <circle cx={cx} cy={cy + 3.4} r={r} fill="#08090a" />
       <circle cx={cx} cy={cy + 3.4} r={r} fill="none" stroke="#24292e" strokeWidth="2.6" strokeDasharray="0.9 1.5" />
@@ -531,6 +579,8 @@ export function Scene({ onZoom, reveal, lay }: { onZoom: (z: ZoomId) => void; re
   const slotLabel = (fn: SlotFn) => ({ level: 'FAROL ▲▼', espOff: 'ESP OFF', isgOff: 'ISG OFF', lock: 'TRAVA', ac: 'A/C', recirc: 'RECIRC', rearDefrost: 'DESEMB', fan: '', temp: '', vent: '', none: '' }[fn]);
   const slotLed = (fn: SlotFn) => ({ espOff: !v.esp, isgOff: !v.isg, lock: v.locked, ac: v.ac && v.fan > 0, recirc: v.recirc, rearDefrost: v.rearDefrost } as Record<string, boolean>)[fn];
   const mid = SW / 2;
+  const mb = mirrorBoxes(L, C, Rt);
+  const mirrorX = mb.I[0] + mb.I[2] / 2;
 
   return (
     <svg className="scene-svg" viewBox={`0 0 ${SW} 420`} style={{ width: SW }} data-testid="scene">
@@ -560,34 +610,29 @@ export function Scene({ onZoom, reveal, lay }: { onZoom: (z: ZoomId) => void; re
         <radialGradient id="footwell" cx="50%" cy="20%" r="90%"><stop offset="0" stopColor="#050506" /><stop offset="1" stopColor="#0d0e10" /></radialGradient>
         <radialGradient id="vignette" cx="50%" cy="55%" r="75%"><stop offset="0.6" stopColor="#000" stopOpacity="0" /><stop offset="1" stopColor="#000" stopOpacity="0.5" /></radialGradient>
         {grain && <pattern id="grain" width="96" height="96" patternUnits="userSpaceOnUse"><image href={grain} width="96" height="96" /></pattern>}
+        <CabinDefs night={v.night} />
+        <linearGradient id="binnacle" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#25292d" /><stop offset="1" stopColor="#0b0c0e" /></linearGradient>
+        <radialGradient id="rimTube" gradientUnits="userSpaceOnUse" cx="270" cy="293" r="183">
+          <stop offset="0.874" stopColor="#050607" /><stop offset="0.902" stopColor="#15181b" /><stop offset="0.93" stopColor="#2b3035" />
+          <stop offset="0.952" stopColor="#30363b" /><stop offset="0.975" stopColor="#191c20" /><stop offset="0.996" stopColor="#070809" />
+        </radialGradient>
+        <radialGradient id="gripTube" gradientUnits="userSpaceOnUse" cx="270" cy="293" r="183">
+          <stop offset="0.858" stopColor="#060708" /><stop offset="0.882" stopColor="#2c3136" /><stop offset="0.905" stopColor="#0e1012" />
+        </radialGradient>
+        <linearGradient id="rimLight" gradientUnits="userSpaceOnUse" x1="270" y1="112" x2="270" y2="476">
+          <stop offset="0" stopColor="#ffffff" stopOpacity="0.1" /><stop offset="0.35" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="0.62" stopColor="#000" stopOpacity="0" /><stop offset="1" stopColor="#000" stopOpacity="0.6" />
+        </linearGradient>
       </defs>
 
+      {!photo && <DashBody lay={lay} />}
       {photo && <image href={art.url('base')} x={L} y={0} width={art.layer('base')!.w / 4} height={420} preserveAspectRatio="none" pointerEvents="none" data-art="base" data-testid="art-base" />}
-      {!photo && <>
-      {/* colunas A */}
-      <path d="M0 0 H38 L10 128 H0 Z" fill="#0a0b0c" />
-      <path d="M34 0 L38 0 L10 128 L7 128 Z" fill="#1c1f22" />
-      <path d={`M${SW} 0 H${SW - 38} L${SW - 10} 128 H${SW} Z`} fill="#0a0b0c" />
-
-      {/* painel: superfície de cima, face, textura */}
-      <path d={`M0 122 Q${mid} 92 ${SW} 122 L${SW} 148 Q${mid} 122 0 148 Z`} fill="url(#dashTop)" />
-      <path d={`M0 146 Q${mid} 120 ${SW} 146 V420 H0 Z`} fill="url(#dashFace)" />
-      {grain && <path d={`M0 122 Q${mid} 92 ${SW} 122 V420 H0 Z`} fill="url(#grain)" pointerEvents="none" />}
-      <path d={`M0 146 Q${mid} 120 ${SW} 146`} fill="none" stroke="#3a4046" strokeWidth="1" />
-      <path d={`M0 148 Q${mid} 122 ${SW} 148`} fill="none" stroke="#000" strokeOpacity="0.5" strokeWidth="1.5" />
-      {/* linhas de acabamento */}
-      <path d={`M0 240 Q${(L + 300) * 0.6} 228 ${C + 522} 234`} fill="none" stroke="#08090a" strokeWidth="2" />
-      <path d={`M0 241.6 Q${(L + 300) * 0.6} 229.6 ${C + 522} 235.6`} fill="none" stroke="#2b3035" strokeWidth="0.6" />
-      <path d={`M${C + 714} 234 Q${(C + 714 + SW) / 2} 228 ${SW} 236`} fill="none" stroke="#08090a" strokeWidth="2" />
-      <path d={`M${C + 714} 235.6 Q${(C + 714 + SW) / 2} 229.6 ${SW} 237.6`} fill="none" stroke="#2b3035" strokeWidth="0.6" />
-      {/* ===================== lado do passageiro ===================== */}
-      <g transform={`translate(${Rt} 0)`}>
-        <Vent x={818} y={152} w={62} h={34} trim />
-        <path d="M730 262 Q815 254 898 264" fill="none" stroke="#2b3035" strokeWidth="0.6" />
-        <path d="M716 256 L900 250 L900 420 L716 420 Z" fill="url(#footwell)" />
-        <path d="M716 256 L900 250" stroke="#000" strokeOpacity="0.6" strokeWidth="2" />
-      </g>
-      </>}
+      <CabinFrame lay={lay} mirrorX={mirrorX} photo={photo} />
+      {!photo && (
+        <g transform={`translate(${Rt} 0)`}>
+          <Vent x={818} y={152} w={62} h={34} trim />
+        </g>
+      )}
       {v.night && <path d={`M0 ${photo ? 100 : 122} Q${mid} ${photo ? 80 : 92} ${SW} ${photo ? 100 : 122} V420 H0 Z`} fill="#000" opacity="0.45" pointerEvents="none" />}
       {photo && (
         <g transform={`translate(${Rt} 0)`}>
@@ -601,8 +646,6 @@ export function Scene({ onZoom, reveal, lay }: { onZoom: (z: ZoomId) => void; re
         {/* porta */}
         <path d="M-60 150 L18 154 L18 268 L-60 276 Z" fill="#0f1113" stroke="#22272b" />
         <rect x="3" y="194" width="11" height="14" rx="2.5" fill="url(#keyFace)" stroke="#3a4148" strokeWidth="0.5" />
-        {/* poço da embreagem */}
-        <path d="M-60 316 L104 312 L112 420 L-60 420 Z" fill="url(#footwell)" />
         <Vent x={24} y={152} w={60} h={34} trim />
         {/* botões à esquerda do volante */}
         <rect x="22" y="194" width="66" height="54" rx="6" fill="url(#recess)" stroke="#22272b" />
@@ -616,9 +659,15 @@ export function Scene({ onZoom, reveal, lay }: { onZoom: (z: ZoomId) => void; re
 
         {/* capô e quadro */}
         {!photo && <>
-        <rect x="164" y="152" width="212" height="114" rx="24" fill="#040506" />
-        <path d="M148 180 Q146 128 270 124 Q394 128 392 180 Q388 148 270 144 Q152 148 148 180 Z" fill="url(#hood)" />
-        <path d="M152 176 Q152 132 270 128 Q388 132 388 176" fill="none" stroke="#ffffff" strokeOpacity="0.08" strokeWidth="1" />
+        {/* moldura do quadro (binóculo) e a cobertura em cima */}
+        <path d="M152 170 Q152 146 178 145 L362 145 Q388 146 388 170 L388 262 Q388 276 372 276 L168 276 Q152 276 152 262 Z" fill="url(#binnacle)" />
+        <path d="M152 170 Q152 146 178 145 L362 145 Q388 146 388 170 L388 262 Q388 276 372 276 L168 276 Q152 276 152 262 Z" fill="url(#grain)" />
+        <rect x="163" y="151" width="214" height="116" rx="25" fill="#000" opacity="0.8" />
+        <rect x="164" y="152" width="212" height="114" rx="24" fill="#030405" />
+        <path d="M146 182 Q144 126 270 121 Q396 126 394 182 Q390 147 270 143 Q150 147 146 182 Z" fill="url(#hood)" />
+        <path d="M146 182 Q144 126 270 121 Q396 126 394 182 Q390 147 270 143 Q150 147 146 182 Z" fill="url(#grain)" />
+        <path d="M150 178 Q150 129 270 125 Q390 129 390 178" fill="none" stroke="#ffffff" strokeOpacity="0.12" strokeWidth="1" />
+        <path d="M148 181 Q152 148 270 144.5 Q388 148 392 181" fill="none" stroke="#000" strokeOpacity="0.6" strokeWidth="1.6" />
         </>}
         <ClusterSvg x={172} y={160} width={196} height={98} id="scene" />
         <rect x="172" y="160" width="196" height="98" rx="18" fill="url(#glare)" pointerEvents="none" />
@@ -627,6 +676,7 @@ export function Scene({ onZoom, reveal, lay }: { onZoom: (z: ZoomId) => void; re
         {/* capa da coluna de direção (aparece quando o volante gira) */}
         {!photo && <>
         <path d="M196 262 Q270 246 344 262 L352 360 Q270 376 188 360 Z" fill="url(#hood)" stroke="#2a3036" />
+        <path d="M196 262 Q270 246 344 262 L352 360 Q270 376 188 360 Z" fill="url(#grain)" />
         <path d="M200 266 Q270 251 340 266" fill="none" stroke="#ffffff" strokeOpacity="0.08" />
         </>}
         <WheelGrip {...wheelDrag} />
@@ -641,7 +691,8 @@ export function Scene({ onZoom, reveal, lay }: { onZoom: (z: ZoomId) => void; re
         {/* central multimídia flutuante */}
         {!photo && <>
         <rect x="527" y="99" width="186" height="96" rx="8" fill="#000" opacity="0.55" />
-        <rect x="532" y="90" width="176" height="92" rx="7" fill="url(#hood)" stroke="#3a4148" strokeWidth="1" />
+        <rect x="532" y="90" width="176" height="92" rx="7" fill="#07080a" stroke="#3a4148" strokeWidth="1" />
+        <rect x="532" y="90" width="176" height="92" rx="7" fill="url(#gloss)" />
         </>}
         <rect x="539" y="96" width="162" height="80" rx="3" fill={screenOn ? 'url(#screenG)' : '#020303'} />
         {screenOn && (
@@ -725,6 +776,7 @@ export function Scene({ onZoom, reveal, lay }: { onZoom: (z: ZoomId) => void; re
         </g>
       </g>
 
+      <SunVisors lay={lay} mirrorX={mirrorX} />
       {/* vinheta: profundidade nas bordas */}
       <rect x="0" y="0" width={SW} height="420" fill="url(#vignette)" pointerEvents="none" />
       {reveal && R[reveal] && <rect className="reveal" x={R[reveal][0]} y={R[reveal][1]} width={R[reveal][2]} height={R[reveal][3]} rx="8" pointerEvents="none" />}

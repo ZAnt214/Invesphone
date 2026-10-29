@@ -271,6 +271,12 @@ const c2 = await car();
 check('trocas 1→2→3 pelo console até 50 km/h', c2.gear === '3' && c2.kmh > 48, `${c2.gear} ${c2.kmh.toFixed(0)} km/h`);
 const spd = await S(() => document.querySelector('[data-testid=speed-scene]')?.textContent);
 check('velocímetro digital do quadro acompanha', Math.abs(Number(spd) - c2.kmh) < 3, `${spd}`);
+{
+  const ang = (n) => S((n) => Number(/rotate\(([-\d.]+)/.exec(document.querySelector(`[data-testid=cluster-scene] [data-needle=${n}]`).getAttribute('transform'))[1]), n);
+  const k = await ang('kmh'), r = await ang('rpm'), now = await car();
+  check('ponteiro do velocímetro marca a velocidade', Math.abs(k - (-130 + (260 * now.kmh) / 220)) < 4, `${k.toFixed(0)}° para ${now.kmh.toFixed(0)} km/h`);
+  check('ponteiro do conta-giros marca o giro', Math.abs(r - (-130 + (260 * now.rpm) / 8000)) < 8, `${r.toFixed(0)}° para ${now.rpm.toFixed(0)} rpm`);
+}
 await page.screenshot({ path: `${SHOTS}/74-andando.png` });
 await release('throttle');
 await pedal('brake', 0.5);
@@ -322,6 +328,11 @@ await sleep(300);
 check('volta ao cockpit ao deitar o iPhone', (await page.locator('[data-testid=cockpit]').count()) === 1);
 
 for (const k of [...active.keys()]) await up(k);
+// ---------- para-sóis ----------
+await tap('[data-testid=visor-L]');
+check('tocar no para-sol do motorista abaixa', (await S(() => document.querySelector('[data-testid=visor-L]').dataset.down)) === '1');
+await tap('[data-testid=visor-L]');
+check('tocar de novo sobe o para-sol', (await S(() => document.querySelector('[data-testid=visor-L]').dataset.down)) === '0');
 check('nenhum erro de JavaScript', errors.length === 0, errors.slice(0, 3).join(' | '));
 await browser.close();
 const failed = results.filter((x) => !x.ok);

@@ -92,6 +92,33 @@ Todos em `public/cambio/art/`.
 - **Peso**: o celular baixa tudo de uma vez, então mantenha o total abaixo de ~12 MB. Se precisar, use PNG com paleta/quantização nas peças pequenas. O painel-base pode ficar maior.
 - Validação sugerida (como no pacote do helicóptero): um `preview.png` montado com as camadas nas posições do manifest, para conferir o encaixe antes de entregar.
 
+## Atualização de 29/10/2026 (moldura da cabine e retrovisores)
+O cockpit vetorial ganhou moldura da cabine e retrovisores. Novo guia de posição: `creative-requests/refs/2026-10-28-cambio-cockpit/mapa-moldura.jpg`; a imagem `layout-atual.jpg` foi atualizada.
+
+**Desenhado em código, por cima da arte. Não pintar no `painel-base.png`:**
+- teto (faixa de cima até y ≈ 26 nas laterais e ≈ 12 no centro);
+- para-sóis, que abaixam ao toque;
+- serigrafia preta do para-brisa;
+- os três retrovisores, com o reflexo animado;
+- o quadro de instrumentos, que passou a ter conta-giros e velocímetro analógicos com tela central. A janela do quadro continua a mesma.
+
+**Colunas A:** continuam no `painel-base.png`, nesta posição (unidades do mapa, x a partir da borda esquerda da cena de 900):
+
+| Coluna | Borda | Topo (y = 0) | Base (no painel) |
+|---|---|---|---|
+| Esquerda | externa | x = 28 | (142, 119) |
+| Esquerda | interna | x = 92 | (186, 114) |
+| Direita (espelhada) | externa | x = 872 | (758, 119) |
+| Direita (espelhada) | interna | x = 808 | (714, 114) |
+
+- O tweeter fica na base de cada coluna, no topo do painel.
+- Fora das colunas, acima da linha do painel, a arte fica transparente: ali aparecem a janela lateral e o retrovisor.
+
+**Retrovisores externos:** ficam do lado de fora das colunas, desenhados em código.
+- Esquerdo: caixa (2, 60) → (102, 122).
+- Direito: caixa (808, 66) → (892, 120).
+- Não pintar retrovisores na arte.
+
 ## Resposta do ChatGPT
 Preenchido pelo ChatGPT ao concluir.
 

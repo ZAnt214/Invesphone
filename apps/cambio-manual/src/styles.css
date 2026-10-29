@@ -529,13 +529,15 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--amber)
 .sc-scr-s { font-size: 7.5px; fill: #c7d3dc; }
 .sc-scr-l { font-size: 15px; font-weight: 600; fill: #f2f6f8; }
 .cluster-svg text { font-family: var(--font-display); font-variant-numeric: tabular-nums; }
-.c-num { font-size: 8px; font-weight: 600; }
-.c-tiny { font-size: 5.4px; fill: #8b97a2; }
-.c-gear { font-size: 24px; font-weight: 700; fill: #9fd0ff; }
-.c-hint { font-size: 10px; fill: #3fd27f; }
-.c-speed { font-size: 30px; font-weight: 700; fill: #f2f6f8; }
-.c-cruise { font-size: 6.5px; fill: #3fd27f; font-weight: 600; }
-.c-trip { font-size: 11px; font-weight: 600; fill: #f2f6f8; }
+.c-num { font-size: 6.4px; font-weight: 600; }
+.c-tiny { font-size: 4.6px; fill: #8b97a2; }
+.c-gear { font-size: 19px; font-weight: 700; fill: #9fd0ff; }
+.c-hint { font-size: 8px; fill: #3fd27f; }
+.c-speed { font-size: 11px; font-weight: 700; fill: #f2f6f8; }
+.c-cruise { font-size: 4.6px; fill: #3fd27f; font-weight: 600; }
+.c-trip-l { font-size: 4.1px; fill: #8b97a2; }
+.c-trip { font-size: 8px; font-weight: 600; fill: #f2f6f8; }
+.c-bar { font-size: 3.6px; font-weight: 700; fill: #6f7b86; }
 .clamp.lit { filter: drop-shadow(0 0 1.5px currentColor); }
 .scene-svg .reveal { fill: rgba(76,195,138,.18); stroke: #4cc38a; stroke-width: 2; animation: pulse .8s infinite alternate; }
 
