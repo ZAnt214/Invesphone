@@ -342,7 +342,7 @@ export interface MirrorBoxes { L: [number, number, number, number]; R: [number, 
 /** Onde cada espelho fica na cena (x, y, largura, altura em unidades). */
 export function mirrorBoxes(L: number, C: number, Rt: number): MirrorBoxes {
   const ix = (L + 270 + C + 620) / 2 + 18;
-  return { L: [L + 2, 84, 100, 64], R: [Rt + 808, 92, 84, 54], I: [ix - 72, 0, 144, 52] };
+  return { L: [L + 2, 60, 100, 62], R: [Rt + 808, 66, 84, 54], I: [ix - 72, 0, 144, 52] };
 }
 
 /** Arrasto do interno com a mão: o reflexo acompanha o dedo. */
