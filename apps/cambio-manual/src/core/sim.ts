@@ -3,6 +3,7 @@ import { Car, type Gear, type SimEvent, GEAR_RATIO, FINAL_DRIVE, WHEEL_R, RPM2RA
 import { Shifter } from '../sim/shifter';
 import { Vehicle, STATIONS } from '../sim/vehicle';
 import { CarAudio } from '../audio/engineAudio';
+import { Mirrors } from '../sim/mirrors';
 import { explain, blockedFeedback, makeFeedback, type Feedback } from '../train/feedback';
 import { progress } from '../train/progress';
 import { DrillRunner, LessonRunner, DRILLS, LESSONS, type Runner, type SimApi } from '../train/runners';
@@ -14,6 +15,7 @@ const SUBSTEP = 1 / 240;
 export class Sim implements SimApi {
   car = new Car();
   veh = new Vehicle();
+  mirrors = new Mirrors();
   audio = new CarAudio();
   shifter: Shifter;
   mode: Mode = 'free';
@@ -120,6 +122,7 @@ export class Sim implements SimApi {
     for (let i = 0; i < n; i++) c.step(h);
     if (this.mode === 'drive' || this.mode === 'free') progress.addDrive(dt, c.distance - d0);
     this.runner?.tick(dt);
+    this.mirrorFrame(dt);
 
     const ratio = GEAR_RATIO[c.gear] * FINAL_DRIVE;
     this.audio.update({
@@ -140,6 +143,30 @@ export class Sim implements SimApi {
     this.frameSubs.forEach((f) => f(this));
     const now = performance.now();
     if (now - this.lastUi > 120) { this.lastUi = now; this.notify(); }
+  }
+
+  // ---------- retrovisores ----------
+  /** O cockpit (com os espelhos) está na tela. */
+  mirrorsVisible = false;
+  private mirrorWarned = false;
+  private mirrorFrame(dt: number) {
+    const m = this.mirrors, c = this.car, v = this.veh;
+    const { moving, drillDone } = m.update(dt, v.accOn, c.v, this.now());
+    this.audio.mirrorMotor(moving);
+    if (drillDone) {
+      this.say({ kind: 'mirrors', severity: 'ok', title: `Retrovisores ajustados em ${(drillDone / 1000).toFixed(1).replace('.', ',')} s`, fix: 'Faça isso sempre antes de sair: banco, retrovisores e cinto.' });
+      this.notify();
+    }
+    // como o instrutor: avisa uma vez por viagem se sair com algum espelho desajustado
+    if (v.ignition === 'LOCK') this.mirrorWarned = false;
+    if (this.mirrorsVisible && !this.mirrorWarned && Math.abs(c.kmh) > 6 && !m.drill.active) {
+      this.mirrorWarned = true;
+      const bad = (['L', 'I', 'R'] as const).filter((id) => !m.status(id).ok);
+      if (bad.length) {
+        const names = bad.map((id) => ({ L: 'esquerdo', R: 'direito', I: 'interno' })[id]).join(', ');
+        this.say({ kind: 'mirrors', severity: 'warn', title: `Retrovisor desajustado: ${names}`, what: 'Na autoescola os retrovisores se ajustam antes de sair, com o carro parado.', fix: m.status(bad[0]).hint });
+      }
+    }
   }
 
   // ---------- eventos ----------

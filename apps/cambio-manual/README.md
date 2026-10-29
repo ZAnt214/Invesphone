@@ -26,6 +26,12 @@ src/
                       PNG + manifest.json com tamanhos e pivôs) e troca o desenho pelas fotos; sem o
                       pacote, fica o desenho vetorial. Contrato no pedido
                       creative-requests/inbox/2026-10-28-cambio-cockpit-fotorrealista.md
+  sim/mirrors.ts      retrovisores: câmera virtual de cada espelho (yaw/pitch), avaliação do ajuste
+                      (lateral do carro e horizonte nos externos, vidro traseiro centralizado no
+                      interno), motor elétrico, carro que vem atrás, treino e dicas
+  ui/cockpit/Mirrors.tsx  reflexo desenhado em canvas (rua de trás, lateral do próprio carro, carro de
+                      trás com faróis à noite, gotas, repetidor da seta); comando E/D + setas na porta;
+                      interno ajustado com o dedo e alavanca dia/noite
   ui/panel/           peças compartilhadas: luzes-espia, para-brisa, ajuste "Meu carro", exercício
   core/sim.ts         loop único: física a 240 Hz, áudio, treino, interface
   ui/                 painel, alavanca, pedais, instrutor, progresso
@@ -41,6 +47,7 @@ npm test           # física e alavanca
 npm run typecheck
 npm run e2e        # Chromium emulando iPhone
 node e2e/cockpit.mjs # cockpit horizontal em tela cheia (50 verificações, várias proporções)
+node e2e/mirrors.mjs # retrovisores: comando elétrico, interno com o dedo, treino e aviso ao sair
 node e2e/cockpit-art.mjs # modo foto com um pacote de arte de teste (e2e/make-test-art.py)
 ```
 

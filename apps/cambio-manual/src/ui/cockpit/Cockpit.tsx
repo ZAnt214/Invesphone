@@ -4,11 +4,12 @@ import { useFrame } from '../hooks';
 import { Scene, useArtReady, type ZoomId, type Lay } from './Scene';
 import { loadArt, art } from './art';
 import { Zoom } from './Zoom';
+import { MirrorsLayer, mirrorBoxes } from './Mirrors';
 import { Windshield } from '../panel/Windshield';
 import { Pedal } from '../Pedal';
 import { SetupSheet } from '../panel/SetupSheet';
-import { quiz, carSetup, zoneOf } from '../panel/layout';
-import { quizStart, quizStop } from '../panel/Kit';
+import { quiz, carSetup, zoneOf, quizActive } from '../panel/layout';
+import { quizStart, quizStop, quizAnswer } from '../panel/Kit';
 import { SummarySheet } from '../Sheets';
 
 /**
@@ -53,6 +54,7 @@ function Menu({ onClose, onSetup }: { onClose: () => void; onSetup: () => void }
     <div className="zoom-wrap" onPointerDown={(e: React.PointerEvent) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="menu-panel" data-testid="menu">
         {item(quiz.active ? 'Parar "Onde fica?"' : 'Onde fica? (exercício)', () => { if (quiz.active) quizStop(); else quizStart(); onClose(); }, 'quiz', quiz.active)}
+        {item(sim.mirrors.drill.active ? 'Parar treino dos retrovisores' : 'Treinar ajuste dos retrovisores', () => { const m = sim.mirrors; if (m.drill.active) m.stopDrill(); else { if (quiz.active) quizStop(); m.startDrill(sim.now()); sim.feedback = []; } onClose(); }, 'mirrors', sim.mirrors.drill.active)}
         {item('Meu carro', onSetup, 'setup')}
         {item(v.night ? 'Noite' : 'Dia', () => { v.night = !v.night; }, 'night', v.night)}
         {item(['Sem chuva', 'Chuva', 'Chuva forte'][v.rain], () => { v.rain = (v.rain + 1) % 3; }, 'rain', v.rain > 0)}
@@ -103,7 +105,11 @@ export function Cockpit() {
   const r = sim.runner;
   const qa = quiz.active && !quiz.done ? quiz.list[quiz.idx] : null;
   const reveal = qa && quiz.wrongHere >= 2 ? zoneOf(qa.id, carSetup.get()) : null;
-  const msg = qa
+  const md = sim.mirrors.drill.active ? sim.mirrors : null;
+  const mk = (id: 'L' | 'I' | 'R', n: string) => `${n} ${md!.status(id).ok ? '✓' : '·'}`;
+  const msg = md
+    ? `Ajuste os retrovisores: ${mk('L', 'esquerdo')}  ${mk('I', 'interno')}  ${mk('R', 'direito')}`
+    : qa
     ? `Onde fica ${qa.ask}?`
     : quiz.active && quiz.done
       ? `Resultado: ${quiz.firstTry} de ${quiz.list.length} de primeira · ${(quiz.times.reduce((a, b) => a + b, 0) / Math.max(1, quiz.times.length) / 1000).toFixed(1).replace('.', ',')} s por comando`
@@ -116,6 +122,7 @@ export function Cockpit() {
         <div className="scene-shake" ref={shake}>
           <div className="ws-layer" ref={ws} style={{ width: SW }}><Windshield vx={(L + 300) / SW} /></div>
           <Scene onZoom={(z) => setZoom(z)} reveal={reveal} lay={lay} />
+          <MirrorsLayer boxes={mirrorBoxes(L, C, Rt)} onOpen={(z) => setZoom(z)} onQuiz={(id) => { if (!quizActive()) return false; quizAnswer(id); return true; }} />
           <div className={`ck-pedal clutch${pedalCls('pedalClutch')}`} style={{ left: L + 6, ...pedalStyle('pedalClutch') }}><Pedal kind="clutch" compact /></div>
           <div className={`ck-pedal brake${pedalCls('pedalBrake')}`} style={{ left: Rt + 726, ...pedalStyle('pedalBrake') }}><Pedal kind="brake" compact /></div>
           <div className={`ck-pedal gas${pedalCls('pedalGas')}`} style={{ left: Rt + 814, ...pedalStyle('pedalGas') }}><Pedal kind="throttle" compact /></div>

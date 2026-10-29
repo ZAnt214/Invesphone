@@ -6,6 +6,7 @@ import { carSetup, quizActive, type SlotFn } from '../panel/layout';
 import { quizAnswer } from '../panel/Kit';
 import { STATIONS, SOURCES, type WiperMode } from '../../sim/vehicle';
 import { art, placeAt, type ArtId } from './art';
+import { mirrorBoxes } from './Mirrors';
 
 /** Modo foto: liga quando o pacote de arte (public/cambio/art) termina de carregar. */
 export function useArtReady() {
@@ -21,7 +22,7 @@ function ArtImg({ id, px, py, scale = 1, testId }: { id: ArtId; px: number; py: 
   return <image href={art.url(id)} x={x} y={y} width={w} height={h} preserveAspectRatio="none" pointerEvents="none" data-art={id} data-testid={testId} />;
 }
 
-export type ZoomId = 'spokeL' | 'spokeR' | 'stalkL' | 'stalkR' | 'leftBank' | 'door' | 'climate' | 'media' | 'cluster';
+export type ZoomId = 'spokeL' | 'spokeR' | 'stalkL' | 'stalkR' | 'leftBank' | 'door' | 'climate' | 'media' | 'cluster' | 'mirrorI';
 /** Largura da cena (unidades) e deslocamentos dos grupos: lado do motorista, console central, lado do passageiro. */
 export interface Lay { SW: number; L: number; C: number; Rt: number }
 
@@ -525,7 +526,7 @@ export function Scene({ onZoom, reveal, lay }: { onZoom: (z: ZoomId) => void; re
   const R: Record<string, [number, number, number, number]> = {
     cluster: [L + 172, 160, 196, 98], stalkL: [L + 8, 250, 86, 66], wheel: [L + 132, 288, 276, 40], stalkR: [L + 446, 250, 86, 66], leftBank: [L + 24, 194, 62, 54],
     door: [L - 4, 150, 26, 120], start: [L + 448, 320, 64, 64],
-    media: [C + 532, 90, 176, 108], hazard: [C + 608, 204, 34, 34], climate: [C + 546, 246, 158, 74], console: [C + 526, 324, 196, 96],
+    rearMirror: mirrorBoxes(L, C, Rt).I, media: [C + 532, 90, 176, 108], hazard: [C + 608, 204, 34, 34], climate: [C + 546, 246, 158, 74], console: [C + 526, 324, 196, 96],
   };
   const slotLabel = (fn: SlotFn) => ({ level: 'FAROL ▲▼', espOff: 'ESP OFF', isgOff: 'ISG OFF', lock: 'TRAVA', ac: 'A/C', recirc: 'RECIRC', rearDefrost: 'DESEMB', fan: '', temp: '', vent: '', none: '' }[fn]);
   const slotLed = (fn: SlotFn) => ({ espOff: !v.esp, isgOff: !v.isg, lock: v.locked, ac: v.ac && v.fan > 0, recirc: v.recirc, rearDefrost: v.rearDefrost } as Record<string, boolean>)[fn];
