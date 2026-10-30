@@ -3,7 +3,9 @@ import { Car, type Gear, type SimEvent, GEAR_RATIO, FINAL_DRIVE, WHEEL_R, RPM2RA
 import { Shifter } from '../sim/shifter';
 import { Vehicle, STATIONS } from '../sim/vehicle';
 import { CarAudio } from '../audio/engineAudio';
-import { Mirrors } from '../sim/mirrors';
+import { Mirrors, type MirrorId } from '../sim/mirrors';
+import { CityDrive } from '../sim/city';
+import { TurnTrainer, type CourseId } from '../train/turns';
 import { explain, blockedFeedback, makeFeedback, type Feedback } from '../train/feedback';
 import { progress } from '../train/progress';
 import { DrillRunner, LessonRunner, DRILLS, LESSONS, type Runner, type SimApi } from '../train/runners';
@@ -16,6 +18,11 @@ export class Sim implements SimApi {
   car = new Car();
   veh = new Vehicle();
   mirrors = new Mirrors();
+  city = new CityDrive();
+  /** Treino livre na cidade (sem avaliação). */
+  cityFree = false;
+  /** Olhada rápida num retrovisor (o espelho aparece grande por um instante). */
+  mirrorGlance: { id: MirrorId; until: number } | null = null;
   audio = new CarAudio();
   shifter: Shifter;
   mode: Mode = 'free';
@@ -122,6 +129,7 @@ export class Sim implements SimApi {
     for (let i = 0; i < n; i++) c.step(h);
     if (this.mode === 'drive' || this.mode === 'free') progress.addDrive(dt, c.distance - d0);
     this.runner?.tick(dt);
+    this.cityFrame(dt);
     this.mirrorFrame(dt);
 
     const ratio = GEAR_RATIO[c.gear] * FINAL_DRIVE;
@@ -143,6 +151,41 @@ export class Sim implements SimApi {
     this.frameSubs.forEach((f) => f(this));
     const now = performance.now();
     if (now - this.lastUi > 120) { this.lastUi = now; this.notify(); }
+  }
+
+  // ---------- cidade ----------
+  private cityFrame(dt: number) {
+    if (!this.city.active) return;
+    const c = this.car;
+    const r = this.city.update(dt, c.v, this.steer);
+    if (r.blocked) c.v = 0;
+    if (r.curb) {
+      this.audio.thump(3);
+      c.shake = 4;
+      if (this.runner instanceof TurnTrainer) this.runner.onCurb();
+      this.say({ kind: 'curb', severity: 'error', title: 'Bateu no meio-fio', what: 'Uma roda encostou na calçada.', fix: 'Dê ré um pouco ou gire o volante para o outro lado e siga devagar.' });
+    }
+  }
+  /** O aluno (ou o instrutor) olha um retrovisor. */
+  glance(id: MirrorId) {
+    this.mirrorGlance = { id, until: this.now() + 1300 };
+    this.notify();
+  }
+  /** Treino de conversões. */
+  startTurns(course: CourseId, opts: { guides: boolean; demo: boolean }) {
+    this.feedback = [];
+    this.mirrors.stopDrill();
+    this.runner = new TurnTrainer(course, opts, this);
+    this.notify();
+  }
+  /** Dirigir livre na cidade de treino. */
+  setCityFree(on: boolean) {
+    this.cityFree = on;
+    if (this.runner?.kind === 'turn') this.runner = null;
+    this.city.active = on;
+    this.city.guide = null; this.city.steerTarget = null;
+    if (on) { this.city.place({ x: 1.75, z: -60, h: 0 }); this.steer = 0; }
+    this.notify();
   }
 
   // ---------- retrovisores ----------
@@ -283,6 +326,7 @@ export class Sim implements SimApi {
 
   startDrill(id: string) {
     const def = DRILLS.find((d) => d.id === id)!;
+    this.city.active = false;
     this.feedback = [];
     this.runner = new DrillRunner(def, this);
     this.notify();
@@ -290,12 +334,19 @@ export class Sim implements SimApi {
 
   startLesson(id: string) {
     const def = LESSONS.find((d) => d.id === id)!;
+    this.city.active = false;
     this.feedback = [];
     this.runner = new LessonRunner(def, this);
     this.notify();
   }
 
   stopRunner() {
+    if (this.runner?.kind === 'turn') {
+      this.steerDrag = false;
+      this.city.guide = null; this.city.steerTarget = null;
+      this.city.active = this.cityFree;
+      this.pedals.throttle = 0; this.pedals.brake = 0;
+    }
     this.runner = null;
     this.notify();
   }

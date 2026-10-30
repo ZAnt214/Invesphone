@@ -188,6 +188,24 @@ function useWheelDrag(L: number) {
   return { down, move, up };
 }
 
+/** Alvo do volante no treino de conversões: a seta laranja mostra onde o topo do volante deve ficar. */
+function SteerGuide() {
+  const g = React.useRef<SVGGElement | null>(null);
+  useFrame(() => {
+    const t = sim.city.active ? sim.city.steerTarget : null;
+    if (!g.current) return;
+    if (t === null) { g.current.style.opacity = '0'; return; }
+    g.current.style.opacity = '1';
+    g.current.setAttribute('transform', `rotate(${t.toFixed(1)} 270 293)`);
+  });
+  return (
+    <g ref={g} style={{ opacity: 0 }} pointerEvents="none" data-testid="steer-guide">
+      <path d={arc(270, 293, 192, 262, 278)} fill="none" stroke="#ff8a1f" strokeWidth="4" strokeLinecap="round" />
+      <path d="M270 104 l-6 -10 h12 Z" fill="#ff8a1f" stroke="#000" strokeWidth="0.6" />
+    </g>
+  );
+}
+
 /** Arco de circunferência (graus, 0 = direita, 90 = embaixo). */
 function arc(cx: number, cy: number, r: number, a0: number, a1: number) {
   const p = (a: number) => [cx + r * Math.cos((a * Math.PI) / 180), cy + r * Math.sin((a * Math.PI) / 180)];
@@ -222,7 +240,9 @@ function Wheel({ legend, onZoom, photo }: { legend: string; onZoom: (z: ZoomId) 
       <path d={arc(270, 293, 175.5, 196, 286)} fill="none" stroke="#ffffff" strokeOpacity="0.16" strokeWidth="3" strokeLinecap="round" pointerEvents="none" />
       <path d={arc(270, 293, 176.5, 214, 262)} fill="none" stroke="#ffffff" strokeOpacity="0.2" strokeWidth="1.1" strokeLinecap="round" pointerEvents="none" />
       </>}
+      <SteerGuide />
       <g ref={rot}>
+        {sim.city.active && <path d="M270 115 l-4.5 -7 h9 Z" fill="#ffffff" stroke="#000" strokeWidth="0.6" pointerEvents="none" data-testid="wheel-top" />}
         {photo && <ArtImg id="wheel" px={270} py={293} testId="art-wheel" />}
         {!photo && <>
         {/* pegas de polegar e costura (giram com o volante) */}

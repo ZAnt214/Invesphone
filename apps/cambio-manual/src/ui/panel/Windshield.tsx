@@ -1,6 +1,7 @@
 import React from 'react';
 import { sim } from '../../core/sim';
 import { useFrame } from '../hooks';
+import { drawCity, eyeView } from '../cockpit/cityRender';
 
 interface Drop { x: number; y: number; r: number }
 
@@ -40,65 +41,77 @@ export function Windshield({ vx = 0.5 }: { vx?: number }) {
     const hw = (z: number) => w * (0.012 + 0.36 * z);
     const yz = (z: number) => hy + (h - hy) * z;
 
-    // céu
-    const sky = ctx.createLinearGradient(0, 0, 0, hy);
-    if (night) { sky.addColorStop(0, '#04060a'); sky.addColorStop(1, '#0b1118'); }
-    else { sky.addColorStop(0, v.rain ? '#6f7c87' : '#7aa0c4'); sky.addColorStop(1, v.rain ? '#9aa5ad' : '#cfdbe3'); }
-    ctx.fillStyle = sky; ctx.fillRect(0, 0, w, h);
-    // relevo (desliza com a curva)
-    ctx.fillStyle = night ? '#06080a' : v.rain ? '#59646b' : '#6d8466';
-    ctx.beginPath(); ctx.moveTo(0, hy);
-    for (let x = 0; x <= w; x += 20) { const xx = x + s.pan * 6; ctx.lineTo(x, hy - 6 - 6 * Math.sin(xx / 70) - 3 * Math.sin(xx / 23)); }
-    ctx.lineTo(w, hy); ctx.closePath(); ctx.fill();
-    // campo
-    const field = ctx.createLinearGradient(0, hy, 0, h);
-    field.addColorStop(0, night ? '#07090b' : v.rain ? '#4d5459' : '#66765c');
-    field.addColorStop(1, night ? '#030405' : v.rain ? '#3c4246' : '#4f5d47');
-    ctx.fillStyle = field; ctx.fillRect(0, hy, w, h - hy);
-    // estrada
-    ctx.fillStyle = night ? '#0e1114' : v.rain ? '#30353a' : '#3a3f44';
-    ctx.beginPath();
-    for (let i = 0; i <= 20; i++) { const z = i / 20; ctx.lineTo(cx(z) - hw(z), yz(z)); }
-    for (let i = 20; i >= 0; i--) { const z = i / 20; ctx.lineTo(cx(z) + hw(z), yz(z)); }
-    ctx.closePath(); ctx.fill();
-    // faixas de borda
-    ctx.strokeStyle = night ? '#3a3d40' : '#d9d4c3'; ctx.lineWidth = 1.2;
-    for (const side of [-1, 1]) { ctx.beginPath(); for (let i = 0; i <= 20; i++) { const z = i / 20; ctx.lineTo(cx(z) + side * hw(z) * 0.94, yz(z)); } ctx.stroke(); }
-    // faixa central tracejada (movimento)
-    s.road = (s.road + (c.v * dt) * 0.08) % 1;
-    ctx.fillStyle = night ? '#4a4d50' : '#e7e2d1';
-    for (let i = 0; i < 8; i++) {
-      const za = (i + s.road) / 8, zb = Math.min(1, za + 0.045);
-      const a = za * za, b = zb * zb;
-      const wa = 0.6 + 4 * a, wb = 0.6 + 4 * b;
-      ctx.beginPath(); ctx.moveTo(cx(a) - wa / 2, yz(a)); ctx.lineTo(cx(a) + wa / 2, yz(a)); ctx.lineTo(cx(b) + wb / 2, yz(b)); ctx.lineTo(cx(b) - wb / 2, yz(b)); ctx.fill();
-    }
-    // postes na beira da estrada
-    s.posts = (s.posts + (c.v * dt) * 0.03) % 1;
-    for (let i = 0; i < 8; i++) {
-      const zl = (i + s.posts) / 8, z = zl * zl;
-      const y = yz(z);
-      const ph = 3 + 50 * z;
-      const pw = 1 + z * 4;
-      for (const side of [-1, 1]) {
-        const x = cx(z) + side * (hw(z) * 1.25 + 4);
-        ctx.fillStyle = night ? (v.lowBeam ? `rgba(200,190,160,${0.12 + z * 0.5})` : '#0b0d10') : '#e6e2d6';
-        ctx.fillRect(x - pw / 2, y - ph, pw, ph);
-        if (!night) { ctx.fillStyle = '#1b1d1f'; ctx.fillRect(x - pw / 2, y - ph, pw, ph * 0.18); }
+    if (sim.city.active) {
+      // cidade de treino: câmera no olho do motorista
+      const view = eyeView(sim.city.pose, 0, h * 1.72, X0, hy, w, h);
+      drawCity(ctx, view, { night, rain: v.rain, guides: sim.city.guide });
+      if (v.lowBeam || (v.flash && v.powerOn)) {
+        const high = v.highBeamOn || (v.flash && v.powerOn);
+        const g = ctx.createRadialGradient(X0, h * 1.05, 0, X0, h * 1.05, h * (high ? 0.95 : 0.7));
+        g.addColorStop(0, `rgba(255,236,190,${night ? 0.4 : 0.08})`); g.addColorStop(1, 'rgba(255,236,190,0)');
+        ctx.fillStyle = g; ctx.fillRect(0, hy, w, h - hy);
       }
-    }
-    // faróis
-    if (v.lowBeam || (v.flash && v.powerOn) || v.position) {
-      const high = v.highBeamOn || (v.flash && v.powerOn);
-      const reach = v.lowBeam || high ? (high ? 0.03 : 0.25 + v.level * 0.08) : 0.85;
-      const top = yz(reach);
-      const alpha = !v.lowBeam && !high ? 0.06 : night ? (high ? 0.5 : 0.36) : 0.1;
-      const g = ctx.createLinearGradient(0, h, 0, top);
-      g.addColorStop(0, `rgba(255,236,190,${alpha})`); g.addColorStop(1, 'rgba(255,236,190,0)');
-      ctx.fillStyle = g;
-      const spread = high ? 0.16 : 0.1;
-      ctx.beginPath(); ctx.moveTo(X0 - w * 0.4, h); ctx.lineTo(cx(reach) - w * spread, top); ctx.lineTo(cx(reach) + w * spread, top); ctx.lineTo(X0 + w * 0.4, h); ctx.closePath(); ctx.fill();
-      if (v.fogOn) { ctx.fillStyle = `rgba(255,240,200,${night ? 0.18 : 0.05})`; ctx.fillRect(0, h * 0.85, w, h * 0.15); }
+    } else {
+      // céu
+      const sky = ctx.createLinearGradient(0, 0, 0, hy);
+      if (night) { sky.addColorStop(0, '#04060a'); sky.addColorStop(1, '#0b1118'); }
+      else { sky.addColorStop(0, v.rain ? '#6f7c87' : '#7aa0c4'); sky.addColorStop(1, v.rain ? '#9aa5ad' : '#cfdbe3'); }
+      ctx.fillStyle = sky; ctx.fillRect(0, 0, w, h);
+      // relevo (desliza com a curva)
+      ctx.fillStyle = night ? '#06080a' : v.rain ? '#59646b' : '#6d8466';
+      ctx.beginPath(); ctx.moveTo(0, hy);
+      for (let x = 0; x <= w; x += 20) { const xx = x + s.pan * 6; ctx.lineTo(x, hy - 6 - 6 * Math.sin(xx / 70) - 3 * Math.sin(xx / 23)); }
+      ctx.lineTo(w, hy); ctx.closePath(); ctx.fill();
+      // campo
+      const field = ctx.createLinearGradient(0, hy, 0, h);
+      field.addColorStop(0, night ? '#07090b' : v.rain ? '#4d5459' : '#66765c');
+      field.addColorStop(1, night ? '#030405' : v.rain ? '#3c4246' : '#4f5d47');
+      ctx.fillStyle = field; ctx.fillRect(0, hy, w, h - hy);
+      // estrada
+      ctx.fillStyle = night ? '#0e1114' : v.rain ? '#30353a' : '#3a3f44';
+      ctx.beginPath();
+      for (let i = 0; i <= 20; i++) { const z = i / 20; ctx.lineTo(cx(z) - hw(z), yz(z)); }
+      for (let i = 20; i >= 0; i--) { const z = i / 20; ctx.lineTo(cx(z) + hw(z), yz(z)); }
+      ctx.closePath(); ctx.fill();
+      // faixas de borda
+      ctx.strokeStyle = night ? '#3a3d40' : '#d9d4c3'; ctx.lineWidth = 1.2;
+      for (const side of [-1, 1]) { ctx.beginPath(); for (let i = 0; i <= 20; i++) { const z = i / 20; ctx.lineTo(cx(z) + side * hw(z) * 0.94, yz(z)); } ctx.stroke(); }
+      // faixa central tracejada (movimento)
+      s.road = (s.road + (c.v * dt) * 0.08) % 1;
+      ctx.fillStyle = night ? '#4a4d50' : '#e7e2d1';
+      for (let i = 0; i < 8; i++) {
+        const za = (i + s.road) / 8, zb = Math.min(1, za + 0.045);
+        const a = za * za, b = zb * zb;
+        const wa = 0.6 + 4 * a, wb = 0.6 + 4 * b;
+        ctx.beginPath(); ctx.moveTo(cx(a) - wa / 2, yz(a)); ctx.lineTo(cx(a) + wa / 2, yz(a)); ctx.lineTo(cx(b) + wb / 2, yz(b)); ctx.lineTo(cx(b) - wb / 2, yz(b)); ctx.fill();
+      }
+      // postes na beira da estrada
+      s.posts = (s.posts + (c.v * dt) * 0.03) % 1;
+      for (let i = 0; i < 8; i++) {
+        const zl = (i + s.posts) / 8, z = zl * zl;
+        const y = yz(z);
+        const ph = 3 + 50 * z;
+        const pw = 1 + z * 4;
+        for (const side of [-1, 1]) {
+          const x = cx(z) + side * (hw(z) * 1.25 + 4);
+          ctx.fillStyle = night ? (v.lowBeam ? `rgba(200,190,160,${0.12 + z * 0.5})` : '#0b0d10') : '#e6e2d6';
+          ctx.fillRect(x - pw / 2, y - ph, pw, ph);
+          if (!night) { ctx.fillStyle = '#1b1d1f'; ctx.fillRect(x - pw / 2, y - ph, pw, ph * 0.18); }
+        }
+      }
+      // faróis
+      if (v.lowBeam || (v.flash && v.powerOn) || v.position) {
+        const high = v.highBeamOn || (v.flash && v.powerOn);
+        const reach = v.lowBeam || high ? (high ? 0.03 : 0.25 + v.level * 0.08) : 0.85;
+        const top = yz(reach);
+        const alpha = !v.lowBeam && !high ? 0.06 : night ? (high ? 0.5 : 0.36) : 0.1;
+        const g = ctx.createLinearGradient(0, h, 0, top);
+        g.addColorStop(0, `rgba(255,236,190,${alpha})`); g.addColorStop(1, 'rgba(255,236,190,0)');
+        ctx.fillStyle = g;
+        const spread = high ? 0.16 : 0.1;
+        ctx.beginPath(); ctx.moveTo(X0 - w * 0.4, h); ctx.lineTo(cx(reach) - w * spread, top); ctx.lineTo(cx(reach) + w * spread, top); ctx.lineTo(X0 + w * 0.4, h); ctx.closePath(); ctx.fill();
+        if (v.fogOn) { ctx.fillStyle = `rgba(255,240,200,${night ? 0.18 : 0.05})`; ctx.fillRect(0, h * 0.85, w, h * 0.15); }
+      }
     }
     // chuva acumulando no vidro
     if (v.rain > 0) {

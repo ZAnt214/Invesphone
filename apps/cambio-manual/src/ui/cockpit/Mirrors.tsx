@@ -3,6 +3,7 @@ import { sim } from '../../core/sim';
 import { useFrame } from '../hooks';
 import { project, CAR, ROAD, REAR_GLASS, GEO, type MirrorId, type Aim } from '../../sim/mirrors';
 import { carSetup } from '../panel/layout';
+import { drawCity, mirrorView } from './cityRender';
 
 // ------------------------------------------------------------------ desenho do reflexo
 type V3 = [number, number, number];
@@ -36,6 +37,16 @@ function shade(hex: string, k: number, a = 1) {
 const hash = (i: number) => { const s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
 
 /** Rua de trás: céu, árvores no horizonte, pista, faixas, balizadores e o carro que vem atrás. */
+/** O que aparece atrás: a cidade de treino (quando ativa) ou a estrada. */
+function drawBehind(g: CanvasRenderingContext2D, vw: View, e: Env, from = 0.25) {
+  if (sim.city.active) {
+    const geo = GEO[vw.id];
+    drawCity(g, mirrorView(sim.city.pose, geo.cam, vw.a.yaw, vw.a.pitch, geo.fovH, geo.fovV, { ox: vw.ox, oy: vw.oy, w: vw.W, h: vw.H }), { night: e.night, rain: e.rain, low: true });
+    return;
+  }
+  drawWorld(g, vw, e, from);
+}
+
 function drawWorld(g: CanvasRenderingContext2D, vw: View, e: Env, from = 0.25) {
   const { night, rain } = e;
   const fov = GEO[vw.id].fovH, fovV = GEO[vw.id].fovV;
@@ -178,7 +189,7 @@ function drawRearView(g: CanvasRenderingContext2D, vw: View, e: Env) {
   poly(g, vw, glass.map(([x, y, z]) => [x * 1.06, y + (y > 1.1 ? 0.03 : -0.03), z] as V3)); g.fillStyle = '#060707'; g.fill();
   g.save();
   poly(g, vw, glass); g.clip();
-  drawWorld(g, vw, e, CAR.rear + 0.05);
+  drawBehind(g, vw, e, CAR.rear + 0.05);
   // resistências do desembaçador
   g.strokeStyle = v.rearDefrost && v.powerOn ? 'rgba(255,140,60,0.5)' : 'rgba(40,30,25,0.45)'; g.lineWidth = 0.6;
   for (let i = 1; i < 9; i++) {
@@ -302,7 +313,7 @@ export function paintMirror(cv: HTMLCanvasElement, d: MirrorDraw) {
   const vw: View = { id: d.id, a, ox: Math.min(...xs), oy: Math.min(...ys) + jit, W: Math.max(...xs) - Math.min(...xs), H: Math.max(...ys) - Math.min(...ys) };
   g.save();
   roundPoly(g, gp, (d.big ? 14 : 6) * dpr); g.clip();
-  drawWorld(g, vw, e);
+  drawBehind(g, vw, e);
   drawOwnBody(g, vw, e);
   // gotas no espelho externo
   if (e.rain) {
@@ -333,7 +344,13 @@ function glassFx(g: CanvasRenderingContext2D, vw: View) {
 /** Canvas que redesenha o espelho a cada quadro. */
 export function MirrorCanvas({ id, big, className, testId }: { id: MirrorId; big?: boolean; className?: string; testId?: string }) {
   const ref = React.useRef<HTMLCanvasElement | null>(null);
-  useFrame(() => { if (ref.current) paintMirror(ref.current, { id, big }); });
+  const n = React.useRef(id === 'R' ? 1 : 0);
+  useFrame(() => {
+    if (!ref.current) return;
+    // na cidade os espelhos pequenos se redesenham em quadros alternados (o direito e o esquerdo intercalados)
+    if (sim.city.active && !big && (n.current++ & 1)) return;
+    paintMirror(ref.current, { id, big });
+  });
   return <canvas ref={ref} className={className} data-testid={testId} />;
 }
 
@@ -374,15 +391,15 @@ function useRearDrag(onTap: () => void) {
   return { onPointerDown: down, onPointerMove: move, onPointerUp: up, onPointerCancel: up };
 }
 
-export function MirrorsLayer({ boxes, onOpen, onQuiz }: { boxes: MirrorBoxes; onOpen: (z: 'door' | 'mirrorI') => void; onQuiz: (id: string) => boolean }) {
+export function MirrorsLayer({ boxes, onOpen, onQuiz, onGlance }: { boxes: MirrorBoxes; onOpen: (z: 'door' | 'mirrorI') => void; onQuiz: (id: string) => boolean; onGlance?: (id: MirrorId) => boolean }) {
   React.useEffect(() => { sim.mirrorsVisible = true; return () => { sim.mirrorsVisible = false; }; }, []);
-  const drag = useRearDrag(() => { if (!onQuiz('mirrorI')) onOpen('mirrorI'); });
+  const drag = useRearDrag(() => { if (onGlance?.('I')) return; if (!onQuiz('mirrorI')) onOpen('mirrorI'); });
   const st = (b: [number, number, number, number]) => ({ left: b[0], top: b[1], width: b[2], height: b[3] });
-  const tapSide = (e: React.PointerEvent) => { e.preventDefault(); if (!onQuiz('mirrorSwitch')) onOpen('door'); };
+  const tapSide = (id: 'L' | 'R') => (e: React.PointerEvent) => { e.preventDefault(); if (onGlance?.(id)) return; if (!onQuiz('mirrorSwitch')) onOpen('door'); };
   return (
     <>
-      <div className="mirror ext" style={st(boxes.L)} data-testid="mirror-L" onPointerDown={tapSide}><MirrorCanvas id="L" /></div>
-      <div className="mirror ext" style={st(boxes.R)} data-testid="mirror-R" onPointerDown={tapSide}><MirrorCanvas id="R" /></div>
+      <div className="mirror ext" style={st(boxes.L)} data-testid="mirror-L" onPointerDown={tapSide('L')}><MirrorCanvas id="L" /></div>
+      <div className="mirror ext" style={st(boxes.R)} data-testid="mirror-R" onPointerDown={tapSide('R')}><MirrorCanvas id="R" /></div>
       <div className="mirror int" style={st(boxes.I)} data-testid="mirror-I" {...drag}><MirrorCanvas id="I" /></div>
       <button type="button" className="mirror-tab" aria-label="Dia/noite do retrovisor interno" data-testid="mirror-tab"
         style={{ left: boxes.I[0] + boxes.I[2] / 2 - 14, top: boxes.I[1] + boxes.I[3] - 8, width: 28, height: 16 }}

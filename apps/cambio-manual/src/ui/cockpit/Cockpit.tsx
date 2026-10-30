@@ -5,6 +5,8 @@ import { Scene, useArtReady, type ZoomId, type Lay } from './Scene';
 import { loadArt, art } from './art';
 import { Zoom } from './Zoom';
 import { MirrorsLayer, mirrorBoxes } from './Mirrors';
+import { TurnMenu, TurnReport, GlanceOverlay } from './TurnsUI';
+import { TurnTrainer } from '../../train/turns';
 import { Windshield } from '../panel/Windshield';
 import { Pedal } from '../Pedal';
 import { SetupSheet } from '../panel/SetupSheet';
@@ -44,7 +46,7 @@ function useFit(ref: React.MutableRefObject<HTMLDivElement | null>, probe: React
   return fit;
 }
 
-function Menu({ onClose, onSetup }: { onClose: () => void; onSetup: () => void }) {
+function Menu({ onClose, onSetup, onTurns }: { onClose: () => void; onSetup: () => void; onTurns: () => void }) {
   const v = sim.veh;
   const [muted, setMuted] = React.useState(sim.audio.muted);
   const item = (label: string, fn: () => void, id: string, on?: boolean) => (
@@ -54,6 +56,7 @@ function Menu({ onClose, onSetup }: { onClose: () => void; onSetup: () => void }
     <div className="zoom-wrap" onPointerDown={(e: React.PointerEvent) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="menu-panel" data-testid="menu">
         {item(quiz.active ? 'Parar "Onde fica?"' : 'Onde fica? (exercício)', () => { if (quiz.active) quizStop(); else quizStart(); onClose(); }, 'quiz', quiz.active)}
+        {item(sim.runner?.kind === 'turn' && !sim.runner.done ? 'Parar treino de conversões' : 'Treino de conversões', () => { if (sim.runner?.kind === 'turn' && !sim.runner.done) { sim.stopRunner(); onClose(); } else onTurns(); }, 'turns', sim.runner?.kind === 'turn' || sim.cityFree)}
         {item(sim.mirrors.drill.active ? 'Parar treino dos retrovisores' : 'Treinar ajuste dos retrovisores', () => { const m = sim.mirrors; if (m.drill.active) m.stopDrill(); else { if (quiz.active) quizStop(); m.startDrill(sim.now()); sim.feedback = []; } onClose(); }, 'mirrors', sim.mirrors.drill.active)}
         {item('Meu carro', onSetup, 'setup')}
         {item(v.night ? 'Noite' : 'Dia', () => { v.night = !v.night; }, 'night', v.night)}
@@ -84,6 +87,7 @@ export function Cockpit() {
   const [zoom, setZoom] = React.useState<ZoomId | null>(null);
   const [menu, setMenu] = React.useState(false);
   const [setup, setSetup] = React.useState(false);
+  const [turns, setTurns] = React.useState(false);
   const [, force] = React.useState(0);
   React.useEffect(() => carSetup.subscribe(() => force((x: number) => x + 1)), []);
 
@@ -122,7 +126,8 @@ export function Cockpit() {
         <div className="scene-shake" ref={shake}>
           <div className="ws-layer" ref={ws} style={{ width: SW }}><Windshield vx={(L + 300) / SW} /></div>
           <Scene onZoom={(z) => setZoom(z)} reveal={reveal} lay={lay} />
-          <MirrorsLayer boxes={mirrorBoxes(L, C, Rt)} onOpen={(z) => setZoom(z)} onQuiz={(id) => { if (!quizActive()) return false; quizAnswer(id); return true; }} />
+          <MirrorsLayer boxes={mirrorBoxes(L, C, Rt)} onOpen={(z) => setZoom(z)} onQuiz={(id) => { if (!quizActive()) return false; quizAnswer(id); return true; }}
+            onGlance={(id) => { if (!(sim.runner instanceof TurnTrainer) && !sim.cityFree) return false; sim.glance(id); if (sim.runner instanceof TurnTrainer && !sim.runner.done) sim.runner.onGlance(id); return true; }} />
           <div className={`ck-pedal clutch${pedalCls('pedalClutch')}`} style={{ left: L + 6, ...pedalStyle('pedalClutch') }}><Pedal kind="clutch" compact /></div>
           <div className={`ck-pedal brake${pedalCls('pedalBrake')}`} style={{ left: Rt + 726, ...pedalStyle('pedalBrake') }}><Pedal kind="brake" compact /></div>
           <div className={`ck-pedal gas${pedalCls('pedalGas')}`} style={{ left: Rt + 814, ...pedalStyle('pedalGas') }}><Pedal kind="throttle" compact /></div>
@@ -137,7 +142,10 @@ export function Cockpit() {
           <svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
         </button>
         {zoom && <Zoom z={zoom} onClose={() => setZoom(null)} />}
-        {menu && <Menu onClose={() => setMenu(false)} onSetup={() => { setMenu(false); setSetup(true); }} />}
+        {menu && <Menu onClose={() => setMenu(false)} onSetup={() => { setMenu(false); setSetup(true); }} onTurns={() => { setMenu(false); setTurns(true); }} />}
+        {turns && <TurnMenu onClose={() => setTurns(false)} />}
+        <GlanceOverlay SW={SW} />
+        <TurnReport />
       </div>
       {setup && <SetupSheet onClose={() => setSetup(false)} />}
       <SummarySheet />
