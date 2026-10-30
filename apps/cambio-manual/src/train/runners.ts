@@ -20,7 +20,7 @@ export interface Summary {
 }
 
 export interface Runner {
-  kind: 'drill' | 'lesson';
+  kind: 'drill' | 'lesson' | 'turn';
   id: string;
   title: string;
   instruction: string;
