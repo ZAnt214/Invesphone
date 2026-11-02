@@ -18,6 +18,20 @@
 .sd .dim{position:absolute;inset:0;pointer-events:none;background:#000;opacity:0;transition:opacity .9s ease}
 .sd .sd-stage.answering .dim{opacity:.12}
 .sd .sd-stage.noting .dim{opacity:.16}
+/* foco na pessoa (depo.focus): o fundo fica um pouco desfocado e a penumbra fecha em volta de quem fala (73% 44%, o mesmo
+   ponto para onde a câmera aproxima); durante a resposta o fundo desfoca e escurece um pouco mais. O desfoque é só no plano
+   do fundo (casa, curiosos, fita e garoa do meio): a pessoa e as folhas da frente continuam nítidas. */
+.sd.focus .dim{background:radial-gradient(ellipse 30% 64% at 73% 44%,transparent 40%,rgba(0,0,0,.55) 78%,#000);opacity:.42;transition:opacity .9s ease}
+.sd.focus .sd-stage.answering .dim{opacity:.56}
+.sd.focus .sd-stage.noting .dim{opacity:.5}
+.sd.dof #sd-Lbg{filter:blur(1.3px) brightness(.9);transition:filter .9s ease}
+.sd.dof .sd-stage.answering #sd-Lbg{filter:blur(2.1px) brightness(.84)}
+/* entrevista: a luz da câmera da TV Sereno ilumina a repórter de frente, e o fundo cai mais para o escuro */
+.sd.focus.press .dim{background:radial-gradient(ellipse 28% 60% at 73% 42%,transparent 36%,rgba(0,0,0,.6) 74%,#000);opacity:.55}
+.sd.focus.press .sd-stage.answering .dim{opacity:.66}
+.sd.dof.press #sd-Lbg{filter:blur(1.8px) brightness(.78) saturate(.85)}
+.sd.dof.press .sd-stage.answering #sd-Lbg{filter:blur(2.4px) brightness(.72) saturate(.85)}
+.sd.focus.press #sd-Lac{filter:brightness(1.1) contrast(1.04)}
 
 .sd #sd-bg{left:2%;top:2%;width:844px;height:390px}
 .sd #sd-fg{left:2%;top:2%;width:844px;height:390px}

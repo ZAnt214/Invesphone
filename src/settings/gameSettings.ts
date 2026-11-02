@@ -70,6 +70,7 @@ export const EFFECTS:Effect[] = [
   { id:'depo.lens', cat:'depo', label:'Gotas na lente', desc:'Gotas paradas na câmera que às vezes escorrem.', def:true, where:'Casa' },
   { id:'depo.flyby', cat:'depo', label:'Viatura e helicóptero passando', desc:'A luz de uma viatura e o holofote de um helicóptero passando pela cena, com vento e folhas.', def:true, where:'Casa' },
   { id:'depo.outro', cat:'depo', label:'Foto no fim da entrevista', desc:'O flash do cinegrafista congela a cena, que vira a foto da matéria e voa para a caderneta do Lemos. Desligado, a cena escurece com as faixas de cinema.', def:true, where:'Casa' },
+  { id:'depo.focus', cat:'depo', label:'Foco na pessoa', desc:'O fundo fica levemente desfocado e na penumbra em volta de quem fala, e desfoca um pouco mais durante a resposta. Na entrevista, a luz da câmera da TV ilumina o rosto da repórter. Na qualidade baixa, fica só a penumbra.', def:true, where:'Casa' },
   { id:'depo.tape', cat:'depo', label:'Fita ao vento', desc:'A fita de isolamento cede no meio, ondula e torce com o vento e o helicóptero.', def:true, where:'Casa' },
   { id:'depo.shade', cat:'depo', label:'Sombra nos curiosos', desc:'Os curiosos atrás da fita ficam na penumbra, com a sombra da árvore e o giroflex passando por eles.', def:true, where:'Casa' },
   { id:'depo.hair', cat:'depo', label:'Cabelo ao vento', desc:'O cabelo do Jorge balança com o vento da garoa e é empurrado quando o helicóptero passa. Desligado (ou na qualidade baixa), o retrato fica parado.', def:true, where:'Casa' },

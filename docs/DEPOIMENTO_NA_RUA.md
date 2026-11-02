@@ -44,8 +44,17 @@ Código: `src/rua/streetDepo.js` e `src/rua/streetDepo.css` (tudo dentro de `.sd
 
 ## Ajustes
 
-Em Gráficos > **Depoimento na rua**: `depo.rain`, `depo.lens`, `depo.flyby`, `depo.film`, `depo.camera`. Em Som:
+Em Gráficos > **Depoimento na rua**: `depo.rain`, `depo.lens`, `depo.flyby`, `depo.film`, `depo.camera`, `depo.focus`. Em Som:
 `sfx.depoAmb` e `sfx.depoFx`. A qualidade baixa desliga as gotas na lente e a cor de cinema e reduz a resolução.
+
+## Foco na pessoa (`depo.focus`, 02/11/2026)
+
+O foco da cena é quem fala. O fundo (casa, curiosos, fita e garoa do meio, a camada `#sd-Lbg`) fica levemente desfocado e
+mais escuro, e a penumbra (`.dim`, entre o fundo e a pessoa) fecha em volta do ponto para onde a câmera aproxima (73% 44%).
+Durante a resposta, o fundo desfoca e escurece um pouco mais. Na entrevista (`.sd.press`), o fundo cai mais para o escuro e
+a repórter recebe a luz da câmera da TV Sereno, de frente. A fita do portão fica na altura do peito, atrás do corpo, para
+não passar pela boca de quem fala. O desfoque sai na qualidade baixa e quando o aparelho já precisou aliviar (`DEG>0`);
+a penumbra continua.
 
 ## Fachada viva (`depo.life`)
 

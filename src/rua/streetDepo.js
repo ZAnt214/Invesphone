@@ -112,7 +112,7 @@ export function openStreetDepo(host,id,opts={}){
   const FXON=k=>fxOn(k)&&!(low()&&HEAVY[k]);
   const AMBON=()=>SOUND&&fxOn('sfx.depoAmb');
 
-  const root=document.createElement('div');root.className='sd';root.setAttribute('role','dialog');root.setAttribute('aria-label',`Depoimento na rua: ${cfg.name}`);
+  const root=document.createElement('div');root.className='sd'+(PM?' press':'');root.setAttribute('role','dialog');root.setAttribute('aria-label',`Depoimento na rua: ${cfg.name}`);
   root.innerHTML=`<div class="sd-wrap"><div class="sd-stage" id="sd-stage">
     <div class="scene"><div class="layer" id="sd-Lbg"><canvas id="sd-bg"></canvas><canvas id="sd-tapegl" style="visibility:hidden"></canvas><canvas id="sd-tape"></canvas></div><div class="dim"></div><div class="layer" id="sd-Lac"><canvas id="sd-hair" style="visibility:hidden"></canvas><canvas id="sd-ac"></canvas></div><div class="layer" id="sd-Lfg"><canvas id="sd-debM" style="visibility:hidden"></canvas><canvas id="sd-fg"></canvas><canvas id="sd-debN" style="visibility:hidden"></canvas></div></div>
     <div class="grade"></div><canvas id="sd-grain" width="422" height="195"></canvas><div class="vig"></div>
@@ -426,7 +426,8 @@ export function openStreetDepo(host,id,opts={}){
     if(tail)strip(c,tailPts(x+w*.15,y+TH/2,tail,seed,t),seed*40);
   }
   /* trechos: a do portão sai da borda direita do poste até o pilar; a dos curiosos vem de fora do quadro até a borda esquerda do poste */
-  const TAPES={gate:[458,196,790,192,9,1.3],crowd:[-30,252,433,262,11,4.1]};
+  /* a do portão fica na altura do peito, atrás do corpo, para não passar pela boca de quem fala (foco na pessoa, 02/11/2026) */
+  const TAPES={gate:[458,240,790,236,9,1.3],crowd:[-30,252,433,262,11,4.1]};
   function tapeSpan(c,k,t){const a=TAPES[k],P=spanPts(a[0],a[1],a[2],a[3],a[4],a[5],t),s0=k==='gate'?40:0;if(c)strip(c,P,s0);else TG.strip(P,s0)}
   /* As fitas ficam num canvas próprio, em resolução cheia, só na faixa da tela onde elas passam (y 150..320),
      por cima do fundo e na mesma camada dele (andam juntas com a câmera). Recebem o giroflex e o holofote. */
@@ -1440,8 +1441,10 @@ export function openStreetDepo(host,id,opts={}){
   const GS={r:0,b:0};let last=performance.now(),FN=0;const t0=performance.now();
   /* se o aparelho não segura ~40 quadros, alivia em dois passos: menos resolução e sem filme; depois metade da garoa */
   let pAcc=0,pN=0;function perf(dt){if(DEG>=2)return;pAcc+=dt;pN++;if(pAcc<2)return;const avg=pAcc/pN;pAcc=0;pN=0;
-    if(avg>1/40){DEG++;root.classList.add('nofilm');size()}}
+    if(avg>1/40){DEG++;root.classList.add('nofilm');focusSync();size()}}
   const filmSync=()=>root.classList.toggle('nofilm',!FXON('depo.film')||DEG>0);filmSync();
+  /* foco na pessoa (depo.focus): penumbra em volta de quem fala; o desfoque do fundo sai na qualidade baixa ou se o aparelho já precisou aliviar */
+  const focusSync=()=>{const on=fxOn('depo.focus');root.classList.toggle('focus',on);root.classList.toggle('dof',on&&!low()&&DEG===0)};focusSync();
   function frame(now){
     if(!alive||FROZEN)return;   // congelada no flash: a última imagem fica parada (é a foto)
     const dt=Math.min(.05,(now-last)/1000);last=now;RDT=dt;const t=now/1000;
@@ -1740,7 +1743,7 @@ void main(){vec2 p=gl_FragCoord.xy/r;p.y=res.y-p.y;vec2 d=(p-c)/R;float q=length
     setTimeout(()=>sayLine(PM.q,PM.qe||'asking',()=>{pressExpr(IDLE);stage.classList.remove('listen','answering');setTimeout(pressChoices,300)}),RM?500:2500)}
 
   /* ---------- abrir e fechar ---------- */
-  const offFx=onFxChange(()=>{filmSync();hairSync();if(AMBOUT&&AC)AMBOUT.gain.setTargetAtTime(fxOn('sfx.depoAmb')?1.6:0,AC.currentTime,.2)});
+  const offFx=onFxChange(()=>{filmSync();focusSync();hairSync();if(AMBOUT&&AC)AMBOUT.gain.setTargetAtTime(fxOn('sfx.depoAmb')?1.6:0,AC.currentTime,.2)});
   const onDown=()=>ensureAudio();root.addEventListener('pointerdown',onDown,true);
   function close(){
     if(!alive)return;alive=false;host.classList.remove('sd-under');
