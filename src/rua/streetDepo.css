@@ -26,11 +26,12 @@
 .sd.focus .sd-stage.noting .dim{opacity:.5}
 .sd.dof #sd-Lbg{filter:blur(1.3px) brightness(.9);transition:filter .9s ease}
 .sd.dof .sd-stage.answering #sd-Lbg{filter:blur(2.1px) brightness(.84)}
-/* entrevista: a luz da câmera da TV Sereno ilumina a repórter de frente, e o fundo cai mais para o escuro */
-.sd.focus.press .dim{background:radial-gradient(ellipse 28% 60% at 73% 42%,transparent 36%,rgba(0,0,0,.6) 74%,#000);opacity:.55}
-.sd.focus.press .sd-stage.answering .dim{opacity:.66}
-.sd.dof.press #sd-Lbg{filter:blur(1.8px) brightness(.78) saturate(.85)}
-.sd.dof.press .sd-stage.answering #sd-Lbg{filter:blur(2.4px) brightness(.72) saturate(.85)}
+/* entrevista: a luz da câmera da TV Sereno ilumina a repórter de frente e o fundo cai quase no escuro. O escuro vem da
+   penumbra (sem filtro), para valer também quando o desfoque sai (qualidade baixa ou aparelho aliviando). */
+.sd.focus.press .dim{background:radial-gradient(ellipse 25% 56% at 73% 42%,rgba(0,0,0,.28) 30%,rgba(0,0,0,.82) 68%,#000);opacity:.86}
+.sd.focus.press .sd-stage.answering .dim{opacity:.93}
+.sd.dof.press #sd-Lbg{filter:blur(3.2px) saturate(.8)}
+.sd.dof.press .sd-stage.answering #sd-Lbg{filter:blur(4px) saturate(.75)}
 .sd.focus.press #sd-Lac{filter:brightness(1.1) contrast(1.04)}
 
 .sd #sd-bg{left:2%;top:2%;width:844px;height:390px}
